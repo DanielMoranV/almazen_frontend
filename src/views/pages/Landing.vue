@@ -6,7 +6,11 @@ import { RouterLink } from 'vue-router';
     <div class="min-h-screen flex flex-col bg-white text-gray-800">
         <!-- Header -->
         <header class="flex justify-between items-center px-6 py-4 shadow-md">
-            <h1 class="text-2xl font-bold text-green-600">AlmaZen</h1>
+            <div class="flex justify-center">
+                <RouterLink to="/">
+                    <img src="/images/almazen.logo.png" alt="Logo" class="h-14 object-contain cursor-pointer" />
+                </RouterLink>
+            </div>
             <nav class="space-x-4">
                 <RouterLink to="/login" class="text-gray-700 hover:text-green-600 font-medium">Iniciar sesión</RouterLink>
                 <RouterLink to="/register" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"> Registrarse </RouterLink>

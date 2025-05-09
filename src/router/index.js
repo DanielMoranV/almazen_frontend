@@ -15,7 +15,7 @@ const router = createRouter({
                     path: '/dashboard',
                     name: 'dashboard',
                     component: () => import('@/views/Dashboard.vue'),
-                    meta: { positions: ['admin', 'ADMINISTRACION'] }
+                    meta: { positions: ['admin', 'Developer'] }
                 },
                 {
                     path: '/profile',
@@ -154,7 +154,7 @@ const router = createRouter({
 // Guard de navegación
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore();
-    const currentUser = authStore.getUser;
+    const currentUser = authStore.currentUser;
 
     // Si la ruta es pública, permite el acceso sin verificación
     if (to.meta.public) {
@@ -168,8 +168,7 @@ router.beforeEach((to, from, next) => {
 
     // Verifica si la ruta requiere posiciones específicas
     const allowedPositions = to.meta.positions;
-    if (allowedPositions && !allowedPositions.includes(currentUser.position) && currentUser.position !== 'SISTEMAS') {
-        // Redirige si no tiene la posición adecuada y no es 'SISTEMAS'
+    if (allowedPositions && !allowedPositions.includes(currentUser.position) && currentUser.position !== 'Developer') {
         return next({ name: 'accessDenied' });
     }
 

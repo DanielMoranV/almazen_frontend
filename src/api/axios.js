@@ -66,6 +66,7 @@ instance.interceptors.response.use(
             console.log('error', error);
             errData.message = 'La solicitud ha tardado demasiado tiempo. Intente nuevamente.';
         } else {
+            console.log('error', error);
             errData.message = 'Error de conexión. Verifique su red.';
         }
 

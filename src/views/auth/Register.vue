@@ -1,10 +1,14 @@
 <script setup>
+import { useAuthStore } from '@/stores/authStore';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
+import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
 
 const router = useRouter();
 const toast = useToast();
@@ -18,7 +22,7 @@ const form = ref({
     company_name: ''
 });
 
-const onSubmit = () => {
+const onSubmit = async () => {
     if (!form.value.name || !form.value.dni || !form.value.email || !form.value.password || !form.value.password_confirmation || !form.value.company_name) {
         toast.add({ severity: 'error', summary: 'Faltan campos', detail: 'Todos los campos son obligatorios.', life: 3000 });
         return;
@@ -29,14 +33,18 @@ const onSubmit = () => {
         return;
     }
 
-    console.log('Formulario enviado:', form.value);
-
-    toast.add({ severity: 'success', summary: 'Registro exitoso', detail: 'Cuenta creada correctamente.', life: 3000 });
-    router.push('/login');
+    await authStore.register(form.value);
+    if (authStore.isAuthenticated) {
+        toast.add({ severity: 'success', summary: 'Registro exitoso', detail: 'Cuenta creada correctamente.', life: 3000 });
+        router.push('/dashboard');
+    } else {
+        toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+    }
 };
 </script>
 
 <template>
+    <Toast />
     <div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
         <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-10">
             <!-- Logo -->
@@ -55,13 +63,13 @@ const onSubmit = () => {
                     <!-- Nombre completo -->
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                        <InputText id="name" v-model="form.name" class="w-full" placeholder="Ej. Janella Valladares Yovera" />
+                        <InputText id="name" v-model="form.name" class="w-full" placeholder="Ej. Jhon Doe" />
                     </div>
 
                     <!-- DNI -->
                     <div>
                         <label for="dni" class="block text-sm font-medium text-gray-700 mb-1">DNI</label>
-                        <InputText id="dni" v-model="form.dni" class="w-full" placeholder="Ej. 72922629" />
+                        <InputText id="dni" v-model="form.dni" class="w-full" placeholder="Ej. 12345678" />
                     </div>
 
                     <!-- Correo -->

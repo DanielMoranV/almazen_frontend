@@ -1,10 +1,14 @@
 <script setup>
+import { useAuthStore } from '@/stores/authStore';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
+import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
 
 const dni = ref('');
 const password = ref('');
@@ -14,17 +18,31 @@ const toast = useToast();
 const imgLogin = '/images/login.png';
 
 const handleLogin = async () => {
-    // Simulación (reemplaza con tu llamada real a API)
-    if (dni.value === '72922629' && password.value === '72922629') {
-        toast.add({ severity: 'success', summary: 'Bienvenido', detail: 'Inicio de sesión exitoso', life: 3000 });
-        router.push('/dashboard');
+    // Validar DNI
+    const dniRegex = /^\d{8}$/;
+    if (!dniRegex.test(dni.value)) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'El DNI ingresado no es válido.', life: 3000 });
+        return;
+    }
+    // Validar contraseña
+    if (password.value.length < 8) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'La contraseña debe tener al menos 8 caracteres.', life: 3000 });
+        return;
+    }
+    await authStore.login({ dni: dni.value, password: password.value });
+    if (authStore.isAuthenticated) {
+        toast.add({ severity: 'success', summary: 'Bienvenido', detail: authStore.message, life: 3000 });
+        setTimeout(() => {
+            router.push('/dashboard');
+        }, 3000);
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Credenciales inválidas', life: 3000 });
+        toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
     }
 };
 </script>
 
 <template>
+    <Toast />
     <div class="min-h-screen flex items-center justify-center bg-gray-100 m-2">
         <div class="grid grid-cols-1 md:grid-cols-2 bg-white shadow-lg rounded-2xl overflow-hidden max-w-5xl w-full">
             <!-- Imagen -->
@@ -47,7 +65,7 @@ const handleLogin = async () => {
 
                 <div class="space-y-4">
                     <label class="block text-sm font-medium text-gray-700">DNI</label>
-                    <InputText v-model="dni" class="w-full" placeholder="Ingrese su DNI" />
+                    <InputText v-model="dni" class="w-full" placeholder="Ingrese su DNI" maxlength="8" />
 
                     <label class="block text-sm font-medium text-gray-700">Contraseña</label>
                     <Password v-model="password" :toggleMask="true" class="mb-4" fluid :feedback="false" toggleMask placeholder="Ingrese su contraseña" />
