@@ -9,13 +9,13 @@ const router = createRouter({
         {
             path: '/dashboard',
             component: AppLayout,
-            meta: { positions: ['admin', 'ADMINISTRACION'] }, // Solo accesible por usuarios con estas posiciones
+            meta: { positions: ['Administrador', 'Developer'] }, // Solo accesible por usuarios con estas posiciones
             children: [
                 {
                     path: '/dashboard',
                     name: 'dashboard',
                     component: () => import('@/views/Dashboard.vue'),
-                    meta: { positions: ['admin', 'Developer'] }
+                    meta: { positions: ['Administrador', 'Developer'] }
                 },
                 {
                     path: '/profile',

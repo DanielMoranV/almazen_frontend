@@ -7,6 +7,7 @@ import Aura from '@primevue/themes/aura';
 import PrimeVue from 'primevue/config';
 import ConfirmationService from 'primevue/confirmationservice';
 import KeyFilter from 'primevue/keyfilter';
+import StyleClass from 'primevue/styleclass';
 import ToastService from 'primevue/toastservice';
 
 import '@/assets/styles.scss';
@@ -21,6 +22,7 @@ import '@/assets/tailwind.css';
     app.use(pinia);
 
     app.directive('keyfilter', KeyFilter);
+    app.directive('styleclass', StyleClass);
     app.use(PrimeVue, {
         theme: {
             preset: {

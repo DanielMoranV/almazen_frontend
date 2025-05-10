@@ -1,22 +1,17 @@
 <script setup>
 import { useLayout } from '@/layout/composables/layout';
-import { useAdmissionsStore } from '@/stores/admissionsStore';
 import { useAuthStore } from '@/stores/authStore';
-import { useInsurersStore } from '@/stores/insurersStore';
-import { useInvoicesStore } from '@/stores/invoicesStore';
-import { useMedicalRecordsStore } from '@/stores/medicalRecordsStore';
 import cache from '@/utils/cache';
 import indexedDB from '@/utils/indexedDB';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import ProgressSpinner from 'primevue/progressspinner';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppConfigurator from './AppConfigurator.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const admissionsStore = useAdmissionsStore();
-const insurersStore = useInsurersStore();
-const invoicesStore = useInvoicesStore();
-const medicalRecordsStore = useMedicalRecordsStore();
 
 const logoutDialog = ref(false);
 const { onMenuToggle, toggleDarkMode, isDarkTheme } = useLayout();
@@ -41,19 +36,15 @@ const logout = async () => {
     await authStore.logout();
 };
 
-onMounted(async () => {
-    // await insurersStore.initializeStore();
-    // await invoicesStore.initializeStore();
-    // await medicalRecordsStore.initializeStore();
-});
+onMounted(async () => {});
 </script>
 
 <template>
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
             <router-link to="/dashboard" class="layout-topbar-logo">
-                <img width="25px" src="/az.logo.png" alt="Logo Clinica Santa Rosa" />
-                <span>Clinica Santa Rosa</span>
+                <img width="25px" src="/az.logo.png" alt="Logo AlmaZEN" />
+                <span>AlmaZEN</span>
             </router-link>
         </div>
 
