@@ -2,32 +2,24 @@
 import { useAuthStore } from '@/stores/authStore';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
 
-import { handleResponseToast } from '@/utils/response';
 import { capitalizeName, restrictToNumbers, validateDNI, validateEmail, validatePhone } from '@/utils/validationUtils';
-
-const api_url = import.meta.env.VITE_API_URL;
-const storage_url = import.meta.env.VITE_STORAGE_URL;
 
 // Stores
 const authStore = useAuthStore();
 
 // Referencias y datos
 const user = ref({
+    name: '',
     dni: '',
     email: '',
     phone: '',
-    role: { id: '', name: '' },
-    position: '',
-    url_photo_profile: ''
+    position: ''
 });
-const urlPhotoProfile = ref('');
 const passwordInput = ref('');
 const confirmPasswordInput = ref('');
 const isLoading = ref(false);
 const isLoadingPassword = ref(false);
-const isLoadingProfile = ref(true);
 
 // Estados de validación
 const isDNIValid = ref(true);
@@ -36,7 +28,6 @@ const isPhoneValid = ref(true);
 
 // Toast y Router
 const toast = useToast();
-const router = useRouter();
 
 // Validar campos
 const validateFields = () => {
@@ -89,10 +80,12 @@ const updateUser = async () => {
         phone: user.value.phone
     };
 
-    const success = await authStore.updateProfile(payload, user.value.id);
-    handleResponseToast(success, authStore.auth.message, authStore.auth.status, toast);
-    if (success) {
-        authStore.updateUser(user.value);
+    await authStore.updateUser(payload);
+
+    if (authStore.success) {
+        toast.add({ severity: 'success', summary: 'Perfil actualizado', detail: authStore.message, life: 3000 });
+    } else {
+        toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
     }
     isLoading.value = false;
 };
@@ -108,10 +101,11 @@ const updatePassword = async () => {
         return;
     }
     if (password === confirmPassword) {
-        const success = await authStore.updateProfile({ password: password }, user.value.id);
-        handleResponseToast(success, authStore.auth.message, authStore.auth.status, toast);
-        if (success) {
-            authStore.updateUser(user.value);
+        await authStore.updateUser({ password: password, id: user.value.id });
+        if (authStore.success) {
+            toast.add({ severity: 'success', summary: 'Contraseña actualizada', detail: authStore.message, life: 3000 });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
         }
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Contraseña de confirmación no coincide', life: 3000 });
@@ -119,63 +113,26 @@ const updatePassword = async () => {
     isLoadingPassword.value = false;
 };
 
-// Manejar carga de foto de perfil
-const beforeUpload = (request) => {
-    request.xhr.setRequestHeader('Authorization', 'Bearer ' + authStore.getToken);
-    return request;
-};
-
-const onUpload = async (request) => {
-    isLoadingProfile.value = true;
-    try {
-        const response = typeof request.xhr.response === 'string' ? JSON.parse(request.xhr.response) : request.xhr.response;
-        const urlPhotoProfile = response.data.url_photo_profile;
-        const payload = {
-            ...user.value,
-            url_photo_profile: urlPhotoProfile
-        };
-        const success = await authStore.updateProfile(payload, user.value.id);
-        handleResponseToast(success, 'Foto de perfil actualizada correctamente', 'success', toast);
-        if (success) {
-            authStore.updateUser(payload);
-            user.value.url_photo_profile = storage_url + urlPhotoProfile;
-        }
-    } catch (error) {
-        console.error('Error al procesar la respuesta', error);
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al procesar la respuesta', life: 3000 });
-    } finally {
-        isLoadingProfile.value = false;
-    }
-};
-
-// Función para obtener la URL de la foto de perfil
-const getProfilePhotoUrl = (urlPhoto, defaultPhoto, storageUrl) => {
-    if (urlPhoto !== defaultPhoto && !urlPhoto.includes(storageUrl)) {
-        return `${storageUrl}${urlPhoto}`;
-    }
-    return urlPhoto;
-};
-
 // Cargar datos del usuario
 onMounted(() => {
-    user.value = authStore.getUser;
-    const defaultProfile = '/images/profile.png';
-    const protoProfile = user.value.url_photo_profile ?? defaultProfile;
-
-    // Obtener la URL de la foto de perfil
-    user.value.url_photo_profile = getProfilePhotoUrl(protoProfile, defaultProfile, storage_url);
-    urlPhotoProfile.value = api_url + '/users/' + user.value.id + '/photoprofile';
+    user.value = authStore.currentUser;
 });
 
 // Watchers
 watch(() => user.value.dni, validateDNIField);
 watch(() => user.value.email, validateEmailField);
 watch(() => user.value.phone, validatePhoneField);
+
+const getAvatarUrl = (name) => {
+    if (!name) return '/images/profile.png'; // backup si no hay nombre
+    const encoded = encodeURIComponent(name.trim());
+    return `https://api.dicebear.com/7.x/bottts/svg?seed=${encoded}&backgroundColor=ffffff&textColor=000000`;
+};
 </script>
 
 <template>
     <div class="profile-header mb-3">
-        <Avatar :image="user.url_photo_profile" size="xlarge" shape="circle" class="mr-3" />
+        <Avatar :image="getAvatarUrl(user.name)" size="xlarge" shape="circle" class="mr-3 shadow-lg" alt="Avatar" />
         <div>
             <h2>{{ user.name }}</h2>
             <p>{{ user.position.toUpperCase() }}</p>
@@ -218,21 +175,6 @@ watch(() => user.value.phone, validatePhoneField);
                 </div>
                 <div class="flex w-full">
                     <Button label="Actualizar Contraseña" icon="pi pi-pencil" class="w-full mx-auto" @click="updatePassword" severity="info" :loading="isLoadingPassword"></Button>
-                </div>
-                <div class="flex flex-col gap-2 w-full">
-                    <FileUpload
-                        name="photo_profile"
-                        :url="urlPhotoProfile"
-                        @before-send="beforeUpload"
-                        mode="basic"
-                        accept="image/*"
-                        :maxFileSize="1000000"
-                        :auto="true"
-                        chooseLabel="Actualizar foto de Perfil"
-                        class="w-full mx-auto"
-                        @upload="onUpload"
-                        :loading="isLoadingProfile"
-                    />
                 </div>
             </div>
         </div>

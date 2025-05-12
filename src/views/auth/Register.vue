@@ -99,7 +99,7 @@ const onSubmit = async () => {
 
                 <!-- Botón y enlace -->
                 <div class="mt-8">
-                    <Button label="Registrarse" icon="pi pi-user-plus" class="w-full bg-green-600 border-none hover:bg-green-700" type="submit" />
+                    <Button label="Registrarse" icon="pi pi-user-plus" class="w-full bg-green-600 border-none hover:bg-green-700" type="submit" :loading="authStore.loading" />
                 </div>
 
                 <p class="text-center text-sm text-gray-600 mt-4">

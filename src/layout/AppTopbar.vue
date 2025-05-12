@@ -2,7 +2,6 @@
 import { useLayout } from '@/layout/composables/layout';
 import { useAuthStore } from '@/stores/authStore';
 import cache from '@/utils/cache';
-import indexedDB from '@/utils/indexedDB';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -26,7 +25,6 @@ const goToConfig = () => {
 
 const goToRefresh = () => {
     cache.refresh();
-    indexedDB.cleanAll();
     window.location.reload();
 };
 const confirmLogout = () => {
@@ -34,9 +32,16 @@ const confirmLogout = () => {
 };
 const logout = async () => {
     await authStore.logout();
+    router.push('/');
 };
 
-onMounted(async () => {});
+onMounted(async () => {
+    await authStore.me();
+    if (!authStore.isAuthenticated) {
+        console.log('no autenticado');
+        router.push('/login');
+    }
+});
 </script>
 
 <template>
@@ -102,17 +107,17 @@ onMounted(async () => {});
         <div class="flex items-center gap-4">
             <i class="pi pi-exclamation-triangle !text-3xl" />
             <span>
-                Deseas cerrar sesión <b>{{ authStore.getUser?.name || 'Usuario' }}</b
+                Deseas cerrar sesión <b>{{ authStore.currentUser?.name || 'Usuario' }}</b
                 >?
             </span>
         </div>
         <template #footer>
-            <div v-if="authStore.getLoading">
+            <div v-if="authStore.isLoading">
                 <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" fill="var(--surface-ground)" animationDuration=".5s" aria-label="Custom ProgressSpinner" />
             </div>
             <div v-else>
                 <Button label="No" icon="pi pi-times" text @click="logoutDialog = false" />
-                <Button label="Sí" icon="pi pi-check" @click="logout" />
+                <Button label="Sí" icon="pi pi-check" @click="logout" :loading="authStore.loading" />
             </div>
         </template>
     </Dialog>

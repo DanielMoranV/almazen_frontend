@@ -33,7 +33,7 @@ const handleLogin = async () => {
     if (authStore.isAuthenticated) {
         toast.add({ severity: 'success', summary: 'Bienvenido', detail: authStore.message, life: 3000 });
         setTimeout(() => {
-            router.push('/dashboard');
+            router.push('/profile');
         }, 3000);
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
@@ -70,7 +70,7 @@ const handleLogin = async () => {
                     <label class="block text-sm font-medium text-gray-700">Contraseña</label>
                     <Password v-model="password" :toggleMask="true" class="mb-4" fluid :feedback="false" toggleMask placeholder="Ingrese su contraseña" />
 
-                    <Button label="Iniciar sesión" icon="pi pi-sign-in" class="w-full mt-4 bg-green-600 border-green-600 hover:bg-green-700" @click="handleLogin" />
+                    <Button label="Iniciar sesión" icon="pi pi-sign-in" class="w-full mt-4 bg-green-600 border-green-600 hover:bg-green-700" :loading="authStore.loading" @click="handleLogin" />
 
                     <p class="text-center text-sm text-gray-600 mt-6">
                         ¿No tienes una cuenta?

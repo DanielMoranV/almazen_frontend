@@ -1,4 +1,4 @@
-import { login, logout, me, refresh, register } from '@/api';
+import { login, logout, me, refresh, register, updateUser } from '@/api';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
 
@@ -16,7 +16,9 @@ export const useAuthStore = defineStore('authStore', {
     getters: {
         isAuthenticated: (state) => !!state.user && !!state.success,
         isActive: (state) => state.user?.is_active,
-        currentUser: (state) => state.user
+        currentUser: (state) => state.user,
+        loading: (state) => state.isLoading,
+        getToken: (state) => state.token
     },
 
     actions: {
@@ -54,7 +56,7 @@ export const useAuthStore = defineStore('authStore', {
             this.isLoading = true;
             try {
                 const { data, message } = await me();
-                this.setUser(data.user);
+                this.setUser(data);
                 this.message = message;
                 this.success = true;
             } catch (error) {
@@ -108,10 +110,31 @@ export const useAuthStore = defineStore('authStore', {
                 const now = Date.now();
                 const timeLeft = this.expiresAt - now;
 
+                console.log('timeLeft', timeLeft);
+
                 if (timeLeft < 60_000) {
+                    console.log('refreshing token');
                     await this.refreshToken();
                 }
             }, 40_000); // Verifica cada 30s
+        },
+
+        async updateUser(user) {
+            this.isLoading = true;
+            let userId = user.id;
+
+            try {
+                const { data, message } = await updateUser(user, userId);
+                this.setUser(data);
+                this.success = true;
+                this.message = message;
+            } catch (error) {
+                console.log(error);
+                this.message = error.message || 'Error al actualizar el usuario';
+                this.success = false;
+            } finally {
+                this.isLoading = false;
+            }
         },
 
         setUser(user) {
