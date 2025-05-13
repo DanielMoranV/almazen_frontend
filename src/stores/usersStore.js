@@ -48,6 +48,7 @@ export const useUsersStore = defineStore('userStore', {
                 this.message = message;
                 this.success = success;
             } catch (error) {
+                console.log(error);
                 this.message = handleError(error, 'Error al crear el usuario');
                 this.success = false;
             } finally {

@@ -5,7 +5,7 @@ import cache from '@/utils/cache';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import ProgressSpinner from 'primevue/progressspinner';
-import { onMounted, ref } from 'vue';
+import { onBeforeMount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppConfigurator from './AppConfigurator.vue';
 
@@ -40,6 +40,12 @@ onMounted(async () => {
     if (!authStore.isAuthenticated) {
         console.log('no autenticado');
         router.push('/login');
+    }
+});
+
+onBeforeMount(() => {
+    if (cache.getItem('darkMode') === true) {
+        document.documentElement.classList.toggle('app-dark');
     }
 });
 </script>

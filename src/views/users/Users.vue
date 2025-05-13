@@ -2,13 +2,18 @@
 import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+
 import Toast from 'primevue/toast';
 import { onMounted } from 'vue';
 
 import { Positions } from '@/constants/positions';
 import { useUsersStore } from '@/stores/usersStore';
+import { onBeforeMount } from 'vue';
 
 const usersStore = useUsersStore();
+
+const filters = ref(null);
 
 // Estado
 const users = ref([]); // Aquí cargarás tus usuarios
@@ -61,6 +66,29 @@ const hideDeleteDialog = () => {
     deleteDialog.value = false;
 };
 
+function initFilters() {
+    filters.value = {
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        dni: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        email: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        phone: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        position: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+        is_active: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
+    };
+}
+
+onBeforeMount(() => {
+    initFilters();
+});
+
+function clearFilter() {
+    filters.value = {
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+    };
+    initFilters();
+}
+
 onMounted(async () => {
     await usersStore.fetchUsers();
     if (usersStore.success) {
@@ -70,6 +98,27 @@ onMounted(async () => {
         toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
     }
 });
+
+const submitUser = async () => {
+    if (userForm.value.id) {
+        await usersStore.updateUser(userForm.value, userForm.value.id);
+        if (usersStore.success) {
+            users.value = usersStore.usersList;
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario actualizado correctamente', life: 3000 });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
+        }
+    } else {
+        await usersStore.createUser(userForm.value);
+        if (usersStore.success) {
+            users.value = usersStore.usersList;
+            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario creado correctamente', life: 3000 });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
+        }
+    }
+    userDialog.value = false;
+};
 </script>
 
 <template>
@@ -87,11 +136,14 @@ onMounted(async () => {
             dataKey="id"
             class="p-datatable-sm"
             :scrollable="true"
+            stripedRows
             size="small"
+            v-model:filters="filters"
             scrollHeight="400px"
             responsiveLayout="scroll"
             paginator
             :rows="5"
+            :globalFilterFields="['name', 'dni', 'email', 'phone', 'position', 'is_active']"
             :rowsPerPageOptions="[5, 10, 20, 50]"
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Usuarios"
@@ -107,7 +159,7 @@ onMounted(async () => {
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText placeholder="Buscar..." />
+                        <InputText v-model="filters['global'].value" placeholder="Buscar..." />
                     </IconField>
                 </div>
             </template>
@@ -165,7 +217,7 @@ onMounted(async () => {
 
             <template #footer>
                 <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-                <Button label="Guardar" icon="pi pi-check" text severity="success" :disabled="!userForm.name || !userForm.email || !userForm.position" />
+                <Button label="Guardar" icon="pi pi-check" text severity="success" :disabled="!userForm.name || !userForm.email || !userForm.position" :loading="usersStore.isLoadingUsers" @click="submitUser" />
             </template>
         </Dialog>
 
