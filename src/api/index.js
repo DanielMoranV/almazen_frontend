@@ -13,3 +13,9 @@ export const fetchUsers = () => axios.get('/users');
 export const createUser = (payload) => axios.post('/users', payload);
 export const deleteUser = (id) => axios.delete(`/users/${id}`);
 export const updateUser = (payload, id) => axios.put(`/users/${id}`, payload);
+
+// Companies
+export const fetchCompanies = () => axios.get('/companies');
+export const createCompany = (payload) => axios.post('/companies', payload);
+export const deleteCompany = (id) => axios.delete(`/companies/${id}`);
+export const updateCompany = (payload, id) => axios.put(`/companies/${id}`, payload);

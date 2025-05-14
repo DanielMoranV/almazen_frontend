@@ -29,6 +29,13 @@ const router = createRouter({
                     name: 'users',
                     component: () => import('@/views/users/Users.vue'),
                     meta: { positions: ['Administrador'] } // Solo accesible por administradores
+                },
+
+                {
+                    path: '/companies',
+                    name: 'companies',
+                    component: () => import('@/views/companies/Companies.vue'),
+                    meta: { positions: ['Administrador'] } // Solo accesible por administradores
                 }
             ]
         },

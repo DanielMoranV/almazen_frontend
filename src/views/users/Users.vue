@@ -9,6 +9,7 @@ import { onMounted } from 'vue';
 
 import { Positions } from '@/constants/positions';
 import { useUsersStore } from '@/stores/usersStore';
+import { exportToExcel } from '@/utils/excelUtils';
 import { onBeforeMount } from 'vue';
 
 const usersStore = useUsersStore();
@@ -118,6 +119,33 @@ const submitUser = async () => {
         }
     }
     userDialog.value = false;
+};
+
+const deleteUser = async (user) => {
+    let idUser = user.id;
+    await usersStore.removeUser(idUser);
+    if (usersStore.success) {
+        users.value = usersStore.usersList;
+        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario eliminado correctamente', life: 3000 });
+    } else {
+        toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
+    }
+
+    deleteDialog.value = false;
+};
+
+const exportUsers = async () => {
+    const columns = [
+        { header: 'Nombre', key: 'name', width: 25 },
+        { header: 'DNI', key: 'dni', width: 15 },
+        { header: 'Teléfono', key: 'phone', width: 15 },
+        { header: 'Email', key: 'email', width: 20 },
+        { header: 'Cargo', key: 'position', width: 15 },
+        { header: 'Activo', key: 'is_active', width: 15 },
+        { header: 'Empresa', key: 'company_name', width: 25 }
+    ];
+
+    await exportToExcel(columns, users.value, 'Usuarios', 'Usuarios');
 };
 </script>
 
@@ -232,7 +260,7 @@ const submitUser = async () => {
             </div>
             <template #footer>
                 <Button label="Cancelar" icon="pi pi-times" text @click="hideDeleteDialog" />
-                <Button label="Eliminar" icon="pi pi-trash" text severity="danger" />
+                <Button label="Eliminar" icon="pi pi-trash" text severity="danger" :loading="usersStore.isLoadingUsers" @click="deleteUser(selectedUser)" />
             </template>
         </Dialog>
     </div>

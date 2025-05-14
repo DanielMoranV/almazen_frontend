@@ -14,7 +14,10 @@ const model = ref([
     },
     {
         label: 'Administrador',
-        items: [{ label: 'Usuarios', icon: 'pi pi-fw pi-users', to: '/users', positions: ['Administrador'] }],
+        items: [
+            { label: 'Usuarios', icon: 'pi pi-fw pi-users', to: '/users', positions: ['Administrador'] },
+            { label: 'Empresas', icon: 'pi pi-fw pi-building', to: '/companies', positions: ['Administrador'] }
+        ],
         positions: ['Administrador']
     }
 ]);
