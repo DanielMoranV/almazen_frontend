@@ -246,7 +246,15 @@ const exportCompanies = async () => {
 
             <template #footer>
                 <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-                <Button label="Guardar" icon="pi pi-check" text severity="success" :disabled="!companyForm.company_name || !companyForm.email || !companyForm.position" :loading="companiesStore.isLoadingCompanies" @click="submitCompany" />
+                <Button
+                    label="Guardar"
+                    icon="pi pi-check"
+                    text
+                    severity="success"
+                    :disabled="!companyForm.company_name || !companyForm.email || !companyForm.address || !companyForm.phone || !companyForm.logo || !companyForm.description"
+                    :loading="companiesStore.isLoadingCompanies"
+                    @click="submitCompany"
+                />
             </template>
         </Dialog>
 

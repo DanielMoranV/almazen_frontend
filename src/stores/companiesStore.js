@@ -31,6 +31,7 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 this.message = message;
                 this.success = success;
             } catch (error) {
+                console.log(error);
                 this.message = handleError(error, 'Error al obtener las empresas');
                 this.success = false;
             } finally {
@@ -62,6 +63,7 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 this.message = message;
                 this.success = success;
             } catch (error) {
+                console.log(error);
                 this.message = handleError(error, 'Error al actualizar la empresa');
                 this.success = false;
             } finally {

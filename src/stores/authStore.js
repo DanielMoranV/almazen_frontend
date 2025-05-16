@@ -35,6 +35,7 @@ export const useAuthStore = defineStore('authStore', {
 
                 this.startRefreshInterval();
             } catch (error) {
+                console.log(error);
                 this.message = error.details?.dni[0] || error.message || 'Error de autenticación';
                 this.success = false;
             } finally {
