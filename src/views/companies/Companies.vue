@@ -197,7 +197,7 @@ const exportCompanies = async () => {
             <Column header="Acciones" :exportable="false" style="width: 150px">
                 <template #body="slotProps">
                     <Button icon="pi pi-pencil" class="p-button-rounded p-button-info mr-2" @click="editCompany(slotProps.data)" />
-                    <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="confirmDelete(slotProps.data)" />
+                    <!-- <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="confirmDelete(slotProps.data)" /> -->
                 </template>
             </Column>
         </DataTable>
