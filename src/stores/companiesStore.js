@@ -9,7 +9,7 @@ function handleError(error, fallbackMessage = 'Ocurrió un error') {
 
 export const useCompaniesStore = defineStore('companiesStore', {
     state: () => ({
-        companies: [], // ✅ Usa array en lugar de {}
+        companies: [],
         company: cache.getItem('company') || null,
         message: '',
         success: false,

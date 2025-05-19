@@ -36,6 +36,18 @@ const router = createRouter({
                     name: 'companies',
                     component: () => import('@/views/companies/Companies.vue'),
                     meta: { positions: ['Administrador'] } // Solo accesible por administradores
+                },
+                {
+                    path: '/products',
+                    name: 'products',
+                    component: () => import('@/views/products/Products.vue'),
+                    meta: { positions: ['Administrador', 'Logística'] } // Solo accesible por administradores y logística
+                },
+                {
+                    path: '/units',
+                    name: 'units',
+                    component: () => import('@/views/products/Units.vue'),
+                    meta: { positions: ['Developer'] } // Solo accesible por desarrolladores
                 }
             ]
         },

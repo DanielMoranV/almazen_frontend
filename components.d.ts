@@ -7,8 +7,17 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    DeleteConfirmationDialog: typeof import('./src/components/DeleteConfirmationDialog.vue')['default']
     FloatingConfigurator: typeof import('./src/components/FloatingConfigurator.vue')['default']
+    ProductsFormDialog: typeof import('./src/components/products/ProductsFormDialog.vue')['default']
+    ProductsTable: typeof import('./src/components/products/ProductsTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    UnitsFormDialog: typeof import('./src/components/Units/UnitsFormDialog.vue')['default']
+    UnitsTable: typeof import('./src/components/Units/UnitsTable.vue')['default']
+    UserFilters: typeof import('./src/components/users/UserFilters.vue')['default']
+    UserForm: typeof import('./src/components/UserForm.vue')['default']
+    UserFormDialog: typeof import('./src/components/users/UserFormDialog.vue')['default']
+    UsersTable: typeof import('./src/components/users/UsersTable.vue')['default']
   }
 }

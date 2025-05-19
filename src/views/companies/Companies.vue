@@ -145,11 +145,12 @@ const exportCompanies = async () => {
         <ConfirmDialog />
 
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Gestión de Empresas</h2>
-            <Button label="Nueva Empresa" icon="pi pi-plus" class="p-button-success" @click="openNew" />
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Gestión de Empresas</h2>
+            <Button icon="pi pi-plus" class="p-button-success" @click="openNew" />
         </div>
 
         <DataTable
+            :style="{ fontSize: '11px', fontFamily: 'Arial, sans-serif' }"
             :value="companies"
             dataKey="id"
             class="p-datatable-sm"
@@ -168,9 +169,9 @@ const exportCompanies = async () => {
             :loading="companiesStore.isLoadingCompanies"
         >
             <template #header>
-                <div class="flex flex-wrap gap-2 items-center justify-between mb-2">
+                <div class="flex flex-wrap gap-2 items-center justify-between mb-3">
                     <!-- Exportar Excel -->
-                    <Button type="button" icon="pi pi-file-excel" label="Exportar Excel" outlined @click="exportCompanies()" />
+                    <Button type="button" icon="pi pi-file-excel" label="Exportar" outlined @click="exportCompanies()" />
 
                     <!-- Buscador  -->
                     <IconField>
@@ -181,22 +182,26 @@ const exportCompanies = async () => {
                     </IconField>
                 </div>
             </template>
-            <Column field="company_name" header="Nombre" sortable />
-            <Column field="address" header="Dirección" sortable />
-            <Column field="phone" header="Teléfono" sortable />
-            <Column field="email" header="Email" sortable />
-            <Column field="website" header="Web" sortable />
-            <Column field="logo" header="Logo" sortable />
-            <Column field="description" header="Descripción" sortable />
-            <Column field="is_active" header="Activo" sortable>
+            <!-- Mostrar mensaje cuando no hay registros -->
+            <template #empty>
+                <div class="flex justify-center items-center h-12">No se encontraron registros</div>
+            </template>
+            <Column field="company_name" header="Nombre" sortable style="min-width: 8rem" />
+            <Column field="address" header="Dirección" sortable style="min-width: 8rem" />
+            <Column field="phone" header="Teléfono" sortable style="min-width: 5rem" />
+            <Column field="email" header="Email" sortable style="min-width: 5rem" />
+            <Column field="website" header="Web" sortable style="min-width: 5rem" />
+            <!-- <Column field="logo" header="Logo" sortable style="min-width: 5rem" /> -->
+            <Column field="description" header="Descripción" sortable style="min-width: 10rem" />
+            <Column field="is_active" header="Activo" sortable style="min-width: 5rem">
                 <template #body="slotProps">
                     <i class="pi pi-check-circle text-green-500 text-2xl" v-if="slotProps.data.is_active"></i>
                     <i class="pi pi-times-circle text-red-500 text-2xl" v-else></i>
                 </template>
             </Column>
-            <Column header="Acciones" :exportable="false" style="width: 150px">
+            <Column header="Acciones" :exportable="false" style="min-width: 3rem">
                 <template #body="slotProps">
-                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-info mr-2" @click="editCompany(slotProps.data)" />
+                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-info m-1" @click="editCompany(slotProps.data)" />
                     <!-- <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="confirmDelete(slotProps.data)" /> -->
                 </template>
             </Column>

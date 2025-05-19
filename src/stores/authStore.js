@@ -95,6 +95,7 @@ export const useAuthStore = defineStore('authStore', {
 
                 this.startRefreshInterval();
             } catch (error) {
+                console.log(error);
                 this.message = error.message || 'Error de registro';
                 this.success = false;
             } finally {

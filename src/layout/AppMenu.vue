@@ -19,6 +19,35 @@ const model = ref([
             { label: 'Empresas', icon: 'pi pi-fw pi-building', to: '/companies', positions: ['Administrador'] }
         ],
         positions: ['Administrador']
+    },
+    {
+        label: 'Inventario',
+        items: [
+            {
+                label: 'Gestión',
+                icon: 'pi pi-fw pi-cog',
+                items: [
+                    { label: 'Almacenes', icon: 'pi pi-building', to: '/warehouses', positions: ['Developer', 'Administrador'] },
+                    { label: 'Categorías', icon: 'pi pi-th-large', to: '/categories', positions: ['Developer', 'Administrador'] },
+                    { label: 'Unidades', icon: 'pi pi-sliders-h', to: '/units', positions: ['Developer'] },
+                    { label: 'Proveedores', icon: 'pi pi-truck', to: '/providers', positions: ['Developer', 'Administrador'] }
+                ],
+                positions: ['Developer', 'Administrador']
+            },
+
+            { label: 'Productos', icon: 'pi pi-tags', to: '/products', positions: ['Developer', 'Administrador'] },
+
+            {
+                label: 'Movimientos',
+                icon: 'pi pi-refresh',
+                items: [
+                    { label: 'Entradas', icon: 'pi pi-sign-in', to: '/entries', positions: ['Developer', 'Administrador'] },
+                    { label: 'Salidas', icon: 'pi pi-sign-out', to: '/outputs', positions: ['Developer', 'Administrador'] },
+                    { label: 'Transferencias', icon: 'pi pi-arrow-right-arrow-left', to: '/transfers', positions: ['Developer', 'Administrador'] }
+                ],
+                positions: ['Developer', 'Administrador']
+            }
+        ]
     }
 ]);
 

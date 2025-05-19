@@ -9,6 +9,10 @@ export const exportToExcel = async (columns, data, sheetName = 'Sheet1', fileNam
     worksheet.columns = columns;
 
     // Agregar datos y aplicar estilos a las celdas
+
+    if (data === null || data?.length === 0) {
+        return;
+    }
     data.forEach((item) => {
         const row = worksheet.addRow(item);
 

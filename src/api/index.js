@@ -19,3 +19,15 @@ export const fetchCompanies = () => axios.get('/companies');
 export const createCompany = (payload) => axios.post('/companies', payload);
 export const deleteCompany = (id) => axios.delete(`/companies/${id}`);
 export const updateCompany = (payload, id) => axios.put(`/companies/${id}`, payload);
+
+// Products
+export const fetchProducts = () => axios.get('/products');
+export const createProduct = (payload) => axios.post('/products', payload);
+export const deleteProduct = (id) => axios.delete(`/products/${id}`);
+export const updateProduct = (payload, id) => axios.put(`/products/${id}`, payload);
+
+// Units
+export const fetchUnits = () => axios.get('/units');
+export const createUnit = (payload) => axios.post('/units', payload);
+export const deleteUnit = (id) => axios.delete(`/units/${id}`);
+export const updateUnit = (payload, id) => axios.put(`/units/${id}`, payload);

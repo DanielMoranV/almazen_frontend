@@ -3,11 +3,7 @@
 import { createUser, deleteUser, fetchUsers, updateUser } from '@/api';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-
-// 🔧 Utilidad para manejar errores consistentemente
-function handleError(error, fallbackMessage = 'Ocurrió un error') {
-    return error?.response?.data?.message || error?.message || fallbackMessage;
-}
+import { handleError } from '@/utils/handleError';
 
 export const useUsersStore = defineStore('userStore', {
     state: () => ({
@@ -56,11 +52,11 @@ export const useUsersStore = defineStore('userStore', {
             }
         },
 
-        async updateUser(payload, id) {
+        async updateUser(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateUser(payload, id);
-                this.users = this.users.map((u) => (u.id === id ? data : u));
+                const { data, message, success } = await updateUser(payload, payload.id);
+                this.users = this.users.map((u) => (u.id === payload.id ? data : u));
                 this.message = message;
                 this.success = success;
             } catch (error) {
