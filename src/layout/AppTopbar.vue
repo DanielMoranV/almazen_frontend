@@ -54,7 +54,7 @@ onBeforeMount(() => {
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
             <router-link to="/dashboard" class="layout-topbar-logo">
-                <img width="25px" src="/az.logo.png" alt="Logo AlmaZEN" />
+                <img width="25px" src="/azlogo.png" alt="Logo AlmaZEN" />
                 <span>AlmaZEN</span>
             </router-link>
         </div>

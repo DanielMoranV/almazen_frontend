@@ -8,7 +8,7 @@ import { RouterLink } from 'vue-router';
         <header class="flex justify-between items-center px-6 py-4 shadow-md">
             <div class="flex justify-center">
                 <RouterLink to="/">
-                    <img src="/images/almazen.logo.png" alt="Logo" class="h-14 object-contain cursor-pointer" />
+                    <img src="/images/almazenlogo.png" alt="Logo" class="h-14 object-contain cursor-pointer" />
                 </RouterLink>
             </div>
             <nav class="space-x-4">

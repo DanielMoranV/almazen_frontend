@@ -14,7 +14,7 @@ const goHome = () => {
 
     <div class="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4 text-center">
         <!-- Logo AlmaZen -->
-        <img src="/images/almazen.logo.png" alt="AlmaZen" class="w-50 h-24 mb-6" />
+        <img src="/images/almazenlogo.png" alt="AlmaZen" class="w-50 h-24 mb-6" />
 
         <!-- Mensaje principal -->
         <h1 class="text-6xl font-bold text-primary mb-4">404</h1>

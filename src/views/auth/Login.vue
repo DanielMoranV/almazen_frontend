@@ -55,7 +55,7 @@ const handleLogin = async () => {
                 <!-- Logo -->
                 <div class="flex justify-center mb-1">
                     <RouterLink to="/">
-                        <img src="/az.logo.png" alt="Logo" class="h-12 object-contain cursor-pointer" />
+                        <img src="/azlogo.png" alt="Logo" class="h-12 object-contain cursor-pointer" />
                     </RouterLink>
                 </div>
                 <!-- Titulo -->

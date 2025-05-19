@@ -50,7 +50,7 @@ const onSubmit = async () => {
             <!-- Logo -->
             <div class="flex justify-center mb-6">
                 <RouterLink to="/">
-                    <img src="/az.logo.png" alt="Logo" class="h-14 object-contain cursor-pointer" />
+                    <img src="/azlogo.png" alt="Logo" class="h-14 object-contain cursor-pointer" />
                 </RouterLink>
             </div>
 

@@ -13,10 +13,9 @@ declare module 'vue' {
     ProductsTable: typeof import('./src/components/products/ProductsTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    UnitsFormDialog: typeof import('./src/components/Units/UnitsFormDialog.vue')['default']
-    UnitsTable: typeof import('./src/components/Units/UnitsTable.vue')['default']
+    UnitsFormDialog: typeof import('./src/components/units/UnitsFormDialog.vue')['default']
+    UnitsTable: typeof import('./src/components/units/UnitsTable.vue')['default']
     UserFilters: typeof import('./src/components/users/UserFilters.vue')['default']
-    UserForm: typeof import('./src/components/UserForm.vue')['default']
     UserFormDialog: typeof import('./src/components/users/UserFormDialog.vue')['default']
     UsersTable: typeof import('./src/components/users/UsersTable.vue')['default']
   }
