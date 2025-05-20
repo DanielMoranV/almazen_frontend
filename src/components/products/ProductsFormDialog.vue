@@ -1,17 +1,24 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useUnitsStore } from '@/stores/unitsStore';
+import { useCategoriesStore } from '@/stores/categoriesStore';
 import { fetchProductByBarcode } from '@/api/openFoodFacts';
 
 const unitsStore = useUnitsStore();
+const categoriesStore = useCategoriesStore();
 
 const units = computed(() => unitsStore.unitsList);
+const categories = computed(() => categoriesStore.categoriesList);
 
 const isSearching = ref(false);
 const searchError = ref(null);
+const submitted = ref(false);
 
 onMounted(() => {
     unitsStore.fetchUnits();
+    categoriesStore.fetchCategories();
+    console.log(units.value);
+    console.log(categories.value);
 });
 
 const props = defineProps({
@@ -34,8 +41,18 @@ const form = ref({
     unit_id: null,
     company_name: '',
     image_url: '',
-    is_active: true
+    is_active: true,
+    // Cambiamos de category_id a categories como array para permitir múltiples selecciones
+    categories: []
 });
+
+// Filtrado para la búsqueda de empresas
+const filteredCompanies = ref([]);
+const searchCompanies = (event) => {
+    // Aquí implementarías la lógica de búsqueda de empresas
+    // Por ahora usamos un mock simple
+    filteredCompanies.value = ['Empresa 1', 'Empresa 2', 'Empresa 3'].filter((company) => company.toLowerCase().includes(event.query.toLowerCase()));
+};
 
 const resetForm = () => {
     form.value = {
@@ -47,7 +64,8 @@ const resetForm = () => {
         unit_id: null,
         company_name: '',
         image_url: '',
-        is_active: true
+        is_active: true,
+        categories: []
     };
 };
 
@@ -59,7 +77,12 @@ watch(
     () => props.product,
     (product) => {
         if (product) {
-            form.value = { ...product };
+            // Si el producto ya tiene categorías, aseguramos que esté en formato de array
+            const productWithCategories = {
+                ...product,
+                categories: product.categories || (product.category_id ? [product.category_id] : [])
+            };
+            form.value = productWithCategories;
         } else {
             resetForm();
         }
@@ -68,7 +91,10 @@ watch(
 );
 
 const handleSubmit = () => {
-    emit('submit', form.value);
+    submitted.value = true;
+    if (isFormValid.value) {
+        emit('submit', form.value);
+    }
 };
 
 const handleCancel = () => {
@@ -85,7 +111,7 @@ const searchProduct = async () => {
         if (productData) {
             form.value.name = productData.name || '';
             form.value.description = productData.description || '';
-            form.value.sku = productData.brand || '';
+            form.value.sku = productData.sku || '';
             form.value.image_url = productData.image_url || '';
         } else {
             searchError.value = 'Producto no encontrado.';
@@ -98,71 +124,96 @@ const searchProduct = async () => {
 };
 </script>
 <template>
-    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '500px', maxWidth: '95vw' }" :header="form.id ? 'Editar Producto' : 'Nuevo Producto'" :modal="true" class="p-fluid">
+    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '550px', maxWidth: '95vw' }" :header="form.id ? 'Editar Producto' : 'Nuevo Producto'" :modal="true" class="p-fluid">
         <div class="flex flex-col gap-4">
-            <!-- Código de Barras -->
-            <div class="field">
-                <label for="barcode">Código de barras</label>
-                <div class="p-inputgroup">
-                    <InputText id="barcode" v-model="form.barcode" placeholder="Ingrese el código de barras" />
-                    <Button icon="pi pi-search" @click="searchProduct" :loading="isSearching" label="Buscar" />
+            <!-- Código de Barras con scanner -->
+            <div style="display: flex; align-items: center; gap: 0.5rem">
+                <IconField>
+                    <InputIcon>
+                        <i class="pi pi-search" />
+                    </InputIcon>
+                    <InputText v-model="form.barcode" placeholder="Código de barras" v-keyfilter.int autofocus />
+                </IconField>
+                <Button label="Buscar" icon="pi pi-search" class="ml-2" @click="searchProduct(form.barcode)" :loading="isSearching" />
+            </div>
+
+            <!-- Mensaje de error en la búsqueda -->
+            <small class="p-error" v-if="searchError">{{ searchError }}</small>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Nombre -->
+                <div class="field col-span-2">
+                    <label for="name" class="font-medium mb-2 block">Nombre del producto</label>
+                    <InputText id="name" v-model="form.name" placeholder="Nombre del producto" :class="{ 'p-invalid': submitted && !form.name }" />
+                    <small class="p-error" v-if="submitted && !form.name">El nombre es requerido.</small>
                 </div>
-                <small class="p-error" v-if="!form.barcode">Código de barras es requerido.</small>
-                <small class="p-error" v-if="searchError">{{ searchError }}</small>
-            </div>
 
-            <!-- Nombre -->
-            <div class="field">
-                <label for="name">Nombre</label>
-                <InputText id="name" v-model="form.name" placeholder="Nombre del producto" :class="{ 'p-invalid': !form.name }" />
-                <small class="p-error" v-if="!form.name">Nombre es requerido.</small>
-            </div>
+                <!-- SKU -->
+                <div class="field">
+                    <label for="sku" class="font-medium mb-2 block">SKU</label>
+                    <InputText id="sku" v-model="form.sku" placeholder="SKU o código interno" :class="{ 'p-invalid': submitted && !form.sku }" />
+                    <small class="p-error" v-if="submitted && !form.sku">El SKU es requerido.</small>
+                </div>
 
-            <!-- SKU -->
-            <div class="field">
-                <label for="sku">SKU</label>
-                <InputText id="sku" v-model="form.sku" placeholder="SKU o marca" :class="{ 'p-invalid': !form.sku }" />
-                <small class="p-error" v-if="!form.sku">SKU es requerido.</small>
-            </div>
-
-            <!-- Unidad -->
-            <div class="field">
-                <label for="unit_id">Unidad</label>
-                <Select id="unit_id" v-model="form.unit_id" :options="units" optionLabel="name" optionValue="id" placeholder="Unidad" :class="{ 'p-invalid': !form.unit_id }" />
-                <small class="p-error" v-if="!form.unit_id">Unidad es requerida.</small>
+                <!-- Unidad -->
+                <div class="field">
+                    <label for="unit_id" class="font-medium mb-2 block">Unidad de medida</label>
+                    <Select id="unit_id" v-model="form.unit_id" :options="units" optionLabel="name" optionValue="id" placeholder="Unidad" :class="{ 'p-invalid': submitted && !form.unit_id }" />
+                    <small class="p-error" v-if="submitted && !form.unit_id">La unidad es requerida.</small>
+                </div>
             </div>
 
             <!-- Empresa -->
             <div class="field">
-                <label for="company_name">Empresa</label>
-                <InputText id="company_name" v-model="form.company_name" placeholder="Empresa" :class="{ 'p-invalid': !form.company_name }" />
-                <small class="p-error" v-if="!form.company_name">Empresa es requerida.</small>
+                <label for="company_name" class="font-medium mb-2 block">Empresa / Proveedor</label>
+                <AutoComplete
+                    id="company_name"
+                    v-model="form.company_name"
+                    placeholder="Empresa o proveedor"
+                    :suggestions="filteredCompanies"
+                    @complete="searchCompanies"
+                    :class="{ 'p-invalid': submitted && !form.company_name }"
+                    forceSelection
+                    class="w-full"
+                />
+                <small class="p-error" v-if="submitted && !form.company_name">La empresa es requerida.</small>
             </div>
 
             <!-- Descripción -->
             <div class="field">
-                <label for="description">Descripción</label>
-                <Textarea id="description" v-model="form.description" autoResize rows="3" placeholder="Descripción" :class="{ 'p-invalid': !form.description }" />
-                <small class="p-error" v-if="!form.description">Descripción es requerida.</small>
+                <label for="description" class="font-medium mb-2 block">Descripción</label>
+                <Textarea id="description" v-model="form.description" autoResize rows="3" placeholder="Descripción del producto" :class="{ 'p-invalid': submitted && !form.description }" />
+                <small class="p-error" v-if="submitted && !form.description">La descripción es requerida.</small>
             </div>
 
             <!-- Imagen -->
-            <div class="field" v-if="form.image_url">
-                <label>Imagen del producto</label>
-                <img :src="form.image_url" alt="Imagen del producto" class="w-full border-round shadow-2" style="max-height: 200px; object-fit: contain" />
+            <div class="field">
+                <label class="font-medium mb-2 block">Imagen del producto</label>
+                <div class="flex items-center gap-4">
+                    <div class="relative bg-gray-100 border border-gray-300 rounded-lg h-40 w-40 flex items-center justify-center overflow-hidden">
+                        <img v-if="form.image_url" :src="form.image_url" alt="Imagen del producto" class="max-h-full max-w-full object-contain" />
+                        <div v-else class="text-gray-400 text-center">
+                            <i class="pi pi-image text-4xl mb-2"></i>
+                            <p>Sin imagen</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Checkbox Activo -->
-            <div class="field-checkbox">
-                <Checkbox id="is_active" v-model="form.is_active" :binary="true" />
-                <label for="is_active">Producto activo</label>
+            <!-- Categorías con MultiSelect (selección múltiple como chips) -->
+            <div class="field">
+                <label for="categories" class="font-medium mb-2 block">Categorías</label>
+                <MultiSelect id="categories" v-model="form.categories" :options="categories" optionLabel="name" optionValue="id" placeholder="Seleccione las categorías" display="chip" filter class="w-full" />
+                <small class="text-gray-500">Puede seleccionar múltiples categorías</small>
             </div>
         </div>
 
         <!-- Footer -->
         <template #footer>
-            <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="handleCancel" />
-            <Button label="Guardar" icon="pi pi-check" class="p-button-text" :disabled="!isFormValid" @click="handleSubmit" :loading="loading" />
+            <div class="flex justify-between w-full">
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="handleCancel" />
+                <Button label="Guardar" icon="pi pi-check" class="p-button-primary" @click="handleSubmit" :loading="loading" />
+            </div>
         </template>
     </Dialog>
 </template>

@@ -31,3 +31,9 @@ export const fetchUnits = () => axios.get('/units');
 export const createUnit = (payload) => axios.post('/units', payload);
 export const deleteUnit = (id) => axios.delete(`/units/${id}`);
 export const updateUnit = (payload, id) => axios.put(`/units/${id}`, payload);
+
+// Categories
+export const fetchCategories = () => axios.get('/categories');
+export const createCategory = (payload) => axios.post('/categories', payload);
+export const deleteCategory = (id) => axios.delete(`/categories/${id}`);
+export const updateCategory = (payload, id) => axios.put(`/categories/${id}`, payload);

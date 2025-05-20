@@ -1,6 +1,6 @@
 // src/plugins/primevue-components.js
 
-import { Drawer, IconField, InputIcon, Popover, Select, ToggleSwitch } from 'primevue';
+import { Drawer, IconField, InputIcon, Popover, Select, ToggleSwitch, MultiSelect, AutoComplete } from 'primevue';
 import Avatar from 'primevue/avatar';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -45,4 +45,6 @@ export default function registerPrimeVueComponents(app) {
     app.component('Popover', Popover);
     app.component('IconField', IconField);
     app.component('InputIcon', InputIcon);
+    app.component('MultiSelect', MultiSelect);
+    app.component('AutoComplete', AutoComplete);
 }
