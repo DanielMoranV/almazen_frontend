@@ -33,6 +33,8 @@ const loadProducts = async () => {
 };
 
 const handleProductSubmit = async (productData) => {
+    console.log(productData);
+    return;
     const action = productData.id ? productsStore.updateProduct : productsStore.createProduct;
     await action(productData);
 

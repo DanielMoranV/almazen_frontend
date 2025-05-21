@@ -17,8 +17,6 @@ const submitted = ref(false);
 onMounted(() => {
     unitsStore.fetchUnits();
     categoriesStore.fetchCategories();
-    console.log(units.value);
-    console.log(categories.value);
 });
 
 const props = defineProps({
@@ -38,21 +36,14 @@ const form = ref({
     barcode: '',
     sku: '',
     description: '',
+    brand: '',
     unit_id: null,
-    company_name: '',
     image_url: '',
+    presentation: '',
     is_active: true,
     // Cambiamos de category_id a categories como array para permitir múltiples selecciones
     categories: []
 });
-
-// Filtrado para la búsqueda de empresas
-const filteredCompanies = ref([]);
-const searchCompanies = (event) => {
-    // Aquí implementarías la lógica de búsqueda de empresas
-    // Por ahora usamos un mock simple
-    filteredCompanies.value = ['Empresa 1', 'Empresa 2', 'Empresa 3'].filter((company) => company.toLowerCase().includes(event.query.toLowerCase()));
-};
 
 const resetForm = () => {
     form.value = {
@@ -61,16 +52,17 @@ const resetForm = () => {
         barcode: '',
         sku: '',
         description: '',
+        brand: '',
         unit_id: null,
-        company_name: '',
         image_url: '',
+        presentation: '',
         is_active: true,
         categories: []
     };
 };
 
 const isFormValid = computed(() => {
-    return form.value.name && form.value.barcode && form.value.sku && form.value.description && form.value.unit_id && form.value.company_name;
+    return form.value.name && form.value.barcode && form.value.sku && form.value.description && form.value.unit_id;
 });
 
 watch(
@@ -111,8 +103,12 @@ const searchProduct = async () => {
         if (productData) {
             form.value.name = productData.name || '';
             form.value.description = productData.description || '';
+            form.value.brand = productData.brand || '';
             form.value.sku = productData.sku || '';
             form.value.image_url = productData.image_url || '';
+            form.value.presentation = productData.presentation || '';
+            form.value.unit_id = productData.unit_id || null;
+            form.value.categories = productData.categories || [];
         } else {
             searchError.value = 'Producto no encontrado.';
         }
@@ -148,6 +144,20 @@ const searchProduct = async () => {
                     <small class="p-error" v-if="submitted && !form.name">El nombre es requerido.</small>
                 </div>
 
+                <!-- Marca -->
+                <div class="field">
+                    <label for="brand" class="font-medium mb-2 block">Marca</label>
+                    <InputText id="brand" v-model="form.brand" placeholder="Marca del producto" :class="{ 'p-invalid': submitted && !form.brand }" />
+                    <small class="p-error" v-if="submitted && !form.brand">La marca es requerida.</small>
+                </div>
+
+                <!-- Presentación -->
+                <div class="field">
+                    <label for="presentation" class="font-medium mb-2 block">Presentación</label>
+                    <InputText id="presentation" v-model="form.presentation" placeholder="Presentación del producto" :class="{ 'p-invalid': submitted && !form.presentation }" />
+                    <small class="p-error" v-if="submitted && !form.presentation">La presentación es requerida.</small>
+                </div>
+
                 <!-- SKU -->
                 <div class="field">
                     <label for="sku" class="font-medium mb-2 block">SKU</label>
@@ -161,22 +171,6 @@ const searchProduct = async () => {
                     <Select id="unit_id" v-model="form.unit_id" :options="units" optionLabel="name" optionValue="id" placeholder="Unidad" :class="{ 'p-invalid': submitted && !form.unit_id }" />
                     <small class="p-error" v-if="submitted && !form.unit_id">La unidad es requerida.</small>
                 </div>
-            </div>
-
-            <!-- Empresa -->
-            <div class="field">
-                <label for="company_name" class="font-medium mb-2 block">Empresa / Proveedor</label>
-                <AutoComplete
-                    id="company_name"
-                    v-model="form.company_name"
-                    placeholder="Empresa o proveedor"
-                    :suggestions="filteredCompanies"
-                    @complete="searchCompanies"
-                    :class="{ 'p-invalid': submitted && !form.company_name }"
-                    forceSelection
-                    class="w-full"
-                />
-                <small class="p-error" v-if="submitted && !form.company_name">La empresa es requerida.</small>
             </div>
 
             <!-- Descripción -->
