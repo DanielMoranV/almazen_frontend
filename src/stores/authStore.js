@@ -112,13 +112,13 @@ export const useAuthStore = defineStore('authStore', {
                 const now = Date.now();
                 const timeLeft = this.expiresAt - now;
 
-                console.log('timeLeft', timeLeft);
+                console.log("Token refresh check. Time left: ", timeLeft);
 
-                if (timeLeft < 60_000) {
-                    console.log('refreshing token');
+                if (timeLeft < 90_000) {
+                    console.log("Attempting to refresh token as time left is less than 90 seconds.");
                     await this.refreshToken();
                 }
-            }, 40_000); // Verifica cada 30s
+            }, 60_000); // Verifica cada 30s
         },
 
         async updateUser(user) {
