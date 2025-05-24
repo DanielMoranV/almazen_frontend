@@ -48,6 +48,24 @@ const router = createRouter({
                     name: 'units',
                     component: () => import('@/views/products/Units.vue'),
                     meta: { positions: ['Developer'] } // Solo accesible por desarrolladores
+                },
+                {
+                    path: '/categories',
+                    name: 'categories',
+                    component: () => import('@/views/categories/Categories.vue'),
+                    meta: { positions: ['Administrador', 'Developer'] }
+                },
+                {
+                    path: '/warehouses',
+                    name: 'warehouses',
+                    component: () => import('@/views/warehouses/Warehouses.vue'),
+                    meta: { positions: ['Administrador', 'Logística'] }
+                },
+                {
+                    path: '/providers',
+                    name: 'providers',
+                    component: () => import('@/views/providers/Providers.vue'),
+                    meta: { positions: ['Administrador', 'Compras'] }
                 }
             ]
         },

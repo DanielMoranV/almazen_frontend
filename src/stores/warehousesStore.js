@@ -1,26 +1,26 @@
 import { defineStore } from 'pinia';
-import { fetchCategories, createCategory, deleteCategory, updateCategory } from '@/api';
+import { fetchWarehouses, createWarehouse, deleteWarehouse, updateWarehouse } from '@/api';
 import cache from '@/utils/cache';
 import { handleError } from '@/utils/handleError';
 
-export const useCategoriesStore = defineStore('categoriesStore', {
+export const useWarehousesStore = defineStore('warehousesStore', {
     state: () => ({
-        categories: [],
+        warehouses: [],
         message: '',
         success: false,
         isLoading: false
     }),
 
     getters: {
-        categoriesList: (state) => state.categories,
-        isLoadingCategories: (state) => state.isLoading
+        warehousesList: (state) => state.warehouses,
+        isLoadingWarehouses: (state) => state.isLoading
     },
     actions: {
-        async fetchCategories() {
+        async fetchWarehouses() {
             this.isLoading = true;
             try {
-                const { data, message, success } = await fetchCategories();
-                this.categories = data;
+                const { data, message, success } = await fetchWarehouses();
+                this.warehouses = data;
                 this.message = message;
                 this.success = success;
             } catch (error) {
@@ -29,11 +29,11 @@ export const useCategoriesStore = defineStore('categoriesStore', {
                 this.isLoading = false;
             }
         },
-        async createCategory(payload) {
+        async createWarehouse(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createCategory(payload);
-                this.categories.push(data);
+                const { data, message, success } = await createWarehouse(payload);
+                this.warehouses.push(data);
                 this.message = message;
                 this.success = success;
             } catch (error) {
@@ -42,11 +42,11 @@ export const useCategoriesStore = defineStore('categoriesStore', {
                 this.isLoading = false;
             }
         },
-        async deleteCategory(id) {
+        async deleteWarehouse(id) {
             this.isLoading = true;
             try {
-                const { message, success } = await deleteCategory(id);
-                this.categories = this.categories.filter((category) => category.id !== id);
+                const { message, success } = await deleteWarehouse(id);
+                this.warehouses = this.warehouses.filter((warehouse) => warehouse.id !== id);
                 this.message = message;
                 this.success = success;
             } catch (error) {
@@ -55,11 +55,11 @@ export const useCategoriesStore = defineStore('categoriesStore', {
                 this.isLoading = false;
             }
         },
-        async updateCategory(payload, id) {
+        async updateWarehouse(payload, id) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateCategory(payload, id);
-                this.categories = this.categories.map((category) => (category.id === id ? data : category));
+                const { data, message, success } = await updateWarehouse(payload, id);
+                this.warehouses = this.warehouses.map((warehouse) => (warehouse.id === id ? data : warehouse));
                 this.message = message;
                 this.success = success;
             } catch (error) {

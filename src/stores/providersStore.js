@@ -1,26 +1,26 @@
 import { defineStore } from 'pinia';
-import { fetchCategories, createCategory, deleteCategory, updateCategory } from '@/api';
+import { fetchProviders, createProvider, deleteProvider, updateProvider } from '@/api';
 import cache from '@/utils/cache';
 import { handleError } from '@/utils/handleError';
 
-export const useCategoriesStore = defineStore('categoriesStore', {
+export const useProvidersStore = defineStore('providersStore', {
     state: () => ({
-        categories: [],
+        providers: [],
         message: '',
         success: false,
         isLoading: false
     }),
 
     getters: {
-        categoriesList: (state) => state.categories,
-        isLoadingCategories: (state) => state.isLoading
+        providersList: (state) => state.providers,
+        isLoadingProviders: (state) => state.isLoading
     },
     actions: {
-        async fetchCategories() {
+        async fetchProviders() {
             this.isLoading = true;
             try {
-                const { data, message, success } = await fetchCategories();
-                this.categories = data;
+                const { data, message, success } = await fetchProviders();
+                this.providers = data;
                 this.message = message;
                 this.success = success;
             } catch (error) {
@@ -29,11 +29,11 @@ export const useCategoriesStore = defineStore('categoriesStore', {
                 this.isLoading = false;
             }
         },
-        async createCategory(payload) {
+        async createProvider(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createCategory(payload);
-                this.categories.push(data);
+                const { data, message, success } = await createProvider(payload);
+                this.providers.push(data);
                 this.message = message;
                 this.success = success;
             } catch (error) {
@@ -42,11 +42,11 @@ export const useCategoriesStore = defineStore('categoriesStore', {
                 this.isLoading = false;
             }
         },
-        async deleteCategory(id) {
+        async deleteProvider(id) {
             this.isLoading = true;
             try {
-                const { message, success } = await deleteCategory(id);
-                this.categories = this.categories.filter((category) => category.id !== id);
+                const { message, success } = await deleteProvider(id);
+                this.providers = this.providers.filter((provider) => provider.id !== id);
                 this.message = message;
                 this.success = success;
             } catch (error) {
@@ -55,11 +55,11 @@ export const useCategoriesStore = defineStore('categoriesStore', {
                 this.isLoading = false;
             }
         },
-        async updateCategory(payload, id) {
+        async updateProvider(payload, id) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateCategory(payload, id);
-                this.categories = this.categories.map((category) => (category.id === id ? data : category));
+                const { data, message, success } = await updateProvider(payload, id);
+                this.providers = this.providers.map((provider) => (provider.id === id ? data : provider));
                 this.message = message;
                 this.success = success;
             } catch (error) {
