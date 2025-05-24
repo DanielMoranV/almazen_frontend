@@ -137,6 +137,12 @@ const searchProduct = async () => {
             <small class="p-error" v-if="searchError">{{ searchError }}</small>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Código de Barras -->
+                <div class="field col-span-2">
+                    <label for="barcode" class="font-medium mb-2 block">Código de barras</label>
+                    <InputText id="barcode" v-model="form.barcode" placeholder="Código de barras" :class="{ 'p-invalid': submitted && !form.barcode }" />
+                    <small class="p-error" v-if="submitted && !form.barcode">El código de barras es requerido.</small>
+                </div>
                 <!-- Nombre -->
                 <div class="field col-span-2">
                     <label for="name" class="font-medium mb-2 block">Nombre del producto</label>

@@ -7,10 +7,14 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    CategoriesTable: typeof import('./src/components/categories/CategoriesTable.vue')['default']
+    CategoryFormDialog: typeof import('./src/components/categories/CategoryFormDialog.vue')['default']
     DeleteConfirmationDialog: typeof import('./src/components/DeleteConfirmationDialog.vue')['default']
     FloatingConfigurator: typeof import('./src/components/FloatingConfigurator.vue')['default']
     ProductsFormDialog: typeof import('./src/components/products/ProductsFormDialog.vue')['default']
     ProductsTable: typeof import('./src/components/products/ProductsTable.vue')['default']
+    ProviderFormDialog: typeof import('./src/components/providers/ProviderFormDialog.vue')['default']
+    ProvidersTable: typeof import('./src/components/providers/ProvidersTable.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     UnitsFormDialog: typeof import('./src/components/units/UnitsFormDialog.vue')['default']
@@ -18,5 +22,7 @@ declare module 'vue' {
     UserFilters: typeof import('./src/components/users/UserFilters.vue')['default']
     UserFormDialog: typeof import('./src/components/users/UserFormDialog.vue')['default']
     UsersTable: typeof import('./src/components/users/UsersTable.vue')['default']
+    WarehouseFormDialog: typeof import('./src/components/warehouses/WarehouseFormDialog.vue')['default']
+    WarehousesTable: typeof import('./src/components/warehouses/WarehousesTable.vue')['default']
   }
 }
