@@ -27,15 +27,15 @@ const model = ref([
                 label: 'Gestión',
                 icon: 'pi pi-fw pi-cog',
                 items: [
-                    { label: 'Almacenes', icon: 'pi pi-building', to: '/warehouses', positions: ['Developer', 'Administrador'] },
+                    { label: 'Almacenes', icon: 'pi pi-building', to: '/warehouses', positions: ['Administrador', 'Logística'] },
                     { label: 'Categorías', icon: 'pi pi-th-large', to: '/categories', positions: ['Developer', 'Administrador'] },
                     { label: 'Unidades', icon: 'pi pi-sliders-h', to: '/units', positions: ['Developer'] },
-                    { label: 'Proveedores', icon: 'pi pi-truck', to: '/providers', positions: ['Developer', 'Administrador'] }
+                    { label: 'Proveedores', icon: 'pi pi-truck', to: '/providers', positions: ['Administrador', 'Compras'] }
                 ],
-                positions: ['Developer', 'Administrador']
+                positions: ['Developer', 'Administrador', 'Logística', 'Compras'] // Add Compras here so the section is visible
             },
 
-            { label: 'Productos', icon: 'pi pi-tags', to: '/products', positions: ['Developer', 'Administrador'] },
+            { label: 'Productos', icon: 'pi pi-tags', to: '/products', positions: ['Developer', 'Administrador', 'Logística'] },
 
             {
                 label: 'Movimientos',

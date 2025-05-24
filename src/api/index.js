@@ -37,3 +37,15 @@ export const fetchCategories = () => axios.get('/categories');
 export const createCategory = (payload) => axios.post('/categories', payload);
 export const deleteCategory = (id) => axios.delete(`/categories/${id}`);
 export const updateCategory = (payload, id) => axios.put(`/categories/${id}`, payload);
+
+// Warehouses
+export const fetchWarehouses = () => axios.get('/warehouses');
+export const createWarehouse = (payload) => axios.post('/warehouses', payload);
+export const deleteWarehouse = (id) => axios.delete(`/warehouses/${id}`);
+export const updateWarehouse = (payload, id) => axios.put(`/warehouses/${id}`, payload);
+
+// Providers
+export const fetchProviders = () => axios.get('/providers');
+export const createProvider = (payload) => axios.post('/providers', payload);
+export const deleteProvider = (id) => axios.delete(`/providers/${id}`);
+export const updateProvider = (payload, id) => axios.put(`/providers/${id}`, payload);
