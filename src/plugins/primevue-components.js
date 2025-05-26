@@ -19,6 +19,7 @@ import TabPanel from 'primevue/tabpanel';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
+import Tooltip from 'primevue/tooltip';
 
 export default function registerPrimeVueComponents(app) {
     app.component('FileUpload', FileUpload);
@@ -47,4 +48,5 @@ export default function registerPrimeVueComponents(app) {
     app.component('InputIcon', InputIcon);
     app.component('MultiSelect', MultiSelect);
     app.component('AutoComplete', AutoComplete);
+    app.directive('tooltip', Tooltip);
 }

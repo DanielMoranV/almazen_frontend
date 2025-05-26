@@ -49,3 +49,9 @@ export const fetchProviders = () => axios.get('/providers');
 export const createProvider = (payload) => axios.post('/providers', payload);
 export const deleteProvider = (id) => axios.delete(`/providers/${id}`);
 export const updateProvider = (payload, id) => axios.put(`/providers/${id}`, payload);
+
+// Categories Company
+export const fetchCategoriesCompany = () => axios.get('/categories-company');
+export const createCategoryCompany = (payload) => axios.post('/categories-company', payload);
+export const deleteCategoryCompany = (id) => axios.delete(`/categories-company/${id}`);
+export const updateCategoryCompany = (payload, id) => axios.put(`/categories-company/${id}`, payload);

@@ -56,6 +56,7 @@ export const fetchProductByBarcode = async (barcode) => {
                 brand: product.brands || '',
                 company_name: product.brands || '',
                 barcode: barcode,
+                barcode_type: product.barcode_type || 'ean',
                 sku: enrichedData.sku,
                 description: enrichedData.description,
                 image_url: product.image_url || product.image_front_url || product.image_small_url || '',

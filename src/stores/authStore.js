@@ -1,4 +1,4 @@
-import { login, logout, me, refresh, register, updateUser } from '@/api';
+import { fetchCategoriesCompany, login, logout, me, refresh, register, updateUser } from '@/api';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
 
@@ -10,7 +10,8 @@ export const useAuthStore = defineStore('authStore', {
         message: '',
         success: !!cache.getItem('currentUser') && !!cache.getItem('token'),
         isLoading: false,
-        refreshTimer: null
+        refreshTimer: null,
+        categories: []
     }),
 
     getters: {
@@ -18,10 +19,25 @@ export const useAuthStore = defineStore('authStore', {
         isActive: (state) => state.user?.is_active,
         currentUser: (state) => state.user,
         loading: (state) => state.isLoading,
-        getToken: (state) => state.token
+        getToken: (state) => state.token,
+        getCategories: (state) => state.categories
     },
 
     actions: {
+        async fetchCategoriesCompany() {
+            this.isLoading = true;
+            try {
+                const { data, message, success } = await fetchCategoriesCompany();
+                console.log(data);
+                this.categories = data;
+                this.message = message;
+                this.success = success;
+            } catch (error) {
+                this.message = handleError(error);
+            } finally {
+                this.isLoading = false;
+            }
+        },
         async login(payload) {
             this.isLoading = true;
             try {
@@ -112,13 +128,13 @@ export const useAuthStore = defineStore('authStore', {
                 const now = Date.now();
                 const timeLeft = this.expiresAt - now;
 
-                console.log("Token refresh check. Time left: ", timeLeft);
+                console.log('Token refresh check. Time left: ', timeLeft);
 
                 if (timeLeft < 90_000) {
-                    console.log("Attempting to refresh token as time left is less than 90 seconds.");
+                    console.log('Intentando refrescar token como el tiempo restante es menor a 90 segundos.');
                     await this.refreshToken();
                 }
-            }, 60_000); // Verifica cada 30s
+            }, 60_000); // Verifica cada 60s
         },
 
         async updateUser(user) {

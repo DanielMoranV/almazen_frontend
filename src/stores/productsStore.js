@@ -56,11 +56,11 @@ export const useProductsStore = defineStore('productsStore', {
                 this.isLoading = false;
             }
         },
-        async updateProduct(payload, id) {
+        async updateProduct(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateProduct(payload, id);
-                this.products = this.products.map((product) => (product.id === id ? data : product));
+                const { data, message, success } = await updateProduct(payload, payload.id);
+                this.products = this.products.map((product) => (product.id === payload.id ? data : product));
                 this.message = message;
                 this.success = success;
             } catch (error) {

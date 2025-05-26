@@ -2,13 +2,16 @@
 import { useAuthStore } from '@/stores/authStore';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import MultiSelect from 'primevue/multiselect';
 import Password from 'primevue/password';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
+
+const categoriesCompany = ref([]);
 
 const router = useRouter();
 const toast = useToast();
@@ -19,12 +22,18 @@ const form = ref({
     email: '',
     password: '',
     password_confirmation: '',
+    categories_company: [],
     company_name: ''
 });
 
 const onSubmit = async () => {
     if (!form.value.name || !form.value.dni || !form.value.email || !form.value.password || !form.value.password_confirmation || !form.value.company_name) {
         toast.add({ severity: 'error', summary: 'Faltan campos', detail: 'Todos los campos son obligatorios.', life: 3000 });
+        return;
+    }
+
+    if (form.value.categories_company.length === 0) {
+        toast.add({ severity: 'error', summary: 'Categorías requeridas', detail: 'Debes seleccionar al menos una categoría de empresa.', life: 3000 });
         return;
     }
 
@@ -41,21 +50,26 @@ const onSubmit = async () => {
         toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
     }
 };
+
+onMounted(async () => {
+    await authStore.fetchCategoriesCompany();
+    categoriesCompany.value = authStore.getCategories;
+    console.log('Categorías cargadas:', categoriesCompany.value);
+});
 </script>
 
 <template>
     <Toast />
     <div class="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-10">
-            <!-- Logo -->
-            <div class="flex justify-center mb-6">
-                <RouterLink to="/">
-                    <img src="/azlogo.png" alt="Logo" class="h-14 object-contain cursor-pointer" />
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-6">
+            <!-- Logo y Título -->
+            <div class="flex flex-col items-center mb-2">
+                <RouterLink to="/" class="mb-3">
+                    <img src="/azlogo.png" alt="Logo" class="h-12 object-contain cursor-pointer hover:scale-105 transition-transform duration-200" />
                 </RouterLink>
+                <h2 class="text-2xl font-bold text-green-600">Crear una Cuenta</h2>
+                <p class="text-gray-500 text-sm mt-1">Completa los datos para registrar tu empresa</p>
             </div>
-
-            <!-- Título -->
-            <h2 class="text-3xl font-bold text-center text-green-600 mb-8">Crear una Cuenta</h2>
 
             <!-- Formulario -->
             <form @submit.prevent="onSubmit">
@@ -84,6 +98,35 @@ const onSubmit = async () => {
                         <InputText id="company_name" v-model="form.company_name" class="w-full" placeholder="Acme Corporation" />
                     </div>
 
+                    <!-- Categorías de Empresa -->
+                    <div class="md:col-span-2">
+                        <label for="categories_company" class="block text-sm font-medium text-gray-700 mb-1">Categorías de Empresa *</label>
+                        <MultiSelect
+                            id="categories_company"
+                            v-model="form.categories_company"
+                            :options="categoriesCompany"
+                            optionLabel="name"
+                            optionValue="id"
+                            placeholder="Selecciona las categorías de tu empresa"
+                            :maxSelectedLabels="3"
+                            class="w-full"
+                            :filter="true"
+                            filterPlaceholder="Buscar categorías..."
+                        >
+                            <template #chip="slotProps">
+                                <div class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                    {{ slotProps.value }}
+                                </div>
+                            </template>
+                            <template #option="slotProps">
+                                <div class="flex items-center">
+                                    <span>{{ slotProps.option.name }}</span>
+                                </div>
+                            </template>
+                        </MultiSelect>
+                        <small class="text-gray-500 mt-1 block">Selecciona una o más categorías que describan tu empresa</small>
+                    </div>
+
                     <!-- Contraseña -->
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
@@ -97,15 +140,29 @@ const onSubmit = async () => {
                     </div>
                 </div>
 
-                <!-- Botón y enlace -->
-                <div class="mt-8">
-                    <Button label="Registrarse" icon="pi pi-user-plus" class="w-full bg-green-600 border-none hover:bg-green-700" type="submit" :loading="authStore.loading" />
+                <!-- Botón -->
+                <div class="mt-6">
+                    <Button
+                        label="Crear Cuenta"
+                        icon="pi pi-user-plus"
+                        class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 border-none text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.01]"
+                        type="submit"
+                        :loading="authStore.loading"
+                    />
                 </div>
 
-                <p class="text-center text-sm text-gray-600 mt-4">
-                    ¿Ya tienes una cuenta?
-                    <RouterLink to="/login" class="text-green-600 hover:underline font-medium">Inicia sesión aquí</RouterLink>
-                </p>
+                <!-- Enlaces -->
+                <div class="mt-5 text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <div class="border-t border-gray-200 flex-grow"></div>
+                        <span class="px-3 text-gray-500 text-xs">¿Ya tienes cuenta?</span>
+                        <div class="border-t border-gray-200 flex-grow"></div>
+                    </div>
+                    <RouterLink to="/login" class="inline-flex items-center text-green-600 hover:text-green-700 font-semibold text-sm transition-colors duration-200 hover:underline">
+                        <i class="pi pi-sign-in mr-1 text-sm"></i>
+                        Iniciar sesión
+                    </RouterLink>
+                </div>
             </form>
         </div>
     </div>

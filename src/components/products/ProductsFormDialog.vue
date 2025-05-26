@@ -3,12 +3,25 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useUnitsStore } from '@/stores/unitsStore';
 import { useCategoriesStore } from '@/stores/categoriesStore';
 import { fetchProductByBarcode } from '@/api/openFoodFacts';
+import { BarcodeType } from '@/constants/barcode_type';
 
 const unitsStore = useUnitsStore();
 const categoriesStore = useCategoriesStore();
 
 const units = computed(() => unitsStore.unitsList);
 const categories = computed(() => categoriesStore.categoriesList);
+const barcodeTypes = computed(() => {
+    const types = [];
+    for (const key in BarcodeType) {
+        if (Object.prototype.hasOwnProperty.call(BarcodeType, key)) {
+            types.push({
+                name: BarcodeType[key].toUpperCase(),
+                value: key
+            });
+        }
+    }
+    return types;
+});
 
 const isSearching = ref(false);
 const searchError = ref(null);
@@ -16,6 +29,7 @@ const submitted = ref(false);
 
 onMounted(() => {
     unitsStore.fetchUnits();
+    console.log(units.value);
     categoriesStore.fetchCategories();
 });
 
@@ -34,6 +48,7 @@ const form = ref({
     id: null,
     name: '',
     barcode: '',
+    type_barcode: '',
     sku: '',
     description: '',
     brand: '',
@@ -50,6 +65,7 @@ const resetForm = () => {
         id: null,
         name: '',
         barcode: '',
+        type_barcode: '',
         sku: '',
         description: '',
         brand: '',
@@ -108,6 +124,7 @@ const searchProduct = async () => {
             form.value.image_url = productData.image_url || '';
             form.value.presentation = productData.presentation || '';
             form.value.unit_id = productData.unit_id || null;
+            form.value.type_barcode = productData.barcode_type || '';
             form.value.categories = productData.categories || [];
         } else {
             searchError.value = 'Producto no encontrado.';
@@ -138,10 +155,16 @@ const searchProduct = async () => {
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Código de Barras -->
-                <div class="field col-span-2">
+                <div class="field">
                     <label for="barcode" class="font-medium mb-2 block">Código de barras</label>
                     <InputText id="barcode" v-model="form.barcode" placeholder="Código de barras" :class="{ 'p-invalid': submitted && !form.barcode }" />
                     <small class="p-error" v-if="submitted && !form.barcode">El código de barras es requerido.</small>
+                </div>
+                <!-- Tipo de Código -->
+                <div class="field">
+                    <label for="type_barcode" class="font-medium mb-2 block">Tipo de Código</label>
+                    <Select id="type_barcode" v-model="form.type_barcode" :options="barcodeTypes" optionLabel="name" optionValue="value" placeholder="Tipo de Código" :class="{ 'p-invalid': submitted && !form.type_barcode }" />
+                    <small class="p-error" v-if="submitted && !form.type_barcode">El tipo de código es requerido.</small>
                 </div>
                 <!-- Nombre -->
                 <div class="field col-span-2">
@@ -174,7 +197,7 @@ const searchProduct = async () => {
                 <!-- Unidad -->
                 <div class="field">
                     <label for="unit_id" class="font-medium mb-2 block">Unidad de medida</label>
-                    <Select id="unit_id" v-model="form.unit_id" :options="units" optionLabel="name" optionValue="id" placeholder="Unidad" :class="{ 'p-invalid': submitted && !form.unit_id }" />
+                    <Select id="unit_id" v-model="form.unit_id" :options="units" optionLabel="symbol" optionValue="id" placeholder="Seleccione una unidad" :class="{ 'p-invalid': submitted && !form.unit_id }" />
                     <small class="p-error" v-if="submitted && !form.unit_id">La unidad es requerida.</small>
                 </div>
             </div>

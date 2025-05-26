@@ -26,6 +26,7 @@ const loadProducts = async () => {
 
     if (productsStore.success) {
         products.value = productsStore.productsList;
+        console.log(products.value);
         showSuccess('Productos cargados', productsStore.message);
     } else {
         showError(productsStore.message);

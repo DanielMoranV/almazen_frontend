@@ -8,6 +8,7 @@
         "lint": "eslint --fix . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
     },
     "dependencies": {
+        "@chenfengyuan/vue-barcode": "^2.0.2",
         "@primevue/themes": "^4.2.5",
         "@vee-validate/rules": "^4.15.0",
         "@vuelidate/core": "^2.0.3",
