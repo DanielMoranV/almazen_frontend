@@ -26,7 +26,6 @@ const loadProducts = async () => {
 
     if (productsStore.success) {
         products.value = productsStore.productsList;
-        console.log(products.value);
         showSuccess('Productos cargados', productsStore.message);
     } else {
         showError(productsStore.message);
@@ -34,7 +33,6 @@ const loadProducts = async () => {
 };
 
 const handleProductSubmit = async (productData) => {
-    console.log(productData);
     const action = productData.id ? productsStore.updateProduct : productsStore.createProduct;
     await action(productData);
 
@@ -48,7 +46,7 @@ const handleProductSubmit = async (productData) => {
 };
 
 const handleProductDelete = async () => {
-    await productsStore.removeProduct(selectedProduct.value.id);
+    await productsStore.deleteProduct(selectedProduct.value.id);
     if (productsStore.success) {
         products.value = productsStore.productsList;
         showSuccess('Producto eliminado', productsStore.message);

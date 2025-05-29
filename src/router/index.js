@@ -66,6 +66,12 @@ const router = createRouter({
                     name: 'providers',
                     component: () => import('@/views/providers/Providers.vue'),
                     meta: { positions: ['Administrador', 'Compras'] }
+                },
+                {
+                    path: '/entries',
+                    name: 'entries',
+                    component: () => import('@/views/movements/Entry.vue'),
+                    meta: { positions: ['Administrador', 'Logística'] }
                 }
             ]
         },

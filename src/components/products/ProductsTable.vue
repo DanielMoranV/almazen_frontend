@@ -8,10 +8,9 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import { exportToExcel } from '@/utils/excelUtils';
-import VueBarcode from '@chenfengyuan/vue-barcode';
+// SOLUCIÓN 1: Usar JsBarcode directamente
+import JsBarcode from 'jsbarcode';
 import { useCategoriesStore } from '@/stores/categoriesStore';
-
-const Barcode = VueBarcode;
 
 const categoriesStore = useCategoriesStore();
 const categories = computed(() => categoriesStore.categoriesList);
@@ -77,12 +76,21 @@ const exportProducts = async () => {
     await exportToExcel(columns, formattedProducts, 'Productos', 'Productos');
 };
 
-// Función para obtener las opciones del código de barras de forma segura
-const getBarcodeOptions = (type) => {
-    // Formatos soportados por JsBarcode
-    const supportedFormats = ['CODE128', 'CODE39', 'EAN13', 'EAN8', 'UPC', 'ITF14'];
+// SOLUCIÓN: Componente personalizado para código de barras
+const generateBarcode = (element, value, options) => {
+    try {
+        JsBarcode(element, value, options);
+    } catch (error) {
+        console.error('Error generating barcode:', error);
+        // Mostrar texto como fallback
+        element.innerHTML = `<div class="barcode-fallback">${value}</div>`;
+    }
+};
 
-    let format = 'CODE128'; // Por defecto
+// Función mejorada para obtener las opciones del código de barras
+const getBarcodeOptions = (type) => {
+    const supportedFormats = ['CODE128', 'CODE39', 'EAN13', 'EAN8', 'UPC', 'ITF14'];
+    let format = 'CODE128';
 
     if (type) {
         const upperType = type.toUpperCase();
@@ -93,11 +101,14 @@ const getBarcodeOptions = (type) => {
 
     return {
         format: format,
-        width: 0.9,
-        height: 20,
-        fontSize: 12,
-        textMargin: 1,
-        displayValue: true // No mostrar el texto debajo del código
+        width: 1,
+        height: 30,
+        fontSize: 10,
+        textMargin: 2,
+        displayValue: true,
+        background: '#ffffff',
+        lineColor: '#000000',
+        margin: 5
     };
 };
 </script>
@@ -124,10 +135,7 @@ const getBarcodeOptions = (type) => {
     >
         <template #header>
             <div class="flex flex-wrap gap-2 items-center justify-between mb-3">
-                <!-- Exportar Excel -->
                 <Button type="button" icon="pi pi-file-excel" label="Exportar" outlined @click="exportProducts()" />
-
-                <!-- Buscador  -->
                 <IconField>
                     <InputIcon>
                         <i class="pi pi-search" />
@@ -137,15 +145,12 @@ const getBarcodeOptions = (type) => {
             </div>
         </template>
 
-        <!-- Mostrar mensaje cuando no hay registros -->
         <template #empty>
             <div class="flex justify-center items-center h-12">No se encontraron registros</div>
         </template>
 
-        <!-- Nombre del producto - Columna principal -->
         <Column field="name" header="Nombre del Producto" sortable style="min-width: 12rem; max-width: 15rem" />
 
-        <!-- SKU - Más visible -->
         <Column field="sku" header="SKU" sortable style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
                 <div class="font-mono text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-center">
@@ -154,17 +159,26 @@ const getBarcodeOptions = (type) => {
             </template>
         </Column>
 
-        <!-- Código de barras - Más compacto -->
+        <!-- SOLUCIÓN: Componente de código de barras personalizado -->
         <Column field="barcode" header="Cód. Barras" sortable style="min-width: 10rem; max-width: 12rem">
             <template #body="{ data }">
                 <div v-if="data.barcode" class="barcode-container flex flex-col items-center gap-1">
-                    <Barcode :value="data.barcode" :options="getBarcodeOptions(data.type_barcode)" />
+                    <!-- Canvas para el código de barras -->
+                    <canvas
+                        :ref="
+                            (el) => {
+                                if (el) {
+                                    generateBarcode(el, data.barcode, getBarcodeOptions(data.type_barcode));
+                                }
+                            }
+                        "
+                        class="barcode-canvas"
+                    ></canvas>
                 </div>
                 <span v-else class="text-gray-400">Sin código</span>
             </template>
         </Column>
 
-        <!-- Tipo de código de barras -->
         <Column field="type_barcode" header="Tipo" sortable style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <span class="px-2 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium">
@@ -173,7 +187,6 @@ const getBarcodeOptions = (type) => {
             </template>
         </Column>
 
-        <!-- Descripción - Texto más legible -->
         <Column field="description" header="Descripción" sortable style="min-width: 12rem; max-width: 18rem">
             <template #body="{ data }">
                 <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" :title="data.description">
@@ -182,7 +195,6 @@ const getBarcodeOptions = (type) => {
             </template>
         </Column>
 
-        <!-- Unidad y Presentación juntas -->
         <Column header="Detalles" style="min-width: 8rem; max-width: 10rem">
             <template #body="{ data }">
                 <div class="text-center">
@@ -192,7 +204,6 @@ const getBarcodeOptions = (type) => {
             </template>
         </Column>
 
-        <!-- Marca -->
         <Column field="brand" header="Marca" sortable style="min-width: 8rem; max-width: 12rem">
             <template #body="{ data }">
                 <div class="font-medium text-sm text-gray-800 dark:text-gray-200">
@@ -201,7 +212,6 @@ const getBarcodeOptions = (type) => {
             </template>
         </Column>
 
-        <!-- Imagen -->
         <Column field="image_url" header="Imagen" style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
@@ -213,7 +223,6 @@ const getBarcodeOptions = (type) => {
             </template>
         </Column>
 
-        <!-- Estado -->
         <Column field="is_active" header="Act." sortable style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
@@ -223,7 +232,6 @@ const getBarcodeOptions = (type) => {
             </template>
         </Column>
 
-        <!-- Acciones -->
         <Column :exportable="false" header="Acciones" style="min-width: 6rem; max-width: 8rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
@@ -236,9 +244,7 @@ const getBarcodeOptions = (type) => {
 </template>
 
 <style scoped>
-/* Estilos personalizados para la tabla */
 :deep(.products-table) {
-    /* Headers más grandes y destacados */
     .p-datatable-thead > tr > th {
         background-color: #f8fafc;
         color: #1e293b;
@@ -249,25 +255,21 @@ const getBarcodeOptions = (type) => {
         text-align: center;
     }
 
-    /* Celdas con mejor espaciado */
     .p-datatable-tbody > tr > td {
         padding: 10px 8px;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
     }
 
-    /* Filas alternas más suaves */
     .p-datatable-tbody > tr:nth-child(even) {
         background-color: #fafbfc;
     }
 
-    /* Hover effect */
     .p-datatable-tbody > tr:hover {
         background-color: #f1f5f9;
     }
 }
 
-/* Utility classes para texto truncado */
 .line-clamp-1 {
     display: -webkit-box;
     -webkit-line-clamp: 1;
@@ -282,14 +284,23 @@ const getBarcodeOptions = (type) => {
     overflow: hidden;
 }
 
-/* Contenedor del código de barras más compacto */
 .barcode-container {
     max-width: 100%;
     overflow: hidden;
 }
 
-.barcode-container canvas {
+.barcode-canvas {
     max-width: 100%;
     height: auto;
+}
+
+.barcode-fallback {
+    font-family: monospace;
+    font-size: 12px;
+    text-align: center;
+    padding: 5px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 3px;
 }
 </style>

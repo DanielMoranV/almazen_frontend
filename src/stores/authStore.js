@@ -1,6 +1,7 @@
 import { fetchCategoriesCompany, login, logout, me, refresh, register, updateUser } from '@/api';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
+import { handleError } from '@/utils/handleError';
 
 export const useAuthStore = defineStore('authStore', {
     state: () => ({
