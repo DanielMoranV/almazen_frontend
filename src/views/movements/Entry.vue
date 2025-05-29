@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <h1>Entradas</h1>
+    <div class="p-6 card">
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Entradas</h2>
     </div>
 </template>
 
