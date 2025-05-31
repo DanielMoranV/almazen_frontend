@@ -47,7 +47,13 @@ const onSubmit = async () => {
         toast.add({ severity: 'success', summary: 'Registro exitoso', detail: 'Cuenta creada correctamente.', life: 3000 });
         router.push('/dashboard');
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        if (authStore.validationErrors && authStore.validationErrors.length > 0) {
+            authStore.validationErrors.forEach(err => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        }
     }
 };
 

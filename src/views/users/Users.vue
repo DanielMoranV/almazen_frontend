@@ -27,7 +27,13 @@ const loadUsers = async () => {
         users.value = usersStore.usersList;
         showSuccess('Usuarios cargados', usersStore.message);
     } else {
-        showError(usersStore.message);
+        if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
+            usersStore.validationErrors.forEach(err => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(usersStore.message);
+        }
     }
 };
 
@@ -40,7 +46,13 @@ const handleUserSubmit = async (userData) => {
         showSuccess(userData.id ? 'Usuario actualizado' : 'Usuario creado', usersStore.message);
         showUserDialog.value = false;
     } else {
-        showError(usersStore.message);
+        if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
+            usersStore.validationErrors.forEach(err => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(usersStore.message);
+        }
     }
 };
 
@@ -50,7 +62,13 @@ const handleUserDelete = async () => {
         users.value = usersStore.usersList;
         showSuccess('Usuario eliminado', usersStore.message);
     } else {
-        showError(usersStore.message);
+        if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
+            usersStore.validationErrors.forEach(err => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(usersStore.message);
+        }
     }
     showDeleteDialog.value = false;
 };

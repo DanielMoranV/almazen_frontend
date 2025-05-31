@@ -88,7 +88,18 @@ export function useUsersCrud() {
                 users.value = usersStore.usersList;
                 toast.add({ severity: 'success', summary: 'Usuarios cargados', detail: usersStore.message, life: 3000 });
             } else {
-                throw new Error(usersStore.message);
+                if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
+                    usersStore.validationErrors.forEach(err => {
+                        toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                    });
+                } else {
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: usersStore.message || 'Error al cargar usuarios',
+                        life: 3000
+                    });
+                }
             }
         } catch (error) {
             toast.add({
@@ -125,7 +136,13 @@ export function useUsersCrud() {
             users.value = usersStore.usersList;
             toast.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario eliminado correctamente', life: 3000 });
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
+            if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
+                usersStore.validationErrors.forEach(err => {
+                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                });
+            } else {
+                toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
+            }
         }
 
         deleteDialog.value = false;

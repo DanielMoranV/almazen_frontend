@@ -1,7 +1,7 @@
 import { fetchCategoriesCompany, login, logout, me, refresh, register, updateUser } from '@/api';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-import { handleError } from '@/utils/handleError';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useAuthStore = defineStore('authStore', {
     state: () => ({
@@ -12,7 +12,8 @@ export const useAuthStore = defineStore('authStore', {
         success: !!cache.getItem('currentUser') && !!cache.getItem('token'),
         isLoading: false,
         refreshTimer: null,
-        categories: []
+        categories: [],
+        validationErrors: []
     }),
 
     getters: {
@@ -26,60 +27,63 @@ export const useAuthStore = defineStore('authStore', {
 
     actions: {
         async fetchCategoriesCompany() {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message, success } = await fetchCategoriesCompany();
-                console.log(data);
-                this.categories = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchCategoriesCompany();
+                const processed = handleProcessSuccess(res, this);
+                this.categories = processed.data;
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
+
         async login(payload) {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message } = await login(payload);
-                this.setUser(data.user);
-                this.setToken(data.access_token);
-                this.setExpiration(data.expires_in);
+                const res = await login(payload);
+                const processed = handleProcessSuccess(res, this);
 
-                this.message = message;
-                this.success = true;
-
-                this.startRefreshInterval();
+                if (processed.success) {
+                    this.setUser(processed.data.user);
+                    this.setToken(processed.data.access_token);
+                    this.setExpiration(processed.data.expires_in);
+                    this.startRefreshInterval();
+                }
             } catch (error) {
-                console.log(error);
-                this.message = error.details?.dni[0] || error.data.message || error.message || 'Error de autenticación';
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
 
         async logout() {
+            this.resetState();
             try {
-                await logout();
-            } catch (error) {
+                const res = await logout();
+                const processed = handleProcessSuccess(res, this);
+            } catch {
                 console.warn('Fallo logout en backend, limpiando local...');
             } finally {
+                this.isLoading = false;
                 this.clearAuthData();
             }
         },
 
         async me() {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message } = await me();
-                this.setUser(data);
-                this.message = message;
-                this.success = true;
+                const res = await me();
+                const processed = handleProcessSuccess(res, this);
+
+                if (processed.success) {
+                    this.setUser(processed.data);
+                } else {
+                    this.clearAuthData();
+                }
             } catch (error) {
-                this.message = error.message || 'No se pudo obtener el usuario';
-                this.success = false;
+                handleProcessError(error, this);
                 this.clearAuthData();
             } finally {
                 this.isLoading = false;
@@ -100,21 +104,35 @@ export const useAuthStore = defineStore('authStore', {
         },
 
         async register(payload) {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message } = await register(payload);
-                this.setUser(data.user);
-                this.setToken(data.access_token);
-                this.setExpiration(data.expires_in);
+                const res = await register(payload);
+                const processed = handleProcessSuccess(res, this);
 
-                this.message = message;
-                this.success = true;
-
-                this.startRefreshInterval();
+                if (processed.success) {
+                    this.setUser(processed.data.user);
+                    this.setToken(processed.data.access_token);
+                    this.setExpiration(processed.data.expires_in);
+                    this.startRefreshInterval();
+                }
             } catch (error) {
-                console.log(error);
-                this.message = error.message || 'Error de registro';
-                this.success = false;
+                handleProcessError(error, this);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async updateUser(user) {
+            this.resetState();
+            try {
+                const res = await updateUser(user, user.id);
+                const processed = handleProcessSuccess(res, this);
+
+                if (processed.success) {
+                    this.setUser(processed.data);
+                }
+            } catch (error) {
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -138,38 +156,26 @@ export const useAuthStore = defineStore('authStore', {
             }, 60_000); // Verifica cada 60s
         },
 
-        async updateUser(user) {
-            this.isLoading = true;
-            let userId = user.id;
-
-            try {
-                const { data, message } = await updateUser(user, userId);
-                this.setUser(data);
-                this.success = true;
-                this.message = message;
-            } catch (error) {
-                console.log(error);
-                this.message = error.message || 'Error al actualizar el usuario';
-                this.success = false;
-            } finally {
-                this.isLoading = false;
+        setUser(user) {
+            if (this.user !== user) {
+                this.user = user;
+                cache.setItem('currentUser', user);
             }
         },
 
-        setUser(user) {
-            this.user = user;
-            cache.setItem('currentUser', user);
-        },
-
         setToken(token) {
-            this.token = token;
-            cache.setItem('token', token);
+            if (this.token !== token) {
+                this.token = token;
+                cache.setItem('token', token);
+            }
         },
 
         setExpiration(expiresInSeconds) {
             const expirationTime = Date.now() + expiresInSeconds * 1000;
-            this.expiresAt = expirationTime;
-            cache.setItem('expiresAt', expirationTime);
+            if (this.expiresAt !== expirationTime) {
+                this.expiresAt = expirationTime;
+                cache.setItem('expiresAt', expirationTime);
+            }
         },
 
         clearAuthData() {
@@ -178,6 +184,7 @@ export const useAuthStore = defineStore('authStore', {
             this.expiresAt = null;
             this.success = false;
             this.message = '';
+            this.validationErrors = [];
 
             cache.removeItem('currentUser');
             cache.removeItem('token');
@@ -198,6 +205,13 @@ export const useAuthStore = defineStore('authStore', {
             if (this.token && this.expiresAt) {
                 this.startRefreshInterval();
             }
+        },
+
+        resetState() {
+            this.isLoading = true;
+            this.message = '';
+            this.success = false;
+            this.validationErrors = [];
         }
     }
 });

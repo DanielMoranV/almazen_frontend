@@ -31,46 +31,73 @@ instance.interceptors.response.use(
         if (response.config.responseType === 'blob') {
             return response; // Devolver la respuesta completa para blobs
         }
+        // Si el backend ya responde con la estructura estándar, solo retorna response.data
+        // Si algún endpoint no cumple, aquí puedes adaptarlo
         return response.data;
     },
     function (error) {
-        let errData = {
-            message: error.message || (error.response && error.response.data.message) || error.response.data.error,
-            code: error.code,
-            status_code: error.response ? error.response.status : null,
+        // Si el backend responde, intenta adaptar la estructura al estándar
+        let backendData = error.response && error.response.data;
+        let errResponse = {
             success: false,
-            details: error.response ? error.response.data.errors : null,
-            data: error.response ? error.response.data : null
+            message: backendData?.message || error.message || 'Error de red',
+            data: null,
+            status: error.response ? error.response.status : 0,
+            details: backendData?.details || {
+                exception: error.name,
+                error_message: error.message,
+                trace: backendData?.trace || []
+            },
+            validationErrors: backendData?.errors || []
         };
 
-        // Manejo de errores específicos
+        // Mensajes amigables según código de estado
         if (error.response) {
             switch (error.response.status) {
                 case 401:
-                    errData.message = 'Credenciales incorrectas. Por favor, intentelo nuevamente.';
+                    errResponse.message = 'Credenciales incorrectas. Por favor, inténtelo nuevamente.';
                     break;
                 case 403:
-                    errData.message = 'Usuario deshabilitado o no registrado.';
+                    errResponse.message = 'Usuario deshabilitado o no registrado.';
                     break;
                 case 404:
-                    errData.message = 'Recurso no encontrado.';
+                    errResponse.message = 'Recurso no encontrado.';
+                    break;
+                case 422:
+                    // Si errors es un objeto tipo { campo: [mensajes] }
+                    let validationMsgs = [];
+                    if (backendData?.errors && typeof backendData.errors === 'object' && !Array.isArray(backendData.errors)) {
+                        validationMsgs = Object.entries(backendData.errors).flatMap(
+                            ([field, messages]) => messages.map(msg => `${field}: ${msg}`)
+                        );
+                        errResponse.validationErrors = validationMsgs;
+                    } else if (Array.isArray(backendData?.errors)) {
+                        validationMsgs = backendData.errors;
+                        errResponse.validationErrors = validationMsgs;
+                    } else if (Array.isArray(backendData?.details)) {
+                        validationMsgs = backendData.details;
+                        errResponse.validationErrors = validationMsgs;
+                    }
+                    errResponse.message = 'Error de validación. Por favor, revise los campos.' + (validationMsgs.length > 0 ? ': ' + validationMsgs.join(', ') : '');
                     break;
                 case 500:
-                    errData.message = 'Error interno del servidor. Intente más tarde.';
+                    errResponse.message = 'Error interno del servidor. Intente más tarde.';
                     break;
                 default:
-                    errData.message = `Error ${error.response.status}: ${error.response.statusText}`;
+                    errResponse.message = `Error ${error.response.status}: ${error.response.statusText}`;
                     break;
             }
         } else if (error.code === 'ECONNABORTED') {
-            console.log('error', error);
-            errData.message = 'La solicitud ha tardado demasiado tiempo. Intente nuevamente.';
+            // eslint-disable-next-line no-console
+            console.error('error', error);
+            errResponse.message = 'La solicitud ha tardado demasiado tiempo. Intente nuevamente.';
         } else {
-            console.log('error', error);
-            errData.message = 'Error de conexión. Verifique su red.';
+            // eslint-disable-next-line no-console
+            console.error('error', error);
+            errResponse.message = 'Error de conexión. Verifique su red.';
         }
 
-        return Promise.reject(errData);
+        return Promise.reject(errResponse);
     }
 );
 

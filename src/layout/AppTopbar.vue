@@ -118,13 +118,8 @@ onBeforeMount(() => {
             </span>
         </div>
         <template #footer>
-            <div v-if="authStore.isLoading">
-                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" fill="var(--surface-ground)" animationDuration=".5s" aria-label="Custom ProgressSpinner" />
-            </div>
-            <div v-else>
-                <Button label="No" icon="pi pi-times" text @click="logoutDialog = false" />
-                <Button label="Sí" icon="pi pi-check" @click="logout" :loading="authStore.loading" />
-            </div>
+            <Button label="No" icon="pi pi-times" text @click="logoutDialog = false" />
+            <Button label="Sí" icon="pi pi-check" @click="logout" :loading="authStore.loading" />
         </template>
     </Dialog>
 </template>

@@ -85,7 +85,13 @@ const updateUser = async () => {
     if (authStore.success) {
         toast.add({ severity: 'success', summary: 'Perfil actualizado', detail: authStore.message, life: 3000 });
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        if (authStore.validationErrors && authStore.validationErrors.length > 0) {
+            authStore.validationErrors.forEach(err => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        }
     }
     isLoading.value = false;
 };
@@ -105,7 +111,13 @@ const updatePassword = async () => {
         if (authStore.success) {
             toast.add({ severity: 'success', summary: 'Contraseña actualizada', detail: authStore.message, life: 3000 });
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+            if (authStore.validationErrors && authStore.validationErrors.length > 0) {
+                authStore.validationErrors.forEach(err => {
+                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                });
+            } else {
+                toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+            }
         }
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Contraseña de confirmación no coincide', life: 3000 });

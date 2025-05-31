@@ -1,17 +1,16 @@
-// src/stores/userStore.ts
-
 import { createUser, deleteUser, fetchUsers, updateUser } from '@/api';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-import { handleError } from '@/utils/handleError';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useUsersStore = defineStore('userStore', {
     state: () => ({
-        users: [], // ✅ Usa array en lugar de {}
+        users: [],
         user: cache.getItem('user') || null,
         message: '',
         success: false,
-        isLoading: false
+        isLoading: false,
+        validationErrors: []
     }),
 
     getters: {
@@ -22,64 +21,71 @@ export const useUsersStore = defineStore('userStore', {
 
     actions: {
         async fetchUsers() {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message, success } = await fetchUsers();
-                this.users = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchUsers();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.users = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error, 'Error al obtener los usuarios');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
 
         async createUser(payload) {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message, success } = await createUser(payload);
-                this.users.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createUser(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.users.push(processed.data);
+                }
             } catch (error) {
                 console.log(error);
-                this.message = handleError(error, 'Error al crear el usuario');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
 
         async updateUser(payload) {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message, success } = await updateUser(payload, payload.id);
-                this.users = this.users.map((u) => (u.id === payload.id ? data : u));
-                this.message = message;
-                this.success = success;
+                const res = await updateUser(payload, payload.id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.users = this.users.map((u) => (u.id === payload.id ? processed.data : u));
+                }
             } catch (error) {
-                this.message = handleError(error, 'Error al actualizar el usuario');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
 
         async removeUser(id) {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { message, success } = await deleteUser(id);
-                this.users = this.users.filter((u) => u.id !== id);
-                this.message = message;
-                this.success = success;
+                const res = await deleteUser(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.users = this.users.filter((u) => u.id !== id);
+                }
             } catch (error) {
-                this.message = handleError(error, 'Error al eliminar el usuario');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        resetState() {
+            this.isLoading = true;
+            this.message = '';
+            this.success = false;
+            this.validationErrors = [];
         }
     }
 });

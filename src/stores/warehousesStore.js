@@ -42,11 +42,11 @@ export const useWarehousesStore = defineStore('warehousesStore', {
                 this.isLoading = false;
             }
         },
-        async deleteWarehouse(id) {
+        async deleteWarehouse(payload) {
             this.isLoading = true;
             try {
-                const { message, success } = await deleteWarehouse(id);
-                this.warehouses = this.warehouses.filter((warehouse) => warehouse.id !== id);
+                const { message, success } = await deleteWarehouse(payload, payload.id);
+                this.warehouses = this.warehouses.filter((warehouse) => warehouse.id !== payload.id);
                 this.message = message;
                 this.success = success;
             } catch (error) {
@@ -55,11 +55,11 @@ export const useWarehousesStore = defineStore('warehousesStore', {
                 this.isLoading = false;
             }
         },
-        async updateWarehouse(payload, id) {
+        async updateWarehouse(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateWarehouse(payload, id);
-                this.warehouses = this.warehouses.map((warehouse) => (warehouse.id === id ? data : warehouse));
+                const { data, message, success } = await updateWarehouse(payload, payload.id);
+                this.warehouses = this.warehouses.map((warehouse) => (warehouse.id === payload.id ? data : warehouse));
                 this.message = message;
                 this.success = success;
             } catch (error) {

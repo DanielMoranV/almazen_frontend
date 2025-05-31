@@ -34,9 +34,15 @@ const handleLogin = async () => {
         toast.add({ severity: 'success', summary: 'Bienvenido', detail: authStore.message, life: 3000 });
         setTimeout(() => {
             router.push('/profile');
-        }, 3000);
+        }, 1000);
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        if (authStore.validationErrors && authStore.validationErrors.length > 0) {
+            authStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+        }
     }
 };
 </script>
