@@ -28,7 +28,7 @@ const loadUsers = async () => {
         showSuccess('Usuarios cargados', usersStore.message);
     } else {
         if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
-            usersStore.validationErrors.forEach(err => {
+            usersStore.validationErrors.forEach((err) => {
                 toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
             });
         } else {
@@ -40,14 +40,15 @@ const loadUsers = async () => {
 const handleUserSubmit = async (userData) => {
     const action = userData.id ? usersStore.updateUser : usersStore.createUser;
     await action(userData);
-
+    console.log('validationErrors', usersStore.validationErrors);
     if (usersStore.success) {
         users.value = usersStore.usersList;
         showSuccess(userData.id ? 'Usuario actualizado' : 'Usuario creado', usersStore.message);
         showUserDialog.value = false;
     } else {
         if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
-            usersStore.validationErrors.forEach(err => {
+            usersStore.validationErrors.forEach((err) => {
+                console.log(err);
                 toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
             });
         } else {
@@ -63,7 +64,8 @@ const handleUserDelete = async () => {
         showSuccess('Usuario eliminado', usersStore.message);
     } else {
         if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
-            usersStore.validationErrors.forEach(err => {
+            usersStore.validationErrors.forEach((err) => {
+                console.log(err);
                 toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
             });
         } else {

@@ -53,6 +53,7 @@ instance.interceptors.response.use(
 
         // Mensajes amigables según código de estado
         if (error.response) {
+            console.log(error.response);
             switch (error.response.status) {
                 case 401:
                     errResponse.message = 'Credenciales incorrectas. Por favor, inténtelo nuevamente.';
@@ -67,9 +68,7 @@ instance.interceptors.response.use(
                     // Si errors es un objeto tipo { campo: [mensajes] }
                     let validationMsgs = [];
                     if (backendData?.errors && typeof backendData.errors === 'object' && !Array.isArray(backendData.errors)) {
-                        validationMsgs = Object.entries(backendData.errors).flatMap(
-                            ([field, messages]) => messages.map(msg => `${field}: ${msg}`)
-                        );
+                        validationMsgs = Object.entries(backendData.errors).flatMap(([field, messages]) => messages.map((msg) => `${field}: ${msg}`));
                         errResponse.validationErrors = validationMsgs;
                     } else if (Array.isArray(backendData?.errors)) {
                         validationMsgs = backendData.errors;
@@ -78,7 +77,7 @@ instance.interceptors.response.use(
                         validationMsgs = backendData.details;
                         errResponse.validationErrors = validationMsgs;
                     }
-                    errResponse.message = 'Error de validación. Por favor, revise los campos.' + (validationMsgs.length > 0 ? ': ' + validationMsgs.join(', ') : '');
+                    errResponse.message = 'Error de validación. Por favor, revise los campos.';
                     break;
                 case 500:
                     errResponse.message = 'Error interno del servidor. Intente más tarde.';
