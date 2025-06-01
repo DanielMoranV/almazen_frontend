@@ -28,7 +28,13 @@ const loadCategories = async () => {
         categories.value = categoriesStore.categoriesList;
         showSuccess('Categorías cargadas', categoriesStore.message);
     } else {
-        showError(categoriesStore.message);
+        if (categoriesStore.validationErrors && categoriesStore.validationErrors.length > 0) {
+            categoriesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(categoriesStore.message);
+        }
     }
 };
 
@@ -41,7 +47,13 @@ const handleCategorySubmit = async (categoryData) => {
         showSuccess(categoryData.id ? 'Categoría actualizada' : 'Categoría creada', categoriesStore.message);
         showCategoryDialog.value = false;
     } else {
-        showError(categoriesStore.message);
+        if (categoriesStore.validationErrors && categoriesStore.validationErrors.length > 0) {
+            categoriesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(categoriesStore.message);
+        }
     }
 };
 
@@ -52,7 +64,13 @@ const handleCategoryDelete = async () => {
         showSuccess('Categoría eliminada', categoriesStore.message);
         showDeleteDialog.value = false;
     } else {
-        showError(categoriesStore.message);
+        if (categoriesStore.validationErrors && categoriesStore.validationErrors.length > 0) {
+            categoriesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(categoriesStore.message);
+        }
     }
 };
 

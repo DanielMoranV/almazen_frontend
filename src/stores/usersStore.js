@@ -44,7 +44,6 @@ export const useUsersStore = defineStore('userStore', {
                     this.users.push(processed.data);
                 }
             } catch (error) {
-                console.log(error);
                 handleProcessError(error, this);
             } finally {
                 this.isLoading = false;

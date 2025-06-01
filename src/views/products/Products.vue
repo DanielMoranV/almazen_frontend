@@ -28,7 +28,13 @@ const loadProducts = async () => {
         products.value = productsStore.productsList;
         showSuccess('Productos cargados', productsStore.message);
     } else {
-        showError(productsStore.message);
+        if (productsStore.validationErrors && productsStore.validationErrors.length > 0) {
+            productsStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(productsStore.message);
+        }
     }
 };
 
@@ -41,7 +47,13 @@ const handleProductSubmit = async (productData) => {
         showSuccess(productData.id ? 'Producto actualizado' : 'Producto creado', productsStore.message);
         showProductDialog.value = false;
     } else {
-        showError(productsStore.message);
+        if (productsStore.validationErrors && productsStore.validationErrors.length > 0) {
+            productsStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(productsStore.message);
+        }
     }
 };
 
@@ -51,7 +63,13 @@ const handleProductDelete = async () => {
         products.value = productsStore.productsList;
         showSuccess('Producto eliminado', productsStore.message);
     } else {
-        showError(productsStore.message);
+        if (productsStore.validationErrors && productsStore.validationErrors.length > 0) {
+            productsStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(productsStore.message);
+        }
     }
     showDeleteDialog.value = false;
 };

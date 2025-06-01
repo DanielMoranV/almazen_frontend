@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 import { fetchUnits, createUnit, deleteUnit, updateUnit } from '@/api';
 import cache from '@/utils/cache';
-import { handleError } from '@/utils/handleError';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useUnitsStore = defineStore('unitsStore', {
     state: () => ({
         units: [],
         message: '',
         success: false,
-        isLoading: false
+        isLoading: false,
+        validationErrors: []
     }),
 
     getters: {
@@ -19,12 +20,13 @@ export const useUnitsStore = defineStore('unitsStore', {
         async fetchUnits() {
             this.isLoading = true;
             try {
-                const { data, message, success } = await fetchUnits();
-                this.units = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchUnits();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.units = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -32,12 +34,13 @@ export const useUnitsStore = defineStore('unitsStore', {
         async createUnit(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createUnit(payload);
-                this.units.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createUnit(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.units.push(processed.data);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -45,25 +48,27 @@ export const useUnitsStore = defineStore('unitsStore', {
         async deleteUnit(id) {
             this.isLoading = true;
             try {
-                const { message, success } = await deleteUnit(id);
-                this.units = this.units.filter((unit) => unit.id !== id);
-                this.message = message;
-                this.success = success;
+                const res = await deleteUnit(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.units = this.units.filter((unit) => unit.id !== id);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
-        async updateUnit(payload, id) {
+        async updateUnit(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateUnit(payload, id);
-                this.units = this.units.map((unit) => (unit.id === id ? data : unit));
-                this.message = message;
-                this.success = success;
+                const res = await updateUnit(payload, payload.id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.units = this.units.map((unit) => (unit.id === payload.id ? processed.data : unit));
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }

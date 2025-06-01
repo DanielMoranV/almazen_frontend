@@ -8,7 +8,6 @@ import { processResponse } from '@/composables/useApiResponse';
 export function handleProcessError(error, store) {
     const processed = processResponse(error);
     store.message = processed.message || 'Ha ocurrido un error.';
-    console.log('validationErrors helper', processed.validationErrors);
     store.validationErrors = processed.validationErrors || [];
     store.success = false;
 }

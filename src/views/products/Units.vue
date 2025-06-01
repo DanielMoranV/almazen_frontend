@@ -28,7 +28,13 @@ const loadUnits = async () => {
         units.value = unitsStore.unitsList;
         showSuccess('Unidades cargadas', unitsStore.message);
     } else {
-        showError(unitsStore.message);
+        if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
+            unitsStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(unitsStore.message);
+        }
     }
 };
 
@@ -41,7 +47,13 @@ const handleUnitSubmit = async (unitData) => {
         showSuccess(unitData.id ? 'Unidad actualizada' : 'Unidad creada', unitsStore.message);
         showUnitDialog.value = false;
     } else {
-        showError(unitsStore.message);
+        if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
+            unitsStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(unitsStore.message);
+        }
     }
 };
 
@@ -52,7 +64,13 @@ const handleUnitDelete = async () => {
         showSuccess('Unidad eliminada', unitsStore.message);
         showDeleteDialog.value = false;
     } else {
-        showError(unitsStore.message);
+        if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
+            unitsStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(unitsStore.message);
+        }
     }
 };
 

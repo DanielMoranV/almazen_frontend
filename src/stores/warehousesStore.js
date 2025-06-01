@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 import { fetchWarehouses, createWarehouse, deleteWarehouse, updateWarehouse } from '@/api';
 import cache from '@/utils/cache';
-import { handleError } from '@/utils/handleError';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useWarehousesStore = defineStore('warehousesStore', {
     state: () => ({
         warehouses: [],
         message: '',
         success: false,
-        isLoading: false
+        isLoading: false,
+        validationErrors: []
     }),
 
     getters: {
@@ -19,12 +20,13 @@ export const useWarehousesStore = defineStore('warehousesStore', {
         async fetchWarehouses() {
             this.isLoading = true;
             try {
-                const { data, message, success } = await fetchWarehouses();
-                this.warehouses = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchWarehouses();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.warehouses = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -32,12 +34,13 @@ export const useWarehousesStore = defineStore('warehousesStore', {
         async createWarehouse(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createWarehouse(payload);
-                this.warehouses.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createWarehouse(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.warehouses.push(processed.data);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -45,12 +48,13 @@ export const useWarehousesStore = defineStore('warehousesStore', {
         async deleteWarehouse(payload) {
             this.isLoading = true;
             try {
-                const { message, success } = await deleteWarehouse(payload, payload.id);
-                this.warehouses = this.warehouses.filter((warehouse) => warehouse.id !== payload.id);
-                this.message = message;
-                this.success = success;
+                const res = await deleteWarehouse(payload, payload.id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.warehouses = this.warehouses.filter((warehouse) => warehouse.id !== payload.id);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -58,15 +62,22 @@ export const useWarehousesStore = defineStore('warehousesStore', {
         async updateWarehouse(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateWarehouse(payload, payload.id);
-                this.warehouses = this.warehouses.map((warehouse) => (warehouse.id === payload.id ? data : warehouse));
-                this.message = message;
-                this.success = success;
+                const res = await updateWarehouse(payload, payload.id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.warehouses = this.warehouses.map((warehouse) => (warehouse.id === payload.id ? processed.data : warehouse));
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
+        },
+        resetState() {
+            this.isLoading = false;
+            this.message = '';
+            this.success = false;
+            this.validationErrors = [];
         }
     }
 });

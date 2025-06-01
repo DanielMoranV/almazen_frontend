@@ -1,4 +1,6 @@
 import { defineStore } from 'pinia';
+import { fetchMovementsStock, fetchEntries, fetchExits, fetchOutputs, createEntry, createExit, createOutput } from '@/api';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useMovementsStockStore = defineStore('movementsStockStore', {
     state: () => ({
@@ -8,7 +10,8 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
         outputs: [],
         message: '',
         success: false,
-        isLoading: false
+        isLoading: false,
+        validationErrors: []
     }),
 
     getters: {
@@ -23,12 +26,13 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
             this.isLoading = true;
 
             try {
-                const { data, message, success } = await fetchMovementsStock();
-                this.movementsStock = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchMovementsStock();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.movementsStock = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -38,12 +42,13 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
             this.isLoading = true;
 
             try {
-                const { data, message, success } = await fetchEntries();
-                this.entries = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchEntries();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.entries = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -53,12 +58,13 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
             this.isLoading = true;
 
             try {
-                const { data, message, success } = await fetchExits();
-                this.exits = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchExits();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.exits = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -68,12 +74,13 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
             this.isLoading = true;
 
             try {
-                const { data, message, success } = await fetchOutputs();
-                this.outputs = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchOutputs();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.outputs = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -82,12 +89,13 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
         async createEntry(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createEntry(payload);
-                this.entries.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createEntry(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.entries.push(processed.data);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -96,12 +104,13 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
         async createExit(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createExit(payload);
-                this.exits.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createExit(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.exits.push(processed.data);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -110,12 +119,13 @@ export const useMovementsStockStore = defineStore('movementsStockStore', {
         async createOutput(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createOutput(payload);
-                this.outputs.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createOutput(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.outputs.push(processed.data);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }

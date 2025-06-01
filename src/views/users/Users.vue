@@ -40,7 +40,6 @@ const loadUsers = async () => {
 const handleUserSubmit = async (userData) => {
     const action = userData.id ? usersStore.updateUser : usersStore.createUser;
     await action(userData);
-    console.log('validationErrors', usersStore.validationErrors);
     if (usersStore.success) {
         users.value = usersStore.usersList;
         showSuccess(userData.id ? 'Usuario actualizado' : 'Usuario creado', usersStore.message);
@@ -48,7 +47,6 @@ const handleUserSubmit = async (userData) => {
     } else {
         if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
             usersStore.validationErrors.forEach((err) => {
-                console.log(err);
                 toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
             });
         } else {
@@ -65,7 +63,6 @@ const handleUserDelete = async () => {
     } else {
         if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
             usersStore.validationErrors.forEach((err) => {
-                console.log(err);
                 toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
             });
         } else {

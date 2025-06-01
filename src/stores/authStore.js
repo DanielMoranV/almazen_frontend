@@ -83,6 +83,7 @@ export const useAuthStore = defineStore('authStore', {
                     this.clearAuthData();
                 }
             } catch (error) {
+                console.log('me', error);
                 handleProcessError(error, this);
                 this.clearAuthData();
             } finally {

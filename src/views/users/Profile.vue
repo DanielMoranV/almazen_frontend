@@ -86,7 +86,7 @@ const updateUser = async () => {
         toast.add({ severity: 'success', summary: 'Perfil actualizado', detail: authStore.message, life: 3000 });
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
-            authStore.validationErrors.forEach(err => {
+            authStore.validationErrors.forEach((err) => {
                 toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
             });
         } else {
@@ -112,7 +112,7 @@ const updatePassword = async () => {
             toast.add({ severity: 'success', summary: 'Contraseña actualizada', detail: authStore.message, life: 3000 });
         } else {
             if (authStore.validationErrors && authStore.validationErrors.length > 0) {
-                authStore.validationErrors.forEach(err => {
+                authStore.validationErrors.forEach((err) => {
                     toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
                 });
             } else {

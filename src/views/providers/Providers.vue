@@ -28,7 +28,13 @@ const loadProviders = async () => {
         providers.value = providersStore.providersList;
         showSuccess('Proveedores cargados', providersStore.message);
     } else {
-        showError(providersStore.message);
+        if (providersStore.validationErrors && providersStore.validationErrors.length > 0) {
+            providersStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(providersStore.message);
+        }
     }
 };
 
@@ -41,7 +47,13 @@ const handleProviderSubmit = async (providerData) => {
         showSuccess(providerData.id ? 'Proveedor actualizado' : 'Proveedor creado', providersStore.message);
         showProviderDialog.value = false;
     } else {
-        showError(providersStore.message);
+        if (providersStore.validationErrors && providersStore.validationErrors.length > 0) {
+            providersStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(providersStore.message);
+        }
     }
 };
 
@@ -52,7 +64,13 @@ const handleProviderDelete = async () => {
         showSuccess('Proveedor eliminado', providersStore.message);
         showDeleteDialog.value = false;
     } else {
-        showError(providersStore.message);
+        if (providersStore.validationErrors && providersStore.validationErrors.length > 0) {
+            providersStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(providersStore.message);
+        }
     }
 };
 

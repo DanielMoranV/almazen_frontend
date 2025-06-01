@@ -1,14 +1,16 @@
 import { defineStore } from 'pinia';
 import { fetchCategories, createCategory, deleteCategory, updateCategory } from '@/api';
 import cache from '@/utils/cache';
-import { handleError } from '@/utils/handleError';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useCategoriesStore = defineStore('categoriesStore', {
     state: () => ({
         categories: [],
+        category: cache.getItem('category') || null,
         message: '',
         success: false,
-        isLoading: false
+        isLoading: false,
+        validationErrors: []
     }),
 
     getters: {
@@ -17,56 +19,66 @@ export const useCategoriesStore = defineStore('categoriesStore', {
     },
     actions: {
         async fetchCategories() {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message, success } = await fetchCategories();
-                this.categories = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchCategories();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.categories = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
         async createCategory(payload) {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message, success } = await createCategory(payload);
-                this.categories.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createCategory(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.categories.push(processed.data);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
-        async deleteCategory(id) {
-            this.isLoading = true;
+        async removeCategory(id) {
+            this.resetState();
             try {
-                const { message, success } = await deleteCategory(id);
-                this.categories = this.categories.filter((category) => category.id !== id);
-                this.message = message;
-                this.success = success;
+                const res = await deleteCategory(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.categories = this.categories.filter((category) => category.id !== id);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
         },
         async updateCategory(payload, id) {
-            this.isLoading = true;
+            this.resetState();
             try {
-                const { data, message, success } = await updateCategory(payload, id);
-                this.categories = this.categories.map((category) => (category.id === id ? data : category));
-                this.message = message;
-                this.success = success;
+                const res = await updateCategory(payload, id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.categories = this.categories.map((category) => (category.id === id ? processed.data : category));
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
+        },
+        resetState() {
+            this.isLoading = true;
+            this.message = '';
+            this.success = false;
+            this.validationErrors = [];
         }
     }
 });

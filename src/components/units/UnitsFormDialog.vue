@@ -32,12 +32,10 @@ const isFormValid = computed(() => {
 
 const handleSubmit = () => {
     emit('submit', form.value);
-    resetForm();
 };
 
 const handleCancel = () => {
     emit('update:visible', false);
-    resetForm();
 };
 
 watch(

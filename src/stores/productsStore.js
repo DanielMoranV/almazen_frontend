@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
 import { fetchProducts, createProduct, deleteProduct, updateProduct } from '@/api';
 import cache from '@/utils/cache';
-import { handleError } from '@/utils/handleError';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useProductsStore = defineStore('productsStore', {
     state: () => ({
         products: [],
         message: '',
         success: false,
-        isLoading: false
+        isLoading: false,
+        validationErrors: []
     }),
 
     getters: {
@@ -20,12 +21,13 @@ export const useProductsStore = defineStore('productsStore', {
             this.isLoading = true;
 
             try {
-                const { data, message, success } = await fetchProducts();
-                this.products = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchProducts();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.products = processed.data;
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -33,12 +35,13 @@ export const useProductsStore = defineStore('productsStore', {
         async createProduct(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createProduct(payload);
-                this.products.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createProduct(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.products.push(processed.data);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -46,12 +49,13 @@ export const useProductsStore = defineStore('productsStore', {
         async deleteProduct(id) {
             this.isLoading = true;
             try {
-                const { message, success } = await deleteProduct(id);
-                this.products = this.products.filter((product) => product.id !== id);
-                this.message = message;
-                this.success = success;
+                const res = await deleteProduct(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.products = this.products.filter((product) => product.id !== id);
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -59,12 +63,13 @@ export const useProductsStore = defineStore('productsStore', {
         async updateProduct(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateProduct(payload, payload.id);
-                this.products = this.products.map((product) => (product.id === payload.id ? data : product));
-                this.message = message;
-                this.success = success;
+                const res = await updateProduct(payload, payload.id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.products = this.products.map((product) => (product.id === payload.id ? processed.data : product));
+                }
             } catch (error) {
-                this.message = handleError(error);
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }

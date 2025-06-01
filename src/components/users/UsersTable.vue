@@ -6,8 +6,9 @@ import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { exportToExcel } from '@/utils/excelUtils';
+import { useAuthStore } from '@/stores/authStore';
 
 const { users, loading } = defineProps({
     users: { type: Array, required: true },
@@ -15,6 +16,9 @@ const { users, loading } = defineProps({
 });
 
 defineEmits(['edit', 'delete']);
+
+const authStore = useAuthStore();
+const showCompanyColumn = computed(() => authStore.currentUser?.position === 'Developer');
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -97,6 +101,8 @@ const exportUsers = async () => {
                 <i :class="['pi text-xl', data.is_active ? 'pi-check-circle text-green-500' : 'pi-times-circle text-red-500']" />
             </template>
         </Column>
+
+        <Column v-if="showCompanyColumn" field="company_name" header="Compañia" sortable style="min-width: 12rem; max-width: 15rem" />
 
         <Column header="Acciones" :exportable="false" style="min-width: 5rem">
             <template #body="{ data }">

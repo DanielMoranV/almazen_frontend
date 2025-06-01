@@ -3,8 +3,6 @@ const isDev = import.meta.env.MODE === 'development';
 export function processResponse(response) {
     let validationErrors = [];
 
-    console.log('response', response);
-
     if (response && response.details) {
         if (Array.isArray(response.details.validationErrors)) {
             validationErrors = response.details.validationErrors;
@@ -15,7 +13,6 @@ export function processResponse(response) {
         }
     }
     if (response && response.validationErrors) {
-        console.log('validationErrors', response.validationErrors);
         validationErrors = response.validationErrors.map((err) => (typeof err === 'string' ? err.toUpperCase() : err));
     }
 
@@ -32,7 +29,7 @@ export function processResponse(response) {
 
     if (isDev && response.details && response.validationErrors) {
         console.error('Detalles técnicos:', response.details);
-        console.log('validationErrors', validationErrors);
+        console.error('validationErrors', validationErrors);
     }
 
     return {

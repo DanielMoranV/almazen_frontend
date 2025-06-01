@@ -10,6 +10,7 @@ declare module 'vue' {
     CategoriesTable: typeof import('./src/components/categories/CategoriesTable.vue')['default']
     CategoryFormDialog: typeof import('./src/components/categories/CategoryFormDialog.vue')['default']
     DeleteConfirmationDialog: typeof import('./src/components/DeleteConfirmationDialog.vue')['default']
+    EntriesFormDialog: typeof import('./src/components/entries/EntriesFormDialog.vue')['default']
     FloatingConfigurator: typeof import('./src/components/FloatingConfigurator.vue')['default']
     ProductsFormDialog: typeof import('./src/components/products/ProductsFormDialog.vue')['default']
     ProductsTable: typeof import('./src/components/products/ProductsTable.vue')['default']

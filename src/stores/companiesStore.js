@@ -1,10 +1,21 @@
 import { createCompany, deleteCompany, fetchCompanies, updateCompany } from '@/api';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
+import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
-// 🔧 Utilidad para manejar errores consistentemente
-function handleError(error, fallbackMessage = 'Ocurrió un error') {
-    return error?.response?.data?.message || error?.message || fallbackMessage;
+// Normaliza la estructura de una empresa para asegurar que tenga todos los campos
+function normalizeCompany(company) {
+    return {
+        id: company.id ?? null,
+        company_name: company.company_name ?? '',
+        address: company.address ?? '',
+        phone: company.phone ?? '',
+        email: company.email ?? '',
+        website: company.website ?? '',
+        logo: company.logo ?? '',
+        description: company.description ?? '',
+        is_active: company.is_active ?? true
+    };
 }
 
 export const useCompaniesStore = defineStore('companiesStore', {
@@ -13,7 +24,8 @@ export const useCompaniesStore = defineStore('companiesStore', {
         company: cache.getItem('company') || null,
         message: '',
         success: false,
-        isLoading: false
+        isLoading: false,
+        validationErrors: []
     }),
 
     getters: {
@@ -26,14 +38,20 @@ export const useCompaniesStore = defineStore('companiesStore', {
         async fetchCompanies() {
             this.isLoading = true;
             try {
-                const { data, message, success } = await fetchCompanies();
-                this.companies = data;
-                this.message = message;
-                this.success = success;
+                const res = await fetchCompanies();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.companies = Array.isArray(processed.data)
+                        ? processed.data.map(normalizeCompany)
+                        : [];
+                    this.success = true;
+                    this.message = processed.message || 'Empresas cargadas correctamente';
+                } else {
+                    this.success = false;
+                    this.message = processed.message || 'Error al cargar empresas';
+                }
             } catch (error) {
-                console.log(error);
-                this.message = handleError(error, 'Error al obtener las empresas');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -42,14 +60,18 @@ export const useCompaniesStore = defineStore('companiesStore', {
         async createCompany(payload) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await createCompany(payload);
-                this.companies.push(data);
-                this.message = message;
-                this.success = success;
+                const res = await createCompany(payload);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.companies.push(normalizeCompany(processed.data));
+                    this.success = true;
+                    this.message = processed.message || 'Empresa creada correctamente';
+                } else {
+                    this.success = false;
+                    this.message = processed.message || 'Error al crear empresa';
+                }
             } catch (error) {
-                console.log(error);
-                this.message = handleError(error, 'Error al crear la empresa');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -58,14 +80,18 @@ export const useCompaniesStore = defineStore('companiesStore', {
         async updateCompany(payload, id) {
             this.isLoading = true;
             try {
-                const { data, message, success } = await updateCompany(payload, id);
-                this.companies = this.companies.map((c) => (c.id === id ? data : c));
-                this.message = message;
-                this.success = success;
+                const res = await updateCompany(payload, id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.companies = this.companies.map((c) => (c.id === id ? normalizeCompany(processed.data) : c));
+                    this.success = true;
+                    this.message = processed.message || 'Empresa actualizada correctamente';
+                } else {
+                    this.success = false;
+                    this.message = processed.message || 'Error al actualizar empresa';
+                }
             } catch (error) {
-                console.log(error);
-                this.message = handleError(error, 'Error al actualizar la empresa');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }
@@ -74,13 +100,18 @@ export const useCompaniesStore = defineStore('companiesStore', {
         async removeCompany(id) {
             this.isLoading = true;
             try {
-                const { message, success } = await deleteCompany(id);
-                this.companies = this.companies.filter((c) => c.id !== id);
-                this.message = message;
-                this.success = success;
+                const res = await deleteCompany(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.companies = this.companies.filter((c) => c.id !== id);
+                    this.success = true;
+                    this.message = processed.message || 'Empresa eliminada correctamente';
+                } else {
+                    this.success = false;
+                    this.message = processed.message || 'Error al eliminar empresa';
+                }
             } catch (error) {
-                this.message = handleError(error, 'Error al eliminar la empresa');
-                this.success = false;
+                handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
             }

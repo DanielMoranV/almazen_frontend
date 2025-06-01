@@ -28,7 +28,13 @@ const loadWarehouses = async () => {
         warehouses.value = warehousesStore.warehousesList;
         showSuccess('Almacenes cargados', warehousesStore.message);
     } else {
-        showError(warehousesStore.message);
+        if (warehousesStore.validationErrors && warehousesStore.validationErrors.length > 0) {
+            warehousesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(warehousesStore.message);
+        }
     }
 };
 
@@ -41,7 +47,13 @@ const handleWarehouseSubmit = async (warehouseData) => {
         showSuccess(warehouseData.id ? 'Almacén actualizado' : 'Almacén creado', warehousesStore.message);
         showWarehouseDialog.value = false;
     } else {
-        showError(warehousesStore.message);
+        if (warehousesStore.validationErrors && warehousesStore.validationErrors.length > 0) {
+            warehousesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(warehousesStore.message);
+        }
     }
 };
 
@@ -52,7 +64,13 @@ const handleWarehouseDelete = async () => {
         showSuccess('Almacén eliminado', warehousesStore.message);
         showDeleteDialog.value = false;
     } else {
-        showError(warehousesStore.message);
+        if (warehousesStore.validationErrors && warehousesStore.validationErrors.length > 0) {
+            warehousesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(warehousesStore.message);
+        }
     }
 };
 

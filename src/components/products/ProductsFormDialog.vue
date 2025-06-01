@@ -29,7 +29,6 @@ const submitted = ref(false);
 
 onMounted(() => {
     unitsStore.fetchUnits();
-    console.log(units.value);
     categoriesStore.fetchCategories();
 });
 

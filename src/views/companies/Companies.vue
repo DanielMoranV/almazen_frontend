@@ -85,7 +85,13 @@ onMounted(async () => {
         companies.value = companiesStore.companiesList;
         toast.add({ severity: 'success', summary: 'Empresas cargadas', detail: companiesStore.message, life: 3000 });
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+        if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
+            companiesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+        }
     }
 });
 
@@ -96,7 +102,13 @@ const submitCompany = async () => {
             companies.value = companiesStore.companiesList;
             toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa actualizada correctamente', life: 3000 });
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+            if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
+                companiesStore.validationErrors.forEach((err) => {
+                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                });
+            } else {
+                toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+            }
         }
     } else {
         await companiesStore.createCompany(companyForm.value);
@@ -104,7 +116,13 @@ const submitCompany = async () => {
             companies.value = companiesStore.companiesList;
             toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa creada correctamente', life: 3000 });
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+            if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
+                companiesStore.validationErrors.forEach((err) => {
+                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                });
+            } else {
+                toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+            }
         }
     }
     companyDialog.value = false;
@@ -117,7 +135,13 @@ const deleteCompany = async (company) => {
         companies.value = companiesStore.companiesList;
         toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa eliminada correctamente', life: 3000 });
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+        if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
+            companiesStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
+        }
     }
 
     deleteDialog.value = false;
