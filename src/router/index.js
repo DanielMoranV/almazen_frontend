@@ -9,69 +9,216 @@ const router = createRouter({
         {
             path: '/dashboard',
             component: AppLayout,
-            meta: { positions: ['Administrador', 'Developer'] }, // Solo accesible por usuarios con estas posiciones
+            meta: { positions: ['Administrador', 'Developer'] },
             children: [
+                // Dashboard
                 {
                     path: '/dashboard',
                     name: 'dashboard',
                     component: () => import('@/views/Dashboard.vue'),
-                    meta: { positions: ['Administrador', 'Developer'] }
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero'] }
                 },
                 {
-                    path: '/profile',
-                    name: 'profile',
-                    component: () => import('@/views/users/Profile.vue'),
-                    meta: { public: true } // Ruta pública
+                    path: '/reports',
+                    name: 'reports',
+                    component: () => import('@/views/reports/Reports.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística'] }
                 },
-
+                
+                // POS
                 {
-                    path: '/users',
-                    name: 'users',
-                    component: () => import('@/views/users/Users.vue'),
-                    meta: { positions: ['Administrador'] } // Solo accesible por administradores
-                },
-
-                {
-                    path: '/companies',
-                    name: 'companies',
-                    component: () => import('@/views/companies/Companies.vue'),
-                    meta: { positions: ['Administrador'] } // Solo accesible por administradores
+                    path: '/pos',
+                    name: 'pos',
+                    component: () => import('@/views/pos/POS.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Cajero'] }
                 },
                 {
-                    path: '/products',
-                    name: 'products',
-                    component: () => import('@/views/products/Products.vue'),
-                    meta: { positions: ['Administrador', 'Logística'] } // Solo accesible por administradores y logística
+                    path: '/cash-sessions',
+                    name: 'cashSessions',
+                    component: () => import('@/views/pos/CashSessions.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Cajero'] }
+                },
+                
+                // Ventas
+                {
+                    path: '/sales-orders',
+                    name: 'salesOrders',
+                    component: () => import('@/views/sales/SalesOrders.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
                 {
-                    path: '/units',
-                    name: 'units',
-                    component: () => import('@/views/products/Units.vue'),
-                    meta: { positions: ['Developer'] } // Solo accesible por desarrolladores
+                    path: '/invoices',
+                    name: 'invoices',
+                    component: () => import('@/views/sales/invoices/Invoices.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
                 {
-                    path: '/categories',
-                    name: 'categories',
-                    component: () => import('@/views/categories/Categories.vue'),
-                    meta: { positions: ['Administrador', 'Developer'] }
+                    path: '/customers',
+                    name: 'customers',
+                    component: () => import('@/views/customers/Customers.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
                 {
-                    path: '/warehouses',
-                    name: 'warehouses',
-                    component: () => import('@/views/warehouses/Warehouses.vue'),
-                    meta: { positions: ['Administrador', 'Logística'] }
+                    path: '/quotes',
+                    name: 'quotes',
+                    component: () => import('@/views/sales/quotes/Quotes.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
+                },
+                
+                // Compras
+                {
+                    path: '/purchase-orders',
+                    name: 'purchaseOrders',
+                    component: () => import('@/views/purchases/orders/PurchaseOrders.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Compras'] }
                 },
                 {
                     path: '/providers',
                     name: 'providers',
                     component: () => import('@/views/providers/Providers.vue'),
-                    meta: { positions: ['Administrador', 'Compras'] }
+                    meta: { positions: ['Developer', 'Administrador', 'Compras'] }
+                },
+                {
+                    path: '/purchase-requests',
+                    name: 'purchaseRequests',
+                    component: () => import('@/views/purchases/Purchase.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador', 'Compras', 'Logística'] }
+                },
+                
+                // Inventario
+                {
+                    path: '/products',
+                    name: 'products',
+                    component: () => import('@/views/products/Products.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Logística', 'Compras'] }
+                },
+                {
+                    path: '/stock',
+                    name: 'stock',
+                    component: () => import('@/views/inventory/stock/Stock.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Logística', 'Ventas'] }
+                },
+                {
+                    path: '/inventory-movements',
+                    name: 'inventoryMovements',
+                    component: () => import('@/views/movements/Entry.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
+                },
+                {
+                    path: '/adjustments',
+                    name: 'adjustments',
+                    component: () => import('@/views/inventory/adjustments/Adjustments.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
+                },
+                {
+                    path: '/physical-count',
+                    name: 'physicalCount',
+                    component: () => import('@/views/inventory/stock/Stock.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
+                },
+                {
+                    path: '/transfers',
+                    name: 'transfers',
+                    component: () => import('@/views/inventory/transfers/Transfers.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
+                },
+                
+                // Logística
+                {
+                    path: '/warehouses',
+                    name: 'warehouses',
+                    component: () => import('@/views/inventory/warehouses/Warehouses.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
                 {
                     path: '/entries',
                     name: 'entries',
                     component: () => import('@/views/movements/Entry.vue'),
-                    meta: { positions: ['Administrador', 'Logística'] }
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
+                },
+                {
+                    path: '/deliveries',
+                    name: 'deliveries',
+                    component: () => import('@/views/movements/Entry.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
+                },
+                
+                // Configuración - Catálogos
+                {
+                    path: '/categories',
+                    name: 'categories',
+                    component: () => import('@/views/categories/Categories.vue'),
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/units',
+                    name: 'units',
+                    component: () => import('@/views/products/Units.vue'),
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/payment-methods',
+                    name: 'paymentMethods',
+                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                
+                // Administración
+                {
+                    path: '/companies',
+                    name: 'companies',
+                    component: () => import('@/views/companies/Companies.vue'),
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/branches',
+                    name: 'branches',
+                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/users',
+                    name: 'users',
+                    component: () => import('@/views/users/Users.vue'),
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/roles',
+                    name: 'roles',
+                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/settings',
+                    name: 'settings',
+                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/taxes',
+                    name: 'taxes',
+                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/sequences',
+                    name: 'sequences',
+                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/backups',
+                    name: 'backups',
+                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                    meta: { positions: ['Developer'] }
+                },
+                
+                // User Profile
+                {
+                    path: '/profile',
+                    name: 'profile',
+                    component: () => import('@/views/users/Profile.vue'),
+                    meta: { public: true }
                 }
             ]
         },

@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useProductsStore } from '@/stores/productsStore';
 import ProductsTable from '@/components/products/ProductsTable.vue';
-import ProductsFormDialog from '@/components/products/ProductsFormDialog.vue';
+import ProductsFormDialog from '@/components/products/ProductFormDialog.vue';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 
 const toast = useToast();
