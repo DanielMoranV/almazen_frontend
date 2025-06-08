@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useUsersStore } from '@/stores/usersStore';
-import UsersTable from '@/components/users/UsersTable.vue';
-import UserFormDialog from '@/components/users/UserFormDialog.vue';
+import UsersTable from '@/views/users/componentsUsers/UsersTable.vue';
+import UserFormDialog from '@/views/users/componentsUsers/UserFormDialog.vue';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 
 const toast = useToast();

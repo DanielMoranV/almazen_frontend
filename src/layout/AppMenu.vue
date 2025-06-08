@@ -191,13 +191,13 @@ const model = ref([
                         icon: 'pi pi-sliders-h',
                         to: '/units',
                         positions: ['Developer', 'Administrador']
-                    },
-                    {
-                        label: 'Pagos',
-                        icon: 'pi pi-credit-card',
-                        to: '/payment-methods',
-                        positions: ['Developer', 'Administrador']
                     }
+                    // {
+                    //     label: 'Pagos',
+                    //     icon: 'pi pi-credit-card',
+                    //     to: '/payment-methods',
+                    //     positions: ['Developer', 'Administrador']
+                    // }
                 ],
                 positions: ['Developer', 'Administrador']
             },

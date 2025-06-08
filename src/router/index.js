@@ -24,7 +24,7 @@ const router = createRouter({
                     component: () => import('@/views/reports/Reports.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística'] }
                 },
-                
+
                 // POS
                 {
                     path: '/pos',
@@ -38,7 +38,7 @@ const router = createRouter({
                     component: () => import('@/views/pos/CashSessions.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Cajero'] }
                 },
-                
+
                 // Ventas
                 {
                     path: '/sales-orders',
@@ -64,7 +64,7 @@ const router = createRouter({
                     component: () => import('@/views/sales/quotes/Quotes.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
-                
+
                 // Compras
                 {
                     path: '/purchase-orders',
@@ -75,7 +75,7 @@ const router = createRouter({
                 {
                     path: '/providers',
                     name: 'providers',
-                    component: () => import('@/views/providers/Providers.vue'),
+                    component: () => import('@/views/purchases/providers/Providers.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Compras'] }
                 },
                 {
@@ -84,12 +84,12 @@ const router = createRouter({
                     component: () => import('@/views/purchases/Purchase.vue'), // Placeholder until specific view is created
                     meta: { positions: ['Developer', 'Administrador', 'Compras', 'Logística'] }
                 },
-                
+
                 // Inventario
                 {
                     path: '/products',
                     name: 'products',
-                    component: () => import('@/views/products/Products.vue'),
+                    component: () => import('@/views/inventory/products/Products.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística', 'Compras'] }
                 },
                 {
@@ -122,7 +122,7 @@ const router = createRouter({
                     component: () => import('@/views/inventory/transfers/Transfers.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
-                
+
                 // Logística
                 {
                     path: '/warehouses',
@@ -142,27 +142,27 @@ const router = createRouter({
                     component: () => import('@/views/movements/Entry.vue'), // Placeholder until specific view is created
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
-                
+
                 // Configuración - Catálogos
                 {
                     path: '/categories',
                     name: 'categories',
-                    component: () => import('@/views/categories/Categories.vue'),
+                    component: () => import('@/views/config/categories/Categories.vue'),
                     meta: { positions: ['Developer', 'Administrador'] }
                 },
                 {
                     path: '/units',
                     name: 'units',
-                    component: () => import('@/views/products/Units.vue'),
+                    component: () => import('@/views/config/units/Units.vue'),
                     meta: { positions: ['Developer', 'Administrador'] }
                 },
-                {
-                    path: '/payment-methods',
-                    name: 'paymentMethods',
-                    component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
-                    meta: { positions: ['Developer', 'Administrador'] }
-                },
-                
+                // {
+                //     path: '/payment-methods',
+                //     name: 'paymentMethods',
+                //     component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
+                //     meta: { positions: ['Developer', 'Administrador'] }
+                // },
+
                 // Administración
                 {
                     path: '/companies',
@@ -212,7 +212,7 @@ const router = createRouter({
                     component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
                     meta: { positions: ['Developer'] }
                 },
-                
+
                 // User Profile
                 {
                     path: '/profile',

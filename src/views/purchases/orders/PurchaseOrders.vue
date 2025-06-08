@@ -1,23 +1,47 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
 import { useRouter } from 'vue-router';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import Chart from 'primevue/chart';
 
 const toast = useToast();
+const confirm = useConfirm();
 const router = useRouter();
 const loading = ref(false);
 const purchaseOrders = ref([]);
-const searchQuery = ref('');
+const selectedOrders = ref([]);
+const globalFilterValue = ref('');
 const statusFilter = ref(null);
-const dateRange = ref([null, null]);
+const dateRange = ref(null);
+const showFilters = ref(false);
+const exportColumns = ref([]);
+const chartData = ref(null);
+const chartOptions = ref(null);
+const supplierFilter = ref(null);
+const supplierOptions = ref([]);
+const notificationCount = ref(2);
+const showNotifications = ref(false);
+const notifications = ref([
+    { id: 1, title: 'Orden próxima a vencer', message: 'La orden OC-002 vence en 2 días', severity: 'warning', date: new Date() },
+    { id: 2, title: 'Orden recibida', message: 'La orden OC-003 ha sido marcada como recibida', severity: 'success', date: new Date() }
+]);
+
+// Configuración de filtros para DataTable
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    status: { value: null, matchMode: FilterMatchMode.EQUALS },
+    supplier: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    date: { value: null, matchMode: FilterMatchMode.DATE_IS }
+});
 
 // Opciones de estado para filtrar
 const statusOptions = [
-    { label: 'Todos', value: null },
-    { label: 'Pendiente', value: 'pending' },
-    { label: 'Aprobada', value: 'approved' },
-    { label: 'Recibida', value: 'received' },
-    { label: 'Cancelada', value: 'cancelled' }
+    { label: 'Pendiente', value: 'pending', severity: 'warning' },
+    { label: 'Aprobada', value: 'approved', severity: 'info' },
+    { label: 'Recibida', value: 'received', severity: 'success' },
+    { label: 'Cancelada', value: 'cancelled', severity: 'danger' }
 ];
 
 // Datos de ejemplo para las órdenes de compra
@@ -25,8 +49,8 @@ const mockPurchaseOrders = [
     {
         id: 'OC-001',
         supplier: 'Proveedor Principal S.A.',
-        date: '2025-06-01',
-        expectedDate: '2025-06-10',
+        date: new Date('2025-06-01'),
+        expectedDate: new Date('2025-06-10'),
         total: 12500,
         status: 'pending',
         items: 15
@@ -34,8 +58,8 @@ const mockPurchaseOrders = [
     {
         id: 'OC-002',
         supplier: 'Distribuidora Mayorista',
-        date: '2025-05-28',
-        expectedDate: '2025-06-08',
+        date: new Date('2025-05-28'),
+        expectedDate: new Date('2025-06-08'),
         total: 8700,
         status: 'approved',
         items: 8
@@ -43,8 +67,8 @@ const mockPurchaseOrders = [
     {
         id: 'OC-003',
         supplier: 'Importadora Internacional',
-        date: '2025-05-25',
-        expectedDate: '2025-06-15',
+        date: new Date('2025-05-25'),
+        expectedDate: new Date('2025-06-15'),
         total: 24300,
         status: 'received',
         items: 12
@@ -52,8 +76,8 @@ const mockPurchaseOrders = [
     {
         id: 'OC-004',
         supplier: 'Fabricante Local',
-        date: '2025-06-02',
-        expectedDate: '2025-06-09',
+        date: new Date('2025-06-02'),
+        expectedDate: new Date('2025-06-09'),
         total: 5600,
         status: 'pending',
         items: 6
@@ -61,8 +85,8 @@ const mockPurchaseOrders = [
     {
         id: 'OC-005',
         supplier: 'Suministros Industriales',
-        date: '2025-05-20',
-        expectedDate: '2025-05-30',
+        date: new Date('2025-05-20'),
+        expectedDate: new Date('2025-05-30'),
         total: 3200,
         status: 'cancelled',
         items: 4
@@ -71,11 +95,13 @@ const mockPurchaseOrders = [
 
 onMounted(() => {
     loadPurchaseOrders();
+    initChartData();
+    initExportColumns();
+    loadSupplierOptions();
 });
 
 const loadPurchaseOrders = () => {
     loading.value = true;
-    // Simulación de carga de datos
     setTimeout(() => {
         purchaseOrders.value = mockPurchaseOrders;
         loading.value = false;
@@ -83,18 +109,14 @@ const loadPurchaseOrders = () => {
 };
 
 const createNewPurchaseOrder = () => {
-    // Navegar a la página de creación de nueva orden de compra
     router.push('/purchases/orders/new');
 };
 
 const viewPurchaseOrderDetails = (order) => {
-    // Navegar a la página de detalles de la orden de compra
     router.push(`/purchases/orders/${order.id}`);
 };
 
-const receiveOrder = (order, event) => {
-    event.stopPropagation();
-    
+const receiveOrder = (order) => {
     if (order.status !== 'approved') {
         toast.add({
             severity: 'warn',
@@ -104,30 +126,37 @@ const receiveOrder = (order, event) => {
         });
         return;
     }
-    
-    loading.value = true;
-    
-    // Simulación de recepción de orden
-    setTimeout(() => {
-        const index = purchaseOrders.value.findIndex(o => o.id === order.id);
-        if (index !== -1) {
-            purchaseOrders.value[index].status = 'received';
+
+    confirm.require({
+        message: `¿Está seguro de marcar como recibida la orden ${order.id}?`,
+        header: 'Confirmar Recepción',
+        icon: 'pi pi-check-square',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Recibir',
+        accept: () => {
+            loading.value = true;
+
+            setTimeout(() => {
+                const index = purchaseOrders.value.findIndex((o) => o.id === order.id);
+                if (index !== -1) {
+                    purchaseOrders.value[index].status = 'received';
+                }
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: `Orden ${order.id} marcada como recibida`,
+                    life: 3000
+                });
+
+                loading.value = false;
+            }, 1000);
         }
-        
-        toast.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: `Orden ${order.id} marcada como recibida`,
-            life: 3000
-        });
-        
-        loading.value = false;
-    }, 1000);
+    });
 };
 
-const cancelOrder = (order, event) => {
-    event.stopPropagation();
-    
+const cancelOrder = (order) => {
     if (order.status === 'received' || order.status === 'cancelled') {
         toast.add({
             severity: 'warn',
@@ -137,219 +166,535 @@ const cancelOrder = (order, event) => {
         });
         return;
     }
-    
-    loading.value = true;
-    
-    // Simulación de cancelación de orden
-    setTimeout(() => {
-        const index = purchaseOrders.value.findIndex(o => o.id === order.id);
-        if (index !== -1) {
-            purchaseOrders.value[index].status = 'cancelled';
+
+    confirm.require({
+        message: `¿Está seguro de cancelar la orden ${order.id}?`,
+        header: 'Confirmar Cancelación',
+        icon: 'pi pi-exclamation-triangle',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        rejectLabel: 'No',
+        acceptLabel: 'Sí, Cancelar',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            loading.value = true;
+
+            setTimeout(() => {
+                const index = purchaseOrders.value.findIndex((o) => o.id === order.id);
+                if (index !== -1) {
+                    purchaseOrders.value[index].status = 'cancelled';
+                }
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: `Orden ${order.id} cancelada correctamente`,
+                    life: 3000
+                });
+
+                loading.value = false;
+            }, 1000);
         }
-        
-        toast.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: `Orden ${order.id} cancelada correctamente`,
-            life: 3000
-        });
-        
-        loading.value = false;
-    }, 1000);
+    });
 };
 
-const filteredPurchaseOrders = computed(() => {
-    let result = purchaseOrders.value;
-    
-    // Filtrar por búsqueda
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        result = result.filter(order => 
-            order.id.toLowerCase().includes(query) || 
-            order.supplier.toLowerCase().includes(query)
-        );
-    }
-    
-    // Filtrar por estado
-    if (statusFilter.value) {
-        result = result.filter(order => order.status === statusFilter.value);
-    }
-    
-    // Filtrar por rango de fechas
-    if (dateRange.value[0] && dateRange.value[1]) {
-        const startDate = new Date(dateRange.value[0]);
-        const endDate = new Date(dateRange.value[1]);
-        
-        result = result.filter(order => {
-            const orderDate = new Date(order.date);
-            return orderDate >= startDate && orderDate <= endDate;
-        });
-    }
-    
-    return result;
-});
-
-const getStatusClass = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'bg-yellow-100 text-yellow-700';
-        case 'approved':
-            return 'bg-blue-100 text-blue-700';
-        case 'received':
-            return 'bg-green-100 text-green-700';
-        case 'cancelled':
-            return 'bg-red-100 text-red-700';
-        default:
-            return 'bg-gray-100 text-gray-700';
-    }
+const getSeverity = (status) => {
+    const statusOption = statusOptions.find((option) => option.value === status);
+    return statusOption ? statusOption.severity : 'secondary';
 };
 
 const getStatusLabel = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'Pendiente';
-        case 'approved':
-            return 'Aprobada';
-        case 'received':
-            return 'Recibida';
-        case 'cancelled':
-            return 'Cancelada';
-        default:
-            return status;
-    }
+    const statusOption = statusOptions.find((option) => option.value === status);
+    return statusOption ? statusOption.label : status;
 };
 
-const formatCurrency = (value) => {
-    return value ? `$${value.toLocaleString()}` : '-';
+function formatCurrencyPEN(value) {
+    // Siempre muestra el símbolo S/ para el sol peruano
+    if (typeof value !== 'number') return '';
+    return `S/ ${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Alias para mantener compatibilidad con el template original
+const formatCurrency = formatCurrencyPEN;
+
+const formatDate = (date) => {
+    return date ? date.toLocaleDateString('es-ES') : '-';
 };
 
 const clearFilters = () => {
-    searchQuery.value = '';
+    filters.value.global.value = null;
+    filters.value.status.value = null;
+    filters.value.supplier.value = null;
+    filters.value.date.value = null;
+    globalFilterValue.value = '';
     statusFilter.value = null;
-    dateRange.value = [null, null];
+    dateRange.value = null;
+};
+
+const initFilters = () => {
+    filters.value = {
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        status: { value: null, matchMode: FilterMatchMode.EQUALS },
+        supplier: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        date: { value: null, matchMode: FilterMatchMode.DATE_IS }
+    };
+    globalFilterValue.value = '';
+};
+
+const onGlobalFilterChange = () => {
+    filters.value['global'].value = globalFilterValue.value;
+};
+
+const deleteSelectedOrders = () => {
+    if (selectedOrders.value.length === 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'Seleccione al menos una orden para eliminar',
+            life: 3000
+        });
+        return;
+    }
+
+    confirm.require({
+        message: `¿Está seguro de eliminar ${selectedOrders.value.length} orden(es) seleccionada(s)?`,
+        header: 'Confirmar Eliminación',
+        icon: 'pi pi-exclamation-triangle',
+        rejectClass: 'p-button-secondary p-button-outlined',
+        rejectLabel: 'Cancelar',
+        acceptLabel: 'Eliminar',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            const idsToDelete = selectedOrders.value.map((order) => order.id);
+            purchaseOrders.value = purchaseOrders.value.filter((order) => !idsToDelete.includes(order.id));
+            selectedOrders.value = [];
+
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: `${idsToDelete.length} orden(es) eliminada(s) correctamente`,
+                life: 3000
+            });
+        }
+    });
+};
+
+// Estadísticas computadas
+const statistics = computed(() => {
+    const total = purchaseOrders.value.length;
+    const pending = purchaseOrders.value.filter((o) => o.status === 'pending').length;
+    const approved = purchaseOrders.value.filter((o) => o.status === 'approved').length;
+    const received = purchaseOrders.value.filter((o) => o.status === 'received').length;
+    const cancelled = purchaseOrders.value.filter((o) => o.status === 'cancelled').length;
+    const totalAmount = purchaseOrders.value.reduce((sum, o) => sum + o.total, 0);
+    const pendingAmount = purchaseOrders.value.filter((o) => o.status === 'pending').reduce((sum, o) => sum + o.total, 0);
+    const approvedAmount = purchaseOrders.value.filter((o) => o.status === 'approved').reduce((sum, o) => sum + o.total, 0);
+    const receivedAmount = purchaseOrders.value.filter((o) => o.status === 'received').reduce((sum, o) => sum + o.total, 0);
+    const cancelledAmount = purchaseOrders.value.filter((o) => o.status === 'cancelled').reduce((sum, o) => sum + o.total, 0);
+
+    // Calcular órdenes próximas a vencer (menos de 3 días)
+    const today = new Date();
+    const soonToExpire = purchaseOrders.value.filter((order) => {
+        if (order.status !== 'pending' && order.status !== 'approved') return false;
+        const diffTime = order.expectedDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 3;
+    }).length;
+
+    return {
+        total,
+        pending,
+        approved,
+        received,
+        cancelled,
+        totalAmount,
+        pendingAmount,
+        approvedAmount,
+        receivedAmount,
+        cancelledAmount,
+        soonToExpire
+    };
+});
+
+// Inicializar datos para el gráfico
+const initChartData = () => {
+    chartData.value = {
+        labels: ['Pendientes', 'Aprobadas', 'Recibidas', 'Canceladas'],
+        datasets: [
+            {
+                data: [statistics.value.pending, statistics.value.approved, statistics.value.received, statistics.value.cancelled],
+                backgroundColor: ['#FFB300', '#2196F3', '#4CAF50', '#F44336'],
+                hoverBackgroundColor: ['#FFD54F', '#64B5F6', '#81C784', '#E57373']
+            }
+        ]
+    };
+
+    chartOptions.value = {
+        plugins: {
+            legend: {
+                labels: {
+                    usePointStyle: true,
+                    color: '#495057'
+                }
+            }
+        },
+        responsive: true,
+        maintainAspectRatio: false
+    };
+};
+
+// Actualizar datos del gráfico cuando cambian las órdenes
+watch(
+    () => statistics.value,
+    (newStats) => {
+        if (chartData.value && chartData.value.datasets) {
+            chartData.value.datasets[0].data = [newStats.pending, newStats.approved, newStats.received, newStats.cancelled];
+        }
+    },
+    { deep: true }
+);
+
+// Inicializar columnas para exportación
+const initExportColumns = () => {
+    exportColumns.value = [
+        { field: 'id', header: 'ID Orden' },
+        { field: 'supplier', header: 'Proveedor' },
+        { field: 'date', header: 'Fecha Emisión', format: (value) => formatDate(value) },
+        { field: 'expectedDate', header: 'Fecha Esperada', format: (value) => formatDate(value) },
+        { field: 'items', header: 'Cantidad Items' },
+        { field: 'total', header: 'Total', format: (value) => value.toLocaleString('es-ES') },
+        { field: 'status', header: 'Estado', format: (value) => getStatusLabel(value) }
+    ];
+};
+
+// Cargar opciones de proveedores para filtrado
+const loadSupplierOptions = () => {
+    const uniqueSuppliers = [...new Set(purchaseOrders.value.map((order) => order.supplier))];
+    supplierOptions.value = uniqueSuppliers.map((supplier) => ({ label: supplier, value: supplier }));
+};
+
+// Exportar a CSV
+const exportCSV = () => {
+    const exportData = purchaseOrders.value.map((order) => {
+        const row = {};
+        exportColumns.value.forEach((col) => {
+            const value = order[col.field];
+            row[col.header] = col.format ? col.format(value) : value;
+        });
+        return row;
+    });
+
+    const headers = exportColumns.value.map((col) => col.header);
+    const csvContent = [headers.join(','), ...exportData.map((row) => headers.map((header) => `"${row[header] || ''}"`).join(','))].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ordenes_compra_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.add({
+        severity: 'success',
+        summary: 'Exportación Exitosa',
+        detail: 'Datos exportados a CSV correctamente',
+        life: 3000
+    });
+};
+
+// Exportar a PDF (simulado)
+const exportPDF = () => {
+    toast.add({
+        severity: 'info',
+        summary: 'Exportando PDF',
+        detail: 'La exportación a PDF se está procesando...',
+        life: 3000
+    });
+
+    // Simulación de tiempo de procesamiento
+    setTimeout(() => {
+        toast.add({
+            severity: 'success',
+            summary: 'Exportación Exitosa',
+            detail: 'Datos exportados a PDF correctamente',
+            life: 3000
+        });
+    }, 2000);
+};
+
+// Verificar fechas próximas a vencer
+const isCloseToExpire = (date) => {
+    const today = new Date();
+    const diffTime = date - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 3;
+};
+
+// Marcar todas las notificaciones como leídas
+const markAllAsRead = () => {
+    notificationCount.value = 0;
+    showNotifications.value = false;
+
+    toast.add({
+        severity: 'info',
+        summary: 'Notificaciones',
+        detail: 'Todas las notificaciones han sido marcadas como leídas',
+        life: 3000
+    });
 };
 </script>
 
 <template>
     <div class="grid">
+        <!-- Estadísticas modernas y responsivas -->
+        <div class="col-12">
+            <div class="flex flex-wrap gap-3 justify-content-center md:justify-content-start">
+                <div class="stat-card flex-1 min-w-16rem max-w-20rem p-0">
+                    <div class="stat-gradient stat-blue flex flex-column align-items-start p-4 border-round-xl shadow-3 relative">
+                        <span class="stat-badge bg-blue-500">Órdenes</span>
+                        <div class="flex align-items-center gap-2 mt-2">
+                            <i class="pi pi-list text-4xl text-blue-100"></i>
+                            <span class="text-4xl font-bold text-white">{{ statistics.total }}</span>
+                        </div>
+                        <span class="stat-label mt-2">Total Órdenes</span>
+                    </div>
+                </div>
+                <div class="stat-card flex-1 min-w-16rem max-w-20rem p-0">
+                    <div class="stat-gradient stat-orange flex flex-column align-items-start p-4 border-round-xl shadow-3 relative">
+                        <span class="stat-badge bg-orange-500">Pendientes</span>
+                        <div class="flex align-items-center gap-2 mt-2">
+                            <i class="pi pi-clock text-4xl text-orange-100"></i>
+                            <span class="text-4xl font-bold text-white">{{ statistics.pending }}</span>
+                        </div>
+                        <span class="stat-label mt-2">Pendientes</span>
+                    </div>
+                </div>
+                <div class="stat-card flex-1 min-w-16rem max-w-20rem p-0">
+                    <div class="stat-gradient stat-cyan flex flex-column align-items-start p-4 border-round-xl shadow-3 relative">
+                        <span class="stat-badge bg-cyan-500">Aprobadas</span>
+                        <div class="flex align-items-center gap-2 mt-2">
+                            <i class="pi pi-check-circle text-4xl text-cyan-100"></i>
+                            <span class="text-4xl font-bold text-white">{{ statistics.approved }}</span>
+                        </div>
+                        <span class="stat-label mt-2">Aprobadas</span>
+                    </div>
+                </div>
+                <div class="stat-card flex-1 min-w-16rem max-w-20rem p-0">
+                    <div class="stat-gradient stat-green flex flex-column align-items-start p-4 border-round-xl shadow-3 relative">
+                        <span class="stat-badge bg-green-500">Total S/</span>
+                        <div class="flex align-items-center gap-2 mt-2">
+                            <i class="pi pi-money-bill text-4xl text-green-100"></i>
+                            <span class="text-2xl font-bold text-white">{{ formatCurrencyPEN(statistics.totalAmount) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Principal -->
         <div class="col-12">
             <div class="card">
-                <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-                    <h5 class="m-0">Órdenes de Compra</h5>
-                    <div class="mt-3 md:mt-0">
-                        <button class="p-button p-component" @click="createNewPurchaseOrder">
-                            <i class="pi pi-plus mr-2"></i>
-                            <span class="p-button-label">Nueva Orden</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="grid mt-4">
-                    <div class="col-12 md:col-4 mb-3">
-                        <div class="p-input-icon-left w-full">
-                            <i class="pi pi-search"></i>
-                            <input type="text" v-model="searchQuery" class="p-inputtext p-component w-full" placeholder="Buscar..." />
+                <Toolbar class="mb-4">
+                    <template #start>
+                        <div class="my-2">
+                            <h5 class="m-0">Órdenes de Compra</h5>
+                        </div>
+                    </template>
+
+                    <template #end>
+                        <div class="flex gap-2">
+                            <Button label="Eliminar Seleccionadas" icon="pi pi-trash" severity="danger" @click="deleteSelectedOrders" :disabled="!selectedOrders || !selectedOrders.length" outlined />
+                            <Button label="Nueva Orden" icon="pi pi-plus" @click="createNewPurchaseOrder" />
+                        </div>
+                    </template>
+                </Toolbar>
+
+                <!-- Filtros -->
+                <div class="surface-card shadow-2 border-round-xl p-4 mb-4">
+                    <div class="flex flex-column md:flex-row align-items-stretch gap-3">
+                        <!-- Buscador global -->
+                        <div class="flex-1 min-w-[200px] flex align-items-center gap-2">
+                            <IconField iconPosition="left" class="w-full">
+                                <InputIcon>
+                                    <i class="pi pi-search" />
+                                </InputIcon>
+                                <InputText v-model="globalFilterValue" placeholder="Buscar órdenes..." @input="onGlobalFilterChange" class="w-full" />
+                            </IconField>
+                        </div>
+                        <!-- Filtro de estado -->
+                        <div class="flex-1 min-w-[180px] flex align-items-center gap-2">
+                            <Select v-model="statusFilter" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Estado" showClear class="w-full" @change="filters.status.value = statusFilter" />
+                        </div>
+                        <!-- Filtro de fechas -->
+                        <div class="flex-1 min-w-[200px] flex align-items-center gap-2">
+                            <DatePicker v-model="dateRange" selectionMode="range" :manualInput="false" placeholder="Rango de fechas" showIcon class="w-full" />
+                        </div>
+                        <!-- Botón limpiar -->
+                        <div class="flex align-items-center">
+                            <Button label="Limpiar" icon="pi pi-filter-slash" @click="clearFilters" outlined rounded class="px-3 py-2" />
                         </div>
                     </div>
-                    
-                    <div class="col-6 md:col-3 mb-3">
-                        <label for="status-filter" class="block mb-2">Estado</label>
-                        <select id="status-filter" v-model="statusFilter" class="p-inputtext p-component w-full">
-                            <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                                {{ option.label }}
-                            </option>
-                        </select>
-                    </div>
-                    
-                    <div class="col-6 md:col-4 mb-3">
-                        <label class="block mb-2">Rango de Fechas</label>
-                        <div class="flex">
-                            <input type="date" v-model="dateRange[0]" class="p-inputtext p-component w-full mr-2" />
-                            <input type="date" v-model="dateRange[1]" class="p-inputtext p-component w-full" />
+                </div>
+
+                <DataTable
+                    v-model:selection="selectedOrders"
+                    :value="purchaseOrders"
+                    :loading="loading"
+                    dataKey="id"
+                    :paginator="true"
+                    :rows="10"
+                    :filters="filters"
+                    paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                    :rowsPerPageOptions="[5, 10, 25]"
+                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} órdenes"
+                    responsiveLayout="scroll"
+                    :globalFilterFields="['id', 'supplier']"
+                    stripedRows
+                    removableSort
+                    @row-click="viewPurchaseOrderDetails($event.data)"
+                    class="p-datatable-gridlines"
+                >
+                    <template #header>
+                        <div class="flex justify-content-between">
+                            <span class="text-xl text-900 font-bold">Lista de Órdenes de Compra</span>
                         </div>
-                    </div>
-                    
-                    <div class="col-12 md:col-1 mb-3 flex align-items-end">
-                        <button class="p-button p-component p-button-outlined w-full" @click="clearFilters">
-                            <i class="pi pi-filter-slash"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div v-if="loading" class="flex justify-content-center mt-4">
-                    <i class="pi pi-spin pi-spinner text-2xl"></i>
-                </div>
-                
-                <div v-else-if="filteredPurchaseOrders.length === 0" class="text-center p-5">
-                    <i class="pi pi-shopping-bag text-4xl text-500 mb-3"></i>
-                    <p>No hay órdenes de compra que coincidan con los filtros</p>
-                </div>
-                
-                <div v-else class="overflow-x-auto mt-4">
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th class="text-left p-3 border-bottom-1 surface-border"># Orden</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Proveedor</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Fecha</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Fecha Esperada</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Items</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Total</th>
-                                <th class="text-center p-3 border-bottom-1 surface-border">Estado</th>
-                                <th class="text-center p-3 border-bottom-1 surface-border">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="order in filteredPurchaseOrders" :key="order.id" class="cursor-pointer hover:surface-200" @click="viewPurchaseOrderDetails(order)">
-                                <td class="p-3 border-bottom-1 surface-border">{{ order.id }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ order.supplier }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ order.date }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ order.expectedDate }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ order.items }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(order.total) }}</td>
-                                <td class="text-center p-3 border-bottom-1 surface-border">
-                                    <span class="px-2 py-1 text-xs border-round" :class="getStatusClass(order.status)">
-                                        {{ getStatusLabel(order.status) }}
-                                    </span>
-                                </td>
-                                <td class="text-center p-3 border-bottom-1 surface-border">
-                                    <div class="flex justify-content-center">
-                                        <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text mr-2" @click.stop="viewPurchaseOrderDetails(order)">
-                                            <i class="pi pi-eye"></i>
-                                        </button>
-                                        <button 
-                                            class="p-button p-component p-button-icon-only p-button-rounded p-button-text mr-2"
-                                            :class="{'p-button-success': order.status === 'approved'}"
-                                            @click.stop="receiveOrder(order, $event)"
-                                            :disabled="order.status !== 'approved'"
-                                        >
-                                            <i class="pi pi-check-square"></i>
-                                        </button>
-                                        <button 
-                                            class="p-button p-component p-button-icon-only p-button-rounded p-button-text"
-                                            :class="{'p-button-danger': order.status !== 'received' && order.status !== 'cancelled'}"
-                                            @click.stop="cancelOrder(order, $event)"
-                                            :disabled="order.status === 'received' || order.status === 'cancelled'"
-                                        >
-                                            <i class="pi pi-times-circle"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                    </template>
+
+                    <template #empty>
+                        <div class="text-center p-5">
+                            <i class="pi pi-shopping-bag text-4xl text-400 mb-3"></i>
+                            <p class="text-600">No se encontraron órdenes de compra</p>
+                        </div>
+                    </template>
+
+                    <template #loading>
+                        <div class="text-center p-5">
+                            <ProgressSpinner />
+                            <p class="text-600 mt-3">Cargando órdenes...</p>
+                        </div>
+                    </template>
+
+                    <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
+
+                    <Column field="id" header="# Orden" sortable>
+                        <template #body="slotProps">
+                            <Badge :value="slotProps.data.id" severity="info" />
+                        </template>
+                    </Column>
+
+                    <Column field="supplier" header="Proveedor" sortable>
+                        <template #body="slotProps">
+                            <div class="flex align-items-center">
+                                <i class="pi pi-building mr-2 text-400"></i>
+                                {{ slotProps.data.supplier }}
+                            </div>
+                        </template>
+                    </Column>
+
+                    <Column field="date" header="Fecha" sortable>
+                        <template #body="slotProps">
+                            {{ formatDate(slotProps.data.date) }}
+                        </template>
+                    </Column>
+
+                    <Column field="expectedDate" header="Fecha Esperada" sortable>
+                        <template #body="slotProps">
+                            <div class="flex align-items-center">
+                                <i class="pi pi-calendar mr-2 text-400"></i>
+                                {{ formatDate(slotProps.data.expectedDate) }}
+                            </div>
+                        </template>
+                    </Column>
+
+                    <Column field="items" header="Items" sortable>
+                        <template #body="slotProps">
+                            <Badge :value="slotProps.data.items" severity="secondary" />
+                        </template>
+                    </Column>
+
+                    <Column field="total" header="Total" sortable>
+                        <template #body="slotProps">
+                            <div class="font-semibold text-900">
+                                {{ formatCurrency(slotProps.data.total) }}
+                            </div>
+                        </template>
+                    </Column>
+
+                    <Column field="status" header="Estado" sortable>
+                        <template #body="slotProps">
+                            <Tag :value="getStatusLabel(slotProps.data.status)" :severity="getSeverity(slotProps.data.status)" />
+                        </template>
+                    </Column>
+
+                    <Column header="Acciones" style="width: 12rem">
+                        <template #body="slotProps">
+                            <div class="flex gap-2">
+                                <Button icon="pi pi-eye" severity="info" text rounded @click.stop="viewPurchaseOrderDetails(slotProps.data)" v-tooltip.top="'Ver detalles'" />
+                                <Button icon="pi pi-check-square" severity="success" text rounded @click.stop="receiveOrder(slotProps.data)" :disabled="slotProps.data.status !== 'approved'" v-tooltip.top="'Marcar como recibida'" />
+                                <Button
+                                    icon="pi pi-times-circle"
+                                    severity="danger"
+                                    text
+                                    rounded
+                                    @click.stop="cancelOrder(slotProps.data)"
+                                    :disabled="slotProps.data.status === 'received' || slotProps.data.status === 'cancelled'"
+                                    v-tooltip.top="'Cancelar orden'"
+                                />
+                            </div>
+                        </template>
+                    </Column>
+                </DataTable>
             </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-.cursor-pointer {
-    cursor: pointer;
+.stat-card {
+    flex-basis: 100%;
 }
-
-.overflow-x-auto {
-    overflow-x: auto;
+@media (min-width: 600px) {
+    .stat-card {
+        flex-basis: 48%;
+    }
+}
+@media (min-width: 992px) {
+    .stat-card {
+        flex-basis: 23%;
+    }
+}
+.stat-gradient.stat-blue {
+    background: linear-gradient(135deg, #2563eb 40%, #60a5fa 100%);
+}
+.stat-gradient.stat-orange {
+    background: linear-gradient(135deg, #f59e42 40%, #fbbf24 100%);
+}
+.stat-gradient.stat-cyan {
+    background: linear-gradient(135deg, #06b6d4 40%, #67e8f9 100%);
+}
+.stat-gradient.stat-green {
+    background: linear-gradient(135deg, #22c55e 40%, #bbf7d0 100%);
+}
+.stat-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.4rem 1rem;
+    border-radius: 1rem;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: bold;
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+    z-index: 2;
+}
+.stat-label {
+    color: #e0e7ef;
+    font-size: 1rem;
+    font-weight: 500;
+    opacity: 0.85;
 }
 </style>

@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useProvidersStore } from '@/stores/providersStore';
-import ProvidersTable from '@/components/providers/ProvidersTable.vue';
-import ProviderFormDialog from '@/components/providers/ProviderFormDialog.vue';
+import ProvidersTable from '@/views/purchases/providers/componentsProviders/ProvidersTable.vue';
+import ProviderFormDialog from '@/views/purchases/providers/componentsProviders/ProviderFormDialog.vue';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 
 const toast = useToast();

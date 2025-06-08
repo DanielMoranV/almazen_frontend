@@ -19,7 +19,11 @@ import TabPanel from 'primevue/tabpanel';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
+import Toolbar from 'primevue/toolbar';
+import Calendar from 'primevue/calendar';
 import Tooltip from 'primevue/tooltip';
+import Badge from 'primevue/badge';
+import ProgressSpinner from 'primevue/progressspinner';
 
 export default function registerPrimeVueComponents(app) {
     app.component('FileUpload', FileUpload);
@@ -48,5 +52,9 @@ export default function registerPrimeVueComponents(app) {
     app.component('InputIcon', InputIcon);
     app.component('MultiSelect', MultiSelect);
     app.component('AutoComplete', AutoComplete);
+    app.component('Toolbar', Toolbar);
+    app.component('Calendar', Calendar);
+    app.component('Badge', Badge);
+    app.component('ProgressSpinner', ProgressSpinner);
     app.directive('tooltip', Tooltip);
 }
