@@ -55,3 +55,9 @@ export const fetchCategoriesCompany = () => axios.get('/categories-company');
 export const createCategoryCompany = (payload) => axios.post('/categories-company', payload);
 export const deleteCategoryCompany = (id) => axios.delete(`/categories-company/${id}`);
 export const updateCategoryCompany = (payload, id) => axios.put(`/categories-company/${id}`, payload);
+
+// Purchase Orders
+export const fetchPurchaseOrders = () => axios.get('/purchases');
+export const createPurchaseOrder = (payload) => axios.post('/purchases', payload);
+export const deletePurchaseOrder = (id) => axios.delete(`/purchases/${id}`);
+export const updatePurchaseOrder = (payload, id) => axios.put(`/purchases/${id}`, payload);

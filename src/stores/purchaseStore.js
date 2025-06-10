@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia';
-import { fetchProviders, createProvider, deleteProvider, updateProvider } from '@/api';
+import { fetchPurchaseOrders, createPurchaseOrder, deletePurchaseOrder, updatePurchaseOrder } from '@/api';
 import cache from '@/utils/cache';
 import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
-export const useProvidersStore = defineStore('providersStore', {
+export const usePurchaseStore = defineStore('purchaseStore', {
     state: () => ({
-        providers: [],
+        purchaseOrders: [],
         message: '',
         success: false,
         isLoading: false,
@@ -13,17 +13,17 @@ export const useProvidersStore = defineStore('providersStore', {
     }),
 
     getters: {
-        providersList: (state) => state.providers,
-        isLoadingProviders: (state) => state.isLoading
+        purchaseOrdersList: (state) => state.purchaseOrders,
+        isLoadingPurchaseOrders: (state) => state.isLoading
     },
     actions: {
-        async fetchProviders() {
+        async fetchPurchaseOrders() {
             this.isLoading = true;
             try {
-                const res = await fetchProviders();
+                const res = await fetchPurchaseOrders();
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.providers = processed.data;
+                    this.purchaseOrders = processed.data;
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -31,13 +31,13 @@ export const useProvidersStore = defineStore('providersStore', {
                 this.isLoading = false;
             }
         },
-        async createProvider(payload) {
+        async createPurchaseOrder(payload) {
             this.isLoading = true;
             try {
-                const res = await createProvider(payload);
+                const res = await createPurchaseOrder(payload);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.providers.push(processed.data);
+                    this.purchaseOrders.push(processed.data);
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -45,13 +45,13 @@ export const useProvidersStore = defineStore('providersStore', {
                 this.isLoading = false;
             }
         },
-        async deleteProvider(id) {
+        async deletePurchaseOrder(id) {
             this.isLoading = true;
             try {
-                const res = await deleteProvider(id);
+                const res = await deletePurchaseOrder(id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.providers = this.providers.filter((provider) => provider.id !== id);
+                    this.purchaseOrders = this.purchaseOrders.filter((purchaseOrder) => purchaseOrder.id !== id);
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -59,13 +59,13 @@ export const useProvidersStore = defineStore('providersStore', {
                 this.isLoading = false;
             }
         },
-        async updateProvider(payload) {
+        async updatePurchaseOrder(payload) {
             this.isLoading = true;
             try {
-                const res = await updateProvider(payload, payload.id);
+                const res = await updatePurchaseOrder(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.providers = this.providers.map((provider) => (provider.id === payload.id ? processed.data : provider));
+                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data : purchaseOrder));
                 }
             } catch (error) {
                 handleProcessError(error, this);

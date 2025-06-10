@@ -15,7 +15,7 @@ const emit = defineEmits(['update:visible', 'submit']);
 const form = ref({
     id: null,
     name: '',
-    contact_name: '',
+    contact_person: '',
     phone: '',
     email: ''
 });
@@ -24,14 +24,14 @@ const resetForm = () => {
     form.value = {
         id: null,
         name: '',
-        contact_name: '',
+        contact_person: '',
         phone: '',
         email: ''
     };
 };
 
 const isFormValid = computed(() => {
-    return form.value.name && form.value.contact_name; // Phone and email are optional
+    return form.value.name && form.value.contact_person; // Phone and email are optional
 });
 
 const handleSubmit = () => {
@@ -65,9 +65,9 @@ watch(
             <small class="p-error" v-if="!form.name">Nombre es requerido.</small>
         </div>
         <div class="field">
-            <label for="contact_name">Nombre de Contacto</label>
-            <InputText id="contact_name" v-model="form.contact_name" placeholder="Ingrese el nombre de contacto" :class="{ 'p-invalid': !form.contact_name }" fluid />
-            <small class="p-error" v-if="!form.contact_name">Nombre de contacto es requerido.</small>
+            <label for="contact_person">Nombre de Contacto</label>
+            <InputText id="contact_person" v-model="form.contact_person" placeholder="Ingrese el nombre de contacto" :class="{ 'p-invalid': !form.contact_person }" fluid />
+            <small class="p-error" v-if="!form.contact_person">Nombre de contacto es requerido.</small>
         </div>
         <div class="field">
             <label for="phone">Teléfono</label>

@@ -20,7 +20,7 @@ defineEmits(['edit', 'delete']);
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    contact_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    contact_person: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     phone: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     email: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
 });
@@ -37,7 +37,7 @@ watch(
 const exportProviders = async () => {
     const columns = [
         { header: 'Nombre', key: 'name', width: 30 },
-        { header: 'Nombre Contacto', key: 'contact_name', width: 30 },
+        { header: 'Nombre Contacto', key: 'contact_person', width: 30 },
         { header: 'Teléfono', key: 'phone', width: 20 },
         { header: 'Email', key: 'email', width: 30 }
     ];
@@ -82,7 +82,7 @@ const exportProviders = async () => {
             <div class="flex justify-center items-center h-12">No se encontraron registros</div>
         </template>
         <Column field="name" header="Nombre" sortable style="min-width: 10rem" />
-        <Column field="contact_name" header="Nombre Contacto" sortable style="min-width: 10rem" />
+        <Column field="contact_person" header="Nombre Contacto" sortable style="min-width: 10rem" />
         <Column field="phone" header="Teléfono" sortable style="min-width: 8rem" />
         <Column field="email" header="Email" sortable style="min-width: 10rem" />
         <Column :exportable="false" style="min-width: 8rem">

@@ -27,9 +27,9 @@ const isSearching = ref(false);
 const searchError = ref(null);
 const submitted = ref(false);
 
-onMounted(() => {
-    unitsStore.fetchUnits();
-    categoriesStore.fetchCategories();
+onMounted(async () => {
+    await unitsStore.fetchUnits();
+    await categoriesStore.fetchCategories();
 });
 
 const props = defineProps({
@@ -101,11 +101,13 @@ const handleSubmit = () => {
     submitted.value = true;
     if (isFormValid.value) {
         emit('submit', form.value);
+        resetForm();
     }
 };
 
 const handleCancel = () => {
     emit('update:visible', false);
+    resetForm();
 };
 
 const searchProduct = async () => {

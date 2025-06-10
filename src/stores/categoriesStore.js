@@ -60,13 +60,13 @@ export const useCategoriesStore = defineStore('categoriesStore', {
                 this.isLoading = false;
             }
         },
-        async updateCategory(payload, id) {
+        async updateCategory(payload) {
             this.resetState();
             try {
-                const res = await updateCategory(payload, id);
+                const res = await updateCategory(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.categories = this.categories.map((category) => (category.id === id ? processed.data : category));
+                    this.categories = this.categories.map((category) => (category.id === payload.id ? processed.data : category));
                 }
             } catch (error) {
                 handleProcessError(error, this);

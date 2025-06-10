@@ -84,15 +84,16 @@ const showError = (detail) => {
 };
 </script>
 <template>
-    <div class="p-6 card">
+    <div class="p-4 sm:p-6 lg:px-16 card bg-white dark:bg-gray-900 rounded-xl shadow-md w-full max-w-none">
         <Toast />
         <ConfirmDialog />
 
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Gestión de Productos</h2>
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
             <Button
                 icon="pi pi-plus"
-                class="p-button-success"
+                class="p-button-success w-full sm:w-auto block sm:inline-flex mb-2 sm:mb-0"
+                label="Agregar Producto"
                 @click="
                     () => {
                         selectedProduct = null;
@@ -102,25 +103,27 @@ const showError = (detail) => {
             />
         </div>
 
-        <ProductsTable
-            :products="products"
-            :loading="productsStore.isLoadingProducts"
-            @edit="
-                (product) => {
-                    selectedProduct = product;
-                    showProductDialog = true;
-                }
-            "
-            @delete="
-                (product) => {
-                    selectedProduct = product;
-                    showDeleteDialog = true;
-                }
-            "
-        />
-
-        <ProductsFormDialog v-model:visible="showProductDialog" :product="selectedProduct" @submit="handleProductSubmit" :loading="productsStore.isLoadingProducts" />
-
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedProduct?.name || ''" @confirm="handleProductDelete" />
+        <!-- Tabla con scroll horizontal en móviles -->
+        <div class="overflow-x-auto rounded-lg shadow-sm bg-white dark:bg-gray-800">
+            <ProductsTable
+                :products="products"
+                :loading="productsStore.isLoadingProducts"
+                @edit="
+                    (product) => {
+                        selectedProduct = product;
+                        showProductDialog = true;
+                    }
+                "
+                @delete="
+                    (product) => {
+                        selectedProduct = product;
+                        showDeleteDialog = true;
+                    }
+                "
+            />
+        </div>
+        <!-- Diálogos -->
+        <ProductsFormDialog v-model:visible="showProductDialog" :product="selectedProduct" @submit="handleProductSubmit" :loading="productsStore.isLoadingProducts" dialog-class="max-w-full w-[95vw] sm:w-[500px]" />
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedProduct?.name || ''" @confirm="handleProductDelete" dialog-class="max-w-full w-[90vw] sm:w-[400px]" />
     </div>
 </template>

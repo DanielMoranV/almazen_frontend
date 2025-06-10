@@ -24,6 +24,7 @@ import Calendar from 'primevue/calendar';
 import Tooltip from 'primevue/tooltip';
 import Badge from 'primevue/badge';
 import ProgressSpinner from 'primevue/progressspinner';
+import Message from 'primevue/message';
 
 export default function registerPrimeVueComponents(app) {
     app.component('FileUpload', FileUpload);
@@ -56,5 +57,6 @@ export default function registerPrimeVueComponents(app) {
     app.component('Calendar', Calendar);
     app.component('Badge', Badge);
     app.component('ProgressSpinner', ProgressSpinner);
+    app.component('Message', Message);
     app.directive('tooltip', Tooltip);
 }

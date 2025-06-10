@@ -41,9 +41,7 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 const res = await fetchCompanies();
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.companies = Array.isArray(processed.data)
-                        ? processed.data.map(normalizeCompany)
-                        : [];
+                    this.companies = Array.isArray(processed.data) ? processed.data.map(normalizeCompany) : [];
                     this.success = true;
                     this.message = processed.message || 'Empresas cargadas correctamente';
                 } else {
@@ -77,13 +75,13 @@ export const useCompaniesStore = defineStore('companiesStore', {
             }
         },
 
-        async updateCompany(payload, id) {
+        async updateCompany(payload) {
             this.isLoading = true;
             try {
-                const res = await updateCompany(payload, id);
+                const res = await updateCompany(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.companies = this.companies.map((c) => (c.id === id ? normalizeCompany(processed.data) : c));
+                    this.companies = this.companies.map((c) => (c.id === payload.id ? normalizeCompany(processed.data) : c));
                     this.success = true;
                     this.message = processed.message || 'Empresa actualizada correctamente';
                 } else {

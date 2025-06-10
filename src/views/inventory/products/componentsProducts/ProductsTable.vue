@@ -8,7 +8,6 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import { exportToExcel } from '@/utils/excelUtils';
-// SOLUCIÓN 1: Usar JsBarcode directamente
 import JsBarcode from 'jsbarcode';
 import { useCategoriesStore } from '@/stores/categoriesStore';
 
@@ -115,11 +114,9 @@ const getBarcodeOptions = (type) => {
 
 <template>
     <DataTable
-        :style="{ fontSize: '13px', fontFamily: 'Arial, sans-serif' }"
         stripedRows
         :value="products"
         :loading="loading"
-        size="small"
         responsiveLayout="scroll"
         paginator
         scrollable
@@ -131,26 +128,37 @@ const getBarcodeOptions = (type) => {
         :rowsPerPageOptions="[5, 10, 20, 50]"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Productos"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        class="p-datatable-sm products-table"
+        class="products-table p-datatable-gridlines"
     >
         <template #header>
-            <div class="flex flex-wrap gap-2 items-center justify-between mb-3">
-                <Button type="button" icon="pi pi-file-excel" label="Exportar" outlined @click="exportProducts()" />
-                <IconField>
-                    <InputIcon>
-                        <i class="pi pi-search" />
-                    </InputIcon>
-                    <InputText v-model="localFilters.global.value" placeholder="Buscar..." />
-                </IconField>
+            <div class="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-2">
+                <span class="text-xl text-900 font-bold">Lista de Productos</span>
+                <div class="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center sm:gap-2">
+                    <Button type="button" icon="pi pi-file-excel" label="Exportar" outlined @click="exportProducts()" class="w-full sm:w-auto px-0 sm:px-3 py-3 sm:py-2 text-base sm:text-sm" />
+                    <IconField class="w-full sm:w-auto">
+                        <InputIcon>
+                            <i class="pi pi-search" />
+                        </InputIcon>
+                        <InputText v-model="localFilters.global.value" placeholder="Buscar..." class="w-full sm:w-64 px-3 py-2 text-base sm:text-sm" />
+                    </IconField>
+                </div>
             </div>
         </template>
 
         <template #empty>
-            <div class="flex justify-center items-center h-12">No se encontraron registros</div>
+            <div class="text-center p-5">
+                <i class="pi pi-box text-4xl text-400 mb-3"></i>
+                <p class="text-600">No se encontraron productos</p>
+            </div>
+        </template>
+        <template #loading>
+            <div class="text-center p-5">
+                <ProgressSpinner />
+                <p class="text-600 mt-3">Cargando productos...</p>
+            </div>
         </template>
 
-        <Column field="name" header="Nombre del Producto" sortable style="min-width: 12rem; max-width: 15rem" />
-
+        <Column field="name" header="Nombre" sortable style="min-width: 12rem; max-width: 15rem" />
         <Column field="sku" header="SKU" sortable style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
                 <div class="font-mono text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-center">
@@ -158,12 +166,9 @@ const getBarcodeOptions = (type) => {
                 </div>
             </template>
         </Column>
-
-        <!-- SOLUCIÓN: Componente de código de barras personalizado -->
         <Column field="barcode" header="Cód. Barras" sortable style="min-width: 10rem; max-width: 12rem">
             <template #body="{ data }">
                 <div v-if="data.barcode" class="barcode-container flex flex-col items-center gap-1">
-                    <!-- Canvas para el código de barras -->
                     <canvas
                         :ref="
                             (el) => {
@@ -178,7 +183,6 @@ const getBarcodeOptions = (type) => {
                 <span v-else class="text-gray-400">Sin código</span>
             </template>
         </Column>
-
         <Column field="type_barcode" header="Tipo" sortable style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <span class="px-2 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium">
@@ -186,7 +190,6 @@ const getBarcodeOptions = (type) => {
                 </span>
             </template>
         </Column>
-
         <Column field="description" header="Descripción" sortable style="min-width: 12rem; max-width: 18rem">
             <template #body="{ data }">
                 <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" :title="data.description">
@@ -194,7 +197,6 @@ const getBarcodeOptions = (type) => {
                 </div>
             </template>
         </Column>
-
         <Column header="Detalles" style="min-width: 8rem; max-width: 10rem">
             <template #body="{ data }">
                 <div class="text-center">
@@ -203,15 +205,14 @@ const getBarcodeOptions = (type) => {
                 </div>
             </template>
         </Column>
-
         <Column field="brand" header="Marca" sortable style="min-width: 8rem; max-width: 12rem">
             <template #body="{ data }">
-                <div class="font-medium text-sm text-gray-800 dark:text-gray-200">
-                    {{ data.brand || '-' }}
+                <div class="font-medium text-sm text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                    <i class="pi pi-tag text-blue-400"></i>
+                    <span>{{ data.brand || '-' }}</span>
                 </div>
             </template>
         </Column>
-
         <Column field="image_url" header="Imagen" style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
@@ -222,7 +223,6 @@ const getBarcodeOptions = (type) => {
                 </div>
             </template>
         </Column>
-
         <Column field="is_active" header="Act." sortable style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
@@ -231,12 +231,11 @@ const getBarcodeOptions = (type) => {
                 </div>
             </template>
         </Column>
-
         <Column :exportable="false" header="Acciones" style="min-width: 6rem; max-width: 8rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
-                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text title="Editar" @click="$emit('edit', slotProps.data)" />
-                    <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text title="Eliminar" @click="$emit('delete', slotProps.data)" />
+                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Editar'" @click="$emit('edit', slotProps.data)" />
+                    <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text v-tooltip.top="'Eliminar'" @click="$emit('delete', slotProps.data)" />
                 </div>
             </template>
         </Column>
@@ -245,28 +244,101 @@ const getBarcodeOptions = (type) => {
 
 <style scoped>
 :deep(.products-table) {
+    /* Sticky header */
     .p-datatable-thead > tr > th {
-        background-color: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background-color: #f1f5f9;
         color: #1e293b;
-        font-weight: 600;
-        font-size: 14px;
-        padding: 12px 8px;
+        font-weight: 700;
+        font-size: 15px;
+        padding: 14px 10px;
         border-bottom: 2px solid #e2e8f0;
         text-align: center;
+        letter-spacing: 0.02em;
     }
-
+    /* Mejor separación y fondo alterno */
     .p-datatable-tbody > tr > td {
-        padding: 10px 8px;
+        padding: 14px 10px;
         vertical-align: middle;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid #e5e7eb;
+        background: #fff;
+        font-size: 15px;
+        color: #334155;
     }
-
-    .p-datatable-tbody > tr:nth-child(even) {
-        background-color: #fafbfc;
+    .p-datatable-tbody > tr:nth-child(even) > td {
+        background: #f9fafb;
     }
-
-    .p-datatable-tbody > tr:hover {
-        background-color: #f1f5f9;
+    /* Hover con sombra */
+    .p-datatable-tbody > tr:hover > td {
+        background: #e0f2fe;
+        box-shadow: 0 2px 8px 0 rgba(0, 150, 136, 0.07);
+        transition:
+            box-shadow 0.2s,
+            background 0.2s;
+    }
+    /* Acciones más visibles */
+    .p-button-info {
+        background: #2563eb;
+        border: none;
+        color: #fff;
+        transition: background 0.2s;
+    }
+    .p-button-info:hover {
+        background: #1d4ed8;
+    }
+    .p-button-danger {
+        background: #dc2626;
+        border: none;
+        color: #fff;
+        transition: background 0.2s;
+    }
+    .p-button-danger:hover {
+        background: #b91c1c;
+    }
+    /* Imagen más limpia */
+    .product-img {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+        background: #f3f4f6;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+    }
+    /* Badge de estado */
+    .badge-activo {
+        background: #22c55e;
+        color: #fff;
+        font-size: 13px;
+        border-radius: 0.375rem;
+        padding: 3px 10px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        display: inline-block;
+    }
+    .badge-inactivo {
+        background: #ef4444;
+        color: #fff;
+        font-size: 13px;
+        border-radius: 0.375rem;
+        padding: 3px 10px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        display: inline-block;
+    }
+    /* Responsividad */
+    @media (max-width: 640px) {
+        .p-datatable-thead > tr > th,
+        .p-datatable-tbody > tr > td {
+            font-size: 12px;
+            padding: 8px 4px;
+        }
+        .product-img {
+            width: 36px;
+            height: 36px;
+        }
     }
 }
 
