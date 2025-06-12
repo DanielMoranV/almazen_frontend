@@ -23,7 +23,7 @@ const props = defineProps({
                         <span class="stat-badge bg-blue-500">Órdenes</span>
                         <div class="flex align-items-center gap-2 mt-2">
                             <i class="pi pi-list text-4xl text-blue-100"></i>
-                            <span class="text-4xl font-bold text-white">{{ statistics.total || 0 }}</span>
+                            <span class="text-4xl font-bold text-white">{{ statistics.totalOrders || 0 }}</span>
                         </div>
                         <span class="stat-label mt-2">Total Órdenes</span>
                     </div>

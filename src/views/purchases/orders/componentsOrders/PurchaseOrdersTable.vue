@@ -6,13 +6,7 @@ import { useRouter } from 'vue-router';
 
 const props = defineProps({
     purchaseOrders: { type: Array, required: true },
-    loading: { type: Boolean, default: false },
-    filters: { type: Object, required: true },
-    statusOptions: { type: Array, required: true },
-    formatCurrency: { type: Function, required: true },
-    formatDate: { type: Function, required: true },
-    getStatusLabel: { type: Function, required: true },
-    getSeverity: { type: Function, required: true }
+    loading: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['view-details', 'receive-order', 'cancel-order', 'update:selection']);
@@ -22,11 +16,68 @@ const selectedOrders = ref([]);
 watch(selectedOrders, (val) => {
     emit('update:selection', val);
 });
+
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    supplier: { value: null, matchMode: FilterMatchMode.EQUALS },
+    date: { value: null, matchMode: FilterMatchMode.EQUALS },
+    expectedDate: { value: null, matchMode: FilterMatchMode.EQUALS },
+    items: { value: null, matchMode: FilterMatchMode.EQUALS },
+    total: { value: null, matchMode: FilterMatchMode.EQUALS },
+    status: { value: null, matchMode: FilterMatchMode.EQUALS }
+});
+
+const statusOptions = ref([
+    { name: 'Pendiente', value: 'pending' },
+    { name: 'Aprobado', value: 'approved' },
+    { name: 'Rechazado', value: 'rejected' },
+    { name: 'Recibido', value: 'received' },
+    { name: 'Cancelado', value: 'cancelled' }
+]);
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value);
+};
+
+const formatDate = (value) => {
+    return new Intl.DateTimeFormat('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
+};
+
+const getStatusLabel = (status) => {
+    const statusOption = statusOptions.value.find((option) => option.value === status);
+    return statusOption ? statusOption.name : status;
+};
+
+const getSeverity = (status) => {
+    switch (status) {
+        case 'pending':
+            return 'warning';
+        case 'approved':
+            return 'success';
+        case 'rejected':
+            return 'danger';
+        case 'received':
+            return 'info';
+        case 'cancelled':
+            return 'secondary';
+        default:
+            return 'info';
+    }
+};
+
+const toast = useToast();
+
+const showSuccess = (summary, detail) => {
+    toast.add({ severity: 'success', summary, detail, life: 4000 });
+};
+
+const showError = (summary) => {
+    toast.add({ severity: 'error', summary, life: 4000 });
+};
 </script>
 
 <template>
     <DataTable
-        v-model:selection="selectedOrders"
         :value="purchaseOrders"
         :loading="loading"
         dataKey="id"
@@ -59,41 +110,50 @@ watch(selectedOrders, (val) => {
                 <p class="text-600 mt-3">Cargando órdenes...</p>
             </div>
         </template>
-        <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-        <Column field="id" header="# Orden" sortable>
+        <Column field="id" header="#" sortable>
             <template #body="slotProps">
                 <Badge :value="slotProps.data.id" severity="info" />
             </template>
         </Column>
-        <Column field="supplier" header="Proveedor" sortable />
-        <Column field="date" header="Fecha" sortable>
+        <Column field="provider.name" header="Proveedor" sortable />
+        <Column field="purchase_date" header="Fecha" sortable>
             <template #body="slotProps">
                 <div class="flex align-items-center">
                     <i class="pi pi-calendar mr-2 text-400"></i>
-                    {{ formatDate(slotProps.data.date) }}
+                    {{ formatDate(slotProps.data.purchase_date) }}
                 </div>
             </template>
         </Column>
-        <Column field="expectedDate" header="Entrega" sortable>
-            <template #body="slotProps">
-                <div class="flex align-items-center">
-                    <i class="pi pi-calendar mr-2 text-400"></i>
-                    {{ formatDate(slotProps.data.expectedDate) }}
-                </div>
-            </template>
-        </Column>
+        <Column field="document_number" header="Comprobante" sortable />
+
         <Column field="items" header="Items" sortable>
             <template #body="slotProps">
                 <Badge :value="slotProps.data.items" severity="secondary" />
             </template>
         </Column>
-        <Column field="total" header="Total" sortable>
+        <Column field="discount_amount" header="Descuento" sortable>
             <template #body="slotProps">
                 <div class="font-semibold text-900">
-                    {{ formatCurrency(slotProps.data.total) }}
+                    {{ formatCurrency(slotProps.data.discount_amount) }}
                 </div>
             </template>
         </Column>
+        <Column field="tax_amount" header="IGV" sortable>
+            <template #body="slotProps">
+                <div class="font-semibold text-900">
+                    {{ formatCurrency(slotProps.data.tax_amount) }}
+                </div>
+            </template>
+        </Column>
+
+        <Column field="total_amount" header="Total" sortable>
+            <template #body="slotProps">
+                <div class="font-semibold text-900">
+                    {{ formatCurrency(slotProps.data.total_amount) }}
+                </div>
+            </template>
+        </Column>
+        <Column field="user.name" header="Creado por" sortable />
         <Column field="status" header="Estado" sortable>
             <template #body="slotProps">
                 <Tag :value="getStatusLabel(slotProps.data.status)" :severity="getSeverity(slotProps.data.status)" />

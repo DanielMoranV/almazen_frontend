@@ -19,6 +19,14 @@ const showDeleteDialog = ref(false);
 // Inicialización
 onMounted(async () => {
     await loadPurchaseOrders();
+    statistics.value = {
+        totalOrders: purchaseOrders.value.length,
+        totalAmount: purchaseOrders.value.reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
+        averageAmount: purchaseOrders.value.length > 0 ? purchaseOrders.value.reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / purchaseOrders.value.length : 0,
+        highestAmount: purchaseOrders.value.length > 0 ? Math.max(...purchaseOrders.value.map((order) => Number(order.total_amount) || 0)) : 0,
+        lowestAmount: purchaseOrders.value.length > 0 ? Math.min(...purchaseOrders.value.map((order) => Number(order.total_amount) || 0)) : 0
+    };
+    console.log(statistics.value);
 });
 
 // Métodos
@@ -27,6 +35,7 @@ const loadPurchaseOrders = async () => {
 
     if (purchaseStore.success) {
         purchaseOrders.value = purchaseStore.purchaseOrdersList;
+        console.log(purchaseOrders.value);
         showSuccess('Órdenes de compra cargadas', purchaseStore.message);
     } else {
         if (purchaseStore.validationErrors && purchaseStore.validationErrors.length > 0) {
@@ -85,17 +94,13 @@ const showError = (detail) => {
 };
 
 // Estadísticas
-const statistics = computed(() => {
-    const orders = Array.isArray(purchaseOrders.value) ? purchaseOrders.value : [];
-    return {
-        totalOrders: orders.length,
-        totalAmount: orders.reduce((total, order) => total + (order.total || 0), 0),
-        averageAmount: orders.length > 0 ? orders.reduce((total, order) => total + (order.total || 0), 0) / orders.length : 0,
-        highestAmount: orders.length > 0 ? Math.max(...orders.map((order) => order.total || 0)) : 0,
-        lowestAmount: orders.length > 0 ? Math.min(...orders.map((order) => order.total || 0)) : 0
-    };
+const statistics = ref({
+    totalOrders: 0,
+    totalAmount: 0,
+    averageAmount: 0,
+    highestAmount: 0,
+    lowestAmount: 0
 });
-
 function formatCurrencyPEN(value) {
     // Siempre muestra el símbolo S/ para el sol peruano
     if (typeof value !== 'number') return '';
@@ -126,7 +131,7 @@ function formatCurrencyPEN(value) {
         </div>
 
         <!-- Tabla con scroll horizontal en móviles -->
-        <!-- <div class="overflow-x-auto rounded-lg shadow-sm bg-white dark:bg-gray-800">
+        <div class="overflow-x-auto rounded-lg shadow-sm bg-white dark:bg-gray-800">
             <PurchaseOrdersTable
                 :purchaseOrders="purchaseOrders"
                 :loading="purchaseStore.isLoadingPurchaseOrders"
@@ -143,7 +148,7 @@ function formatCurrencyPEN(value) {
                     }
                 "
             />
-        </div> -->
+        </div>
         <!-- Diálogos -->
         <PurchaseOrderFormDialog v-model:visible="showPurchaseOrderDialog" :order="selectedOrder" @submit="handlePurchaseOrderSubmit" :loading="purchaseStore.isLoadingPurchaseOrders" dialog-class="max-w-full w-[95vw] sm:w-[500px]" />
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.id || ''" @confirm="handlePurchaseOrderDelete" dialog-class="max-w-full w-[90vw] sm:w-[400px]" />

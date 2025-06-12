@@ -23,7 +23,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await fetchPurchaseOrders();
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = processed.data;
+                    this.purchaseOrders = processed.data.purchases;
                 }
             } catch (error) {
                 handleProcessError(error, this);

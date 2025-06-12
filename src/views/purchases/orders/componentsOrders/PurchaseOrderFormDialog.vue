@@ -46,8 +46,8 @@ const form = ref({
     document_type: null,
     document_number: null,
     purchase_date: null,
-    total_amount: null,
-    tax_amount: null,
+    total_amount: 0,
+    tax_amount: 0,
     discount_amount: 0,
     notes: null,
     details: []
@@ -58,9 +58,9 @@ const addDetail = (detail = null) => {
         detail || {
             product_id: null,
             batch_id: null,
-            quantity: null,
-            unit_price: null,
-            total_amount: null,
+            quantity: 0,
+            unit_price: 0,
+            total_amount: 0,
             discount_amount: 0
         }
     );
@@ -78,8 +78,8 @@ const resetForm = () => {
         document_type: null,
         document_number: null,
         purchase_date: null,
-        total_amount: null,
-        tax_amount: null,
+        total_amount: 0,
+        tax_amount: 0,
         discount_amount: 0,
         notes: null,
         details: []
