@@ -24,7 +24,11 @@ onMounted(async () => {
         totalAmount: purchaseOrders.value.reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
         averageAmount: purchaseOrders.value.length > 0 ? purchaseOrders.value.reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / purchaseOrders.value.length : 0,
         highestAmount: purchaseOrders.value.length > 0 ? Math.max(...purchaseOrders.value.map((order) => Number(order.total_amount) || 0)) : 0,
-        lowestAmount: purchaseOrders.value.length > 0 ? Math.min(...purchaseOrders.value.map((order) => Number(order.total_amount) || 0)) : 0
+        lowestAmount: purchaseOrders.value.length > 0 ? Math.min(...purchaseOrders.value.map((order) => Number(order.total_amount) || 0)) : 0,
+        pendingOrders: purchaseOrders.value.filter((order) => order.status === 'PENDIENTE').length,
+        approvedOrders: purchaseOrders.value.filter((order) => order.status === 'APROBADO').length,
+        receivedOrders: purchaseOrders.value.filter((order) => order.status === 'RECIBIDO').length,
+        cancelledOrders: purchaseOrders.value.filter((order) => order.status === 'CANCELADO').length
     };
     console.log(statistics.value);
 });

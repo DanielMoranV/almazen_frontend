@@ -11,6 +11,8 @@ const props = defineProps({
         required: true
     }
 });
+
+console.log(props.statistics);
 </script>
 
 <template>
@@ -33,7 +35,7 @@ const props = defineProps({
                         <span class="stat-badge bg-orange-500">Pendientes</span>
                         <div class="flex align-items-center gap-2 mt-2">
                             <i class="pi pi-clock text-4xl text-orange-100"></i>
-                            <span class="text-4xl font-bold text-white">{{ statistics.pending || 0 }}</span>
+                            <span class="text-4xl font-bold text-white">{{ statistics.pendingOrders || 0 }}</span>
                         </div>
                         <span class="stat-label mt-2">Pendientes</span>
                     </div>
@@ -43,7 +45,7 @@ const props = defineProps({
                         <span class="stat-badge bg-cyan-500">Aprobadas</span>
                         <div class="flex align-items-center gap-2 mt-2">
                             <i class="pi pi-check-circle text-4xl text-cyan-100"></i>
-                            <span class="text-4xl font-bold text-white">{{ statistics.approved || 0 }}</span>
+                            <span class="text-4xl font-bold text-white">{{ statistics.approvedOrders || 0 }}</span>
                         </div>
                         <span class="stat-label mt-2">Aprobadas</span>
                     </div>
@@ -66,7 +68,6 @@ const props = defineProps({
 .stat-card {
     flex: 1 1 16rem;
     min-width: 16rem;
-    max-width: 20rem;
     padding: 0;
 }
 .stat-gradient {

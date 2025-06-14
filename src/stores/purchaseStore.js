@@ -37,7 +37,8 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await createPurchaseOrder(payload);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders.push(processed.data);
+                    this.purchaseOrders.unshift(processed.data.purchase);
+                    console.log(this.purchaseOrders);
                 }
             } catch (error) {
                 handleProcessError(error, this);
