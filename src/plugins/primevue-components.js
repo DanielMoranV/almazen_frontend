@@ -25,6 +25,7 @@ import Tooltip from 'primevue/tooltip';
 import Badge from 'primevue/badge';
 import ProgressSpinner from 'primevue/progressspinner';
 import Message from 'primevue/message';
+import Skeleton from 'primevue/skeleton';
 
 export default function registerPrimeVueComponents(app) {
     app.component('FileUpload', FileUpload);
@@ -58,5 +59,6 @@ export default function registerPrimeVueComponents(app) {
     app.component('Badge', Badge);
     app.component('ProgressSpinner', ProgressSpinner);
     app.component('Message', Message);
+    app.component('Skeleton', Skeleton);
     app.directive('tooltip', Tooltip);
 }

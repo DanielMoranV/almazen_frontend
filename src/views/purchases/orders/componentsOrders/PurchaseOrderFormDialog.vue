@@ -3,6 +3,9 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useProvidersStore } from '@/stores/providersStore';
 import { useWarehousesStore } from '@/stores/warehousesStore';
 import { useProductsStore } from '@/stores/productsStore';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
 
 const providersStore = useProvidersStore();
 const warehousesStore = useWarehousesStore();
@@ -23,7 +26,7 @@ onMounted(async () => {
 const props = defineProps({
     visible: Boolean,
     loading: Boolean,
-    purchaseOrder: {
+    order: {
         type: Object,
         default: null
     }
@@ -38,6 +41,11 @@ const documenTypeList = computed(() => {
         { name: 'Ticket', value: 'TICKET' }
     ];
 });
+
+// Detecta si el documento es factura o boleta
+const isFacturaOrBoleta = computed(() =>
+    form.value.document_type === 'FACTURA' || form.value.document_type === 'BOLETA'
+);
 
 const form = ref({
     id: null,
@@ -91,10 +99,10 @@ const isFormValid = computed(() => {
 });
 
 watch(
-    () => props.purchaseOrder,
-    (purchaseOrder) => {
-        if (purchaseOrder) {
-            form.value = { ...purchaseOrder };
+    () => props.order,
+    (order) => {
+        if (order) {
+            form.value = { ...order };
         } else {
             resetForm();
         }
@@ -114,6 +122,73 @@ const handleCancel = () => {
     emit('update:visible', false);
     resetForm();
 };
+// --- Autocálculo de totales y descuentos ---
+// Autocálculo de IGV incluido en boleta/factura
+watch([
+    () => form.value.total_amount,
+    () => form.value.document_type
+], ([total, docType]) => {
+    if (isFacturaOrBoleta.value && total > 0) {
+        const base = +(total / 1.18).toFixed(2);
+        const igv = +(total - base).toFixed(2);
+        form.value.tax_amount = igv;
+        // (Opcional: podrías guardar la base imponible si quieres mostrarla)
+    }
+});
+watch(
+    () => form.value.details.map((d) => [d.quantity, d.unit_price, d.discount_amount]),
+    () => {
+        let totalGeneral = 0;
+        let totalDescuentos = 0;
+        form.value.details.forEach((detail) => {
+            const qty = Number(detail.quantity) || 0;
+            const price = Number(detail.unit_price) || 0;
+            let descuento = Number(detail.discount_amount) || 0;
+            const bruto = +(qty * price).toFixed(2);
+            // Validar: descuento no mayor al subtotal
+            if (descuento > bruto) {
+                descuento = bruto;
+                detail.discount_amount = bruto;
+                // TODO: mostrar advertencia visual al usuario
+                toast.add({ severity: 'error', summary: 'Error', detail: 'El descuento no puede ser mayor al subtotal', life: 3000 });
+            }
+            // El total del detalle es bruto - descuento, nunca menor a 0
+            detail.total_amount = Math.max(+(bruto - descuento).toFixed(2), 0);
+            totalGeneral += detail.total_amount;
+            totalDescuentos += descuento;
+        });
+        // Descuentos generales: suma de descuentos de los detalles
+        // Validar: descuento general no mayor al total bruto
+        let totalBruto = form.value.details.reduce((sum, d) => sum + Number(d.quantity) * Number(d.unit_price), 0);
+        if (totalDescuentos > totalBruto) {
+            totalDescuentos = totalBruto;
+            form.value.discount_amount = +totalBruto.toFixed(2);
+            // TODO: mostrar advertencia visual al usuario
+            toast.add({ severity: 'error', summary: 'Error', detail: 'El descuento general no puede ser mayor al total bruto', life: 3000 });
+        } else {
+            form.value.discount_amount = +totalDescuentos.toFixed(2);
+        }
+        // Total general: suma de netos de los detalles (ya incluye IGV)
+        let igv = Number(form.value.tax_amount) || 0;
+        // Validar: IGV no puede ser negativo
+        if (igv < 0) igv = 0;
+        form.value.tax_amount = igv;
+        form.value.total_amount = +(totalGeneral).toFixed(2);
+    },
+    { deep: true }
+);
+// Si cambia el IGV, recalcula el total_amount general
+watch(
+    () => form.value.tax_amount,
+    () => {
+        let totalGeneral = form.value.details.reduce((sum, d) => sum + (Number(d.quantity) * Number(d.unit_price) - (Number(d.discount_amount) || 0)), 0);
+        let igv = Number(form.value.tax_amount) || 0;
+        // Validar: IGV no puede ser negativo
+        if (igv < 0) igv = 0;
+        form.value.tax_amount = igv;
+        form.value.total_amount = +(totalGeneral).toFixed(2);
+    }
+);
 </script>
 
 <template>
@@ -128,7 +203,22 @@ const handleCancel = () => {
         :draggable="false"
         :resizable="false"
     >
-        <div class="purchase-order-form">
+        <div class="purchase-order-form" style="position: relative;">
+            <div v-if="loading" class="form-skeleton-overlay">
+                <div class="form-skeleton-content">
+                    <Skeleton width="90%" height="2.5rem" class="mb-3" borderRadius="12px" />
+                    <Skeleton width="60%" height="2.5rem" class="mb-3" borderRadius="12px" />
+                    <Skeleton width="100%" height="10rem" class="mb-3" borderRadius="12px" />
+                    <Skeleton width="100%" height="3.5rem" class="mb-3" borderRadius="12px" />
+                    <Skeleton width="100%" height="3.5rem" class="mb-3" borderRadius="12px" />
+                    <Skeleton width="100%" height="2.5rem" class="mb-3" borderRadius="12px" />
+                    <Skeleton width="100%" height="4rem" class="mb-3" borderRadius="12px" />
+                </div>
+                <div class="form-skeleton-footer">
+                    <Skeleton width="120px" height="2.5rem" class="mr-2" borderRadius="8px" />
+                    <Skeleton width="180px" height="2.5rem" borderRadius="8px" />
+                </div>
+            </div>
             <!-- Información básica compacta -->
             <div class="basic-info-grid">
                 <!-- Fila 1: Proveedor y Almacén -->
@@ -194,7 +284,7 @@ const handleCancel = () => {
                         <i class="pi pi-percentage"></i>
                         IGV
                     </label>
-                    <InputNumber v-model="form.tax_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="compact-number" />
+                    <InputNumber v-model="form.tax_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="compact-number" :disabled="isFacturaOrBoleta" />
                 </div>
 
                 <div class="field-group">
@@ -232,7 +322,7 @@ const handleCancel = () => {
                         <Badge :value="form.details.length" severity="info" v-if="form.details.length > 0" />
                         <span>{{ form.details.length === 0 ? 'Sin productos' : `${form.details.length} producto${form.details.length !== 1 ? 's' : ''}` }}</span>
                     </div>
-                    <Button label="Agregar Producto" icon="pi pi-plus" size="small" outlined @click="addDetail()" />
+                    <Button label="Agregar Producto" icon="pi pi-plus" size="small" outlined @click="addDetail()" :disabled="loading" />
                 </div>
 
                 <div class="products-content">
@@ -245,7 +335,7 @@ const handleCancel = () => {
                             <h4>No hay productos agregados</h4>
                             <p>Comienza agregando productos a tu orden de compra</p>
                         </div>
-                        <Button label="Agregar Primer Producto" icon="pi pi-plus" @click="addDetail()" />
+                        <Button label="Agregar Primer Producto" icon="pi pi-plus" @click="addDetail()" :disabled="loading" />
                     </div>
 
                     <!-- Tabla compacta -->
@@ -281,7 +371,7 @@ const handleCancel = () => {
 
                             <Column field="total_amount" header="Total" style="width: 120px">
                                 <template #body="{ data }">
-                                    <InputNumber v-model="data.total_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="table-currency" />
+                                    <InputNumber :modelValue="data.total_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="table-currency" disabled />
                                 </template>
                             </Column>
 
@@ -349,7 +439,38 @@ const handleCancel = () => {
     max-height: 70vh;
     overflow-y: auto;
     padding: 1rem;
+    position: relative;
 }
+.form-skeleton-overlay {
+    position: absolute;
+    z-index: 20;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.82);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: all;
+}
+.form-skeleton-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 2.5rem;
+}
+.form-skeleton-footer {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
 
 /* Grid básico optimizado */
 .basic-info-grid {

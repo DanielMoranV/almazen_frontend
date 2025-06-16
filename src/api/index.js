@@ -61,3 +61,7 @@ export const fetchPurchaseOrders = () => axios.get('/purchases');
 export const createPurchaseOrder = (payload) => axios.post('/purchases', payload);
 export const deletePurchaseOrder = (id) => axios.delete(`/purchases/${id}`);
 export const updatePurchaseOrder = (payload, id) => axios.put(`/purchases/${id}`, payload);
+export const approvePurchaseOrder = (id) => axios.patch(`/purchases/${id}/approve`);
+export const rejectPurchaseOrder = (id) => axios.patch(`/purchases/${id}/reject`);
+export const receivePurchaseOrder = (id) => axios.patch(`/purchases/${id}/receive`);
+export const cancelPurchaseOrder = (id) => axios.patch(`/purchases/${id}/cancel`);

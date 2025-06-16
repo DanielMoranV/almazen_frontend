@@ -3,10 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { useRouter } from 'vue-router';
-// Asegúrate de que estos imports estén registrados globalmente o aquí si usas SFC
-// import Dialog from 'primevue/dialog';
-// import DataTable from 'primevue/datatable';
-// import Column from 'primevue/column';
+import PrintOrderDialog from './PrintOrderDialog.vue';
 
 // --- Estados y métodos para Dialog de items ---
 const showItemsDialog = ref(false);
@@ -31,7 +28,7 @@ const props = defineProps({
     loading: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['view-details', 'receive-order', 'cancel-order', 'update:selection']);
+const emit = defineEmits(['view-details', 'receive-order', 'cancel-order', 'approve-order', 'update:selection', 'edit', 'delete']);
 
 const selectedOrders = ref([]);
 
@@ -93,6 +90,12 @@ const getSeverity = (status) => {
 };
 
 const toast = useToast();
+const showPrintDialog = ref(false);
+const orderToPrint = ref(null);
+function printOrder(order) {
+    orderToPrint.value = order;
+    showPrintDialog.value = true;
+}
 
 const showSuccess = (summary, detail) => {
     toast.add({ severity: 'success', summary, detail, life: 4000 });
@@ -100,6 +103,39 @@ const showSuccess = (summary, detail) => {
 
 const showError = (summary) => {
     toast.add({ severity: 'error', summary, life: 4000 });
+};
+const getStatusClass = (status) => {
+    switch (status) {
+        case 'PENDIENTE':
+            return 'status-pending';
+        case 'APROBADO':
+            return 'status-approved';
+        case 'RECIBIDO':
+            return 'status-received';
+        case 'ANULADO':
+            return 'status-cancelled';
+        case 'RECHAZADO':
+            return 'status-rejected';
+        default:
+            return 'status-default';
+    }
+};
+
+const getStatusIcon = (status) => {
+    switch (status) {
+        case 'PENDIENTE':
+            return 'pi pi-clock';
+        case 'APROBADO':
+            return 'pi pi-check-circle';
+        case 'RECIBIDO':
+            return 'pi pi-box';
+        case 'ANULADO':
+            return 'pi pi-times-circle';
+        case 'RECHAZADO':
+            return 'pi pi-ban';
+        default:
+            return 'pi pi-question-circle';
+    }
 };
 </script>
 
@@ -178,38 +214,24 @@ const showError = (summary) => {
         <Column field="user.name" header="Creado por" sortable />
         <Column field="status" header="Estado" sortable>
             <template #body="slotProps">
-                <Tag :value="getStatusLabel(slotProps.data.status)" :severity="getSeverity(slotProps.data.status)" />
+                <i :class="['status-icon', getStatusIcon(slotProps.data.status), getStatusClass(slotProps.data.status)]" v-tooltip.top="getStatusLabel(slotProps.data.status)"></i>
             </template>
         </Column>
         <Column header="Acciones" style="width: 13rem">
             <template #body="slotProps">
                 <div class="flex gap-2">
                     <Button icon="pi pi-eye" severity="help" text rounded @click.stop="openItemsDialog(slotProps.data)" v-tooltip.top="'Ver items'" />
+                    <Button icon="pi pi-print" severity="info" text rounded @click.stop="printOrder(slotProps.data)" v-tooltip.top="'Imprimir orden'" />
+                    <Button v-if="slotProps.data.status === 'PENDIENTE'" icon="pi pi-pencil" severity="warning" text rounded @click.stop="emit('edit', slotProps.data)" v-tooltip.top="'Editar orden'" />
+                    <Button v-if="slotProps.data.status === 'PENDIENTE'" icon="pi pi-check" severity="info" text rounded @click.stop="emit('approve-order', slotProps.data)" v-tooltip.top="'Aprobar orden'" />
+                    <Button v-if="slotProps.data.status === 'APROBADO'" icon="pi pi-check-square" severity="success" text rounded @click.stop="emit('receive-order', slotProps.data)" v-tooltip.top="'Marcar como recibida'" />
                     <Button
-                        v-if="slotProps.data.status === 'PENDIENTE'"
-                        icon="pi pi-check"
-                        severity="info"
-                        text
-                        rounded
-                        @click.stop="emit('approve-order', slotProps.data)"
-                        v-tooltip.top="'Aprobar orden'"
-                    />
-                    <Button
-                        v-if="slotProps.data.status === 'APROBADO'"
-                        icon="pi pi-check-square"
-                        severity="success"
-                        text
-                        rounded
-                        @click.stop="emit('receive-order', slotProps.data)"
-                        v-tooltip.top="'Marcar como recibida'"
-                    />
-                    <Button
+                        v-if="slotProps.data.status === 'PENDIENTE' || slotProps.data.status === 'APROBADO'"
                         icon="pi pi-times-circle"
                         severity="danger"
                         text
                         rounded
                         @click.stop="emit('cancel-order', slotProps.data)"
-                        :disabled="slotProps.data.status === 'RECIBIDO'"
                         v-tooltip.top="'Anular orden'"
                     />
                 </div>
@@ -262,8 +284,45 @@ const showError = (summary) => {
             </template>
         </Dialog>
     </DataTable>
+    <PrintOrderDialog v-if="showPrintDialog" :order="orderToPrint" @close="showPrintDialog = false" />
 </template>
 
 <style scoped>
-/* Puedes agregar estilos específicos de la tabla aquí si es necesario */
+.status-icon {
+    width: 2em;
+    height: 2em;
+    font-size: 1.15em;
+    border-radius: 50%;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+    cursor: help;
+    background: inherit;
+    /* El gradiente se hereda de la clase de estado */
+    transition: box-shadow 0.2s;
+}
+.status-icon:hover {
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.13);
+}
+
+.status-pending {
+    background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+}
+.status-approved {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+.status-received {
+    background: linear-gradient(90deg, #06b6d4 0%, #22d3ee 100%);
+}
+.status-cancelled {
+    background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+}
+.status-rejected {
+    background: linear-gradient(90deg, #6b7280 0%, #9ca3af 100%);
+}
+.status-default {
+    background: #64748b;
+}
 </style>

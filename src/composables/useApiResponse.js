@@ -10,6 +10,9 @@ export function processResponse(response) {
             validationErrors = response.details.errors;
         } else if (Array.isArray(response.details)) {
             validationErrors = response.details;
+        } else if (response.details.error_message) {
+            validationErrors = [response.details.error_message];
+            response.message = response.details.error_message;
         }
     }
     if (response && response.validationErrors) {

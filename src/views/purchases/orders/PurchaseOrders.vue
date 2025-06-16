@@ -19,27 +19,62 @@ const showDeleteDialog = ref(false);
 // Inicialización
 onMounted(async () => {
     await loadPurchaseOrders();
-    statistics.value = {
-        totalOrders: purchaseOrders.value.length,
-        totalAmount: purchaseOrders.value.reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
-        averageAmount: purchaseOrders.value.length > 0 ? purchaseOrders.value.reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / purchaseOrders.value.length : 0,
-        highestAmount: purchaseOrders.value.length > 0 ? Math.max(...purchaseOrders.value.map((order) => Number(order.total_amount) || 0)) : 0,
-        lowestAmount: purchaseOrders.value.length > 0 ? Math.min(...purchaseOrders.value.map((order) => Number(order.total_amount) || 0)) : 0,
-        pendingOrders: purchaseOrders.value.filter((order) => order.status === 'PENDIENTE').length,
-        approvedOrders: purchaseOrders.value.filter((order) => order.status === 'APROBADO').length,
-        receivedOrders: purchaseOrders.value.filter((order) => order.status === 'RECIBIDO').length,
-        cancelledOrders: purchaseOrders.value.filter((order) => order.status === 'CANCELADO').length
-    };
-    console.log(statistics.value);
+    // Las estadísticas se recalculan automáticamente por el computed
 });
 
 // Métodos
+const handleApproveOrder = async (order) => {
+    await purchaseStore.approvePurchaseOrder(order.id);
+    if (purchaseStore.success) {
+        purchaseOrders.value = purchaseStore.purchaseOrdersList;
+        showSuccess('Orden aprobada', purchaseStore.message);
+    } else {
+        if (purchaseStore.validationErrors && purchaseStore.validationErrors.length > 0) {
+            purchaseStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(purchaseStore.message);
+        }
+    }
+};
+
+const handleReceiveOrder = async (order) => {
+    await purchaseStore.receivePurchaseOrder(order.id);
+    if (purchaseStore.success) {
+        purchaseOrders.value = purchaseStore.purchaseOrdersList;
+        showSuccess('Orden marcada como recibida', purchaseStore.message);
+    } else {
+        if (purchaseStore.validationErrors && purchaseStore.validationErrors.length > 0) {
+            purchaseStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(purchaseStore.message);
+        }
+    }
+};
+
+const handleCancelOrder = async (order) => {
+    await purchaseStore.cancelPurchaseOrder(order.id);
+    if (purchaseStore.success) {
+        purchaseOrders.value = purchaseStore.purchaseOrdersList;
+        showSuccess('Orden cancelada', purchaseStore.message);
+    } else {
+        if (purchaseStore.validationErrors && purchaseStore.validationErrors.length > 0) {
+            purchaseStore.validationErrors.forEach((err) => {
+                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            });
+        } else {
+            showError(purchaseStore.message);
+        }
+    }
+};
 const loadPurchaseOrders = async () => {
     await purchaseStore.fetchPurchaseOrders();
 
     if (purchaseStore.success) {
         purchaseOrders.value = purchaseStore.purchaseOrdersList;
-        console.log(purchaseOrders.value);
         showSuccess('Órdenes de compra cargadas', purchaseStore.message);
     } else {
         if (purchaseStore.validationErrors && purchaseStore.validationErrors.length > 0) {
@@ -97,13 +132,32 @@ const showError = (detail) => {
     toast.add({ severity: 'error', summary: 'Error', detail, life: 3000 });
 };
 
-// Estadísticas
-const statistics = ref({
-    totalOrders: 0,
-    totalAmount: 0,
-    averageAmount: 0,
-    highestAmount: 0,
-    lowestAmount: 0
+// Estadísticas reactivas
+const statistics = computed(() => {
+    const orders = purchaseOrders.value;
+    return {
+        totalOrders: orders.length,
+        totalAmount: orders
+            .filter(order => order.status !== 'ANULADO')
+            .reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
+        averageAmount:
+            orders.filter(order => order.status !== 'ANULADO').length > 0
+                ? orders.filter(order => order.status !== 'ANULADO').reduce((total, order) => total + (Number(order.total_amount) || 0), 0) /
+                  orders.filter(order => order.status !== 'ANULADO').length
+                : 0,
+        highestAmount:
+            orders.filter(order => order.status !== 'ANULADO').length > 0
+                ? Math.max(...orders.filter(order => order.status !== 'ANULADO').map(order => Number(order.total_amount) || 0))
+                : 0,
+        lowestAmount:
+            orders.filter(order => order.status !== 'ANULADO').length > 0
+                ? Math.min(...orders.filter(order => order.status !== 'ANULADO').map(order => Number(order.total_amount) || 0))
+                : 0,
+        pendingOrders: orders.filter((order) => order.status === 'PENDIENTE').length,
+        approvedOrders: orders.filter((order) => order.status === 'APROBADO').length,
+        receivedOrders: orders.filter((order) => order.status === 'RECIBIDO').length,
+        cancelledOrders: orders.filter((order) => order.status === 'ANULADO').length
+    };
 });
 function formatCurrencyPEN(value) {
     // Siempre muestra el símbolo S/ para el sol peruano
@@ -114,7 +168,7 @@ function formatCurrencyPEN(value) {
 
 <template>
     <!-- Estadísticas modernas y responsivas -->
-    <PurchaseOrderStatistics :statistics="statistics" :formatCurrencyPEN="formatCurrencyPEN" class="mb-3" />
+    <PurchaseOrderStatistics :statistics="statistics" :formatCurrencyPEN="formatCurrencyPEN" :loading="purchaseStore.isLoadingPurchaseOrders" class="mb-3" />
 
     <div class="p-4 sm:p-6 lg:px-16 card bg-white dark:bg-gray-900 rounded-xl shadow-md w-full max-w-none">
         <Toast />
@@ -151,10 +205,13 @@ function formatCurrencyPEN(value) {
                         showDeleteDialog = true;
                     }
                 "
+                @approve-order="handleApproveOrder"
+                @receive-order="handleReceiveOrder"
+                @cancel-order="handleCancelOrder"
             />
         </div>
         <!-- Diálogos -->
         <PurchaseOrderFormDialog v-model:visible="showPurchaseOrderDialog" :order="selectedOrder" @submit="handlePurchaseOrderSubmit" :loading="purchaseStore.isLoadingPurchaseOrders" dialog-class="max-w-full w-[95vw] sm:w-[500px]" />
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.id || ''" @confirm="handlePurchaseOrderDelete" dialog-class="max-w-full w-[90vw] sm:w-[400px]" />
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.id ? String(selectedOrder.id) : ''" @confirm="handlePurchaseOrderDelete" dialog-class="max-w-full w-[90vw] sm:w-[400px]" />
     </div>
 </template>

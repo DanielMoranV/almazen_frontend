@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { fetchPurchaseOrders, createPurchaseOrder, deletePurchaseOrder, updatePurchaseOrder } from '@/api';
+import { fetchPurchaseOrders, createPurchaseOrder, deletePurchaseOrder, updatePurchaseOrder, approvePurchaseOrder, receivePurchaseOrder, cancelPurchaseOrder } from '@/api';
 import cache from '@/utils/cache';
 import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
@@ -38,7 +38,6 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
                     this.purchaseOrders.unshift(processed.data.purchase);
-                    console.log(this.purchaseOrders);
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -66,7 +65,52 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await updatePurchaseOrder(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data : purchaseOrder));
+                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data.purchase : purchaseOrder));
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async approvePurchaseOrder(id) {
+            this.isLoading = true;
+            try {
+                const res = await approvePurchaseOrder(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === id ? { ...purchaseOrder, status: processed.data.purchase.status } : purchaseOrder));
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async receivePurchaseOrder(id) {
+            this.isLoading = true;
+            try {
+                const res = await receivePurchaseOrder(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === id ? { ...purchaseOrder, status: processed.data.purchase.status } : purchaseOrder));
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async cancelPurchaseOrder(id) {
+            this.isLoading = true;
+            try {
+                const res = await cancelPurchaseOrder(id);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === id ? { ...purchaseOrder, status: processed.data.purchase.status } : purchaseOrder));
                 }
             } catch (error) {
                 handleProcessError(error, this);
