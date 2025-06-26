@@ -124,32 +124,8 @@ const showError = (summary, detail) => {
 <template>
     <div class="products-page-container">
         <!-- Toast y Confirmaciones -->
-        <Toast position="top-right" group="tr" />
-        <ConfirmDialog group="headless" class="sakai-confirm-dialog">
-            <template #container="{ message, acceptCallback, rejectCallback }">
-                <div class="custom-confirm-dialog">
-                    <div class="confirm-header">
-                        <i class="pi pi-exclamation-triangle text-yellow-500 text-2xl"></i>
-                        <span class="confirm-title">Confirmar acción</span>
-                    </div>
-                    <div class="confirm-content">
-                        <p>{{ message }}</p>
-                    </div>
-                    <div class="confirm-actions">
-                        <Button 
-                            label="Cancelar" 
-                            @click="rejectCallback" 
-                            class="p-button-text p-button-secondary" 
-                        />
-                        <Button 
-                            label="Confirmar" 
-                            @click="acceptCallback" 
-                            class="p-button-danger" 
-                        />
-                    </div>
-                </div>
-            </template>
-        </ConfirmDialog>
+        <Toast />
+        <ConfirmDialog />
 
         <!-- Toolbar Principal -->
         <ProductToolbar :total-products="totalProducts" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" @search="handleSearch" />
@@ -187,234 +163,44 @@ const showError = (summary, detail) => {
 </template>
 
 <style scoped>
-/* ===== MAIN CONTAINER ===== */
 .products-page-container {
     @apply p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto;
-    background: var(--surface-ground);
-    min-height: 100vh;
-    transition: all 0.3s ease;
 }
 
-/* ===== CONTENT SECTION ===== */
+/* Content Section */
 .content-section {
-    @apply min-h-[500px] shadow-xl;
-    border-radius: 1rem;
-    background: var(--surface-0);
-    border: 1px solid var(--surface-border);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    transition: all 0.3s ease;
-}
-
-.content-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.06);
+    @apply min-h-[400px];
 }
 
 .table-container {
-    @apply -m-6;
-    border-radius: 1rem;
-    overflow: hidden;
+    @apply -m-6; /* Negative margin to extend table to card edges */
 }
 
-/* ===== EMPTY STATE ===== */
+/* Empty State */
 .empty-state {
-    @apply text-center py-16 px-6;
-    background: var(--surface-100);
-    border-radius: 1rem;
-    margin: 1.5rem;
+    @apply text-center py-12 px-4;
 }
 
 .empty-icon {
-    @apply mx-auto mb-6 w-20 h-20 flex items-center justify-center rounded-full;
-    background: var(--primary-50);
-    border: 3px solid var(--primary-200);
-    box-shadow: 0 8px 32px rgba(var(--primary), 0.15);
-    animation: pulse 2s infinite;
+    @apply mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800;
 }
 
 .empty-icon i {
-    @apply text-4xl;
-    color: var(--primary-500);
-    text-shadow: 0 2px 4px rgba(var(--primary), 0.2);
+    @apply text-3xl text-gray-400 dark:text-gray-600;
 }
 
 .empty-title {
-    @apply text-2xl font-bold mb-3;
-    color: var(--text-color);
+    @apply text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2;
 }
 
 .empty-description {
-    @apply mb-8 max-w-lg mx-auto text-lg leading-relaxed;
-    color: var(--text-color-secondary);
-    font-weight: 500;
+    @apply text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto;
 }
 
-/* ===== ANIMATIONS ===== */
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: scale(1.05);
-        opacity: 0.8;
-    }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.content-section {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-/* ===== BUTTON ENHANCEMENTS ===== */
-:deep(.p-button-success) {
-    background: var(--green-500);
-    border-color: var(--green-500);
-    box-shadow: 0 8px 25px rgba(var(--green), 0.3);
-    font-weight: 600;
-    letter-spacing: 0.025em;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:deep(.p-button-success:hover) {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(var(--green), 0.4);
-    background: var(--green-600);
-    border-color: var(--green-600);
-}
-
-:deep(.p-button-outlined) {
-    border: 2px solid var(--primary-500);
-    color: var(--primary-500);
-    background: rgba(var(--primary), 0.05);
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-:deep(.p-button-outlined:hover) {
-    background: var(--primary-500);
-    color: var(--primary-color-text);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(var(--primary), 0.25);
-}
-
-/* ===== CARD ENHANCEMENTS ===== */
-:deep(.p-card) {
-    border: none;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-:deep(.p-card-content) {
-    padding: 2rem;
-}
-
-/* PrimeVue automaticamente maneja el modo oscuro con CSS variables */
-
-/* ===== RESPONSIVE DESIGN ===== */
+/* Responsive adjustments */
 @media (max-width: 640px) {
     .products-page-container {
         @apply p-3;
-    }
-    
-    .empty-state {
-        @apply py-12 px-4;
-    }
-    
-    .empty-icon {
-        @apply w-16 h-16 mb-4;
-    }
-    
-    .empty-icon i {
-        @apply text-3xl;
-    }
-    
-    .empty-title {
-        @apply text-xl;
-    }
-    
-    .empty-description {
-        @apply text-base;
-    }
-    
-    :deep(.p-card-content) {
-        padding: 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .products-page-container {
-        @apply p-2;
-    }
-    
-    .content-section {
-        @apply min-h-[400px];
-    }
-}
-
-/* ===== CUSTOM CONFIRM DIALOG ===== */
-:deep(.custom-confirm-dialog) {
-    @apply bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden;
-    max-width: 400px;
-    animation: fadeInScale 0.3s ease-out;
-}
-
-.confirm-header {
-    @apply flex items-center gap-3 p-6 bg-gradient-to-r from-yellow-50 to-red-50 border-b border-gray-200;
-}
-
-.confirm-title {
-    @apply text-lg font-bold text-gray-900;
-}
-
-.confirm-content {
-    @apply p-6 text-gray-700;
-}
-
-.confirm-actions {
-    @apply flex justify-end gap-3 p-6 bg-gray-50 border-t border-gray-200;
-}
-
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-    :deep(.custom-confirm-dialog) {
-        @apply bg-gray-800 border-gray-600;
-    }
-    
-    .confirm-header {
-        @apply bg-gradient-to-r from-yellow-900/20 to-red-900/20 border-gray-600;
-    }
-    
-    .confirm-title {
-        @apply text-gray-100;
-    }
-    
-    .confirm-content {
-        @apply text-gray-300;
-    }
-    
-    .confirm-actions {
-        @apply bg-gray-700/50 border-gray-600;
     }
 }
 </style>

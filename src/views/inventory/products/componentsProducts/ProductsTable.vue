@@ -1,15 +1,12 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
-import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
-import { exportToExcel } from '@/utils/excelUtils';
-import JsBarcode from 'jsbarcode';
 import { useCategoriesStore } from '@/stores/categoriesStore';
+import { exportToExcel } from '@/utils/excelUtils';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import JsBarcode from 'jsbarcode';
+import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import { computed, ref, watch } from 'vue';
 
 const categoriesStore = useCategoriesStore();
 const categories = computed(() => categoriesStore.categoriesList);
@@ -47,7 +44,6 @@ watch(
     },
     { deep: true }
 );
-
 
 const exportProducts = async () => {
     const columns = [
@@ -138,16 +134,7 @@ const getBarcodeOptions = (type) => {
                         <i class="pi pi-list"></i>
                         <span>Lista de Productos</span>
                     </div>
-                    <Button 
-                        type="button" 
-                        icon="pi pi-file-excel" 
-                        label="Exportar Excel" 
-                        class="export-btn"
-                        @click="exportProducts()" 
-                        v-tooltip.top="'Exportar productos a Excel'"
-                        severity="success"
-                        outlined
-                    />
+                    <Button type="button" icon="pi pi-file-excel" label="Exportar Excel" class="export-btn" @click="exportProducts()" v-tooltip.top="'Exportar productos a Excel'" severity="success" outlined />
                 </div>
             </div>
         </template>
@@ -279,7 +266,9 @@ const getBarcodeOptions = (type) => {
 :deep(.green-theme) {
     border-radius: 0.75rem;
     overflow: hidden;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(34, 197, 94, 0.1);
 }
 
@@ -333,7 +322,9 @@ const getBarcodeOptions = (type) => {
 /* ===== HOVER EFFECTS ===== */
 :deep(.green-theme .p-datatable-tbody > tr:hover > td) {
     background: var(--primary-50);
-    box-shadow: 0 4px 8px -2px rgba(var(--primary), 0.15), 0 2px 4px -1px rgba(var(--primary), 0.1);
+    box-shadow:
+        0 4px 8px -2px rgba(var(--primary), 0.15),
+        0 2px 4px -1px rgba(var(--primary), 0.1);
     transform: translateY(-1px);
 }
 
@@ -504,11 +495,11 @@ const getBarcodeOptions = (type) => {
     .header-title {
         @apply text-base;
     }
-    
+
     .export-btn {
         @apply text-sm px-3 py-2;
     }
-    
+
     :deep(.green-theme .p-datatable-thead > tr > th),
     :deep(.green-theme .p-datatable-tbody > tr > td) {
         font-size: 12px;
