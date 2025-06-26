@@ -6,6 +6,8 @@ import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 export const useProductsStore = defineStore('productsStore', {
     state: () => ({
         products: [],
+        searchTerm: '',
+        searchTimeout: null,
         message: '',
         success: false,
         isLoading: false,
@@ -14,23 +16,50 @@ export const useProductsStore = defineStore('productsStore', {
 
     getters: {
         productsList: (state) => state.products,
-        isLoadingProducts: (state) => state.isLoading
+        isLoadingProducts: (state) => state.isLoading,
+        getCurrentSearchTerm: (state) => state.searchTerm,
+        totalProducts: (state) => state.products.length
     },
     actions: {
         async fetchProducts() {
             this.isLoading = true;
-
             try {
-                const res = await fetchProducts();
+                const params = {};
+                
+                // Solo agregar parámetros si hay búsqueda
+                if (this.searchTerm) {
+                    params.search = this.searchTerm;
+                }
+                
+                const res = await fetchProducts(params);
                 const processed = handleProcessSuccess(res, this);
+                
                 if (processed.success) {
-                    this.products = processed.data;
+                    this.products = Array.isArray(processed.data) ? processed.data : [];
                 }
             } catch (error) {
                 handleProcessError(error, this);
+                this.products = [];
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        async searchProducts(searchTerm = '') {
+            // Debounce para evitar demasiadas llamadas
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
+            
+            this.searchTimeout = setTimeout(async () => {
+                this.searchTerm = searchTerm;
+                await this.fetchProducts();
+            }, 300);
+        },
+
+        clearSearch() {
+            this.searchTerm = '';
+            this.fetchProducts();
         },
         async createProduct(payload) {
             this.isLoading = true;

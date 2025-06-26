@@ -2,10 +2,10 @@ export const Positions = Object.freeze({
     ADMINISTRADOR: 'Administrador',
     VENDEDOR: 'Vendedor',
     CAJA: 'Caja',
-    ALMACEN: 'Almacén',
+    ALMACEN: 'Almacen',
     SUPERVISOR: 'Supervisor',
     COMPRAS: 'Compras',
-    LOGISTICA: 'Logística',
+    LOGISTICA: 'Logistica',
     INVENTARIO: 'Inventario',
     REPARTIDOR: 'Repartidor',
     MANTENIMIENTO: 'Mantenimiento'

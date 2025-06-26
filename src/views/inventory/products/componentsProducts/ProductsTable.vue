@@ -13,7 +13,7 @@ import { useCategoriesStore } from '@/stores/categoriesStore';
 
 const categoriesStore = useCategoriesStore();
 const categories = computed(() => categoriesStore.categoriesList);
-const { products, loading } = defineProps({
+const props = defineProps({
     products: {
         type: Array,
         default: () => []
@@ -24,7 +24,7 @@ const { products, loading } = defineProps({
     }
 });
 
-defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete']);
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -41,12 +41,13 @@ const initFilters = () => ({
 const localFilters = ref(initFilters());
 
 watch(
-    () => products,
+    () => props.products,
     (newProducts) => {
         localFilters.value = { ...initFilters() };
     },
     { deep: true }
 );
+
 
 const exportProducts = async () => {
     const columns = [
@@ -62,7 +63,7 @@ const exportProducts = async () => {
         { header: 'Activo', key: 'is_active', width: 15 }
     ];
 
-    const formattedProducts = products.map((product) => {
+    const formattedProducts = props.products.map((product) => {
         return {
             ...product,
             categories: product.categories
@@ -115,32 +116,38 @@ const getBarcodeOptions = (type) => {
 <template>
     <DataTable
         stripedRows
-        :value="products"
-        :loading="loading"
+        :value="props.products"
+        :loading="props.loading"
         responsiveLayout="scroll"
-        paginator
         scrollable
         scrollHeight="500px"
         removableSort
         dataKey="id"
         :filters="localFilters"
-        :rows="10"
-        :rowsPerPageOptions="[5, 10, 20, 50]"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Productos"
+        :paginator="true"
+        :rows="15"
+        :rowsPerPageOptions="[10, 15, 25, 50, 100]"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        class="products-table p-datatable-gridlines"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
+        class="products-table green-theme p-datatable-gridlines"
     >
         <template #header>
-            <div class="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-2">
-                <span class="text-xl text-900 font-bold">Lista de Productos</span>
-                <div class="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center sm:gap-2">
-                    <Button type="button" icon="pi pi-file-excel" label="Exportar" outlined @click="exportProducts()" class="w-full sm:w-auto px-0 sm:px-3 py-3 sm:py-2 text-base sm:text-sm" />
-                    <IconField class="w-full sm:w-auto">
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText v-model="localFilters.global.value" placeholder="Buscar..." class="w-full sm:w-64 px-3 py-2 text-base sm:text-sm" />
-                    </IconField>
+            <div class="table-header">
+                <div class="header-content">
+                    <div class="header-title">
+                        <i class="pi pi-list"></i>
+                        <span>Lista de Productos</span>
+                    </div>
+                    <Button 
+                        type="button" 
+                        icon="pi pi-file-excel" 
+                        label="Exportar Excel" 
+                        class="export-btn"
+                        @click="exportProducts()" 
+                        v-tooltip.top="'Exportar productos a Excel'"
+                        severity="success"
+                        outlined
+                    />
                 </div>
             </div>
         </template>
@@ -161,7 +168,7 @@ const getBarcodeOptions = (type) => {
         <Column field="name" header="Nombre" sortable style="min-width: 12rem; max-width: 15rem" />
         <Column field="sku" header="SKU" sortable style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
-                <div class="font-mono text-sm bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-center">
+                <div class="sku-badge text-center">
                     {{ data.sku || '-' }}
                 </div>
             </template>
@@ -185,7 +192,7 @@ const getBarcodeOptions = (type) => {
         </Column>
         <Column field="type_barcode" header="Tipo" sortable style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
-                <span class="px-2 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-medium">
+                <span class="barcode-type-badge">
                     {{ data.type_barcode?.toUpperCase() || '-' }}
                 </span>
             </template>
@@ -207,8 +214,8 @@ const getBarcodeOptions = (type) => {
         </Column>
         <Column field="brand" header="Marca" sortable style="min-width: 8rem; max-width: 12rem">
             <template #body="{ data }">
-                <div class="font-medium text-sm text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                    <i class="pi pi-tag text-blue-400"></i>
+                <div class="brand-tag">
+                    <i class="pi pi-tag"></i>
                     <span>{{ data.brand || '-' }}</span>
                 </div>
             </template>
@@ -243,105 +250,220 @@ const getBarcodeOptions = (type) => {
 </template>
 
 <style scoped>
-:deep(.products-table) {
-    /* Sticky header */
-    .p-datatable-thead > tr > th {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-        background-color: #f1f5f9;
-        color: #1e293b;
-        font-weight: 700;
-        font-size: 15px;
-        padding: 14px 10px;
-        border-bottom: 2px solid #e2e8f0;
-        text-align: center;
-        letter-spacing: 0.02em;
-    }
-    /* Mejor separación y fondo alterno */
-    .p-datatable-tbody > tr > td {
-        padding: 14px 10px;
-        vertical-align: middle;
-        border-bottom: 1px solid #e5e7eb;
-        background: #fff;
-        font-size: 15px;
-        color: #334155;
-    }
-    .p-datatable-tbody > tr:nth-child(even) > td {
-        background: #f9fafb;
-    }
-    /* Hover con sombra */
-    .p-datatable-tbody > tr:hover > td {
-        background: #e0f2fe;
-        box-shadow: 0 2px 8px 0 rgba(0, 150, 136, 0.07);
-        transition:
-            box-shadow 0.2s,
-            background 0.2s;
-    }
-    /* Acciones más visibles */
-    .p-button-info {
-        background: #2563eb;
-        border: none;
-        color: #fff;
-        transition: background 0.2s;
-    }
-    .p-button-info:hover {
-        background: #1d4ed8;
-    }
-    .p-button-danger {
-        background: #dc2626;
-        border: none;
-        color: #fff;
-        transition: background 0.2s;
-    }
-    .p-button-danger:hover {
-        background: #b91c1c;
-    }
-    /* Imagen más limpia */
-    .product-img {
-        width: 48px;
-        height: 48px;
-        object-fit: cover;
-        border-radius: 0.5rem;
-        border: 1px solid #e5e7eb;
-        background: #f3f4f6;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
-    }
-    /* Badge de estado */
-    .badge-activo {
-        background: #22c55e;
-        color: #fff;
-        font-size: 13px;
-        border-radius: 0.375rem;
-        padding: 3px 10px;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        display: inline-block;
-    }
-    .badge-inactivo {
-        background: #ef4444;
-        color: #fff;
-        font-size: 13px;
-        border-radius: 0.375rem;
-        padding: 3px 10px;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        display: inline-block;
-    }
-    /* Responsividad */
-    @media (max-width: 640px) {
-        .p-datatable-thead > tr > th,
-        .p-datatable-tbody > tr > td {
-            font-size: 12px;
-            padding: 8px 4px;
-        }
-        .product-img {
-            width: 36px;
-            height: 36px;
-        }
-    }
+/* ===== TABLE HEADER ===== */
+.table-header {
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--yellow-400) 100%);
+    @apply rounded-t-lg p-4 mb-0;
+    box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
 }
 
+.header-content {
+    @apply flex justify-between items-center;
+}
+
+.header-title {
+    @apply flex items-center gap-3 text-white font-bold text-lg;
+}
+
+.header-title i {
+    @apply text-xl;
+}
+
+.export-btn {
+    @apply bg-white/25 border-white/40 text-white hover:bg-white/35 font-semibold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(4px);
+}
+
+/* ===== TABLE STYLES ===== */
+:deep(.green-theme) {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(34, 197, 94, 0.1);
+}
+
+:deep(.green-theme .p-datatable-header) {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+/* ===== STICKY HEADER ===== */
+:deep(.green-theme .p-datatable-thead > tr > th) {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--primary-500);
+    color: var(--primary-color-text);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 16px 12px;
+    border: none;
+    text-align: center;
+    letter-spacing: 0.025em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.green-theme .p-datatable-thead > tr > th:first-child) {
+    border-top-left-radius: 0;
+}
+
+:deep(.green-theme .p-datatable-thead > tr > th:last-child) {
+    border-top-right-radius: 0;
+}
+
+/* ===== TABLE BODY ===== */
+:deep(.green-theme .p-datatable-tbody > tr > td) {
+    padding: 16px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--surface-border);
+    background: var(--surface-0);
+    font-size: 14px;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+:deep(.green-theme .p-datatable-tbody > tr:nth-child(even) > td) {
+    background: var(--surface-50);
+}
+
+/* ===== HOVER EFFECTS ===== */
+:deep(.green-theme .p-datatable-tbody > tr:hover > td) {
+    background: var(--primary-50);
+    box-shadow: 0 4px 8px -2px rgba(var(--primary), 0.15), 0 2px 4px -1px rgba(var(--primary), 0.1);
+    transform: translateY(-1px);
+}
+
+/* ===== ACTION BUTTONS ===== */
+:deep(.green-theme .p-button.p-button-info) {
+    background: var(--primary-500);
+    border-color: var(--primary-500);
+    color: var(--primary-color-text);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(var(--primary), 0.2);
+    font-weight: 600;
+}
+
+:deep(.green-theme .p-button.p-button-info:hover) {
+    background: var(--primary-600);
+    border-color: var(--primary-600);
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(var(--primary), 0.3);
+}
+
+:deep(.green-theme .p-button.p-button-danger) {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+    font-weight: 600;
+}
+
+:deep(.green-theme .p-button.p-button-danger:hover) {
+    background: #dc2626;
+    border-color: #dc2626;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* ===== STATUS INDICATORS ===== */
+:deep(.green-theme .pi-check-circle) {
+    color: var(--green-500);
+    filter: drop-shadow(0 2px 4px rgba(var(--green), 0.25));
+    font-weight: 600;
+}
+
+:deep(.green-theme .pi-times-circle) {
+    color: #ef4444;
+    filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.25));
+    font-weight: 600;
+}
+
+/* ===== PAGINATION ===== */
+:deep(.green-theme .p-paginator) {
+    background: var(--surface-0);
+    border-top: 2px solid var(--primary-500);
+    padding: 1rem;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page) {
+    color: #22c55e;
+    border: 1px solid #22c55e;
+    font-weight: 600;
+}
+
+:deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
+    background: #22c55e;
+    color: white;
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+}
+
+:deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page:hover) {
+    background: #dcfce7;
+    border-color: #16a34a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.15);
+}
+
+:deep(.green-theme .p-paginator .p-dropdown) {
+    border-color: #22c55e;
+    font-weight: 500;
+}
+
+:deep(.green-theme .p-paginator .p-dropdown:focus) {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.15);
+}
+
+/* ===== BRAND STYLING ===== */
+.brand-tag {
+    @apply flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold;
+    background: var(--primary-50);
+    color: var(--primary-900);
+    border: 1px solid var(--primary-200);
+    box-shadow: 0 1px 3px rgba(var(--primary), 0.1);
+}
+
+.brand-tag i {
+    color: var(--primary-700);
+}
+
+/* ===== SKU STYLING ===== */
+.sku-badge {
+    @apply font-mono text-sm px-3 py-1 rounded-lg font-semibold;
+    background: var(--yellow-50);
+    color: var(--yellow-900);
+    border: 1px solid var(--yellow-200);
+    box-shadow: 0 1px 3px rgba(var(--yellow), 0.1);
+}
+
+/* ===== BARCODE TYPE BADGE ===== */
+.barcode-type-badge {
+    @apply px-2 py-1 text-xs rounded-full font-bold uppercase tracking-wide;
+    background: var(--primary-50);
+    color: var(--primary-900);
+    border: 1px solid var(--primary-200);
+    box-shadow: 0 1px 2px rgba(var(--primary), 0.1);
+}
+
+/* ===== EMPTY STATE ===== */
+:deep(.green-theme .p-datatable-emptymessage) {
+    background: #f9fafb;
+    color: #1f2937;
+    padding: 3rem;
+    font-weight: 500;
+}
+
+:deep(.green-theme .p-datatable-emptymessage .pi-box) {
+    color: #22c55e;
+}
+
+/* ===== UTILITY CLASSES ===== */
 .line-clamp-1 {
     display: -webkit-box;
     -webkit-line-clamp: 1;
@@ -370,9 +492,29 @@ const getBarcodeOptions = (type) => {
     font-family: monospace;
     font-size: 12px;
     text-align: center;
-    padding: 5px;
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
-    border-radius: 3px;
+    padding: 8px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    color: #6b7280;
 }
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .header-title {
+        @apply text-base;
+    }
+    
+    .export-btn {
+        @apply text-sm px-3 py-2;
+    }
+    
+    :deep(.green-theme .p-datatable-thead > tr > th),
+    :deep(.green-theme .p-datatable-tbody > tr > td) {
+        font-size: 12px;
+        padding: 12px 8px;
+    }
+}
+
+/* PrimeVue automaticamente maneja el modo oscuro */
 </style>

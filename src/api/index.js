@@ -21,7 +21,10 @@ export const deleteCompany = (id) => axios.delete(`/companies/${id}`);
 export const updateCompany = (payload, id) => axios.put(`/companies/${id}`, payload);
 
 // Products
-export const fetchProducts = () => axios.get('/products');
+export const fetchProducts = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/products${queryString ? `?${queryString}` : ''}`);
+};
 export const createProduct = (payload) => axios.post('/products', payload);
 export const deleteProduct = (id) => axios.delete(`/products/${id}`);
 export const updateProduct = (payload, id) => axios.put(`/products/${id}`, payload);
@@ -65,3 +68,8 @@ export const approvePurchaseOrder = (id) => axios.patch(`/purchases/${id}/approv
 export const rejectPurchaseOrder = (id) => axios.patch(`/purchases/${id}/reject`);
 export const receivePurchaseOrder = (id) => axios.patch(`/purchases/${id}/receive`);
 export const cancelPurchaseOrder = (id) => axios.patch(`/purchases/${id}/cancel`);
+
+// Dashboard
+export const fetchDashboardMetrics = () => axios.get('/dashboard/metrics');
+export const fetchLowStockProducts = () => axios.get('/dashboard/low-stock');
+export const fetchExpiringProducts = () => axios.get('/dashboard/expiring-products');
