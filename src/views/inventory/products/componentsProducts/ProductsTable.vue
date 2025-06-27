@@ -131,31 +131,54 @@ const getBarcodeOptions = (type) => {
     >
         <template #header>
             <div class="table-header">
+                <div class="header-backdrop"></div>
                 <div class="header-content">
-                    <!-- <div class="header-title">
-                        <i class="pi pi-list"></i>
-                    </div> -->
-                    <div class="flex-1 px-4">
-                        <IconField>
-                            <InputIcon class="pi pi-search" />
-                            <InputText v-model="localFilters['global'].value" placeholder="Buscar productos..." />
-                        </IconField>
+                    <div class="search-section">
+                        <div class="search-container">
+                            <IconField>
+                                <InputIcon class="pi pi-search" />
+                                <InputText 
+                                    v-model="localFilters['global'].value" 
+                                    placeholder="Buscar por nombre, SKU, código de barras..."
+                                    class="search-input"
+                                />
+                            </IconField>
+                        </div>
                     </div>
-                    <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportProducts()" v-tooltip.top="'Exportar productos a Excel'" />
+                    <div class="actions-section">
+                        <Button 
+                            type="button" 
+                            icon="pi pi-file-excel" 
+                            label="Exportar" 
+                            class="export-btn" 
+                            @click="exportProducts()" 
+                            v-tooltip.top="'Exportar productos a Excel'"
+                            :disabled="!props.products.length"
+                        />
+                    </div>
                 </div>
             </div>
         </template>
 
         <template #empty>
-            <div class="text-center p-5">
-                <i class="pi pi-box text-4xl text-400 mb-3"></i>
-                <p class="text-600">No se encontraron productos</p>
+            <div class="empty-table-state">
+                <div class="empty-icon">
+                    <i class="pi pi-search"></i>
+                </div>
+                <h3 class="empty-title">No se encontraron productos</h3>
+                <p class="empty-description">Intenta ajustar los filtros o términos de búsqueda</p>
+                <Button 
+                    icon="pi pi-filter-slash" 
+                    label="Limpiar filtros" 
+                    class="p-button-outlined" 
+                    @click="localFilters = initFilters()"
+                />
             </div>
         </template>
         <template #loading>
-            <div class="text-center p-5">
-                <ProgressSpinner />
-                <p class="text-600 mt-3">Cargando productos...</p>
+            <div class="loading-table-state">
+                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
+                <p class="loading-text">Cargando productos...</p>
             </div>
         </template>
 
@@ -246,37 +269,119 @@ const getBarcodeOptions = (type) => {
 </template>
 
 <style scoped>
-/* Encabezado de la tabla con gradiente */
+/* Encabezado de la tabla mejorado */
 .table-header {
-    @apply bg-gradient-to-r from-green-600 to-green-500 rounded-lg p-4 mb-0 relative overflow-hidden;
+    @apply relative overflow-hidden mb-0 rounded-t-2xl;
+    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #3b82f6 100%);
+    padding: 1.5rem 2rem;
+}
+
+/* Fondo decorativo */
+.header-backdrop {
+    @apply absolute inset-0 opacity-10;
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size: 40px 40px, 25px 25px;
+    animation: pattern-drift 25s linear infinite;
 }
 
 .header-content {
-    @apply flex justify-between items-center gap-4;
+    @apply relative z-10 flex justify-between items-center gap-6;
 }
 
-.header-title {
-    @apply flex items-center gap-2 text-white font-bold text-2xl;
+/* Sección de búsqueda mejorada */
+.search-section {
+    @apply flex-1 max-w-md;
 }
 
-.header-title i {
-    @apply text-2xl;
+.search-container {
+    @apply relative;
 }
 
-/* Botón de exportar a Excel */
+.search-input {
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white placeholder-white/70 rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-input:focus {
+    @apply bg-white/30 border-white/50 ring-2 ring-white/20;
+    transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+    @apply text-white/70;
+}
+
+/* Icono de búsqueda */
+:deep(.search-container .p-icon-field .p-input-icon) {
+    @apply text-white/80;
+}
+
+/* Sección de acciones */
+.actions-section {
+    @apply flex gap-3;
+}
+
+/* Botón de exportar mejorado */
 .export-btn {
-    @apply bg-white border-2 border-white text-green-700 font-semibold px-3 py-2 rounded-xl transition-colors;
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-300;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Al pasar el mouse, solo cambia el color y se asegura de que no haya transformación */
-.export-btn:hover {
-    @apply bg-green-50 border-green-100;
-    transform: none !important;
+.export-btn:hover:not(:disabled) {
+    @apply bg-white/30 border-white/40;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Tema principal de la tabla */
+.export-btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+}
+
+/* Estados de tabla vacía y carga mejorados */
+.empty-table-state {
+    @apply text-center py-16 px-8;
+}
+
+.empty-icon {
+    @apply mx-auto mb-4 w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center;
+}
+
+.empty-icon i {
+    @apply text-3xl text-gray-400 dark:text-gray-500;
+}
+
+.empty-title {
+    @apply text-xl font-bold text-gray-700 dark:text-gray-300 mb-2;
+}
+
+.empty-description {
+    @apply text-gray-500 dark:text-gray-400 mb-6;
+}
+
+.loading-table-state {
+    @apply text-center py-16 px-8;
+}
+
+.loading-text {
+    @apply text-gray-600 dark:text-gray-400 mt-4 text-lg font-medium;
+}
+
+/* Animación del patrón */
+@keyframes pattern-drift {
+    0% {
+        background-position: 0% 0%, 0% 0%;
+    }
+    100% {
+        background-position: 100% 100%, -100% -100%;
+    }
+}
+
+/* Tema principal de la tabla mejorado */
 :deep(.green-theme) {
-    @apply rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
+    @apply rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 :deep(.green-theme .p-datatable-header) {
@@ -397,17 +502,52 @@ const getBarcodeOptions = (type) => {
 
 /* Ajustes responsivos para pantallas pequeñas */
 @media (max-width: 768px) {
-    .header-title {
-        @apply text-base;
+    .table-header {
+        @apply p-4;
+    }
+
+    .header-content {
+        @apply flex-col gap-4;
+    }
+
+    .search-section {
+        @apply max-w-none w-full;
+    }
+
+    .search-input {
+        @apply w-full;
+    }
+
+    .actions-section {
+        @apply w-full;
     }
 
     .export-btn {
-        @apply text-sm px-3 py-2;
+        @apply w-full justify-center;
     }
 
     :deep(.green-theme .p-datatable-thead > tr > th),
     :deep(.green-theme .p-datatable-tbody > tr > td) {
         @apply text-xs py-3 px-2;
+    }
+
+    .empty-table-state,
+    .loading-table-state {
+        @apply py-12 px-4;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-header {
+        @apply p-3;
+    }
+
+    .search-input {
+        @apply py-2.5 text-sm;
+    }
+
+    .export-btn {
+        @apply py-2.5 text-sm;
     }
 }
 </style>

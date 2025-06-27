@@ -137,7 +137,7 @@ const searchProduct = async () => {
 };
 </script>
 <template>
-    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '550px', maxWidth: '95vw' }" :header="form.id ? 'Editar Producto' : 'Nuevo Producto'" :modal="true" class="p-fluid product-dialog">
+    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '550px', maxWidth: '95vw' }" :header="form.id ? '✏️ Editar Producto' : '📦➕ Nuevo Producto'" :modal="true" class="p-fluid product-dialog">
         <div class="flex flex-col gap-4">
             <!-- Código de Barras con scanner -->
             <div style="display: flex; align-items: center; gap: 0.5rem">
@@ -273,7 +273,40 @@ const searchProduct = async () => {
 
 /* Contenido del diálogo */
 :deep(.product-dialog .p-dialog-content) {
-    @apply p-6 bg-white dark:bg-gray-800 rounded-b-xl border border-gray-200 dark:border-gray-700 border-t-0;
+    @apply p-6 bg-white dark:bg-gray-800 rounded-b-2xl border border-gray-200 dark:border-gray-700 border-t-0 max-h-96 overflow-y-auto;
+}
+
+/* Vista previa de imagen mejorada */
+.image-preview-container {
+    @apply flex items-start gap-6;
+}
+
+.image-preview {
+    @apply relative bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl h-36 w-36 flex items-center justify-center overflow-hidden transition-all duration-300 hover:border-green-400 dark:hover:border-green-500;
+}
+
+.preview-image {
+    @apply max-h-full max-w-full object-contain rounded-xl shadow-md;
+}
+
+.no-image-placeholder {
+    @apply text-gray-400 dark:text-gray-500 text-center;
+}
+
+.no-image-placeholder i {
+    @apply text-4xl mb-2 text-gray-300 dark:text-gray-600;
+}
+
+.no-image-placeholder p {
+    @apply text-sm font-medium;
+}
+
+.image-info {
+    @apply flex-1 flex items-center;
+}
+
+.image-help-text {
+    @apply text-gray-600 dark:text-gray-400 text-sm leading-relaxed bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-200 dark:border-blue-800;
 }
 
 /* Estilos generales para campos de formulario */

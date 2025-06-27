@@ -1,5 +1,5 @@
 <template>
-    <div class="product-toolbar">
+    <div class="user-toolbar">
         <!-- Header mejorado con gradiente y efectos visuales -->
         <div class="toolbar-header">
             <div class="header-backdrop"></div>
@@ -7,12 +7,12 @@
                 <div class="title-section">
                     <div class="title-wrapper">
                         <div class="icon-container">
-                            <i class="pi pi-box"></i>
+                            <i class="pi pi-users"></i>
                         </div>
                         <div class="title-text">
-                            <h1 class="page-title">Gestión de Productos</h1>
-                            <p v-if="totalProducts > 0" class="subtitle">{{ totalProducts }} {{ totalProducts === 1 ? 'producto' : 'productos' }} en inventario</p>
-                            <p v-else class="subtitle">Comienza agregando tu primer producto</p>
+                            <h1 class="page-title">Gestión de Usuarios</h1>
+                            <p v-if="totalUsers > 0" class="subtitle">{{ totalUsers }} {{ totalUsers === 1 ? 'usuario' : 'usuarios' }} en el sistema</p>
+                            <p v-else class="subtitle">Comienza agregando tu primer usuario</p>
                         </div>
                     </div>
                 </div>
@@ -29,10 +29,10 @@
                         />
                         <Button 
                             icon="pi pi-plus" 
-                            label="Agregar Producto" 
+                            label="Agregar Usuario" 
                             class="action-btn create-btn" 
                             @click="$emit('create')" 
-                            v-tooltip.bottom="'Crear nuevo producto'"
+                            v-tooltip.bottom="'Crear nuevo usuario'"
                         />
                     </div>
                 </div>
@@ -43,7 +43,7 @@
 
 <script setup>
 defineProps({
-    totalProducts: {
+    totalUsers: {
         type: Number,
         default: 0
     },
@@ -58,7 +58,7 @@ defineEmits(['refresh', 'create']);
 
 <style scoped>
 /* Contenedor principal del toolbar con efecto de elevación */
-.product-toolbar {
+.user-toolbar {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
@@ -66,7 +66,7 @@ defineEmits(['refresh', 'create']);
 /* Encabezado del toolbar con gradiente mejorado y efecto de profundidad */
 .toolbar-header {
     @apply relative overflow-hidden;
-    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #3b82f6 100%);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
     padding: 2rem;
     position: relative;
 }
@@ -160,8 +160,8 @@ defineEmits(['refresh', 'create']);
 
 /* Botón de crear con gradiente llamativo */
 .create-btn {
-    @apply bg-gradient-to-r from-yellow-400 to-orange-500 border-2 border-yellow-400 text-white hover:from-yellow-500 hover:to-orange-600 hover:border-yellow-500;
-    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+    @apply bg-gradient-to-r from-pink-400 to-purple-500 border-2 border-pink-400 text-white hover:from-pink-500 hover:to-purple-600 hover:border-pink-500;
+    box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
     font-weight: 600;
 }
 
@@ -239,7 +239,7 @@ defineEmits(['refresh', 'create']);
 
 /* Mejoras para modo oscuro */
 @media (prefers-color-scheme: dark) {
-    .product-toolbar {
+    .user-toolbar {
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
