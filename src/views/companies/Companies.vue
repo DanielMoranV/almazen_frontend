@@ -200,7 +200,7 @@ const exportCompanies = async () => {
                     <!-- Buscador  -->
                     <IconField>
                         <InputIcon>
-                            <i class="pi pi-search" />
+                            <i class="pi pi-search text-white" />
                         </InputIcon>
                         <InputText v-model="filters['global'].value" placeholder="Buscar..." />
                     </IconField>

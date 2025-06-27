@@ -81,25 +81,15 @@ const exportUsers = async () => {
                     <div class="search-section">
                         <div class="search-container">
                             <IconField>
-                                <InputIcon class="pi pi-search" />
-                                <InputText 
-                                    v-model="localFilters.global.value" 
-                                    placeholder="Buscar por nombre, email, DNI, teléfono..."
-                                    class="search-input"
-                                />
+                                <InputIcon>
+                                    <i class="pi pi-search text-white" />
+                                </InputIcon>
+                                <InputText v-model="localFilters.global.value" placeholder="Buscar por nombre, email, DNI, teléfono..." class="search-input" fluid />
                             </IconField>
                         </div>
                     </div>
                     <div class="actions-section">
-                        <Button 
-                            type="button" 
-                            icon="pi pi-file-excel" 
-                            label="Exportar" 
-                            class="export-btn" 
-                            @click="exportUsers()" 
-                            v-tooltip.top="'Exportar usuarios a Excel'"
-                            :disabled="!users.length"
-                        />
+                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportUsers()" v-tooltip.top="'Exportar usuarios a Excel'" :disabled="!users.length" />
                     </div>
                 </div>
             </div>
@@ -112,12 +102,7 @@ const exportUsers = async () => {
                 </div>
                 <h3 class="empty-title">No se encontraron usuarios</h3>
                 <p class="empty-description">Intenta ajustar los filtros o términos de búsqueda</p>
-                <Button 
-                    icon="pi pi-filter-slash" 
-                    label="Limpiar filtros" 
-                    class="p-button-outlined" 
-                    @click="localFilters = initFilters()"
-                />
+                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined" @click="localFilters = initFilters()" />
             </div>
         </template>
         <template #loading>
@@ -213,10 +198,10 @@ const exportUsers = async () => {
 /* Fondo decorativo */
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
-    background-image: 
-        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 40px 40px, 25px 25px;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        40px 40px,
+        25px 25px;
     animation: pattern-drift 25s linear infinite;
 }
 
@@ -305,7 +290,9 @@ const exportUsers = async () => {
 /* Tema principal de la tabla mejorado */
 :deep(.purple-theme) {
     @apply rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 :deep(.purple-theme .p-datatable-header) {
@@ -423,10 +410,14 @@ const exportUsers = async () => {
 /* Animación del patrón */
 @keyframes pattern-drift {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 

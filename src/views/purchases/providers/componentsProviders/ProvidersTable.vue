@@ -71,9 +71,9 @@ const exportProviders = async () => {
                 <!-- Buscador  -->
                 <IconField>
                     <InputIcon>
-                        <i class="pi pi-search" />
+                        <i class="pi pi-search text-white" />
                     </InputIcon>
-                    <InputText v-model="localFilters.global.value" placeholder="Buscar..." />
+                    <InputText v-model="localFilters.global.value" placeholder="Buscar..." fluid />
                 </IconField>
             </div>
         </template>

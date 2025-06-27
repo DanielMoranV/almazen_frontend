@@ -166,8 +166,10 @@ const getStatusIcon = (status) => {
                     <div class="search-section">
                         <div class="search-container">
                             <IconField>
-                                <InputIcon class="pi pi-search" />
-                                <InputText v-model="filters['global'].value" placeholder="Buscar por ID, proveedor, comprobante..." class="search-input" v-tooltip.top="'Buscar en ID, proveedor, comprobante y usuario creador'" />
+                                <InputIcon>
+                                    <i class="pi pi-search text-white" />
+                                </InputIcon>
+                                <InputText v-model="filters['global'].value" placeholder="Buscar por ID, proveedor, comprobante..." class="search-input" v-tooltip.top="'Buscar en ID, proveedor, comprobante y usuario creador'" fluid />
                             </IconField>
                         </div>
                     </div>
@@ -353,7 +355,7 @@ const getStatusIcon = (status) => {
 }
 
 .search-input {
-    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white placeholder-white/70 rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white placeholder-white rounded-xl px-4 py-3 font-medium transition-all duration-300;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
