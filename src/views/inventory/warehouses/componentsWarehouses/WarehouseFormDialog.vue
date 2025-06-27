@@ -15,7 +15,7 @@ const emit = defineEmits(['update:visible', 'submit']);
 const form = ref({
     id: null,
     name: '',
-    address: '',
+    location: '',
     phone: ''
 });
 
@@ -23,13 +23,13 @@ const resetForm = () => {
     form.value = {
         id: null,
         name: '',
-        address: '',
+        location: '',
         phone: ''
     };
 };
 
 const isFormValid = computed(() => {
-    return form.value.name && form.value.address; // Phone is optional
+    return form.value.name && form.value.location; // Phone is optional
 });
 
 const handleSubmit = () => {
@@ -69,9 +69,9 @@ watch(
 
                 <!-- Dirección -->
                 <div class="field">
-                    <label for="address" class="font-medium mb-2 block">Dirección</label>
-                    <Textarea id="address" v-model="form.address" autoResize rows="2" placeholder="Ingrese la dirección completa del almacén" :class="{ 'p-invalid': !form.address }" />
-                    <small class="p-error" v-if="!form.address">La dirección es requerida.</small>
+                    <label for="location" class="font-medium mb-2 block">Ubicación</label>
+                    <Textarea id="location" v-model="form.location" autoResize rows="2" placeholder="Ingrese la ubicación del almacén" :class="{ 'p-invalid': !form.location }" />
+                    <small class="p-error" v-if="!form.location">La ubicación es requerida.</small>
                 </div>
 
                 <!-- Teléfono -->

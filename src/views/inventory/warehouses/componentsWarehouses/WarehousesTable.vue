@@ -20,7 +20,7 @@ defineEmits(['edit', 'delete']);
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    address: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    location: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     phone: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] }
 });
 
@@ -36,7 +36,7 @@ watch(
 const exportWarehouses = async () => {
     const columns = [
         { header: 'Nombre', key: 'name', width: 30 },
-        { header: 'Dirección', key: 'address', width: 40 },
+        { header: 'Ubicación', key: 'location', width: 40 },
         { header: 'Teléfono', key: 'phone', width: 20 }
     ];
 
@@ -55,7 +55,7 @@ const exportWarehouses = async () => {
         dataKey="id"
         :filters="localFilters"
         v-model:filters="localFilters"
-        :globalFilterFields="['name', 'address', 'phone']"
+        :globalFilterFields="['name', 'location', 'phone']"
         :paginator="true"
         :rows="15"
         :rowsPerPageOptions="[10, 15, 25, 50, 100]"
@@ -71,24 +71,12 @@ const exportWarehouses = async () => {
                         <div class="search-container">
                             <IconField>
                                 <InputIcon class="pi pi-search" />
-                                <InputText 
-                                    v-model="localFilters.global.value" 
-                                    placeholder="Buscar por nombre, dirección, teléfono..."
-                                    class="search-input"
-                                />
+                                <InputText v-model="localFilters.global.value" placeholder="Buscar por nombre, ubicación, teléfono..." class="search-input" />
                             </IconField>
                         </div>
                     </div>
                     <div class="actions-section">
-                        <Button 
-                            type="button" 
-                            icon="pi pi-file-excel" 
-                            label="Exportar" 
-                            class="export-btn" 
-                            @click="exportWarehouses()" 
-                            v-tooltip.top="'Exportar almacenes a Excel'"
-                            :disabled="!warehouses.length"
-                        />
+                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportWarehouses()" v-tooltip.top="'Exportar almacenes a Excel'" :disabled="!warehouses.length" />
                     </div>
                 </div>
             </div>
@@ -101,12 +89,7 @@ const exportWarehouses = async () => {
                 </div>
                 <h3 class="empty-title">No se encontraron almacenes</h3>
                 <p class="empty-description">Intenta ajustar los filtros o términos de búsqueda</p>
-                <Button 
-                    icon="pi pi-filter-slash" 
-                    label="Limpiar filtros" 
-                    class="p-button-outlined" 
-                    @click="localFilters = initFilters()"
-                />
+                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined" @click="localFilters = initFilters()" />
             </div>
         </template>
         <template #loading>
@@ -125,11 +108,11 @@ const exportWarehouses = async () => {
                 </div>
             </template>
         </Column>
-        <Column field="address" header="Dirección" sortable style="min-width: 15rem; max-width: 20rem">
+        <Column field="location" header="Ubicación" sortable style="min-width: 15rem; max-width: 20rem">
             <template #body="{ data }">
                 <div class="address-container">
                     <i class="pi pi-map-marker"></i>
-                    <span class="address-text">{{ data.address || '-' }}</span>
+                    <span class="address-text">{{ data.location || '-' }}</span>
                 </div>
             </template>
         </Column>
@@ -163,10 +146,10 @@ const exportWarehouses = async () => {
 /* Fondo decorativo */
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
-    background-image: 
-        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 40px 40px, 25px 25px;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        40px 40px,
+        25px 25px;
     animation: pattern-drift 25s linear infinite;
 }
 
@@ -255,7 +238,9 @@ const exportWarehouses = async () => {
 /* Tema principal de la tabla mejorado */
 :deep(.red-theme) {
     @apply rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 :deep(.red-theme .p-datatable-header) {
@@ -341,10 +326,14 @@ const exportWarehouses = async () => {
 /* Animación del patrón */
 @keyframes pattern-drift {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 

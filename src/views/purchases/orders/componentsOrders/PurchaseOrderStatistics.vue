@@ -19,8 +19,8 @@ const props = defineProps({
 
 <template>
     <div class="stats-container">
-        <!-- Fila superior: Métricas principales -->
-        <div class="stats-row primary-stats">
+        <!-- Todas las tarjetas en una sola fila -->
+        <div class="stats-row all-stats">
             <!-- Total Órdenes - Destacado -->
             <div class="stat-card featured">
                 <div class="stat-content stat-gradient-blue">
@@ -76,10 +76,7 @@ const props = defineProps({
                     </template>
                 </div>
             </div>
-        </div>
 
-        <!-- Fila inferior: Estados de órdenes -->
-        <div class="stats-row secondary-stats">
             <!-- Pendientes -->
             <div class="stat-card">
                 <div class="stat-content stat-gradient-amber">
@@ -219,7 +216,7 @@ const props = defineProps({
 .stats-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 0;
     padding: 0;
 }
 
@@ -228,12 +225,13 @@ const props = defineProps({
     gap: 1rem;
 }
 
-.primary-stats {
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+.all-stats {
+    grid-template-columns: repeat(6, 1fr);
 }
 
-.secondary-stats {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+/* Todas las tarjetas ocupan el mismo tamaño (1 columna cada una) */
+.all-stats .stat-card {
+    grid-column: span 1;
 }
 
 /* Tarjetas principales */
@@ -636,16 +634,18 @@ const props = defineProps({
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+    .all-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .stats-container {
         gap: 1rem;
     }
-
-    .primary-stats {
-        grid-template-columns: 1fr;
-    }
-
-    .secondary-stats {
+    
+    .all-stats {
         grid-template-columns: repeat(2, 1fr);
     }
 
@@ -659,7 +659,7 @@ const props = defineProps({
 }
 
 @media (max-width: 480px) {
-    .secondary-stats {
+    .all-stats {
         grid-template-columns: 1fr;
     }
 

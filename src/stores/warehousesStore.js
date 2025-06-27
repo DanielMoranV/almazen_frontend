@@ -14,7 +14,8 @@ export const useWarehousesStore = defineStore('warehousesStore', {
 
     getters: {
         warehousesList: (state) => state.warehouses,
-        isLoadingWarehouses: (state) => state.isLoading
+        isLoadingWarehouses: (state) => state.isLoading,
+        totalWarehouses: (state) => state.warehouses.length
     },
     actions: {
         async fetchWarehouses() {
