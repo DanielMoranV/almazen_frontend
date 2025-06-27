@@ -1,312 +1,296 @@
 <script setup>
-import { useToast } from 'primevue/usetoast';
-import { onBeforeMount, onMounted, ref } from 'vue';
-
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useCompaniesStore } from '@/stores/companiesStore';
+import CompaniesTable from '@/views/companies/componentsCompanies/CompaniesTable.vue';
+import CompanyFormDialog from '@/views/companies/componentsCompanies/CompanyFormDialog.vue';
+import CompanyToolbar from '@/views/companies/componentsCompanies/CompanyToolbar.vue';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
 
-import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+const toast = useToast();
 const companiesStore = useCompaniesStore();
 
-const filters = ref(null);
-
-// Estado
-const companies = ref([]); // Aquí cargarás tus empresas
+// Estados locales
 const selectedCompany = ref(null);
-const companyDialog = ref(false);
-const deleteDialog = ref(false);
-const submitted = ref(false);
-const toast = useToast();
+const showCompanyDialog = ref(false);
+const showDeleteDialog = ref(false);
+const isCreating = ref(false);
 
-// Datos del formulario
-const companyForm = ref({
-    id: null,
-    company_name: '',
-    address: '',
-    phone: '',
-    email: '',
-    website: '',
-    logo: '',
-    description: '',
-    is_active: true
-});
+// Estados computados del store
+const totalCompanies = computed(() => companiesStore.companiesList.length);
+const isLoading = computed(() => companiesStore.isLoadingCompanies);
+const hasCompanies = computed(() => companiesStore.companiesList.length > 0);
 
-const openNew = () => {
-    companyForm.value = { id: null, company_name: '', address: '', phone: '', email: '', website: '', logo: '', description: '', is_active: true };
-    submitted.value = false;
-    companyDialog.value = true;
-};
-
-const editCompany = (company) => {
-    companyForm.value = { ...company };
-    companyDialog.value = true;
-};
-
-const confirmDelete = (company) => {
-    selectedCompany.value = company;
-    deleteDialog.value = true;
-};
-
-const hideDialog = () => {
-    companyDialog.value = false;
-};
-
-const hideDeleteDialog = () => {
-    deleteDialog.value = false;
-};
-
-function initFilters() {
-    filters.value = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        company_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        address: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        phone: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        email: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        website: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        logo: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        description: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-        is_active: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
-    };
-}
-
-onBeforeMount(() => {
-    initFilters();
-});
-
-function clearFilter() {
-    filters.value = {
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-    };
-    initFilters();
-}
-
+// Inicialización
 onMounted(async () => {
+    await loadCompanies();
+});
+
+// Gestión de carga inicial
+const loadCompanies = async () => {
     await companiesStore.fetchCompanies();
     if (companiesStore.success) {
-        companies.value = companiesStore.companiesList;
-        toast.add({ severity: 'success', summary: 'Empresas cargadas', detail: companiesStore.message, life: 3000 });
-    } else {
-        if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
-            companiesStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
-            });
-        } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
-        }
+        showSuccess('Empresas cargadas', 'Lista actualizada correctamente');
     }
-});
-
-const submitCompany = async () => {
-    if (companyForm.value.id) {
-        await companiesStore.updateCompany(companyForm.value, companyForm.value.id);
-        if (companiesStore.success) {
-            companies.value = companiesStore.companiesList;
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa actualizada correctamente', life: 3000 });
-        } else {
-            if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
-                companiesStore.validationErrors.forEach((err) => {
-                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
-                });
-            } else {
-                toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
-            }
-        }
-    } else {
-        await companiesStore.createCompany(companyForm.value);
-        if (companiesStore.success) {
-            companies.value = companiesStore.companiesList;
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa creada correctamente', life: 3000 });
-        } else {
-            if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
-                companiesStore.validationErrors.forEach((err) => {
-                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
-                });
-            } else {
-                toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
-            }
-        }
-    }
-    companyDialog.value = false;
 };
 
-const deleteCompany = async (company) => {
-    let idCompany = company.id;
-    await companiesStore.removeCompany(idCompany);
+// Gestión de empresas
+const openCreateDialog = () => {
+    selectedCompany.value = null;
+    isCreating.value = true;
+    showCompanyDialog.value = true;
+};
+
+const openEditDialog = (company) => {
+    selectedCompany.value = { ...company };
+    isCreating.value = false;
+    showCompanyDialog.value = true;
+};
+
+const openDeleteDialog = (company) => {
+    selectedCompany.value = company;
+    showDeleteDialog.value = true;
+};
+
+const handleCompanySubmit = async (companyData) => {
+    const action = isCreating.value ? companiesStore.createCompany : companiesStore.updateCompany;
+    await action(companyData, companyData.id);
+
     if (companiesStore.success) {
-        companies.value = companiesStore.companiesList;
-        toast.add({ severity: 'success', summary: 'Éxito', detail: 'Empresa eliminada correctamente', life: 3000 });
+        const message = isCreating.value ? 'Empresa creada exitosamente' : 'Empresa actualizada exitosamente';
+        showSuccess(message, companiesStore.message);
+        showCompanyDialog.value = false;
+        // Recargar la lista para mostrar los cambios
+        await companiesStore.fetchCompanies();
     } else {
-        if (companiesStore.validationErrors && companiesStore.validationErrors.length > 0) {
-            companiesStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
-            });
-        } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: companiesStore.message, life: 3000 });
-        }
+        handleApiErrors(companiesStore);
     }
-
-    deleteDialog.value = false;
 };
 
-const exportCompanies = async () => {
-    const columns = [
-        { header: 'Nombre', key: 'company_name', width: 25 },
-        { header: 'Dirección', key: 'address', width: 25 },
-        { header: 'Teléfono', key: 'phone', width: 15 },
-        { header: 'Email', key: 'email', width: 20 },
-        { header: 'Web', key: 'website', width: 20 },
-        { header: 'Logo', key: 'logo', width: 20 },
-        { header: 'Descripción', key: 'description', width: 25 },
-        { header: 'Activo', key: 'is_active', width: 15 },
-        { header: 'Acciones', key: 'actions', width: 150 }
-    ];
+const handleCompanyDelete = async () => {
+    await companiesStore.removeCompany(selectedCompany.value.id);
 
-    await exportToExcel(columns, companies.value, 'Empresas', 'Empresas');
+    if (companiesStore.success) {
+        showSuccess('Empresa eliminada', companiesStore.message);
+        showDeleteDialog.value = false;
+        // Recargar para reflejar la eliminación
+        await companiesStore.fetchCompanies();
+    } else {
+        handleApiErrors(companiesStore);
+        showDeleteDialog.value = false;
+    }
+};
+
+// Manejadores del toolbar
+const handleRefresh = async () => {
+    await companiesStore.fetchCompanies();
+    showSuccess('Datos actualizados', 'Lista de empresas actualizada');
+};
+
+// Helpers para manejo de respuestas API
+const handleApiErrors = (store) => {
+    if (store.validationErrors && store.validationErrors.length > 0) {
+        store.validationErrors.forEach((err) => {
+            toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+        });
+    } else {
+        showError('Error', store.message || 'Ha ocurrido un error inesperado');
+    }
+};
+
+const showSuccess = (summary, detail) => {
+    toast.add({ severity: 'success', summary, detail, life: 3000 });
+};
+
+const showError = (summary, detail) => {
+    toast.add({ severity: 'error', summary, detail, life: 4000 });
 };
 </script>
 <template>
-    <div class="p-6 card">
+    <div class="companies-page">
+        <!-- Toast y Confirmaciones -->
         <Toast />
         <ConfirmDialog />
 
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Gestión de Empresas</h2>
-            <Button icon="pi pi-plus" class="p-button-success" @click="openNew" />
+        <!-- Toolbar Principal Mejorado -->
+        <CompanyToolbar :total-companies="totalCompanies" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
+
+        <!-- Área Principal de Contenido con Animaciones -->
+        <div class="content-wrapper">
+            <!-- Estado Vacío Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="!isLoading && !hasCompanies" class="empty-state">
+                    <div class="empty-content">
+                        <div class="empty-icon">
+                            <i class="pi pi-building"></i>
+                        </div>
+                        <h3 class="empty-title">Aún no tienes empresas</h3>
+                        <p class="empty-description">Crea tu primera empresa para empezar a gestionar tu directorio empresarial.</p>
+                        <div class="empty-actions">
+                            <Button icon="pi pi-plus" label="Agregar Empresa" class="primary-action-btn" @click="openCreateDialog" />
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- Tabla de Empresas con Animaciones -->
+            <transition name="slide-up" appear>
+                <div v-if="!isLoading && hasCompanies" class="table-container">
+                    <CompaniesTable :companies="companiesStore.companiesList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
+                </div>
+            </transition>
+
+            <!-- Estado de Carga Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="isLoading" class="loading-state">
+                    <div class="loading-content">
+                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
+                        <p class="loading-text">Cargando empresas...</p>
+                    </div>
+                </div>
+            </transition>
         </div>
 
-        <DataTable
-            :style="{ fontSize: '11px', fontFamily: 'Arial, sans-serif' }"
-            :value="companies"
-            dataKey="id"
-            class="p-datatable-sm"
-            :scrollable="true"
-            stripedRows
-            size="small"
-            v-model:filters="filters"
-            scrollHeight="400px"
-            responsiveLayout="scroll"
-            paginator
-            :rows="5"
-            :globalFilterFields="['company_name', 'address', 'phone', 'email', 'website', 'logo', 'description', 'is_active']"
-            :rowsPerPageOptions="[5, 10, 20, 50]"
-            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Empresas"
-            :loading="companiesStore.isLoadingCompanies"
-        >
-            <template #header>
-                <div class="flex flex-wrap gap-2 items-center justify-between mb-3">
-                    <!-- Exportar Excel -->
-                    <Button type="button" icon="pi pi-file-excel" label="Exportar" outlined @click="exportCompanies()" />
+        <!-- Diálogos -->
+        <CompanyFormDialog v-model:visible="showCompanyDialog" :company="selectedCompany" :loading="isLoading" @submit="handleCompanySubmit" />
 
-                    <!-- Buscador  -->
-                    <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search text-white" />
-                        </InputIcon>
-                        <InputText v-model="filters['global'].value" placeholder="Buscar..." />
-                    </IconField>
-                </div>
-            </template>
-            <!-- Mostrar mensaje cuando no hay registros -->
-            <template #empty>
-                <div class="flex justify-center items-center h-12">No se encontraron registros</div>
-            </template>
-            <Column field="company_name" header="Nombre" sortable style="min-width: 8rem" />
-            <Column field="address" header="Dirección" sortable style="min-width: 8rem" />
-            <Column field="phone" header="Teléfono" sortable style="min-width: 5rem" />
-            <Column field="email" header="Email" sortable style="min-width: 5rem" />
-            <Column field="website" header="Web" sortable style="min-width: 5rem" />
-            <!-- <Column field="logo" header="Logo" sortable style="min-width: 5rem" /> -->
-            <Column field="description" header="Descripción" sortable style="min-width: 10rem" />
-            <Column field="is_active" header="Activo" sortable style="min-width: 5rem">
-                <template #body="slotProps">
-                    <i class="pi pi-check-circle text-green-500 text-2xl" v-if="slotProps.data.is_active"></i>
-                    <i class="pi pi-times-circle text-red-500 text-2xl" v-else></i>
-                </template>
-            </Column>
-            <Column header="Acciones" :exportable="false" style="min-width: 3rem">
-                <template #body="slotProps">
-                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-info m-1" @click="editCompany(slotProps.data)" />
-                    <!-- <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="confirmDelete(slotProps.data)" /> -->
-                </template>
-            </Column>
-        </DataTable>
-
-        <!-- Diálogo Crear/Editar -->
-        <Dialog v-model:visible="companyDialog" :style="{ width: '500px' }" header="Empresa" modal class="p-fluid" @hide="hideDialog">
-            <div class="field mb-4">
-                <label for="company_name" class="font-semibold">Nombre</label>
-                <InputText id="company_name" v-model="companyForm.company_name" autofocus required fluid />
-            </div>
-
-            <div class="field mb-4">
-                <label for="address" class="font-semibold">Dirección</label>
-                <InputText id="address" v-model="companyForm.address" required fluid />
-            </div>
-
-            <div class="field mb-4">
-                <label for="phone" class="font-semibold">Teléfono</label>
-                <InputText id="phone" v-model="companyForm.phone" required fluid />
-            </div>
-
-            <div class="field mb-4">
-                <label for="email" class="font-semibold">Email</label>
-                <InputText id="email" v-model="companyForm.email" required fluid />
-            </div>
-
-            <div class="field mb-4">
-                <label for="website" class="font-semibold">Web</label>
-                <InputText id="website" v-model="companyForm.website" required fluid />
-            </div>
-
-            <div class="field mb-4">
-                <label for="logo" class="font-semibold">Logo</label>
-                <InputText id="logo" v-model="companyForm.logo" required fluid />
-            </div>
-
-            <div class="field mb-4">
-                <label for="description" class="font-semibold">Descripción</label>
-                <InputText id="description" v-model="companyForm.description" required fluid />
-            </div>
-
-            <div class="field mb-4">
-                <label for="is_active" class="font-semibold">Activo </label>
-                <Checkbox id="is_active" binary v-model="companyForm.is_active" />
-            </div>
-
-            <template #footer>
-                <Button label="Cancelar" icon="pi pi-times" text @click="hideDialog" />
-                <Button
-                    label="Guardar"
-                    icon="pi pi-check"
-                    text
-                    severity="success"
-                    :disabled="!companyForm.company_name || !companyForm.email || !companyForm.address || !companyForm.phone || !companyForm.logo || !companyForm.description"
-                    :loading="companiesStore.isLoadingCompanies"
-                    @click="submitCompany"
-                />
-            </template>
-        </Dialog>
-
-        <!-- Confirmación de Eliminación -->
-        <Dialog v-model:visible="deleteDialog" :style="{ width: '400px' }" header="Confirmar" modal @hide="hideDeleteDialog">
-            <div class="flex items-center gap-3">
-                <i class="pi pi-exclamation-triangle text-red-500 text-2xl" />
-                <span
-                    >¿Estás seguro de que deseas eliminar a <strong>{{ selectedCompany?.company_name }}</strong
-                    >?</span
-                >
-            </div>
-            <template #footer>
-                <Button label="Cancelar" icon="pi pi-times" text @click="hideDeleteDialog" />
-                <Button label="Eliminar" icon="pi pi-trash" text severity="danger" :loading="companiesStore.isLoadingCompanies" @click="deleteCompany(selectedCompany)" />
-            </template>
-        </Dialog>
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedCompany?.company_name || ''" @confirm="handleCompanyDelete" />
     </div>
 </template>
 
 <style scoped>
-.field label {
-    display: block;
-    margin-bottom: 0.5rem;
+/* Contenedor principal de la página de empresas */
+.companies-page {
+    @apply min-h-screen;
+}
+
+/* Contenedor de contenido con espaciado y diseño mejorado */
+.content-wrapper {
+    @apply mt-6 space-y-6;
+}
+
+/* Contenedor de tabla con efecto de elevación */
+.table-container {
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Estado vacío mejorado con diseño centrado */
+.empty-state {
+    @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl border-2 border-dashed border-green-200 dark:border-gray-600;
+}
+
+.empty-content {
+    @apply text-center px-8 py-12 max-w-md;
+}
+
+/* Contenedor del ícono mejorado */
+.empty-icon {
+    @apply mx-auto mb-6 w-20 h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg;
+}
+
+/* Estilo del ícono con animación */
+.empty-icon i {
+    @apply text-4xl text-white;
+    animation: bounce 2s infinite;
+}
+
+/* Título del estado vacío mejorado */
+.empty-title {
+    @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4;
+    background: linear-gradient(135deg, #059669, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Descripción del estado vacío */
+.empty-description {
+    @apply text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed;
+}
+
+/* Contenedor de acciones en estado vacío */
+.empty-actions {
+    @apply flex justify-center gap-4;
+}
+
+/* Botón de acción principal */
+.primary-action-btn {
+    @apply bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 border-none text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105;
+}
+
+/* Estado de carga mejorado */
+.loading-state {
+    @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl;
+}
+
+.loading-content {
+    @apply text-center px-8 py-12;
+}
+
+.loading-text {
+    @apply text-gray-600 dark:text-gray-400 mt-4 text-lg font-medium;
+}
+
+/* Animaciones de transición */
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+}
+
+.slide-up-enter-active {
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-up-enter-from {
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+/* Animaciones de CSS */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Ajustes responsivos para pantallas pequeñas */
+@media (max-width: 640px) {
+    .empty-content {
+        @apply px-4 py-8;
+    }
+    
+    .empty-title {
+        @apply text-2xl;
+    }
+    
+    .empty-description {
+        @apply text-base;
+    }
+    
+    .empty-actions {
+        @apply flex-col gap-3;
+    }
+    
+    .primary-action-btn {
+        @apply w-full;
+    }
+}
+
+/* Mejoras adicionales para modo oscuro */
+@media (prefers-color-scheme: dark) {
+    .table-container {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    }
 }
 </style>
+

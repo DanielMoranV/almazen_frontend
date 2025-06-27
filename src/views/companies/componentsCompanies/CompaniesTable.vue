@@ -7,7 +7,7 @@ import DataTable from 'primevue/datatable';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
-    providers: {
+    companies: {
         type: Array,
         default: () => []
     },
@@ -21,43 +21,45 @@ const emit = defineEmits(['edit', 'delete']);
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    contact_person: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    company_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    address: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     phone: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     email: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    address: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     website: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    description: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     is_active: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
 });
 
 const localFilters = ref(initFilters());
 
 watch(
-    () => props.providers,
-    (newProviders) => {
+    () => props.companies,
+    (newCompanies) => {
         localFilters.value = { ...initFilters() };
     },
     { deep: true }
 );
 
-const exportProviders = async () => {
+const exportCompanies = async () => {
     const columns = [
-        { header: 'Nombre', key: 'name', width: 30 },
-        { header: 'Persona de Contacto', key: 'contact_person', width: 30 },
-        { header: 'Teléfono', key: 'phone', width: 20 },
-        { header: 'Email', key: 'email', width: 30 },
+        { header: 'Nombre', key: 'company_name', width: 25 },
         { header: 'Dirección', key: 'address', width: 25 },
-        { header: 'Sitio Web', key: 'website', width: 25 },
+        { header: 'Teléfono', key: 'phone', width: 15 },
+        { header: 'Email', key: 'email', width: 20 },
+        { header: 'Web', key: 'website', width: 20 },
+        { header: 'Logo', key: 'logo', width: 20 },
+        { header: 'Descripción', key: 'description', width: 25 },
         { header: 'Activo', key: 'is_active', width: 15 }
     ];
 
-    await exportToExcel(columns, props.providers, 'Proveedores', 'Proveedores');
+    await exportToExcel(columns, props.companies, 'Empresas', 'Empresas');
 };
 </script>
+
 <template>
     <DataTable
         stripedRows
-        :value="props.providers"
+        :value="props.companies"
         :loading="props.loading"
         responsiveLayout="scroll"
         scrollable
@@ -66,13 +68,13 @@ const exportProviders = async () => {
         dataKey="id"
         :filters="localFilters"
         v-model:filters="localFilters"
-        :globalFilterFields="['name', 'contact_person', 'phone', 'email', 'address', 'website']"
+        :globalFilterFields="['company_name', 'address', 'phone', 'email', 'website', 'description']"
         :paginator="true"
         :rows="15"
         :rowsPerPageOptions="[10, 15, 25, 50, 100]"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} proveedores"
-        class="providers-table green-theme p-datatable-gridlines"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} empresas"
+        class="companies-table green-theme p-datatable-gridlines"
     >
         <template #header>
             <div class="table-header">
@@ -84,12 +86,12 @@ const exportProviders = async () => {
                                 <InputIcon>
                                     <i class="pi pi-search text-white" />
                                 </InputIcon>
-                                <InputText v-model="localFilters['global'].value" placeholder="Buscar por nombre, contacto, teléfono..." class="search-input" fluid />
+                                <InputText v-model="localFilters['global'].value" placeholder="Buscar por nombre, dirección, teléfono..." class="search-input" fluid />
                             </IconField>
                         </div>
                     </div>
                     <div class="actions-section">
-                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportProviders()" v-tooltip.top="'Exportar proveedores a Excel'" :disabled="!props.providers.length" />
+                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportCompanies()" v-tooltip.top="'Exportar empresas a Excel'" :disabled="!props.companies.length" />
                     </div>
                 </div>
             </div>
@@ -100,7 +102,7 @@ const exportProviders = async () => {
                 <div class="empty-icon">
                     <i class="pi pi-search"></i>
                 </div>
-                <h3 class="empty-title">No se encontraron proveedores</h3>
+                <h3 class="empty-title">No se encontraron empresas</h3>
                 <p class="empty-description">Intenta ajustar los filtros o términos de búsqueda</p>
                 <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined" @click="localFilters = initFilters()" />
             </div>
@@ -108,16 +110,15 @@ const exportProviders = async () => {
         <template #loading>
             <div class="loading-table-state">
                 <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
-                <p class="loading-text">Cargando proveedores...</p>
+                <p class="loading-text">Cargando empresas...</p>
             </div>
         </template>
 
-        <Column field="name" header="Nombre" sortable style="min-width: 12rem; max-width: 15rem" />
-        <Column field="contact_person" header="Contacto" sortable style="min-width: 10rem; max-width: 12rem">
+        <Column field="company_name" header="Nombre" sortable style="min-width: 12rem; max-width: 15rem" />
+        <Column field="address" header="Dirección" sortable style="min-width: 12rem; max-width: 18rem">
             <template #body="{ data }">
-                <div class="contact-tag">
-                    <i class="pi pi-user"></i>
-                    <span>{{ data.contact_person || '-' }}</span>
+                <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" :title="data.address">
+                    {{ data.address || '-' }}
                 </div>
             </template>
         </Column>
@@ -133,14 +134,7 @@ const exportProviders = async () => {
             <template #body="{ data }">
                 <div class="email-tag">
                     <i class="pi pi-envelope"></i>
-                    <span class="truncate">{{ data.email || '-' }}</span>
-                </div>
-            </template>
-        </Column>
-        <Column field="address" header="Dirección" sortable style="min-width: 12rem; max-width: 18rem">
-            <template #body="{ data }">
-                <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" :title="data.address">
-                    {{ data.address || '-' }}
+                    <span>{{ data.email || '-' }}</span>
                 </div>
             </template>
         </Column>
@@ -148,9 +142,26 @@ const exportProviders = async () => {
             <template #body="{ data }">
                 <div v-if="data.website" class="website-tag">
                     <i class="pi pi-globe"></i>
-                    <a :href="data.website" target="_blank" class="text-blue-600 hover:text-blue-800 truncate">{{ data.website }}</a>
+                    <a :href="data.website" target="_blank" class="text-blue-600 hover:text-blue-800">{{ data.website }}</a>
                 </div>
                 <span v-else class="text-gray-400">-</span>
+            </template>
+        </Column>
+        <Column field="logo" header="Logo" style="min-width: 4rem; max-width: 5rem">
+            <template #body="{ data }">
+                <div class="flex justify-center">
+                    <img v-if="data.logo" :src="data.logo" alt="Logo de la empresa" class="w-12 h-12 object-cover rounded border" @error="$event.target.style.display = 'none'" />
+                    <div v-else class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                        <i class="pi pi-image text-gray-400"></i>
+                    </div>
+                </div>
+            </template>
+        </Column>
+        <Column field="description" header="Descripción" sortable style="min-width: 12rem; max-width: 18rem">
+            <template #body="{ data }">
+                <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" :title="data.description">
+                    {{ data.description || '-' }}
+                </div>
             </template>
         </Column>
         <Column field="is_active" header="Act." sortable style="min-width: 4rem; max-width: 5rem">
@@ -358,14 +369,6 @@ const exportProviders = async () => {
 }
 
 /* Etiquetas de información */
-.contact-tag {
-    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700;
-}
-
-.contact-tag i {
-    @apply text-indigo-600 dark:text-indigo-400;
-}
-
 .phone-tag {
     @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700;
 }
@@ -375,19 +378,19 @@ const exportProviders = async () => {
 }
 
 .email-tag {
-    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-700 max-w-full;
+    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-700;
 }
 
 .email-tag i {
-    @apply text-purple-600 dark:text-purple-400 flex-shrink-0;
+    @apply text-purple-600 dark:text-purple-400;
 }
 
 .website-tag {
-    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-700 max-w-full;
+    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-700;
 }
 
 .website-tag i {
-    @apply text-orange-600 dark:text-orange-400 flex-shrink-0;
+    @apply text-orange-600 dark:text-orange-400;
 }
 
 /* Mensaje de tabla vacía */
@@ -405,10 +408,6 @@ const exportProviders = async () => {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-.truncate {
-    @apply overflow-hidden text-ellipsis whitespace-nowrap;
 }
 
 /* Ajustes responsivos para pantallas pequeñas */
