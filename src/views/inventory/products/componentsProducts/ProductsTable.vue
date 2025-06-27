@@ -120,6 +120,8 @@ const getBarcodeOptions = (type) => {
         removableSort
         dataKey="id"
         :filters="localFilters"
+        v-model:filters="localFilters"
+        :globalFilterFields="['name', 'barcode', 'sku', 'description', 'unit_name', 'brand']"
         :paginator="true"
         :rows="15"
         :rowsPerPageOptions="[10, 15, 25, 50, 100]"
@@ -130,11 +132,16 @@ const getBarcodeOptions = (type) => {
         <template #header>
             <div class="table-header">
                 <div class="header-content">
-                    <div class="header-title">
+                    <!-- <div class="header-title">
                         <i class="pi pi-list"></i>
-                        <span>Lista de Productos</span>
+                    </div> -->
+                    <div class="flex-1 px-4">
+                        <IconField>
+                            <InputIcon class="pi pi-search" />
+                            <InputText v-model="localFilters['global'].value" placeholder="Buscar productos..." />
+                        </IconField>
                     </div>
-                    <Button type="button" icon="pi pi-file-excel" label="Exportar Excel" class="export-btn" @click="exportProducts()" v-tooltip.top="'Exportar productos a Excel'" severity="success" outlined />
+                    <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportProducts()" v-tooltip.top="'Exportar productos a Excel'" />
                 </div>
             </div>
         </template>
@@ -177,11 +184,13 @@ const getBarcodeOptions = (type) => {
                 <span v-else class="text-gray-400">Sin código</span>
             </template>
         </Column>
-        <Column field="type_barcode" header="Tipo" sortable style="min-width: 4rem; max-width: 5rem">
+        <Column field="type_barcode" header="Tipo" sortable style="min-width: 3rem; max-width: 6rem">
             <template #body="{ data }">
-                <span class="barcode-type-badge">
-                    {{ data.type_barcode?.toUpperCase() || '-' }}
-                </span>
+                <div class="text-center">
+                    <span class="barcode-type-badge">
+                        {{ data.type_barcode?.toUpperCase() || '-' }}
+                    </span>
+                </div>
             </template>
         </Column>
         <Column field="description" header="Descripción" sortable style="min-width: 12rem; max-width: 18rem">
@@ -237,231 +246,134 @@ const getBarcodeOptions = (type) => {
 </template>
 
 <style scoped>
-/* ===== TABLE HEADER ===== */
+/* Encabezado de la tabla con gradiente */
 .table-header {
-    background: linear-gradient(135deg, var(--primary-500) 0%, var(--yellow-400) 100%);
-    @apply rounded-t-lg p-4 mb-0;
-    box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
+    @apply bg-gradient-to-r from-green-600 to-green-500 rounded-lg p-4 mb-0 relative overflow-hidden;
 }
 
 .header-content {
-    @apply flex justify-between items-center;
+    @apply flex justify-between items-center gap-4;
 }
 
 .header-title {
-    @apply flex items-center gap-3 text-white font-bold text-lg;
+    @apply flex items-center gap-2 text-white font-bold text-2xl;
 }
 
 .header-title i {
-    @apply text-xl;
+    @apply text-2xl;
 }
 
+/* Botón de exportar a Excel */
 .export-btn {
-    @apply bg-white/25 border-white/40 text-white hover:bg-white/35 font-semibold;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(4px);
+    @apply bg-white border-2 border-white text-green-700 font-semibold px-3 py-2 rounded-xl transition-colors;
 }
 
-/* ===== TABLE STYLES ===== */
+/* Al pasar el mouse, solo cambia el color y se asegura de que no haya transformación */
+.export-btn:hover {
+    @apply bg-green-50 border-green-100;
+    transform: none !important;
+}
+
+/* Tema principal de la tabla */
 :deep(.green-theme) {
-    border-radius: 0.75rem;
-    overflow: hidden;
-    box-shadow:
-        0 10px 15px -3px rgba(0, 0, 0, 0.1),
-        0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(34, 197, 94, 0.1);
+    @apply rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
 }
 
 :deep(.green-theme .p-datatable-header) {
-    background: transparent;
-    border: none;
-    padding: 0;
+    @apply bg-transparent border-none p-0;
 }
 
-/* ===== STICKY HEADER ===== */
+/* Encabezado de las columnas de la tabla */
 :deep(.green-theme .p-datatable-thead > tr > th) {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--primary-500);
-    color: var(--primary-color-text);
-    font-weight: 700;
-    font-size: 14px;
-    padding: 16px 12px;
-    border: none;
-    text-align: center;
-    letter-spacing: 0.025em;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    @apply sticky top-0 z-20 bg-green-600 text-white font-bold text-sm py-4 px-3 border-none text-center;
 }
 
-:deep(.green-theme .p-datatable-thead > tr > th:first-child) {
-    border-top-left-radius: 0;
-}
-
-:deep(.green-theme .p-datatable-thead > tr > th:last-child) {
-    border-top-right-radius: 0;
-}
-
-/* ===== TABLE BODY ===== */
+/* Cuerpo de la tabla */
 :deep(.green-theme .p-datatable-tbody > tr > td) {
-    padding: 16px 12px;
-    vertical-align: middle;
-    border-bottom: 1px solid var(--surface-border);
-    background: var(--surface-0);
-    font-size: 14px;
-    color: var(--text-color);
-    transition: all 0.2s ease;
-    font-weight: 500;
+    @apply py-4 px-3 align-middle border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 font-medium;
 }
 
+/* Estilo para filas pares */
 :deep(.green-theme .p-datatable-tbody > tr:nth-child(even) > td) {
-    background: var(--surface-50);
+    @apply bg-gray-50 dark:bg-gray-700/50;
 }
 
-/* ===== HOVER EFFECTS ===== */
+/* Efecto hover en las filas */
 :deep(.green-theme .p-datatable-tbody > tr:hover > td) {
-    background: var(--primary-50);
-    box-shadow:
-        0 4px 8px -2px rgba(var(--primary), 0.15),
-        0 2px 4px -1px rgba(var(--primary), 0.1);
-    transform: translateY(-1px);
+    @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800;
 }
 
-/* ===== ACTION BUTTONS ===== */
+/* Botones de acción (Editar y Eliminar) */
 :deep(.green-theme .p-button.p-button-info) {
-    background: var(--primary-500);
-    border-color: var(--primary-500);
-    color: var(--primary-color-text);
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(var(--primary), 0.2);
-    font-weight: 600;
-}
-
-:deep(.green-theme .p-button.p-button-info:hover) {
-    background: var(--primary-600);
-    border-color: var(--primary-600);
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(var(--primary), 0.3);
+    @apply bg-green-600 hover:bg-green-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
 }
 
 :deep(.green-theme .p-button.p-button-danger) {
-    background: #ef4444;
-    border-color: #ef4444;
-    color: white;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-    font-weight: 600;
+    @apply bg-red-600 hover:bg-red-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
 }
 
-:deep(.green-theme .p-button.p-button-danger:hover) {
-    background: #dc2626;
-    border-color: #dc2626;
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
-}
-
-/* ===== STATUS INDICATORS ===== */
+/* Indicadores de estado (activo/inactivo) */
 :deep(.green-theme .pi-check-circle) {
-    color: var(--green-500);
-    filter: drop-shadow(0 2px 4px rgba(var(--green), 0.25));
-    font-weight: 600;
+    @apply text-green-600 dark:text-green-400 text-xl;
 }
 
 :deep(.green-theme .pi-times-circle) {
-    color: #ef4444;
-    filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.25));
-    font-weight: 600;
+    @apply text-red-600 dark:text-red-400 text-xl;
 }
 
-/* ===== PAGINATION ===== */
+/* Paginador */
 :deep(.green-theme .p-paginator) {
-    background: var(--surface-0);
-    border-top: 2px solid var(--primary-500);
-    padding: 1rem;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+    @apply bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 p-4 rounded-b-xl;
 }
 
 :deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page) {
-    color: #22c55e;
-    border: 1px solid #22c55e;
-    font-weight: 600;
+    @apply text-green-600 border border-green-600 font-semibold rounded-xl mx-1 w-10 h-10 transition-colors;
 }
 
 :deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
-    background: #22c55e;
-    color: white;
-    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+    @apply bg-green-600 text-white;
 }
 
 :deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page:hover) {
-    background: #dcfce7;
-    border-color: #16a34a;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(34, 197, 94, 0.15);
+    @apply bg-green-50 dark:bg-green-900/30 border-green-700;
 }
 
 :deep(.green-theme .p-paginator .p-dropdown) {
-    border-color: #22c55e;
-    font-weight: 500;
+    @apply border-green-600 font-medium rounded-xl;
 }
 
-:deep(.green-theme .p-paginator .p-dropdown:focus) {
-    border-color: #16a34a;
-    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.15);
-}
-
-/* ===== BRAND STYLING ===== */
+/* Etiqueta de marca */
 .brand-tag {
-    @apply flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold;
-    background: var(--primary-50);
-    color: var(--primary-900);
-    border: 1px solid var(--primary-200);
-    box-shadow: 0 1px 3px rgba(var(--primary), 0.1);
+    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-700;
 }
 
 .brand-tag i {
-    color: var(--primary-700);
+    @apply text-green-600 dark:text-green-400;
 }
 
-/* ===== SKU STYLING ===== */
+/* Insignia de SKU */
 .sku-badge {
-    @apply font-mono text-sm px-3 py-1 rounded-lg font-semibold;
-    background: var(--yellow-50);
-    color: var(--yellow-900);
-    border: 1px solid var(--yellow-200);
-    box-shadow: 0 1px 3px rgba(var(--yellow), 0.1);
+    @apply font-mono text-sm px-3 py-1 rounded-xl font-semibold bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700 text-center;
 }
 
-/* ===== BARCODE TYPE BADGE ===== */
+/* Insignia de tipo de código de barras */
 .barcode-type-badge {
-    @apply px-2 py-1 text-xs rounded-full font-bold uppercase tracking-wide;
-    background: var(--primary-50);
-    color: var(--primary-900);
-    border: 1px solid var(--primary-200);
-    box-shadow: 0 1px 2px rgba(var(--primary), 0.1);
+    @apply inline-block px-3 py-1 text-xs rounded-xl font-bold uppercase tracking-wide bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700;
+    font-family: 'Courier New', monospace;
+    min-width: 4rem;
+    text-align: center;
 }
 
-/* ===== EMPTY STATE ===== */
+/* Mensaje de tabla vacía */
 :deep(.green-theme .p-datatable-emptymessage) {
-    background: #f9fafb;
-    color: #1f2937;
-    padding: 3rem;
-    font-weight: 500;
+    @apply bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-12 font-medium rounded-xl m-6 border-2 border-dashed border-gray-300 dark:border-gray-600;
 }
 
 :deep(.green-theme .p-datatable-emptymessage .pi-box) {
-    color: #22c55e;
+    @apply text-green-600 dark:text-green-400 text-4xl mb-4;
 }
 
-/* ===== UTILITY CLASSES ===== */
-.line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
+/* Clases de utilidad para truncar texto */
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -469,28 +381,21 @@ const getBarcodeOptions = (type) => {
     overflow: hidden;
 }
 
+/* Contenedor del código de barras */
 .barcode-container {
-    max-width: 100%;
-    overflow: hidden;
+    @apply max-w-full overflow-hidden;
 }
 
 .barcode-canvas {
-    max-width: 100%;
-    height: auto;
+    @apply max-w-full h-auto;
 }
 
+/* Fallback para el código de barras si no se puede generar */
 .barcode-fallback {
-    font-family: monospace;
-    font-size: 12px;
-    text-align: center;
-    padding: 8px;
-    background: #f3f4f6;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    color: #6b7280;
+    @apply font-mono text-xs text-center p-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-600 dark:text-gray-400;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* Ajustes responsivos para pantallas pequeñas */
 @media (max-width: 768px) {
     .header-title {
         @apply text-base;
@@ -502,10 +407,7 @@ const getBarcodeOptions = (type) => {
 
     :deep(.green-theme .p-datatable-thead > tr > th),
     :deep(.green-theme .p-datatable-tbody > tr > td) {
-        font-size: 12px;
-        padding: 12px 8px;
+        @apply text-xs py-3 px-2;
     }
 }
-
-/* PrimeVue automaticamente maneja el modo oscuro */
 </style>

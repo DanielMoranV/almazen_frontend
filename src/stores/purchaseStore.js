@@ -1,7 +1,6 @@
+import { approvePurchaseOrder, cancelPurchaseOrder, createPurchaseOrder, deletePurchaseOrder, fetchPurchaseOrders, receivePurchaseOrder, updatePurchaseOrder } from '@/api';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
-import { fetchPurchaseOrders, createPurchaseOrder, deletePurchaseOrder, updatePurchaseOrder, approvePurchaseOrder, receivePurchaseOrder, cancelPurchaseOrder } from '@/api';
-import cache from '@/utils/cache';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const usePurchaseStore = defineStore('purchaseStore', {
     state: () => ({
@@ -23,7 +22,8 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await fetchPurchaseOrders();
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = processed.data.purchases;
+                    console.log(processed.data);
+                    this.purchaseOrders = processed.data;
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -37,7 +37,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await createPurchaseOrder(payload);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders.unshift(processed.data.purchase);
+                    this.purchaseOrders.unshift(processed.data);
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -65,7 +65,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await updatePurchaseOrder(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data.purchase : purchaseOrder));
+                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data : purchaseOrder));
                 }
             } catch (error) {
                 handleProcessError(error, this);

@@ -1,11 +1,11 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useToast } from 'primevue/usetoast';
-import { usePurchaseStore } from '@/stores/purchaseStore';
-import PurchaseOrdersTable from '@/views/purchases/orders/componentsOrders/PurchaseOrdersTable.vue';
-import PurchaseOrderFormDialog from '@/views/purchases/orders/componentsOrders/PurchaseOrderFormDialog.vue';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
+import { usePurchaseStore } from '@/stores/purchaseStore';
+import PurchaseOrderFormDialog from '@/views/purchases/orders/componentsOrders/PurchaseOrderFormDialog.vue';
+import PurchaseOrdersTable from '@/views/purchases/orders/componentsOrders/PurchaseOrdersTable.vue';
 import PurchaseOrderStatistics from '@/views/purchases/orders/componentsOrders/PurchaseOrderStatistics.vue';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
 
 const toast = useToast();
 const purchaseStore = usePurchaseStore();
@@ -19,7 +19,6 @@ const showDeleteDialog = ref(false);
 // Inicialización
 onMounted(async () => {
     await loadPurchaseOrders();
-    // Las estadísticas se recalculan automáticamente por el computed
 });
 
 // Métodos
@@ -137,22 +136,13 @@ const statistics = computed(() => {
     const orders = purchaseOrders.value;
     return {
         totalOrders: orders.length,
-        totalAmount: orders
-            .filter(order => order.status !== 'ANULADO')
-            .reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
+        totalAmount: orders.filter((order) => order.status !== 'ANULADO').reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
         averageAmount:
-            orders.filter(order => order.status !== 'ANULADO').length > 0
-                ? orders.filter(order => order.status !== 'ANULADO').reduce((total, order) => total + (Number(order.total_amount) || 0), 0) /
-                  orders.filter(order => order.status !== 'ANULADO').length
+            orders.filter((order) => order.status !== 'ANULADO').length > 0
+                ? orders.filter((order) => order.status !== 'ANULADO').reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / orders.filter((order) => order.status !== 'ANULADO').length
                 : 0,
-        highestAmount:
-            orders.filter(order => order.status !== 'ANULADO').length > 0
-                ? Math.max(...orders.filter(order => order.status !== 'ANULADO').map(order => Number(order.total_amount) || 0))
-                : 0,
-        lowestAmount:
-            orders.filter(order => order.status !== 'ANULADO').length > 0
-                ? Math.min(...orders.filter(order => order.status !== 'ANULADO').map(order => Number(order.total_amount) || 0))
-                : 0,
+        highestAmount: orders.filter((order) => order.status !== 'ANULADO').length > 0 ? Math.max(...orders.filter((order) => order.status !== 'ANULADO').map((order) => Number(order.total_amount) || 0)) : 0,
+        lowestAmount: orders.filter((order) => order.status !== 'ANULADO').length > 0 ? Math.min(...orders.filter((order) => order.status !== 'ANULADO').map((order) => Number(order.total_amount) || 0)) : 0,
         pendingOrders: orders.filter((order) => order.status === 'PENDIENTE').length,
         approvedOrders: orders.filter((order) => order.status === 'APROBADO').length,
         receivedOrders: orders.filter((order) => order.status === 'RECIBIDO').length,

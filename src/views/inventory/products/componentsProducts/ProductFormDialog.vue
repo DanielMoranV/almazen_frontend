@@ -55,13 +55,7 @@ const form = ref({
     image_url: '',
     presentation: '',
     is_active: true,
-    // Cambiamos de category_id a categories como array para permitir múltiples selecciones
     categories: [],
-    // Campos para gestión de lotes
-    create_batch: false,
-    is_perishable: false,
-    batch_code: '',
-    expiration_date: null
 });
 
 const resetForm = () => {
@@ -78,38 +72,20 @@ const resetForm = () => {
         presentation: '',
         is_active: true,
         categories: [],
-        // Campos para gestión de lotes
-        create_batch: false,
-        is_perishable: false,
-        batch_code: '',
-        expiration_date: null
     };
 };
 
 const isFormValid = computed(() => {
-    const basicValidation = form.value.name && form.value.barcode && form.value.sku && form.value.description && form.value.unit_id;
-    
-    // Si se está creando un lote, validar que tenga fecha de expiración
-    if (form.value.create_batch && form.value.is_perishable && !form.value.expiration_date) {
-        return false;
-    }
-    
-    return basicValidation;
+    return form.value.name && form.value.barcode && form.value.sku && form.value.description && form.value.unit_id;
 });
 
 watch(
     () => props.product,
     (product) => {
         if (product) {
-            // Si el producto ya tiene categorías, aseguramos que esté en formato de array
             const productWithCategories = {
                 ...product,
                 categories: product.categories || (product.category_id ? [product.category_id] : []),
-                // Inicializar campos de lote si no existen
-                create_batch: product.create_batch || false,
-                is_perishable: product.is_perishable || false,
-                batch_code: product.batch_code || '',
-                expiration_date: product.expiration_date || null
             };
             form.value = productWithCategories;
         } else {
@@ -122,26 +98,7 @@ watch(
 const handleSubmit = () => {
     submitted.value = true;
     if (isFormValid.value) {
-        // Limpiar datos antes de enviar
         const dataToSubmit = { ...form.value };
-        
-        // Si no se va a crear lote, eliminar campos relacionados
-        if (!dataToSubmit.create_batch) {
-            delete dataToSubmit.is_perishable;
-            delete dataToSubmit.batch_code;
-            delete dataToSubmit.expiration_date;
-        } else {
-            // Si no es perecedero, eliminar fecha de vencimiento
-            if (!dataToSubmit.is_perishable) {
-                delete dataToSubmit.expiration_date;
-            }
-            
-            // Si el código de lote está vacío, eliminarlo para que se genere automáticamente
-            if (!dataToSubmit.batch_code || dataToSubmit.batch_code.trim() === '') {
-                delete dataToSubmit.batch_code;
-            }
-        }
-        
         emit('submit', dataToSubmit);
         resetForm();
     }
@@ -272,85 +229,6 @@ const searchProduct = async () => {
                 <MultiSelect id="categories" v-model="form.categories" :options="categories" optionLabel="name" optionValue="id" placeholder="Seleccione las categorías" display="chip" filter class="w-full" />
                 <small class="text-gray-500">Puede seleccionar múltiples categorías</small>
             </div>
-
-            <!-- Sección de Gestión de Lotes -->
-            <div class="field">
-                <div class="batch-section">
-                    <h4 class="batch-title">
-                        <i class="pi pi-calendar"></i>
-                        Gestión de Lotes
-                    </h4>
-                    
-                    <!-- Checkbox para activar creación de lote -->
-                    <div class="field-checkbox mb-3">
-                        <Checkbox 
-                            id="create_batch" 
-                            v-model="form.create_batch" 
-                            :binary="true"
-                        />
-                        <label for="create_batch" class="ml-2 font-medium">
-                            ¿Este producto necesita lote?
-                        </label>
-                    </div>
-                    <small class="text-gray-600 block mb-4">
-                        Marque esta opción si el producto es perecedero o requiere control de lotes
-                    </small>
-
-                    <!-- Campos de lote (se muestran solo si create_batch está activado) -->
-                    <div v-if="form.create_batch" class="batch-fields">
-                        <!-- Checkbox para producto perecedero -->
-                        <div class="field-checkbox">
-                            <Checkbox 
-                                id="is_perishable" 
-                                v-model="form.is_perishable" 
-                                :binary="true"
-                            />
-                            <label for="is_perishable" class="ml-2 font-medium">
-                                Producto perecedero (requiere fecha de vencimiento)
-                            </label>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Código de lote -->
-                            <div class="field">
-                                <label for="batch_code" class="font-medium mb-2 block">
-                                    Código de lote
-                                    <span class="text-gray-500 font-normal">(opcional)</span>
-                                </label>
-                                <InputText 
-                                    id="batch_code" 
-                                    v-model="form.batch_code" 
-                                    placeholder="Ej: LOTE-2025-001"
-                                    maxlength="100"
-                                />
-                                <small class="text-gray-500">
-                                    Si no se especifica, se generará automáticamente
-                                </small>
-                            </div>
-
-                            <!-- Fecha de vencimiento -->
-                            <div class="field">
-                                <label for="expiration_date" class="font-medium mb-2 block">
-                                    Fecha de vencimiento
-                                    <span v-if="form.is_perishable" class="text-red-500">*</span>
-                                </label>
-                                <DatePicker
-                                    id="expiration_date"
-                                    v-model="form.expiration_date"
-                                    dateFormat="yy-mm-dd"
-                                    placeholder="Seleccione fecha"
-                                    :minDate="new Date()"
-                                    :class="{ 'p-invalid': submitted && form.create_batch && form.is_perishable && !form.expiration_date }"
-                                    showIcon
-                                />
-                                <small class="p-error" v-if="submitted && form.create_batch && form.is_perishable && !form.expiration_date">
-                                    La fecha de vencimiento es requerida para productos perecederos
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Footer -->
@@ -364,206 +242,141 @@ const searchProduct = async () => {
 </template>
 
 <style scoped>
-/* ===== DIALOG STYLES ===== */
+/**
+ * Estilos para el diálogo de formulario de producto.
+ * Se utiliza :deep para aplicar estilos a componentes anidados de PrimeVue.
+ */
+
+/* Estilo del encabezado del diálogo */
 :deep(.product-dialog .p-dialog-header) {
-    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-400) 30%, var(--primary-600) 70%, var(--yellow-400) 100%);
-    color: var(--primary-color-text);
-    border-radius: 12px 12px 0 0;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(var(--primary), 0.15);
+    @apply bg-gradient-to-r from-green-600 via-green-500 to-yellow-500 text-white rounded-t-xl p-6 relative overflow-hidden;
 }
 
-:deep(.product-dialog .p-dialog-header .p-dialog-title) {
-    font-size: 1.25rem;
-    font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Efecto de patrón de puntos en el encabezado */
+:deep(.product-dialog .p-dialog-header::before) {
+    content: '';
+    @apply absolute inset-0 opacity-10;
+    background-image: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.5) 2px, transparent 2px);
+    background-size: 40px 40px;
 }
 
+/* Título del diálogo */
+:deep(.product-dialog .p-dialog-title) {
+    @apply text-xl font-bold relative z-10;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Icono de cierre del diálogo */
 :deep(.product-dialog .p-dialog-header .p-dialog-header-icon) {
-    color: white;
-    opacity: 0.9;
+    @apply text-white opacity-90 relative z-10 transition-all rounded-xl w-10 h-10 hover:bg-white/20;
 }
 
-:deep(.product-dialog .p-dialog-header .p-dialog-header-icon:hover) {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
+/* Contenido del diálogo */
 :deep(.product-dialog .p-dialog-content) {
-    padding: 2rem;
-    background: var(--surface-0);
-    border-radius: 0 0 12px 12px;
-    border: 1px solid var(--surface-border);
-    border-top: none;
+    @apply p-6 bg-white dark:bg-gray-800 rounded-b-xl border border-gray-200 dark:border-gray-700 border-t-0;
 }
 
-/* ===== FIELD STYLES ===== */
+/* Estilos generales para campos de formulario */
 .field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    @apply flex flex-col gap-2 mb-4;
 }
 
 .field label {
-    @apply font-semibold text-sm;
-    color: var(--text-color);
+    @apply font-semibold text-sm text-gray-700 dark:text-gray-300;
 }
 
+/* Estilo para los checkboxes */
 .field-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
+    @apply flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 transition-all;
 }
 
-/* ===== INPUT FOCUS STATES ===== */
-:deep(.p-inputtext:focus) {
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 0.2rem rgba(var(--primary), 0.15);
+.field-checkbox:hover {
+    @apply bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-500;
 }
 
-:deep(.p-dropdown:not(.p-disabled).p-focus) {
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 0.2rem rgba(var(--primary), 0.15);
+/* Estilos base para componentes de entrada de PrimeVue */
+:deep(.p-inputtext),
+:deep(.p-dropdown),
+:deep(.p-multiselect),
+:deep(.p-calendar),
+:deep(.p-textarea) {
+    @apply border-2 rounded-xl font-medium transition-all border-gray-300 dark:border-gray-600;
 }
 
-:deep(.p-multiselect:not(.p-disabled).p-focus) {
-    border-color: #22c55e;
-    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.15);
-}
-
-:deep(.p-calendar:not(.p-disabled).p-focus) {
-    border-color: #22c55e;
-    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.15);
-}
-
+/* Estado de foco para componentes de entrada */
+:deep(.p-inputtext:focus),
+:deep(.p-dropdown:not(.p-disabled).p-focus),
+:deep(.p-multiselect:not(.p-disabled).p-focus),
+:deep(.p-calendar:not(.p-disabled).p-focus),
 :deep(.p-textarea:focus) {
-    border-color: #22c55e;
-    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.15);
+    @apply border-green-500 ring-2 ring-green-500/20;
 }
 
-/* ===== BATCH SECTION ===== */
-.batch-section {
-    background: linear-gradient(to right, var(--primary-50), var(--yellow-50));
-    border: 1px solid var(--primary-300);
-    @apply rounded-xl p-6;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(var(--primary), 0.1);
+/* Pie de página del diálogo y botones */
+:deep(.p-dialog-footer) {
+    @apply p-6 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700;
 }
 
-.batch-title {
-    @apply font-bold mb-4 flex items-center gap-3 text-lg;
-    color: var(--primary-900);
-}
-
-.batch-title i {
-    @apply text-xl;
-    color: var(--primary-700);
-}
-
-.batch-fields {
-    @apply space-y-4 mt-4;
-    border-top: 1px solid rgba(34, 197, 94, 0.3);
-    padding-top: 1rem;
-}
-
-/* ===== CHECKBOX STYLES ===== */
-:deep(.p-checkbox .p-checkbox-box) {
-    border-color: var(--primary-500);
-    border-width: 2px;
-}
-
-:deep(.p-checkbox:not(.p-disabled):has(.p-checkbox-input:hover) .p-checkbox-box) {
-    border-color: #16a34a;
-}
-
-:deep(.p-checkbox:not(.p-disabled):has(.p-checkbox-input:checked) .p-checkbox-box) {
-    background: var(--primary-500);
-    border-color: var(--primary-500);
-}
-
-:deep(.p-checkbox:not(.p-disabled):has(.p-checkbox-input:focus) .p-checkbox-box) {
-    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.15);
-}
-
-/* ===== BUTTON STYLES ===== */
 :deep(.p-dialog-footer .p-button-primary) {
-    background: var(--primary-500);
-    border-color: var(--primary-500);
-    box-shadow: 0 4px 12px rgba(var(--primary), 0.25);
-}
-
-:deep(.p-dialog-footer .p-button-primary:hover) {
-    background: #16a34a;
-    border-color: #16a34a;
-    box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
+    @apply bg-green-600 hover:bg-green-700 border-none py-3 px-6 rounded-xl font-bold text-base transition-all;
 }
 
 :deep(.p-dialog-footer .p-button-text) {
-    color: #6b7280;
-    font-weight: 500;
+    @apply text-gray-600 dark:text-gray-400 font-semibold py-3 px-6 rounded-xl text-base transition-all hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-800 dark:hover:text-gray-200;
 }
 
-:deep(.p-dialog-footer .p-button-text:hover) {
-    background: rgba(107, 114, 128, 0.1);
-    color: #374151;
-}
-
-/* ===== CHIPS IN MULTISELECT ===== */
+/* Estilos para los chips del MultiSelect */
 :deep(.p-multiselect-chip) {
-    background: var(--primary-500);
-    color: var(--primary-color-text);
-    font-weight: 500;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    @apply bg-green-600 text-white font-semibold border border-green-700 rounded-xl py-1 px-2 m-1 transition-all;
 }
 
 :deep(.p-multiselect-chip .p-multiselect-chip-icon) {
-    color: rgba(255, 255, 255, 0.9);
+    @apply text-white/90 font-bold transition-colors hover:text-white;
 }
 
-/* ===== VALIDATION ERRORS ===== */
+/* Estilos para campos con errores de validación */
 :deep(.p-invalid) {
-    border-color: #dc2626;
+    @apply border-red-500 bg-red-50 dark:bg-red-900/20;
 }
 
 :deep(.p-invalid:focus) {
-    border-color: #dc2626;
-    box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.2);
+    @apply border-red-500 ring-2 ring-red-500/20;
 }
 
 .p-error {
-    color: #dc2626;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+    @apply text-red-600 dark:text-red-400 text-sm mt-1 font-medium p-2 bg-red-50 dark:bg-red-900/20 rounded-xl border-l-4 border-red-500;
 }
 
-/* ===== SEARCH BUTTON ===== */
+/* Botón de búsqueda */
 :deep(.p-button.p-button-primary) {
-    background: #22c55e;
-    border-color: #22c55e;
-    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+    @apply bg-green-600 hover:bg-green-700 border-none rounded-xl font-bold py-2.5 px-4 transition-all;
 }
 
-:deep(.p-button.p-button-primary:hover) {
-    background: #16a34a;
-    border-color: #16a34a;
-    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
-}
-
-/* PrimeVue automaticamente maneja el modo oscuro */
-
-/* ===== RESPONSIVE ===== */
+/* Ajustes responsivos para pantallas pequeñas */
 @media (max-width: 640px) {
     :deep(.product-dialog .p-dialog-content) {
-        padding: 1rem;
+        @apply p-4;
     }
-    
-    .batch-section {
-        padding: 1rem;
+
+    .field {
+        @apply mb-3;
     }
-    
-    .batch-title {
-        font-size: 1rem;
+
+    .field-checkbox {
+        @apply p-2;
+    }
+
+    :deep(.p-checkbox .p-checkbox-box) {
+        @apply w-4 h-4;
+    }
+
+    :deep(.p-dialog-footer) {
+        @apply p-4;
+    }
+
+    :deep(.p-dialog-footer .p-button-primary),
+    :deep(.p-dialog-footer .p-button-text) {
+        @apply py-2.5 px-4 text-sm;
     }
 }
 </style>

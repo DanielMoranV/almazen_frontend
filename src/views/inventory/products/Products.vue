@@ -24,6 +24,7 @@ const hasProducts = computed(() => productsStore.productsList.length > 0);
 // Inicialización
 onMounted(async () => {
     await loadProducts();
+    console.log(productsStore.productsList);
 });
 
 // Gestión de carga inicial
@@ -87,22 +88,7 @@ const handleRefresh = async () => {
     showSuccess('Datos actualizados', 'Lista de productos actualizada');
 };
 
-const handleSearch = (searchTerm) => {
-    // La búsqueda ya se maneja en el toolbar/store
-    console.log('Búsqueda realizada:', searchTerm);
-};
-
 // Helpers para manejo de respuestas API
-const handleApiResponse = (store, successMessage = '') => {
-    if (store.success) {
-        if (successMessage) {
-            showSuccess('Éxito', successMessage);
-        }
-    } else {
-        handleApiErrors(store);
-    }
-};
-
 const handleApiErrors = (store) => {
     if (store.validationErrors && store.validationErrors.length > 0) {
         store.validationErrors.forEach((err) => {
@@ -122,38 +108,36 @@ const showError = (summary, detail) => {
 };
 </script>
 <template>
-    <div class="products-page-container">
+    <div>
         <!-- Toast y Confirmaciones -->
         <Toast />
         <ConfirmDialog />
 
         <!-- Toolbar Principal -->
-        <ProductToolbar :total-products="totalProducts" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" @search="handleSearch" />
+        <ProductToolbar :total-products="totalProducts" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
 
         <!-- Área Principal de Contenido -->
-        <Card class="content-section">
-            <template #content>
-                <!-- Estado Vacío -->
-                <div v-if="!isLoading && !hasProducts" class="empty-state">
-                    <div class="empty-icon">
-                        <i class="pi pi-box"></i>
-                    </div>
-                    <h3 class="empty-title">
-                        {{ productsStore.getCurrentSearchTerm ? 'No se encontraron productos' : 'No hay productos registrados' }}
-                    </h3>
-                    <p class="empty-description">
-                        {{ productsStore.getCurrentSearchTerm ? 'Intenta con otros términos de búsqueda o verifica la ortografía.' : 'Comienza agregando tu primer producto al inventario.' }}
-                    </p>
-                    <Button v-if="!productsStore.getCurrentSearchTerm" icon="pi pi-plus" label="Agregar Primer Producto" class="p-button-success" @click="openCreateDialog" />
-                    <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="p-button-outlined" @click="productsStore.clearSearch()" />
+        <div class="content-wrapper">
+            <!-- Estado Vacío -->
+            <div v-if="!isLoading && !hasProducts" class="empty-state">
+                <div class="empty-icon">
+                    <i class="pi pi-box"></i>
                 </div>
+                <h3 class="empty-title">
+                    {{ productsStore.getCurrentSearchTerm ? 'No se encontraron productos' : 'Aún no tienes productos' }}
+                </h3>
+                <p class="empty-description">
+                    {{ productsStore.getCurrentSearchTerm ? 'Intenta con otros términos de búsqueda o limpia los filtros.' : 'Crea tu primer producto para empezar a gestionar tu inventario.' }}
+                </p>
+                <Button v-if="!productsStore.getCurrentSearchTerm" icon="pi pi-plus" label="Agregar Producto" class="p-button-success" @click="openCreateDialog" />
+                <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="p-button-outlined" @click="productsStore.clearSearch()" />
+            </div>
 
-                <!-- Tabla de Productos -->
-                <div v-else class="table-container">
-                    <ProductsTable :products="productsStore.productsList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
-                </div>
-            </template>
-        </Card>
+            <!-- Tabla de Productos -->
+            <div v-else class="table-container">
+                <ProductsTable :products="productsStore.productsList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
+            </div>
+        </div>
 
         <!-- Diálogos -->
         <ProductsFormDialog v-model:visible="showProductDialog" :product="selectedProduct" :loading="isLoading" @submit="handleProductSubmit" />
@@ -163,44 +147,46 @@ const showError = (summary, detail) => {
 </template>
 
 <style scoped>
-.products-page-container {
-    @apply p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto;
-}
-
-/* Content Section */
-.content-section {
-    @apply min-h-[400px];
+.content-wrapper {
+    @apply mt-6;
 }
 
 .table-container {
-    @apply -m-6; /* Negative margin to extend table to card edges */
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden;
 }
 
-/* Empty State */
+/* Estilos para el estado vacío cuando no hay productos */
 .empty-state {
-    @apply text-center py-12 px-4;
+    @apply text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border-2 border-dashed border-gray-300 dark:border-gray-700;
 }
 
+/* Contenedor del ícono en el estado vacío */
 .empty-icon {
-    @apply mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800;
+    @apply mx-auto mb-4 w-16 h-16 flex items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30;
 }
 
+/* Estilo del ícono (pi-box) */
 .empty-icon i {
-    @apply text-3xl text-gray-400 dark:text-gray-600;
+    @apply text-3xl text-green-600 dark:text-green-400;
 }
 
+/* Título del estado vacío */
 .empty-title {
-    @apply text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2;
+    @apply text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2;
 }
 
+/* Descripción del estado vacío */
 .empty-description {
     @apply text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto;
 }
 
-/* Responsive adjustments */
+/* Ajustes responsivos para pantallas pequeñas */
 @media (max-width: 640px) {
-    .products-page-container {
-        @apply p-3;
+    .empty-state {
+        @apply py-12 px-4;
+    }
+    .empty-title {
+        @apply text-xl;
     }
 }
 </style>
