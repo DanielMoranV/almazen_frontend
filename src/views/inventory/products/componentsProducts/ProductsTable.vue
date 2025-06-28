@@ -107,6 +107,12 @@ const getBarcodeOptions = (type) => {
         margin: 5
     };
 };
+
+// Función para manejar errores de imagen
+const handleImageError = (event) => {
+    event.target.src = '/placeholder-product.png';
+    event.target.style.objectFit = 'cover';
+};
 </script>
 
 <template>
@@ -227,10 +233,12 @@ const getBarcodeOptions = (type) => {
         <Column field="image_url" header="Imagen" style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
-                    <img v-if="data.image_url" :src="data.image_url" alt="Imagen del producto" class="w-12 h-12 object-cover rounded border" @error="$event.target.style.display = 'none'" />
-                    <div v-else class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                        <i class="pi pi-image text-gray-400"></i>
-                    </div>
+                    <img 
+                        :src="data.image_url || '/placeholder-product.png'" 
+                        :alt="data.name || 'Producto'" 
+                        class="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-600" 
+                        @error="handleImageError"
+                    />
                 </div>
             </template>
         </Column>

@@ -9,10 +9,12 @@ import PrintOrderDialog from './PrintOrderDialog.vue';
 const showItemsDialog = ref(false);
 const selectedOrderItems = ref([]);
 const selectedOrderId = ref(null);
+const selectedOrderNumber = ref(null);
 
 function openItemsDialog(order) {
     selectedOrderItems.value = order.details || [];
     selectedOrderId.value = order.id;
+    selectedOrderNumber.value = order.order_number;
     showItemsDialog.value = true;
 }
 
@@ -20,7 +22,24 @@ function closeItemsDialog() {
     showItemsDialog.value = false;
     selectedOrderItems.value = [];
     selectedOrderId.value = null;
+    selectedOrderNumber.value = null;
 }
+
+// Métodos auxiliares para el diálogo
+const getTotalQuantity = () => {
+    if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
+    return selectedOrderItems.value.reduce((total, item) => total + (Math.trunc(item.quantity) || 0), 0);
+};
+
+const getTotalAmount = () => {
+    if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
+    return selectedOrderItems.value.reduce((total, item) => total + (Number(item.total_amount) || 0), 0);
+};
+
+const handleImageError = (event) => {
+    event.target.src = '/placeholder-product.png';
+    event.target.style.objectFit = 'cover';
+};
 // --- Fin Dialog ---
 
 const props = defineProps({
@@ -64,7 +83,10 @@ const formatCurrency = (value) => {
 };
 
 const formatDate = (value) => {
-    return new Intl.DateTimeFormat('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
+    if (!value) return '-';
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return '-';
+    return new Intl.DateTimeFormat('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 };
 
 const getStatusLabel = (status) => {
@@ -192,9 +214,12 @@ const getStatusIcon = (status) => {
                 <p class="loading-text">Cargando órdenes...</p>
             </div>
         </template>
-        <Column field="id" header="#" sortable>
+        <Column field="order_number" header="# Orden" sortable style="width: 100px">
             <template #body="slotProps">
-                <Badge :value="slotProps.data.id" severity="info" />
+                <div class="order-number-cell">
+                    <Badge :value="slotProps.data.order_number" severity="info" class="order-badge" />
+                    <span class="order-id">ID: {{ slotProps.data.id }}</span>
+                </div>
             </template>
         </Column>
         <Column field="provider.name" header="Proveedor" sortable />
@@ -274,49 +299,114 @@ const getStatusIcon = (status) => {
             </template>
         </Column>
 
-        <!-- Dialog para mostrar los items de la orden seleccionada -->
-        <Dialog v-model:visible="showItemsDialog" :modal="true" :closable="true" :header="`Items de la Orden #${selectedOrderId}`" :style="{ width: '900px' }" @hide="closeItemsDialog">
+        <!-- Dialog minimalista para items de la orden -->
+        <Dialog 
+            v-model:visible="showItemsDialog" 
+            :modal="true" 
+            :closable="true" 
+            :style="{ width: '90vw', maxWidth: '900px' }" 
+            class="items-dialog"
+            @hide="closeItemsDialog"
+        >
+            <template #header>
+                <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Orden #{{ selectedOrderNumber }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ selectedOrderItems?.length || 0 }} items • {{ formatCurrency(getTotalAmount()) }}</p>
+                    </div>
+                </div>
+            </template>
+
             <template #default>
-                <DataTable
-                    :value="selectedOrderItems"
-                    stripedRows
-                    responsiveLayout="scroll"
-                    paginator
-                    scrollable
-                    scrollHeight="400px"
-                    removableSort
-                    dataKey="id"
-                    :rows="10"
-                    :rowsPerPageOptions="[5, 10, 20, 50]"
-                    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} Productos"
-                    paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-                    class="products-table p-datatable-gridlines"
-                >
-                    <Column field="product.image_url" header="Imagen" style="width: 60px">
-                        <template #body="slotProps">
-                            <img :src="slotProps.data.product?.image_url" alt="img" style="width: 40px; height: 40px; object-fit: contain" v-if="slotProps.data.product?.image_url" />
-                        </template>
-                    </Column>
-                    <Column field="product.name" header="Producto" />
-                    <Column field="product.sku" header="SKU" />
-                    <Column field="product.brand" header="Marca" />
-                    <Column field="product.presentation" header="Presentación" />
-                    <Column field="quantity" header="Cantidad">
-                        <template #body="slotProps">
-                            {{ Math.trunc(slotProps.data.quantity) }}
-                        </template>
-                    </Column>
-                    <Column field="unit_price" header="P. Unit.">
-                        <template #body="slotProps">
-                            {{ formatCurrency(slotProps.data.unit_price) }}
-                        </template>
-                    </Column>
-                    <Column field="total_amount" header="Subtotal">
-                        <template #body="slotProps">
-                            {{ formatCurrency(slotProps.data.total_amount) }}
-                        </template>
-                    </Column>
-                </DataTable>
+                <div class="p-0">
+                    <DataTable
+                        :value="selectedOrderItems"
+                        responsiveLayout="scroll"
+                        paginator
+                        scrollable
+                        scrollHeight="400px"
+                        dataKey="id"
+                        :rows="20"
+                        :rowsPerPageOptions="[10, 20, 50]"
+                        currentPageReportTemplate="{first}-{last} de {totalRecords}"
+                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                        class="border-0"
+                        size="small"
+                    >
+                        <!-- Producto -->
+                        <Column header="Producto" :style="{ minWidth: '280px' }" frozen>
+                            <template #body="slotProps">
+                                <div class="flex items-center gap-3 py-1">
+                                    <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                        <img 
+                                            :src="slotProps.data.product?.image_url || '/placeholder-product.png'" 
+                                            :alt="slotProps.data.product?.name || 'Producto'"
+                                            class="w-full h-full object-cover"
+                                            @error="handleImageError"
+                                        />
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="font-medium text-gray-900 dark:text-white text-sm truncate">
+                                            {{ slotProps.data.product?.name }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                                            {{ slotProps.data.product?.sku }}
+                                            <span v-if="slotProps.data.product?.brand" class="ml-2">• {{ slotProps.data.product.brand }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <!-- Cantidad -->
+                        <Column field="quantity" header="Cant." :style="{ width: '80px' }" sortable>
+                            <template #body="slotProps">
+                                <div class="text-center font-medium text-gray-900 dark:text-white">
+                                    {{ Math.trunc(slotProps.data.quantity) }}
+                                </div>
+                            </template>
+                        </Column>
+
+                        <!-- Precio unitario -->
+                        <Column field="unit_price" header="Precio" :style="{ width: '100px' }" sortable>
+                            <template #body="slotProps">
+                                <div class="text-right font-mono text-sm text-gray-700 dark:text-gray-300">
+                                    {{ formatCurrency(slotProps.data.unit_price) }}
+                                </div>
+                            </template>
+                        </Column>
+
+                        <!-- Subtotal -->
+                        <Column field="total_amount" header="Total" :style="{ width: '100px' }" sortable>
+                            <template #body="slotProps">
+                                <div class="text-right font-mono text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ formatCurrency(slotProps.data.total_amount) }}
+                                </div>
+                            </template>
+                        </Column>
+                    </DataTable>
+                </div>
+            </template>
+
+            <template #footer>
+                <div class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            {{ getTotalQuantity() }} items
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-lg font-semibold text-gray-900 dark:text-white font-mono">
+                                {{ formatCurrency(getTotalAmount()) }}
+                            </div>
+                            <Button 
+                                label="Cerrar" 
+                                @click="closeItemsDialog"
+                                size="small"
+                                autofocus
+                            />
+                        </div>
+                    </div>
+                </div>
             </template>
         </Dialog>
     </DataTable>
@@ -646,5 +736,33 @@ const getStatusIcon = (status) => {
     .search-input {
         @apply py-2.5 text-sm;
     }
+}
+
+/* Estilos para la columna order_number */
+.order-number-cell {
+    @apply flex flex-col items-center gap-1;
+}
+
+.order-badge {
+    @apply font-bold;
+}
+
+.order-id {
+    @apply text-xs text-gray-500 dark:text-gray-400;
+}
+
+/* Estilos mínimos para el diálogo - usando Tailwind */
+:deep(.items-dialog .p-dialog-header) {
+    padding: 0;
+    border: none;
+}
+
+:deep(.items-dialog .p-dialog-content) {
+    padding: 0;
+}
+
+:deep(.items-dialog .p-dialog-footer) {
+    padding: 0;
+    border: none;
 }
 </style>

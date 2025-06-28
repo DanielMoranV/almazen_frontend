@@ -5,17 +5,14 @@ const api_url = import.meta.env.VITE_API_URL;
 
 const instance = axios.create({
     baseURL: api_url,
-    timeout: 20000000
+    timeout: 20000
 });
 
 instance.interceptors.request.use(
     (config) => {
-        const { getToken, getSocketId } = useAuthStore();
+        const { getToken } = useAuthStore();
         if (getToken) {
             config.headers.Authorization = 'Bearer ' + getToken;
-        }
-        if (getSocketId) {
-            config.headers['X-Socket-ID'] = getSocketId;
         }
 
         return config;
@@ -35,7 +32,32 @@ instance.interceptors.response.use(
         // Si algún endpoint no cumple, aquí puedes adaptarlo
         return response.data;
     },
-    function (error) {
+    async function (error) {
+        const originalRequest = error.config;
+        
+        // Auto-refresh en 401 si no es retry y no es endpoint de auth
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
+            originalRequest._retry = true;
+            
+            try {
+                const { refreshToken, getToken } = useAuthStore();
+                await refreshToken();
+                
+                // Retry con nuevo token
+                const newToken = getToken;
+                if (newToken) {
+                    originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+                    return instance(originalRequest);
+                }
+            } catch (refreshError) {
+                console.warn('[Auth] Refresh automático falló, redirigiendo a login');
+                const { clearAuthData } = useAuthStore();
+                clearAuthData();
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            }
+        }
+        
         // Si el backend responde, intenta adaptar la estructura al estándar
         let backendData = error.response && error.response.data;
         let errResponse = {

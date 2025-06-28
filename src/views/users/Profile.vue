@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref, watch } from 'vue';
 
-import { capitalizeName, restrictToNumbers, validateDNI, validateEmail, validatePhone } from '@/utils/validationUtils';
+import { capitalizeName, validateDNI, validateEmail, validatePhone } from '@/utils/validationUtils';
 
 // Stores
 const authStore = useAuthStore();
@@ -270,7 +270,7 @@ const getAvatarUrl = (name) => {
                         </div>
                     </div>
                     <div class="action-bar">
-                        <Button label="Actualizar Contraseña" icon="pi pi-shield" @click="updatePassword" :loading="isLoadingPassword" severity="secondary" class="save-btn secondary" />
+                        <Button label="Actualizar Contraseña" icon="pi pi-shield" @click="updatePassword" :loading="isLoadingPassword" severity="success" class="save-btn secondary" />
                     </div>
                 </div>
             </TabPanel>
@@ -541,7 +541,6 @@ const getAvatarUrl = (name) => {
 }
 
 .save-btn.secondary {
-    background: linear-gradient(135deg, var(--blue-500), var(--blue-600));
     border: none;
 }
 

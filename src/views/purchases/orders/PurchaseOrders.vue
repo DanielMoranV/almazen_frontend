@@ -4,6 +4,7 @@ import { usePurchaseStore } from '@/stores/purchaseStore';
 import PurchaseOrderFormDialog from '@/views/purchases/orders/componentsOrders/PurchaseOrderFormDialog.vue';
 import PurchaseOrdersTable from '@/views/purchases/orders/componentsOrders/PurchaseOrdersTable.vue';
 import PurchaseOrderStatistics from '@/views/purchases/orders/componentsOrders/PurchaseOrderStatistics.vue';
+import { DatePicker, InputNumber, InputText, Select } from 'primevue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 
@@ -16,11 +17,25 @@ const selectedOrder = ref(null);
 const showPurchaseOrderDialog = ref(false);
 const showDeleteDialog = ref(false);
 
-// Filtros rápidos
+// Filtros rápidos y avanzados
 const quickFilters = ref({
     status: null,
-    period: null
+    period: null,
+    orderNumber: null,
+    orderNumberFrom: null,
+    orderNumberTo: null,
+    providerId: null,
+    warehouseId: null,
+    documentNumber: '',
+    dateFrom: null,
+    dateTo: null
 });
+
+// Estado para búsqueda avanzada
+const showAdvancedSearch = ref(false);
+const searchMode = ref('simple');
+const providerOptions = ref([]); // Se cargará desde el store
+const warehouseOptions = ref([]); // Se cargará desde el store
 
 const statusFilterOptions = ref([
     { name: 'Todos los estados', value: null },
@@ -41,7 +56,7 @@ const periodFilterOptions = ref([
 
 // Inicialización
 onMounted(async () => {
-    await loadPurchaseOrders();
+    await Promise.all([loadPurchaseOrders(), loadAuxiliaryData()]);
 });
 
 // Métodos
@@ -49,7 +64,7 @@ const handleApproveOrder = async (order) => {
     await purchaseStore.approvePurchaseOrder(order.id);
     if (purchaseStore.success) {
         purchaseOrders.value = purchaseStore.purchaseOrdersList;
-        showSuccess('Orden aprobada', `Orden #${order.id} aprobada exitosamente`);
+        showSuccess('Orden aprobada', `Orden #${order.order_number} aprobada exitosamente`);
     } else {
         handleError('Error al aprobar orden', purchaseStore.message, purchaseStore.validationErrors);
     }
@@ -59,7 +74,7 @@ const handleReceiveOrder = async (order) => {
     await purchaseStore.receivePurchaseOrder(order.id);
     if (purchaseStore.success) {
         purchaseOrders.value = purchaseStore.purchaseOrdersList;
-        showSuccess('Orden recibida', `Orden #${order.id} marcada como recibida`);
+        showSuccess('Orden recibida', `Orden #${order.order_number} marcada como recibida`);
     } else {
         handleError('Error al recibir orden', purchaseStore.message, purchaseStore.validationErrors);
     }
@@ -69,7 +84,7 @@ const handleCancelOrder = async (order) => {
     await purchaseStore.cancelPurchaseOrder(order.id);
     if (purchaseStore.success) {
         purchaseOrders.value = purchaseStore.purchaseOrdersList;
-        showSuccess('Orden cancelada', `Orden #${order.id} cancelada exitosamente`);
+        showSuccess('Orden cancelada', `Orden #${order.order_number} cancelada exitosamente`);
     } else {
         handleError('Error al cancelar orden', purchaseStore.message, purchaseStore.validationErrors);
     }
@@ -86,6 +101,75 @@ const loadPurchaseOrders = async () => {
         }
     } else {
         handleError('Error al cargar órdenes', purchaseStore.message, purchaseStore.validationErrors);
+    }
+};
+
+// Nuevos métodos de búsqueda
+const performAdvancedSearch = async () => {
+    const searchParams = {
+        order_number: quickFilters.value.orderNumber,
+        order_number_from: quickFilters.value.orderNumberFrom,
+        order_number_to: quickFilters.value.orderNumberTo,
+        date_from: quickFilters.value.dateFrom ? formatDateForAPI(quickFilters.value.dateFrom) : null,
+        date_to: quickFilters.value.dateTo ? formatDateForAPI(quickFilters.value.dateTo) : null,
+        status: quickFilters.value.status,
+        provider_id: quickFilters.value.providerId,
+        warehouse_id: quickFilters.value.warehouseId,
+        document_number: quickFilters.value.documentNumber,
+        paginate: false // Para obtener compresión gzip
+    };
+
+    // Filtrar parámetros vacíos
+    const filteredParams = Object.fromEntries(Object.entries(searchParams).filter(([_, value]) => value !== null && value !== ''));
+
+    await purchaseStore.searchPurchaseOrdersAdvanced(filteredParams);
+
+    if (purchaseStore.success) {
+        purchaseOrders.value = purchaseStore.purchaseOrdersList;
+        showSuccess('Búsqueda completada', `Se encontraron ${purchaseOrders.value.length} órdenes`);
+        searchMode.value = 'advanced';
+    } else {
+        handleError('Error en búsqueda', purchaseStore.message, purchaseStore.validationErrors);
+    }
+};
+
+// Búsqueda rápida por número de orden
+const searchByOrderNumber = async (orderNumber) => {
+    if (!orderNumber) return;
+
+    await purchaseStore.searchPurchaseOrdersByNumber(orderNumber);
+
+    if (purchaseStore.success) {
+        purchaseOrders.value = purchaseStore.purchaseOrdersList;
+        if (purchaseOrders.value.length > 0) {
+            showSuccess('Búsqueda por número', `Orden #${orderNumber} encontrada`);
+        } else {
+            showError(`No se encontró la orden #${orderNumber}`);
+        }
+        searchMode.value = 'number';
+    } else {
+        handleError('Orden no encontrada', purchaseStore.message);
+    }
+};
+
+// Helper para formatear fechas
+const formatDateForAPI = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return d.toISOString().split('T')[0]; // YYYY-MM-DD
+};
+
+// Cargar datos auxiliares
+const loadAuxiliaryData = async () => {
+    // Cargar proveedores y almacenes para los filtros
+    await Promise.all([purchaseStore.fetchProviders?.(), purchaseStore.fetchWarehouses?.()]);
+
+    if (purchaseStore.providersList) {
+        providerOptions.value = [{ name: 'Todos los proveedores', id: null }, ...purchaseStore.providersList];
+    }
+
+    if (purchaseStore.warehousesList) {
+        warehouseOptions.value = [{ name: 'Todos los almacenes', id: null }, ...purchaseStore.warehousesList];
     }
 };
 
@@ -148,8 +232,19 @@ const applyQuickFilters = () => {
 const clearFilters = () => {
     quickFilters.value = {
         status: null,
-        period: null
+        period: null,
+        orderNumber: null,
+        orderNumberFrom: null,
+        orderNumberTo: null,
+        providerId: null,
+        warehouseId: null,
+        documentNumber: '',
+        dateFrom: null,
+        dateTo: null
     };
+    searchMode.value = 'simple';
+    showAdvancedSearch.value = false;
+    loadPurchaseOrders(); // Recargar datos originales
 };
 
 const exportOrders = () => {
@@ -174,7 +269,7 @@ const handlePurchaseOrderDelete = async () => {
     await purchaseStore.deletePurchaseOrder(selectedOrder.value.id);
     if (purchaseStore.success) {
         purchaseOrders.value = purchaseStore.purchaseOrdersList;
-        showSuccess('Orden eliminada', `Orden #${selectedOrder.value.id} eliminada exitosamente`);
+        showSuccess('Orden eliminada', `Orden #${selectedOrder.value.order_number} eliminada exitosamente`);
     } else {
         handleError('Error al eliminar orden', purchaseStore.message, purchaseStore.validationErrors);
     }
@@ -225,7 +320,6 @@ function formatCurrencyPEN(value) {
     return `S/ ${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 </script>
-
 <template>
     <div class="purchase-orders-view">
         <Toast />
@@ -259,22 +353,141 @@ function formatCurrencyPEN(value) {
             <PurchaseOrderStatistics :statistics="statistics" :formatCurrencyPEN="formatCurrencyPEN" :loading="purchaseStore.isLoadingPurchaseOrders" />
         </div>
 
-        <!-- Toolbar con filtros rápidos -->
+        <!-- Toolbar con filtros rápidos y avanzados -->
         <div class="toolbar-section">
             <div class="toolbar-content">
+                <!-- Búsqueda rápida por número -->
+                <div class="quick-search-group">
+                    <div class="search-item">
+                        <label>Buscar por Orden #:</label>
+                        <div class="search-input-group">
+                            <InputNumber v-model="quickFilters.orderNumber" placeholder="Ej: 15" class="order-search" @keyup.enter="searchByOrderNumber(quickFilters.orderNumber)" />
+                            <Button icon="pi pi-search" @click="searchByOrderNumber(quickFilters.orderNumber)" :disabled="!quickFilters.orderNumber" v-tooltip.top="'Buscar orden específica'" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros básicos existentes -->
                 <div class="filters-group">
                     <div class="filter-item">
                         <label>Estado:</label>
-                        <Dropdown v-model="quickFilters.status" :options="statusFilterOptions" optionLabel="name" optionValue="value" placeholder="Todos los estados" class="status-filter" @change="applyQuickFilters" />
+                        <Select v-model="quickFilters.status" :options="statusFilterOptions" optionLabel="name" optionValue="value" placeholder="Todos los estados" class="status-filter" @change="applyQuickFilters" />
                     </div>
                     <div class="filter-item">
                         <label>Fecha:</label>
-                        <Dropdown v-model="quickFilters.period" :options="periodFilterOptions" optionLabel="name" optionValue="value" placeholder="Todos los períodos" class="period-filter" @change="applyQuickFilters" />
+                        <Select v-model="quickFilters.period" :options="periodFilterOptions" optionLabel="name" optionValue="value" placeholder="Todos los períodos" class="period-filter" @change="applyQuickFilters" />
                     </div>
                 </div>
+
+                <!-- Toggle búsqueda avanzada -->
                 <div class="actions-group">
-                    <Button icon="pi pi-filter-slash" label="Limpiar Filtros" outlined class="clear-filters-btn" @click="clearFilters" v-tooltip.top="'Limpiar todos los filtros'" />
-                    <Button icon="pi pi-download" label="Exportar" outlined class="export-btn" @click="exportOrders" :disabled="!purchaseOrders.length" v-tooltip.top="'Exportar órdenes a Excel'" />
+                    <Button
+                        :icon="showAdvancedSearch ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+                        :label="showAdvancedSearch ? 'Ocultar Avanzado' : 'Búsqueda Avanzada'"
+                        outlined
+                        @click="showAdvancedSearch = !showAdvancedSearch"
+                        v-tooltip.top="'Mostrar/ocultar filtros avanzados'"
+                    />
+                    <Button icon="pi pi-filter-slash" label="Limpiar" outlined @click="clearFilters" v-tooltip.top="'Limpiar todos los filtros'" />
+                    <Button icon="pi pi-download" label="Exportar" outlined @click="exportOrders" :disabled="!purchaseOrders.length" v-tooltip.top="'Exportar órdenes a Excel'" />
+                </div>
+            </div>
+
+            <!-- Panel de búsqueda avanzada -->
+            <div v-if="showAdvancedSearch" class="advanced-search-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">
+                        <i class="pi pi-filter"></i>
+                        Filtros Avanzados
+                    </h3>
+                    <p class="panel-description">Combina múltiples criterios para refinar tu búsqueda</p>
+                </div>
+
+                <!-- Grid organizado por categorías -->
+                <div class="filters-categories">
+                    <!-- Filtros por Números -->
+                    <div class="filter-category">
+                        <h4 class="category-title">
+                            <i class="pi pi-hashtag"></i>
+                            Números y Documentos
+                        </h4>
+                        <div class="category-filters">
+                            <div class="filter-item">
+                                <label>Rango de Órdenes:</label>
+                                <div class="range-inputs">
+                                    <InputNumber v-model="quickFilters.orderNumberFrom" placeholder="Desde" :min="1" class="range-input" fluid />
+                                    <span class="range-separator">→</span>
+                                    <InputNumber v-model="quickFilters.orderNumberTo" placeholder="Hasta" :min="1" class="range-input" fluid />
+                                </div>
+                            </div>
+
+                            <div class="filter-item">
+                                <label>Número de Documento:</label>
+                                <InputText v-model="quickFilters.documentNumber" placeholder="Ej: C000001" class="document-input" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Fechas -->
+                    <div class="filter-category">
+                        <h4 class="category-title">
+                            <i class="pi pi-calendar"></i>
+                            Fechas
+                        </h4>
+                        <div class="category-filters">
+                            <div class="filter-item">
+                                <label>Fecha Desde:</label>
+                                <DatePicker v-model="quickFilters.dateFrom" placeholder="Seleccionar fecha" dateFormat="dd/mm/yy" showIcon iconDisplay="input" class="date-picker" />
+                            </div>
+
+                            <div class="filter-item">
+                                <label>Fecha Hasta:</label>
+                                <DatePicker v-model="quickFilters.dateTo" placeholder="Seleccionar fecha" dateFormat="dd/mm/yy" showIcon iconDisplay="input" class="date-picker" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros por Entidades -->
+                    <div class="filter-category">
+                        <h4 class="category-title">
+                            <i class="pi pi-building"></i>
+                            Proveedores y Almacenes
+                        </h4>
+                        <div class="category-filters">
+                            <div class="filter-item">
+                                <label>Proveedor:</label>
+                                <Select v-model="quickFilters.providerId" :options="providerOptions" optionLabel="name" optionValue="id" placeholder="Seleccionar proveedor" class="entity-select" filter filterPlaceholder="Buscar proveedor..." />
+                            </div>
+
+                            <div class="filter-item">
+                                <label>Almacén:</label>
+                                <Select v-model="quickFilters.warehouseId" :options="warehouseOptions" optionLabel="name" optionValue="id" placeholder="Seleccionar almacén" class="entity-select" filter filterPlaceholder="Buscar almacén..." />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones del panel -->
+                <div class="panel-actions">
+                    <div class="action-buttons">
+                        <Button icon="pi pi-search" label="Buscar Avanzado" @click="performAdvancedSearch" :loading="purchaseStore.isLoadingPurchaseOrders" class="search-button" v-tooltip.top="'Ejecutar búsqueda con filtros avanzados'" />
+                        <Button icon="pi pi-refresh" label="Resetear" outlined @click="loadPurchaseOrders" class="reset-button" v-tooltip.top="'Volver a la lista completa'" />
+                    </div>
+
+                    <!-- Indicador del modo de búsqueda activo -->
+                    <div v-if="searchMode !== 'simple'" class="search-status">
+                        <div class="status-badge" :class="searchMode">
+                            <i
+                                class="pi"
+                                :class="{
+                                    'pi-search': searchMode === 'number',
+                                    'pi-filter': searchMode === 'advanced'
+                                }"
+                            ></i>
+                            <span v-if="searchMode === 'number'">Búsqueda por número activa</span>
+                            <span v-else-if="searchMode === 'advanced'">Filtros avanzados aplicados</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -294,10 +507,9 @@ function formatCurrencyPEN(value) {
 
         <!-- Diálogos -->
         <PurchaseOrderFormDialog v-model:visible="showPurchaseOrderDialog" :order="selectedOrder" @submit="handlePurchaseOrderSubmit" :loading="purchaseStore.isLoadingPurchaseOrders" />
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.id ? `Orden #${selectedOrder.id}` : ''" @confirm="handlePurchaseOrderDelete" />
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.order_number ? `Orden #${selectedOrder.order_number}` : ''" @confirm="handlePurchaseOrderDelete" />
     </div>
 </template>
-
 <style scoped>
 /* Layout principal */
 .purchase-orders-view {
@@ -395,6 +607,115 @@ function formatCurrencyPEN(value) {
     @apply bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden;
 }
 
+/* Búsqueda rápida */
+.quick-search-group {
+    @apply flex gap-3 items-end;
+}
+
+.search-item {
+    @apply flex flex-col gap-2;
+}
+
+.search-item label {
+    @apply text-sm font-semibold text-gray-700 dark:text-gray-300;
+}
+
+.search-input-group {
+    @apply flex gap-2;
+}
+
+.order-search {
+    @apply min-w-32;
+}
+
+/* Panel de búsqueda avanzada */
+.advanced-search-panel {
+    @apply mt-4 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 shadow-inner;
+}
+
+/* Header del panel */
+.panel-header {
+    @apply mb-6 text-center;
+}
+
+.panel-title {
+    @apply text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center justify-center gap-2 mb-2;
+}
+
+.panel-description {
+    @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+/* Categorías de filtros */
+.filters-categories {
+    @apply grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6;
+}
+
+.filter-category {
+    @apply bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-600;
+}
+
+.category-title {
+    @apply text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2 mb-3 pb-2 border-b border-gray-200 dark:border-gray-600;
+}
+
+.category-filters {
+    @apply space-y-4;
+}
+
+/* Inputs específicos */
+.range-inputs {
+    @apply flex items-center gap-3;
+}
+
+.range-input {
+    @apply flex-1 min-w-0;
+}
+
+.range-separator {
+    @apply text-blue-500 font-bold text-lg;
+}
+
+.document-input,
+.date-picker,
+.entity-select {
+    @apply w-full;
+}
+
+/* Acciones del panel */
+.panel-actions {
+    @apply bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600;
+}
+
+.action-buttons {
+    @apply flex justify-center gap-3 mb-4;
+}
+
+.search-button {
+    @apply bg-blue-600 hover:bg-blue-700 border-blue-600 text-white font-semibold px-6;
+}
+
+.reset-button {
+    @apply border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700;
+}
+
+/* Estado de búsqueda */
+.search-status {
+    @apply flex justify-center;
+}
+
+.status-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-sm;
+}
+
+.status-badge.number {
+    @apply bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700;
+}
+
+.status-badge.advanced {
+    @apply bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:border-purple-700;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .purchase-orders-view {
@@ -418,6 +739,18 @@ function formatCurrencyPEN(value) {
         @apply flex-col gap-4;
     }
 
+    .quick-search-group {
+        @apply w-full flex-col gap-2;
+    }
+
+    .search-input-group {
+        @apply w-full;
+    }
+
+    .order-search {
+        @apply flex-1;
+    }
+
     .filters-group {
         @apply w-full flex-col gap-3;
     }
@@ -439,6 +772,40 @@ function formatCurrencyPEN(value) {
     .export-btn {
         @apply flex-1;
     }
+
+    /* Búsqueda avanzada responsive */
+    .filters-categories {
+        @apply grid-cols-1 gap-4;
+    }
+
+    .panel-header {
+        @apply mb-4;
+    }
+
+    .panel-title {
+        @apply text-base;
+    }
+
+    .category-title {
+        @apply text-xs;
+    }
+
+    .range-inputs {
+        @apply flex-col gap-2;
+    }
+
+    .range-separator {
+        @apply self-center text-base;
+    }
+
+    .action-buttons {
+        @apply flex-col gap-2;
+    }
+
+    .search-button,
+    .reset-button {
+        @apply w-full text-sm;
+    }
 }
 
 @media (max-width: 480px) {
@@ -452,6 +819,26 @@ function formatCurrencyPEN(value) {
 
     .header-actions {
         @apply flex-col;
+    }
+
+    .search-item label {
+        @apply text-xs;
+    }
+
+    .status-badge {
+        @apply text-xs px-2 py-1;
+    }
+
+    .panel-actions {
+        @apply p-3;
+    }
+
+    .advanced-search-panel {
+        @apply p-4;
+    }
+
+    .filter-category {
+        @apply p-3;
     }
 }
 </style>
