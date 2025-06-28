@@ -42,8 +42,7 @@ const statusFilterOptions = ref([
     { name: 'Pendiente', value: 'PENDIENTE' },
     { name: 'Aprobado', value: 'APROBADO' },
     { name: 'Recibido', value: 'RECIBIDO' },
-    { name: 'Cancelado', value: 'CANCELADO' },
-    { name: 'Rechazado', value: 'RECHAZADO' }
+    { name: 'Anulado', value: 'ANULADO' }
 ]);
 
 const periodFilterOptions = ref([

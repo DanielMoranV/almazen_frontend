@@ -1,4 +1,16 @@
-import { approvePurchaseOrder, cancelPurchaseOrder, createPurchaseOrder, deletePurchaseOrder, fetchPurchaseOrders, fetchProviders, fetchWarehouses, receivePurchaseOrder, searchPurchaseOrdersAdvanced, searchPurchaseOrdersByNumber, updatePurchaseOrder } from '@/api';
+import {
+    approvePurchaseOrder,
+    cancelPurchaseOrder,
+    createPurchaseOrder,
+    deletePurchaseOrder,
+    fetchProviders,
+    fetchPurchaseOrders,
+    fetchWarehouses,
+    receivePurchaseOrder,
+    searchPurchaseOrdersAdvanced,
+    searchPurchaseOrdersByNumber,
+    updatePurchaseOrder
+} from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
 
@@ -98,7 +110,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await createPurchaseOrder(payload);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders.unshift(processed.data);
+                    this.purchaseOrders.unshift(processed.data.purchase);
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -126,7 +138,8 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await updatePurchaseOrder(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data : purchaseOrder));
+                    console.log('updatePurchaseOrder', processed);
+                    this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data.purchase : purchaseOrder));
                 }
             } catch (error) {
                 handleProcessError(error, this);

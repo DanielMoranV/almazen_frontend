@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { useProductsStore } from '@/stores/productsStore';
 import { useProvidersStore } from '@/stores/providersStore';
 import { useWarehousesStore } from '@/stores/warehousesStore';
-import { useProductsStore } from '@/stores/productsStore';
 import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const toast = useToast();
 
@@ -43,9 +43,7 @@ const documenTypeList = computed(() => {
 });
 
 // Detecta si el documento es factura o boleta
-const isFacturaOrBoleta = computed(() =>
-    form.value.document_type === 'FACTURA' || form.value.document_type === 'BOLETA'
-);
+const isFacturaOrBoleta = computed(() => form.value.document_type === 'FACTURA' || form.value.document_type === 'BOLETA');
 
 const form = ref({
     id: null,
@@ -124,10 +122,7 @@ const handleCancel = () => {
 };
 // --- Autocálculo de totales y descuentos ---
 // Autocálculo de IGV incluido en boleta/factura
-watch([
-    () => form.value.total_amount,
-    () => form.value.document_type
-], ([total, docType]) => {
+watch([() => form.value.total_amount, () => form.value.document_type], ([total, docType]) => {
     if (isFacturaOrBoleta.value && total > 0) {
         const base = +(total / 1.18).toFixed(2);
         const igv = +(total - base).toFixed(2);
@@ -173,7 +168,7 @@ watch(
         // Validar: IGV no puede ser negativo
         if (igv < 0) igv = 0;
         form.value.tax_amount = igv;
-        form.value.total_amount = +(totalGeneral).toFixed(2);
+        form.value.total_amount = +totalGeneral.toFixed(2);
     },
     { deep: true }
 );
@@ -186,7 +181,7 @@ watch(
         // Validar: IGV no puede ser negativo
         if (igv < 0) igv = 0;
         form.value.tax_amount = igv;
-        form.value.total_amount = +(totalGeneral).toFixed(2);
+        form.value.total_amount = +totalGeneral.toFixed(2);
     }
 );
 </script>
@@ -203,7 +198,7 @@ watch(
         :draggable="false"
         :resizable="false"
     >
-        <div class="purchase-order-form" style="position: relative;">
+        <div class="purchase-order-form" style="position: relative">
             <div v-if="loading" class="form-skeleton-overlay">
                 <div class="form-skeleton-content">
                     <Skeleton width="90%" height="2.5rem" class="mb-3" borderRadius="12px" />
@@ -448,7 +443,7 @@ watch(
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255,255,255,0.82);
+    background: rgba(255, 255, 255, 0.82);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -470,7 +465,6 @@ watch(
     gap: 1.5rem;
     margin-top: 1.5rem;
 }
-
 
 /* Grid básico optimizado */
 .basic-info-grid {
