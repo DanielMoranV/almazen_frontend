@@ -342,7 +342,7 @@ function formatCurrencyPEN(value) {
                 </div>
                 <div class="header-actions">
                     <Button icon="pi pi-refresh" label="Actualizar" outlined class="refresh-btn" @click="loadPurchaseOrders" :loading="purchaseStore.isLoadingPurchaseOrders" v-tooltip.top="'Actualizar lista de órdenes'" />
-                    <Button icon="pi pi-plus" label="Nueva Orden" class="create-btn" @click="openCreateDialog" v-tooltip.top="'Crear nueva orden de compra'" />
+                    <Button icon="pi pi-plus" label="Nueva Orden" severity="success"  @click="openCreateDialog" v-tooltip.top="'Crear nueva orden de compra'" />
                 </div>
             </div>
         </div>
@@ -554,7 +554,7 @@ function formatCurrencyPEN(value) {
 }
 
 .refresh-btn {
-    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/30;
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white ;
 }
 
 .create-btn {

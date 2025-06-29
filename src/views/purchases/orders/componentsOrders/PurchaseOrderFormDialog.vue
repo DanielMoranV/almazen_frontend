@@ -127,7 +127,6 @@ watch([() => form.value.total_amount, () => form.value.document_type], ([total, 
         const base = +(total / 1.18).toFixed(2);
         const igv = +(total - base).toFixed(2);
         form.value.tax_amount = igv;
-        // (Opcional: podrías guardar la base imponible si quieres mostrarla)
     }
 });
 watch(
@@ -144,7 +143,6 @@ watch(
             if (descuento > bruto) {
                 descuento = bruto;
                 detail.discount_amount = bruto;
-                // TODO: mostrar advertencia visual al usuario
                 toast.add({ severity: 'error', summary: 'Error', detail: 'El descuento no puede ser mayor al subtotal', life: 3000 });
             }
             // El total del detalle es bruto - descuento, nunca menor a 0
@@ -158,7 +156,6 @@ watch(
         if (totalDescuentos > totalBruto) {
             totalDescuentos = totalBruto;
             form.value.discount_amount = +totalBruto.toFixed(2);
-            // TODO: mostrar advertencia visual al usuario
             toast.add({ severity: 'error', summary: 'Error', detail: 'El descuento general no puede ser mayor al total bruto', life: 3000 });
         } else {
             form.value.discount_amount = +totalDescuentos.toFixed(2);
@@ -193,200 +190,317 @@ watch(
         :style="{ width: '95vw', maxWidth: '1100px' }"
         :header="form.id ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'"
         :modal="true"
-        class="p-fluid purchase-order-dialog"
+        class="p-fluid"
         :breakpoints="{ '1024px': '90vw', '768px': '95vw' }"
         :draggable="false"
         :resizable="false"
     >
-        <div class="purchase-order-form" style="position: relative">
-            <div v-if="loading" class="form-skeleton-overlay">
-                <div class="form-skeleton-content">
-                    <Skeleton width="90%" height="2.5rem" class="mb-3" borderRadius="12px" />
-                    <Skeleton width="60%" height="2.5rem" class="mb-3" borderRadius="12px" />
-                    <Skeleton width="100%" height="10rem" class="mb-3" borderRadius="12px" />
-                    <Skeleton width="100%" height="3.5rem" class="mb-3" borderRadius="12px" />
-                    <Skeleton width="100%" height="3.5rem" class="mb-3" borderRadius="12px" />
-                    <Skeleton width="100%" height="2.5rem" class="mb-3" borderRadius="12px" />
-                    <Skeleton width="100%" height="4rem" class="mb-3" borderRadius="12px" />
-                </div>
-                <div class="form-skeleton-footer">
-                    <Skeleton width="120px" height="2.5rem" class="mr-2" borderRadius="8px" />
-                    <Skeleton width="180px" height="2.5rem" borderRadius="8px" />
+        <div class="relative max-h-[70vh] overflow-y-auto p-4">
+            <!-- Loading Skeleton -->
+            <div v-if="loading" class="absolute inset-0 z-20 bg-white/80 flex flex-col justify-center items-center">
+                <div class="w-full space-y-3">
+                    <Skeleton width="90%" height="2.5rem" borderRadius="12px" />
+                    <Skeleton width="60%" height="2.5rem" borderRadius="12px" />
+                    <Skeleton width="100%" height="10rem" borderRadius="12px" />
+                    <Skeleton width="100%" height="3.5rem" borderRadius="12px" />
                 </div>
             </div>
-            <!-- Información básica compacta -->
-            <div class="basic-info-grid">
-                <!-- Fila 1: Proveedor y Almacén -->
-                <div class="field-group">
-                    <label class="required-field">
-                        <i class="pi pi-building"></i>
+
+            <!-- Información básica -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Proveedor -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm after:content-['*'] after:text-red-500">
+                        <i class="pi pi-building text-gray-500 text-xs"></i>
                         Proveedor
                     </label>
-                    <Select v-model="form.provider_id" :options="providers" optionLabel="name" optionValue="id" placeholder="Seleccionar proveedor" :class="{ 'p-invalid': submitted && !form.provider_id }" filter showClear class="compact-select" />
+                    <Select 
+                        v-model="form.provider_id" 
+                        :options="providers" 
+                        optionLabel="name" 
+                        optionValue="id" 
+                        placeholder="Seleccionar proveedor" 
+                        :class="{ 'p-invalid': submitted && !form.provider_id }" 
+                        filter 
+                        showClear 
+                    />
                     <small class="p-error" v-if="submitted && !form.provider_id">Requerido</small>
                 </div>
 
-                <div class="field-group">
-                    <label class="required-field">
-                        <i class="pi pi-home"></i>
+                <!-- Almacén -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm after:content-['*'] after:text-red-500">
+                        <i class="pi pi-home text-gray-500 text-xs"></i>
                         Almacén
                     </label>
-                    <Select v-model="form.warehouse_id" :options="warehouses" optionLabel="name" optionValue="id" placeholder="Seleccionar almacén" :class="{ 'p-invalid': submitted && !form.warehouse_id }" filter showClear class="compact-select" />
+                    <Select 
+                        v-model="form.warehouse_id" 
+                        :options="warehouses" 
+                        optionLabel="name" 
+                        optionValue="id" 
+                        placeholder="Seleccionar almacén" 
+                        :class="{ 'p-invalid': submitted && !form.warehouse_id }" 
+                        filter 
+                        showClear 
+                    />
                     <small class="p-error" v-if="submitted && !form.warehouse_id">Requerido</small>
                 </div>
 
-                <!-- Fila 2: Documento y Fecha -->
-                <div class="field-group">
-                    <label class="required-field">
-                        <i class="pi pi-file"></i>
+                <!-- Tipo de Documento -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm after:content-['*'] after:text-red-500">
+                        <i class="pi pi-file text-gray-500 text-xs"></i>
                         Tipo de Documento
                     </label>
-                    <Select v-model="form.document_type" :options="documenTypeList" optionLabel="name" optionValue="value" placeholder="Tipo documento" :class="{ 'p-invalid': submitted && !form.document_type }" class="compact-select" />
+                    <Select 
+                        v-model="form.document_type" 
+                        :options="documenTypeList" 
+                        optionLabel="name" 
+                        optionValue="value" 
+                        placeholder="Tipo documento" 
+                        :class="{ 'p-invalid': submitted && !form.document_type }" 
+                    />
                     <small class="p-error" v-if="submitted && !form.document_type">Requerido</small>
                 </div>
 
-                <div class="field-group">
-                    <label class="required-field">
-                        <i class="pi pi-hashtag"></i>
+                <!-- N° Documento -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm after:content-['*'] after:text-red-500">
+                        <i class="pi pi-hashtag text-gray-500 text-xs"></i>
                         N° Documento
                     </label>
-                    <InputText v-model="form.document_number" placeholder="001-001-000001" :class="{ 'p-invalid': submitted && !form.document_number }" class="compact-input" />
+                    <InputText 
+                        v-model="form.document_number" 
+                        placeholder="001-001-000001" 
+                        :class="{ 'p-invalid': submitted && !form.document_number }" 
+                    />
                     <small class="p-error" v-if="submitted && !form.document_number">Requerido</small>
                 </div>
 
-                <!-- Fila 3: Fecha y Montos -->
-                <div class="field-group">
-                    <label class="required-field">
-                        <i class="pi pi-calendar"></i>
+                <!-- Fecha de Compra -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm after:content-['*'] after:text-red-500">
+                        <i class="pi pi-calendar text-gray-500 text-xs"></i>
                         Fecha de Compra
                     </label>
-                    <DatePicker v-model="form.purchase_date" :class="{ 'p-invalid': submitted && !form.purchase_date }" dateFormat="dd/mm/yy" showIcon class="compact-datepicker" />
+                    <DatePicker 
+                        v-model="form.purchase_date" 
+                        :class="{ 'p-invalid': submitted && !form.purchase_date }" 
+                        dateFormat="dd/mm/yy" 
+                        showIcon 
+                    />
                     <small class="p-error" v-if="submitted && !form.purchase_date">Requerido</small>
                 </div>
 
-                <div class="field-group">
-                    <label class="required-field">
-                        <i class="pi pi-money-bill"></i>
+                <!-- Total -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm after:content-['*'] after:text-red-500">
+                        <i class="pi pi-money-bill text-gray-500 text-xs"></i>
                         Total
                     </label>
-                    <InputNumber v-model="form.total_amount" :class="{ 'p-invalid': submitted && !form.total_amount }" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="compact-number" />
+                    <InputNumber 
+                        v-model="form.total_amount" 
+                        :class="{ 'p-invalid': submitted && !form.total_amount }" 
+                        mode="currency" 
+                        currency="PEN" 
+                        locale="es-PE" 
+                        placeholder="0.00" 
+                    />
                     <small class="p-error" v-if="submitted && !form.total_amount">Requerido</small>
                 </div>
 
-                <!-- Fila 4: Montos adicionales -->
-                <div class="field-group">
-                    <label>
-                        <i class="pi pi-percentage"></i>
+                <!-- IGV -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm">
+                        <i class="pi pi-percentage text-gray-500 text-xs"></i>
                         IGV
                     </label>
-                    <InputNumber v-model="form.tax_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="compact-number" :disabled="isFacturaOrBoleta" />
+                    <InputNumber 
+                        v-model="form.tax_amount" 
+                        mode="currency" 
+                        currency="PEN" 
+                        locale="es-PE" 
+                        placeholder="0.00" 
+                        :disabled="isFacturaOrBoleta" 
+                    />
                 </div>
 
-                <div class="field-group">
-                    <label>
-                        <i class="pi pi-minus-circle"></i>
+                <!-- Descuento -->
+                <div class="flex flex-col gap-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm">
+                        <i class="pi pi-minus-circle text-gray-500 text-xs"></i>
                         Descuento
                     </label>
-                    <InputNumber v-model="form.discount_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="compact-number" />
+                    <InputNumber 
+                        v-model="form.discount_amount" 
+                        mode="currency" 
+                        currency="PEN" 
+                        locale="es-PE" 
+                        placeholder="0.00" 
+                    />
                 </div>
 
-                <!-- Fila 5: Notas (span completo) -->
-                <div class="field-group notes-field">
-                    <label>
-                        <i class="pi pi-comment"></i>
+                <!-- Notas (span completo) -->
+                <div class="flex flex-col gap-2 md:col-span-2">
+                    <label class="flex items-center gap-2 font-semibold text-sm">
+                        <i class="pi pi-comment text-gray-500 text-xs"></i>
                         Notas
                     </label>
-                    <Textarea v-model="form.notes" placeholder="Observaciones adicionales..." :rows="2" :autoResize="true" class="compact-textarea" />
+                    <Textarea 
+                        v-model="form.notes" 
+                        placeholder="Observaciones adicionales..." 
+                        :rows="2" 
+                        :autoResize="true" 
+                    />
                 </div>
             </div>
 
-            <!-- Separador visual -->
-            <div class="section-divider">
-                <div class="divider-line"></div>
-                <div class="divider-content">
-                    <i class="pi pi-list"></i>
-                    <span>Productos de la Orden</span>
+            <!-- Separador -->
+            <div class="flex items-center my-6">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                    <i class="pi pi-list text-blue-600"></i>
+                    <span class="font-semibold">Productos de la Orden</span>
                 </div>
-                <div class="divider-line"></div>
+                <div class="flex-1 h-px bg-gray-200"></div>
             </div>
 
-            <!-- Tabla de productos optimizada -->
-            <div class="products-section">
-                <div class="products-header">
-                    <div class="products-title">
+            <!-- Sección de productos -->
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-2">
                         <Badge :value="form.details.length" severity="info" v-if="form.details.length > 0" />
-                        <span>{{ form.details.length === 0 ? 'Sin productos' : `${form.details.length} producto${form.details.length !== 1 ? 's' : ''}` }}</span>
+                        <span class="font-semibold">
+                            {{ form.details.length === 0 ? 'Sin productos' : `${form.details.length} producto${form.details.length !== 1 ? 's' : ''}` }}
+                        </span>
                     </div>
-                    <Button label="Agregar Producto" icon="pi pi-plus" size="small" outlined @click="addDetail()" :disabled="loading" />
+                    <Button 
+                        label="Agregar Producto" 
+                        icon="pi pi-plus" 
+                        size="small" 
+                        outlined 
+                        @click="addDetail()" 
+                        :disabled="loading" 
+                    />
                 </div>
 
-                <div class="products-content">
-                    <!-- Estado vacío optimizado -->
-                    <div class="empty-state" v-if="form.details.length === 0">
-                        <div class="empty-icon">
-                            <i class="pi pi-inbox"></i>
-                        </div>
-                        <div class="empty-text">
-                            <h4>No hay productos agregados</h4>
-                            <p>Comienza agregando productos a tu orden de compra</p>
-                        </div>
-                        <Button label="Agregar Primer Producto" icon="pi pi-plus" @click="addDetail()" :disabled="loading" />
+                <!-- Estado vacío -->
+                <div v-if="form.details.length === 0" class="text-center py-12">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="pi pi-inbox text-2xl text-gray-400"></i>
                     </div>
+                    <h4 class="text-lg font-semibold mb-2">No hay productos agregados</h4>
+                    <p class="text-gray-500 mb-4">Comienza agregando productos a tu orden de compra</p>
+                    <Button 
+                        label="Agregar Primer Producto" 
+                        icon="pi pi-plus" 
+                        @click="addDetail()" 
+                        :disabled="loading" 
+                    />
+                </div>
 
-                    <!-- Tabla compacta -->
-                    <div class="products-table" v-else>
-                        <DataTable
-                            :value="form.details"
-                            :paginator="form.details.length > 6"
-                            :rows="6"
-                            :rowsPerPageOptions="[6, 12, 24]"
-                            responsiveLayout="scroll"
-                            size="small"
-                            class="compact-table"
-                            stripedRows
-                            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
-                        >
-                            <Column field="product_id" header="Producto" style="min-width: 200px">
-                                <template #body="{ data }">
-                                    <Select v-model="data.product_id" :options="products" optionLabel="name" optionValue="id" placeholder="Seleccionar..." filter size="small" class="table-select" />
-                                </template>
-                            </Column>
+                <!-- Tabla de productos -->
+                <div v-else class="bg-white rounded-lg overflow-hidden">
+                    <DataTable
+                        :value="form.details"
+                        :paginator="form.details.length > 6"
+                        :rows="6"
+                        :rowsPerPageOptions="[6, 12, 24]"
+                        responsiveLayout="scroll"
+                        size="small"
+                        stripedRows
+                        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                    >
+                        <Column field="product_id" header="Producto" style="min-width: 180px">
+                            <template #body="{ data }">
+                                <Select 
+                                    v-model="data.product_id" 
+                                    :options="products" 
+                                    optionLabel="name" 
+                                    optionValue="id" 
+                                    placeholder="Seleccionar..." 
+                                    filter 
+                                    size="small" 
+                                    class="w-full"
+                                />
+                            </template>
+                        </Column>
 
-                            <Column field="quantity" header="Cant." style="width: 100px">
-                                <template #body="{ data }">
-                                    <InputNumber v-model="data.quantity" :min="0" :step="1" placeholder="0" size="small" unstyled class="table-number" />
-                                </template>
-                            </Column>
+                        <Column field="quantity" header="Cant." style="width: 80px">
+                            <template #body="{ data }">
+                                <InputNumber 
+                                    v-model="data.quantity" 
+                                    :min="0" 
+                                    :step="1" 
+                                    placeholder="0" 
+                                    size="small"
+                                    class="w-full"
+                                    :inputClass="'text-center'"
+                                />
+                            </template>
+                        </Column>
 
-                            <Column field="unit_price" header="P. Unit." style="width: 120px">
-                                <template #body="{ data }">
-                                    <InputNumber v-model="data.unit_price" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="table-currency" />
-                                </template>
-                            </Column>
+                        <Column field="unit_price" header="P. Unit." style="width: 100px">
+                            <template #body="{ data }">
+                                <InputNumber 
+                                    v-model="data.unit_price" 
+                                    mode="currency" 
+                                    currency="PEN" 
+                                    locale="es-PE" 
+                                    placeholder="0.00" 
+                                    size="small" 
+                                    class="w-full"
+                                />
+                            </template>
+                        </Column>
 
-                            <Column field="total_amount" header="Total" style="width: 120px">
-                                <template #body="{ data }">
-                                    <InputNumber :modelValue="data.total_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="table-currency" disabled />
-                                </template>
-                            </Column>
+                        <Column field="discount_amount" header="Desc." style="width: 90px">
+                            <template #body="{ data }">
+                                <InputNumber 
+                                    v-model="data.discount_amount" 
+                                    mode="currency" 
+                                    currency="PEN" 
+                                    locale="es-PE" 
+                                    placeholder="0.00" 
+                                    size="small" 
+                                    class="w-full"
+                                />
+                            </template>
+                        </Column>
 
-                            <Column field="discount_amount" header="Desc." style="width: 100px">
-                                <template #body="{ data }">
-                                    <InputNumber v-model="data.discount_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="table-currency" />
-                                </template>
-                            </Column>
+                        <Column field="total_amount" header="Total" style="width: 100px">
+                            <template #body="{ data }">
+                                <InputNumber 
+                                    :modelValue="data.total_amount" 
+                                    mode="currency" 
+                                    currency="PEN" 
+                                    locale="es-PE" 
+                                    placeholder="0.00" 
+                                    size="small" 
+                                    class="w-full opacity-60"
+                                    disabled 
+                                />
+                            </template>
+                        </Column>
 
-                            <Column header="" style="width: 60px">
-                                <template #body="{ index }">
-                                    <Button icon="pi pi-trash" severity="danger" text rounded size="small" @click="removeDetail(index)" v-tooltip.top="'Eliminar'" class="delete-btn" />
-                                </template>
-                            </Column>
-                        </DataTable>
-                    </div>
+                        <Column header="" style="width: 50px" class="text-center">
+                            <template #body="{ index }">
+                                <Button 
+                                    icon="pi pi-trash" 
+                                    severity="danger" 
+                                    text 
+                                    rounded 
+                                    size="small" 
+                                    @click="removeDetail(index)" 
+                                    v-tooltip.top="'Eliminar'" 
+                                />
+                            </template>
+                        </Column>
+                    </DataTable>
                 </div>
 
                 <!-- Error de validación -->
-                <div v-if="submitted && form.details.length === 0" class="validation-error">
+                <div v-if="submitted && form.details.length === 0" class="mt-4">
                     <Message severity="error" :closable="false">
                         <i class="pi pi-exclamation-triangle mr-2"></i>
                         Debe agregar al menos un producto a la orden de compra.
@@ -395,18 +509,28 @@ watch(
             </div>
         </div>
 
-        <!-- Footer optimizado -->
+        <!-- Footer -->
         <template #footer>
-            <div class="dialog-footer">
-                <div class="footer-info">
-                    <small class="text-muted">
-                        <i class="pi pi-info-circle mr-1"></i>
-                        {{ isFormValid ? 'Orden lista para guardar' : 'Complete los campos requeridos' }}
-                    </small>
-                </div>
-                <div class="footer-actions">
-                    <Button label="Cancelar" icon="pi pi-times" text severity="secondary" @click="handleCancel" />
-                    <Button :label="form.id ? 'Actualizar Orden' : 'Crear Orden'" icon="pi pi-check" :loading="loading" :disabled="!isFormValid" @click="handleSubmit" />
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t">
+                <small class="text-gray-500 flex items-center gap-1">
+                    <i class="pi pi-info-circle"></i>
+                    {{ isFormValid ? 'Orden lista para guardar' : 'Complete los campos requeridos' }}
+                </small>
+                <div class="flex gap-3">
+                    <Button 
+                        label="Cancelar" 
+                        icon="pi pi-times" 
+                        text 
+                        severity="secondary" 
+                        @click="handleCancel" 
+                    />
+                    <Button 
+                        :label="form.id ? 'Actualizar Orden' : 'Crear Orden'" 
+                        icon="pi pi-check" 
+                        :loading="loading" 
+                        :disabled="!isFormValid" 
+                        @click="handleSubmit" 
+                    />
                 </div>
             </div>
         </template>
@@ -414,346 +538,41 @@ watch(
 </template>
 
 <style scoped>
-.purchase-order-dialog {
-    --primary: #2563eb;
-    --primary-50: #eff6ff;
-    --surface: #ffffff;
-    --surface-50: #f8fafc;
-    --surface-100: #f1f5f9;
-    --surface-200: #e2e8f0;
-    --text: #0f172a;
-    --text-secondary: #64748b;
-    --border: #e2e8f0;
-    --danger: #dc2626;
-    --success: #16a34a;
-    --radius: 8px;
-    --spacing: 1rem;
-}
-
-.purchase-order-form {
-    max-height: 70vh;
-    overflow-y: auto;
-    padding: 1rem;
-    position: relative;
-}
-.form-skeleton-overlay {
-    position: absolute;
-    z-index: 20;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.82);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    pointer-events: all;
-}
-.form-skeleton-content {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.7rem;
-    margin-bottom: 2.5rem;
-}
-.form-skeleton-footer {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-}
-
-/* Grid básico optimizado */
-.basic-info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.notes-field {
-    grid-column: 1 / -1;
-}
-
-.field-group label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: var(--text);
-    margin: 0;
-}
-
-.field-group label i {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-    width: 14px;
-}
-
-.required-field::after {
-    content: ' *';
-    color: var(--danger);
-    font-weight: bold;
-}
-
-/* Componentes compactos */
-.compact-select,
-.compact-input,
-.compact-datepicker,
-.compact-number,
-.compact-textarea {
-    font-size: 0.875rem;
-}
-
-:deep(.compact-select .p-select-label) {
-    padding: 0.5rem 0.75rem;
-}
-
-:deep(.compact-input) {
-    padding: 0.5rem 0.75rem;
-}
-
-.p-error {
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
-}
-
-/* Separador visual */
-.section-divider {
-    display: flex;
-    align-items: center;
-    margin: 2rem 0 1.5rem;
-    gap: 1rem;
-}
-
-.divider-line {
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
-.divider-content {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--surface-50);
-    border-radius: var(--radius);
-    font-weight: 600;
-    color: var(--text);
-    border: 1px solid var(--border);
-}
-
-.divider-content i {
-    color: var(--primary);
-}
-
-/* Sección de productos */
-.products-section {
-    background: var(--surface-50);
-    border-radius: var(--radius);
-    padding: 1rem;
-    border: 1px solid var(--border);
-}
-
-.products-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.products-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    color: var(--text);
-}
-
-/* Estado vacío mejorado */
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 3rem 1rem;
-    text-align: center;
-    background: var(--surface);
-    border-radius: var(--radius);
-    border: 2px dashed var(--border);
-}
-
-.empty-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--surface-100);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-}
-
-.empty-icon i {
-    font-size: 2rem;
-    color: var(--text-secondary);
-}
-
-.empty-text h4 {
-    margin: 0 0 0.5rem;
-    color: var(--text);
-    font-size: 1.1rem;
-}
-
-.empty-text p {
-    margin: 0 0 1.5rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-/* Tabla compacta */
-.products-table {
-    background: var(--surface);
-    border-radius: var(--radius);
-    overflow: hidden;
-}
-
-:deep(.compact-table) {
-    font-size: 0.875rem;
-}
-
-:deep(.compact-table .p-datatable-thead > tr > th) {
-    padding: 0.75rem 0.5rem;
-    background: var(--surface-100);
-    font-weight: 600;
-    font-size: 0.8rem;
-    border-bottom: 1px solid var(--border);
-}
-
-:deep(.compact-table .p-datatable-tbody > tr > td) {
+/* Solo estilos específicos que no se pueden lograr con Tailwind */
+:deep(.p-datatable-small .p-datatable-tbody > tr > td) {
     padding: 0.5rem;
-    border-bottom: 1px solid var(--surface-200);
 }
 
-.table-select,
-.table-number,
-.table-currency {
-    width: 100%;
+:deep(.p-datatable-small .p-datatable-thead > tr > th) {
+    padding: 0.75rem 0.5rem;
 }
 
-:deep(.table-select .p-select-label) {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
+/* Ajustes para inputs pequeños en la tabla */
+:deep(.p-inputnumber-small input) {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
 }
 
-:deep(.table-number input, .table-currency input) {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-    text-align: center;
-}
-
-.delete-btn {
-    width: 2rem;
-    height: 2rem;
-}
-
-.validation-error {
-    margin-top: 1rem;
-}
-
-/* Footer mejorado */
-.dialog-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 0 0;
-    border-top: 1px solid var(--border);
-    margin-top: 1.5rem;
-}
-
-.footer-info {
-    flex: 1;
-}
-
-.footer-actions {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.text-muted {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .basic-info-grid {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-
-    .notes-field {
-        grid-column: 1;
-    }
-}
-
-@media (max-width: 768px) {
-    .purchase-order-form {
-        padding: 0.75rem;
-    }
-
-    .products-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-    }
-
-    .dialog-footer {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-    }
-
-    .footer-actions {
-        justify-content: stretch;
-        flex-direction: column-reverse;
-    }
-
-    .footer-actions .p-button {
-        width: 100%;
-    }
-
-    :deep(.compact-table .p-datatable-thead > tr > th, .compact-table .p-datatable-tbody > tr > td) {
-        padding: 0.4rem 0.3rem;
-        font-size: 0.8rem;
-    }
+:deep(.p-select-small .p-select-label) {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
 }
 
 /* Scrollbar personalizado */
-.purchase-order-form::-webkit-scrollbar {
+.overflow-y-auto::-webkit-scrollbar {
     width: 6px;
 }
 
-.purchase-order-form::-webkit-scrollbar-track {
+.overflow-y-auto::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.purchase-order-form::-webkit-scrollbar-thumb {
-    background: var(--border);
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
     border-radius: 3px;
 }
 
-.purchase-order-form::-webkit-scrollbar-thumb:hover {
-    background: var(--text-secondary);
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
 }
 </style>
