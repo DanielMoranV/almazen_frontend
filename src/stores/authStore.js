@@ -1,11 +1,12 @@
 import { fetchCategoriesCompany, login, logout, me, refresh, register, updateUser } from '@/api';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useAuthStore = defineStore('authStore', {
     state: () => ({
         user: cache.getItem('currentUser'),
+        companyConfig: cache.getItem('companyConfig'),
         token: cache.getItem('token'),
         expiresAt: cache.getItem('expiresAt'),
         message: '',
@@ -20,6 +21,7 @@ export const useAuthStore = defineStore('authStore', {
         isAuthenticated: (state) => !!state.user && !!state.success,
         isActive: (state) => state.user?.is_active,
         currentUser: (state) => state.user,
+        getCompanyConfig: (state) => state.companyConfig,
         loading: (state) => state.isLoading,
         getToken: (state) => state.token,
         getCategories: (state) => state.categories
@@ -45,11 +47,14 @@ export const useAuthStore = defineStore('authStore', {
                 const res = await login(payload);
                 const processed = handleProcessSuccess(res, this);
 
+                console.log('Processed login response:', processed);
+
                 if (processed.success) {
                     this.setUser(processed.data.user);
                     this.setToken(processed.data.access_token);
                     this.setExpiration(processed.data.expires_in);
                     this.startRefreshInterval();
+                    this.setCompanyConfig(processed.data.user.company_config);
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -79,6 +84,7 @@ export const useAuthStore = defineStore('authStore', {
 
                 if (processed.success) {
                     this.setUser(processed.data);
+                    this.setCompanyConfig(processed.data.company_config);
                 } else {
                     this.clearAuthData();
                 }
@@ -115,6 +121,7 @@ export const useAuthStore = defineStore('authStore', {
                     this.setToken(processed.data.access_token);
                     this.setExpiration(processed.data.expires_in);
                     this.startRefreshInterval();
+                    this.setCompanyConfig(processed.data.user.company_config);
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -176,6 +183,12 @@ export const useAuthStore = defineStore('authStore', {
             if (this.expiresAt !== expirationTime) {
                 this.expiresAt = expirationTime;
                 cache.setItem('expiresAt', expirationTime);
+            }
+        },
+        setCompanyConfig(companyConfig) {
+            if (this.companyConfig !== companyConfig) {
+                this.companyConfig = companyConfig;
+                cache.setItem('companyConfig', companyConfig);
             }
         },
 

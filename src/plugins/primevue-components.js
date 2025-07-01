@@ -1,8 +1,10 @@
 // src/plugins/primevue-components.js
 
-import { Drawer, IconField, InputIcon, Popover, Select, ToggleSwitch, MultiSelect, AutoComplete } from 'primevue';
+import { AutoComplete, Drawer, IconField, InputIcon, MultiSelect, Popover, Select, ToggleSwitch } from 'primevue';
 import Avatar from 'primevue/avatar';
+import Badge from 'primevue/badge';
 import Button from 'primevue/button';
+import Calendar from 'primevue/calendar';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
@@ -14,18 +16,16 @@ import Divider from 'primevue/divider';
 import FileUpload from 'primevue/fileupload';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
+import Message from 'primevue/message';
 import Password from 'primevue/password';
+import ProgressSpinner from 'primevue/progressspinner';
+import Skeleton from 'primevue/skeleton';
 import TabPanel from 'primevue/tabpanel';
 import Tag from 'primevue/tag';
 import Textarea from 'primevue/textarea';
 import Toast from 'primevue/toast';
 import Toolbar from 'primevue/toolbar';
-import Calendar from 'primevue/calendar';
 import Tooltip from 'primevue/tooltip';
-import Badge from 'primevue/badge';
-import ProgressSpinner from 'primevue/progressspinner';
-import Message from 'primevue/message';
-import Skeleton from 'primevue/skeleton';
 
 export default function registerPrimeVueComponents(app) {
     app.component('FileUpload', FileUpload);
