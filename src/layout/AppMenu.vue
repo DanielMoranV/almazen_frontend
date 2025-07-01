@@ -6,10 +6,10 @@ import AppMenuItem from './AppMenuItem.vue';
 // Estructura del menú reorganizada y mejorada
 const model = ref([
     {
-        label: 'Dashboard',
+        label: 'Panel Principal',
         items: [
             {
-                label: 'Inicio',
+                label: 'Dashboard',
                 icon: 'pi pi-home',
                 to: '/dashboard',
                 positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
@@ -23,76 +23,86 @@ const model = ref([
         ]
     },
     {
-        label: 'POS',
+        label: 'Comercio',
         items: [
             {
-                label: 'Caja',
+                label: 'Punto de Venta',
                 icon: 'pi pi-desktop',
-                to: '/pos',
+                items: [
+                    {
+                        label: 'POS',
+                        icon: 'pi pi-desktop',
+                        to: '/commerce/pos',
+                        positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
+                    },
+                    {
+                        label: 'Sesiones',
+                        icon: 'pi pi-clock',
+                        to: '/commerce/pos/sessions',
+                        positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
+                    }
+                ],
                 positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
             },
-            {
-                label: 'Sesiones',
-                icon: 'pi pi-clock',
-                to: '/cash-sessions',
-                positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
-            }
-        ],
-        positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
-    },
-    {
-        label: 'Ventas',
-        items: [
             {
                 label: 'Ventas',
                 icon: 'pi pi-shopping-bag',
-                to: '/sales-orders',
+                items: [
+                    {
+                        label: 'Órdenes',
+                        icon: 'pi pi-shopping-bag',
+                        to: '/commerce/sales/orders',
+                        positions: ['Developer', 'Administrador', 'Ventas']
+                    },
+                    {
+                        label: 'Facturas',
+                        icon: 'pi pi-file-pdf',
+                        to: '/commerce/sales/invoices',
+                        positions: ['Developer', 'Administrador', 'Ventas']
+                    },
+                    {
+                        label: 'Cotizaciones',
+                        icon: 'pi pi-file-edit',
+                        to: '/commerce/sales/quotes',
+                        positions: ['Developer', 'Administrador', 'Ventas']
+                    }
+                ],
                 positions: ['Developer', 'Administrador', 'Ventas']
             },
-            {
-                label: 'Facturas',
-                icon: 'pi pi-file-pdf',
-                to: '/invoices',
-                positions: ['Developer', 'Administrador', 'Ventas']
-            },
-            {
-                label: 'Clientes',
-                icon: 'pi pi-users',
-                to: '/customers',
-                positions: ['Developer', 'Administrador', 'Ventas']
-            },
-            {
-                label: 'Cotizaciones',
-                icon: 'pi pi-file-edit',
-                to: '/quotes',
-                positions: ['Developer', 'Administrador', 'Ventas']
-            }
-        ],
-        positions: ['Developer', 'Administrador', 'Ventas']
-    },
-    {
-        label: 'Compras',
-        items: [
             {
                 label: 'Compras',
                 icon: 'pi pi-shopping-cart',
-                to: '/purchase-orders',
+                items: [
+                    {
+                        label: 'Órdenes',
+                        icon: 'pi pi-shopping-cart',
+                        to: '/commerce/purchases/orders',
+                        positions: ['Developer', 'Administrador', 'Compras']
+                    }
+                ],
                 positions: ['Developer', 'Administrador', 'Compras']
             },
             {
-                label: 'Proveedores',
-                icon: 'pi pi-truck',
-                to: '/providers',
-                positions: ['Developer', 'Administrador', 'Compras']
-            },
-            {
-                label: 'Solicitudes',
-                icon: 'pi pi-send',
-                to: '/purchase-requests',
-                positions: ['Developer', 'Administrador', 'Compras', 'Logística']
+                label: 'Socios Comerciales',
+                icon: 'pi pi-users',
+                items: [
+                    {
+                        label: 'Proveedores',
+                        icon: 'pi pi-truck',
+                        to: '/commerce/partners/providers',
+                        positions: ['Developer', 'Administrador', 'Compras']
+                    },
+                    {
+                        label: 'Clientes',
+                        icon: 'pi pi-users',
+                        to: '/commerce/partners/customers',
+                        positions: ['Developer', 'Administrador', 'Ventas']
+                    }
+                ],
+                positions: ['Developer', 'Administrador', 'Ventas', 'Compras']
             }
         ],
-        positions: ['Developer', 'Administrador', 'Compras']
+        positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Cajero']
     },
     {
         label: 'Inventario',
@@ -112,7 +122,14 @@ const model = ref([
             {
                 label: 'Movimientos',
                 icon: 'pi pi-history',
-                to: '/inventory-movements',
+                items: [
+                    {
+                        label: 'Entradas',
+                        icon: 'pi pi-arrow-down',
+                        to: '/inventory/movements/entries',
+                        positions: ['Developer', 'Administrador', 'Logística']
+                    }
+                ],
                 positions: ['Developer', 'Administrador', 'Logística']
             },
             {
@@ -122,7 +139,7 @@ const model = ref([
                     {
                         label: 'Ajustes',
                         icon: 'pi pi-plus-circle',
-                        to: '/stock-adjustments',
+                        to: '/adjustments',
                         positions: ['Developer', 'Administrador', 'Logística']
                     },
                     {
@@ -144,108 +161,22 @@ const model = ref([
         positions: ['Developer', 'Administrador', 'Logística']
     },
     {
-        label: 'Logística',
-        items: [
-            {
-                label: 'Almacenes',
-                icon: 'pi pi-building',
-                to: '/warehouses',
-                positions: ['Developer', 'Administrador', 'Logística']
-            },
-            {
-                label: 'Ubicaciones',
-                icon: 'pi pi-map-marker',
-                to: '/locations',
-                positions: ['Developer', 'Administrador', 'Logística']
-            },
-            {
-                label: 'Picking',
-                icon: 'pi pi-box',
-                to: '/picking',
-                positions: ['Developer', 'Administrador', 'Logística']
-            },
-            {
-                label: 'Entregas',
-                icon: 'pi pi-car',
-                to: '/deliveries',
-                positions: ['Developer', 'Administrador', 'Logística']
-            }
-        ],
-        positions: ['Developer', 'Administrador', 'Logística']
-    },
-    {
-        label: 'Configuración',
-        items: [
-            {
-                label: 'Catálogos',
-                icon: 'pi pi-book',
-                items: [
-                    {
-                        label: 'Categorías',
-                        icon: 'pi pi-th-large',
-                        to: '/categories',
-                        positions: ['Developer', 'Administrador']
-                    },
-                    {
-                        label: 'Unidades',
-                        icon: 'pi pi-sliders-h',
-                        to: '/units',
-                        positions: ['Developer', 'Administrador']
-                    }
-                    // {
-                    //     label: 'Pagos',
-                    //     icon: 'pi pi-credit-card',
-                    //     to: '/payment-methods',
-                    //     positions: ['Developer', 'Administrador']
-                    // }
-                ],
-                positions: ['Developer', 'Administrador']
-            },
-            {
-                label: 'Precios',
-                icon: 'pi pi-percentage',
-                items: [
-                    {
-                        label: 'Listas',
-                        icon: 'pi pi-list',
-                        to: '/price-lists',
-                        positions: ['Developer', 'Administrador', 'Ventas']
-                    },
-                    {
-                        label: 'Descuentos',
-                        icon: 'pi pi-minus',
-                        to: '/discounts',
-                        positions: ['Developer', 'Administrador', 'Ventas']
-                    },
-                    {
-                        label: 'Promociones',
-                        icon: 'pi pi-gift',
-                        to: '/promotions',
-                        positions: ['Developer', 'Administrador', 'Ventas']
-                    }
-                ],
-                positions: ['Developer', 'Administrador', 'Ventas']
-            }
-        ],
-        positions: ['Developer', 'Administrador']
-    },
-    {
         label: 'Administración',
         items: [
             {
-                label: 'Empresas',
+                label: 'Empresa',
                 icon: 'pi pi-sitemap',
                 items: [
                     {
                         label: 'Empresas',
                         icon: 'pi pi-building',
-                        to: '/companies',
+                        to: '/administration/companies',
                         positions: ['Developer', 'Administrador']
                     },
                     {
-                        label: 'Sucursales',
-                        icon: 'pi pi-map',
-                        to: '/branches',
+                        label: 'Configuración',
+                        icon: 'pi pi-cog',
+                        to: '/administration/companies/config',
                         positions: ['Developer', 'Administrador']
                     }
                 ],
@@ -258,45 +189,33 @@ const model = ref([
                     {
                         label: 'Usuarios',
                         icon: 'pi pi-users',
-                        to: '/users',
+                        to: '/administration/users',
                         positions: ['Developer', 'Administrador']
                     },
                     {
-                        label: 'Roles',
-                        icon: 'pi pi-key',
-                        to: '/roles',
-                        positions: ['Developer', 'Administrador']
+                        label: 'Perfil',
+                        icon: 'pi pi-user',
+                        to: '/administration/users/profile',
+                        positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
                     }
                 ],
-                positions: ['Developer', 'Administrador']
+                positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
             },
             {
                 label: 'Sistema',
-                icon: 'pi pi-cog',
+                icon: 'pi pi-sliders-h',
                 items: [
                     {
-                        label: 'General',
-                        icon: 'pi pi-sliders-v',
-                        to: '/settings',
+                        label: 'Categorías',
+                        icon: 'pi pi-th-large',
+                        to: '/administration/system/categories',
                         positions: ['Developer', 'Administrador']
                     },
                     {
-                        label: 'Impuestos',
-                        icon: 'pi pi-percentage',
-                        to: '/taxes',
+                        label: 'Unidades',
+                        icon: 'pi pi-sliders-h',
+                        to: '/administration/system/units',
                         positions: ['Developer', 'Administrador']
-                    },
-                    {
-                        label: 'Secuencias',
-                        icon: 'pi pi-sort-numeric-up',
-                        to: '/sequences',
-                        positions: ['Developer', 'Administrador']
-                    },
-                    {
-                        label: 'Backups',
-                        icon: 'pi pi-cloud-download',
-                        to: '/backups',
-                        positions: ['Developer']
                     }
                 ],
                 positions: ['Developer', 'Administrador']

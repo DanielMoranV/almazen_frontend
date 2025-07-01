@@ -83,13 +83,23 @@ const loadQuotes = () => {
 };
 
 const createNewQuote = () => {
-    // Navegar a la página de creación de nueva cotización
-    router.push('/quotes/new');
+    // Por ahora mostrar toast, luego se implementará la ruta
+    toast.add({
+        severity: 'info', 
+        summary: 'Funcionalidad en Desarrollo', 
+        detail: 'La creación de cotizaciones estará disponible pronto', 
+        life: 3000
+    });
 };
 
 const viewQuoteDetails = (quote) => {
-    // Navegar a la página de detalles de la cotización
-    router.push(`/quotes/${quote.id}`);
+    // Por ahora mostrar toast, luego se implementará la ruta
+    toast.add({
+        severity: 'info', 
+        summary: 'Funcionalidad en Desarrollo', 
+        detail: `Detalles de cotización ${quote.id} estarán disponibles pronto`, 
+        life: 3000
+    });
 };
 
 const convertToOrder = (quote, event) => {

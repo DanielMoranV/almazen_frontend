@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useUnitsStore } from '@/stores/unitsStore';
-import UnitsTable from '@/views/config/units/componentsUnits/UnitsTable.vue';
-import UnitsFormDialog from '@/views/config/units/componentsUnits/UnitsFormDialog.vue';
+import UnitsTable from './componentsUnits/UnitsTable.vue';
+import UnitsFormDialog from './componentsUnits/UnitsFormDialog.vue';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 
 const toast = useToast();

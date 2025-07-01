@@ -1,9 +1,9 @@
 <script setup>
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useCompaniesStore } from '@/stores/companiesStore';
-import CompaniesTable from '@/views/companies/componentsCompanies/CompaniesTable.vue';
-import CompanyFormDialog from '@/views/companies/componentsCompanies/CompanyFormDialog.vue';
-import CompanyToolbar from '@/views/companies/componentsCompanies/CompanyToolbar.vue';
+import CompaniesTable from './componentsCompanies/CompaniesTable.vue';
+import CompanyFormDialog from './componentsCompanies/CompanyFormDialog.vue';
+import CompanyToolbar from './componentsCompanies/CompanyToolbar.vue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 

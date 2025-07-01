@@ -1,9 +1,9 @@
 <script setup>
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { usePurchaseStore } from '@/stores/purchaseStore';
-import PurchaseOrderFormDialog from '@/views/purchases/orders/componentsOrders/PurchaseOrderFormDialog.vue';
-import PurchaseOrdersTable from '@/views/purchases/orders/componentsOrders/PurchaseOrdersTable.vue';
-import PurchaseOrderStatistics from '@/views/purchases/orders/componentsOrders/PurchaseOrderStatistics.vue';
+import PurchaseOrderFormDialog from './componentsOrders/PurchaseOrderFormDialog.vue';
+import PurchaseOrdersTable from './componentsOrders/PurchaseOrdersTable.vue';
+import PurchaseOrderStatistics from './componentsOrders/PurchaseOrderStatistics.vue';
 import { DatePicker, InputNumber, InputText, Select } from 'primevue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
@@ -294,22 +294,40 @@ const handleError = (summary, message, validationErrors = null) => {
     }
 };
 
-// Estadísticas reactivas
+// Estadísticas reactivas mejoradas con tracking
 const statistics = computed(() => {
     const orders = purchaseOrders.value;
+    const activeOrders = orders.filter((order) => order.status !== 'ANULADO');
+    
+    // Calculaciones de bonificaciones
+    const totalBonusItems = orders.reduce((total, order) => {
+        return total + (order.totals?.bonus_quantity || 0);
+    }, 0);
+    
+    const ordersWithBonuses = orders.filter(order => 
+        (order.totals?.bonus_quantity || 0) > 0
+    ).length;
+    
     return {
         totalOrders: orders.length,
-        totalAmount: orders.filter((order) => order.status !== 'ANULADO').reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
-        averageAmount:
-            orders.filter((order) => order.status !== 'ANULADO').length > 0
-                ? orders.filter((order) => order.status !== 'ANULADO').reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / orders.filter((order) => order.status !== 'ANULADO').length
-                : 0,
-        highestAmount: orders.filter((order) => order.status !== 'ANULADO').length > 0 ? Math.max(...orders.filter((order) => order.status !== 'ANULADO').map((order) => Number(order.total_amount) || 0)) : 0,
-        lowestAmount: orders.filter((order) => order.status !== 'ANULADO').length > 0 ? Math.min(...orders.filter((order) => order.status !== 'ANULADO').map((order) => Number(order.total_amount) || 0)) : 0,
+        totalAmount: activeOrders.reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
+        averageAmount: activeOrders.length > 0 
+            ? activeOrders.reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / activeOrders.length 
+            : 0,
+        highestAmount: activeOrders.length > 0 
+            ? Math.max(...activeOrders.map((order) => Number(order.total_amount) || 0)) 
+            : 0,
+        lowestAmount: activeOrders.length > 0 
+            ? Math.min(...activeOrders.map((order) => Number(order.total_amount) || 0)) 
+            : 0,
         pendingOrders: orders.filter((order) => order.status === 'PENDIENTE').length,
         approvedOrders: orders.filter((order) => order.status === 'APROBADO').length,
         receivedOrders: orders.filter((order) => order.status === 'RECIBIDO').length,
-        cancelledOrders: orders.filter((order) => order.status === 'ANULADO').length
+        cancelledOrders: orders.filter((order) => order.status === 'ANULADO').length,
+        // Nuevas estadísticas de bonificaciones
+        totalBonusItems,
+        ordersWithBonuses,
+        bonusPercentage: orders.length > 0 ? (ordersWithBonuses / orders.length) * 100 : 0
     };
 });
 

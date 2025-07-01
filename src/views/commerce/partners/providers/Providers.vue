@@ -1,9 +1,9 @@
 <script setup>
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useProvidersStore } from '@/stores/providersStore';
-import ProviderFormDialog from '@/views/purchases/providers/componentsProviders/ProviderFormDialog.vue';
-import ProvidersTable from '@/views/purchases/providers/componentsProviders/ProvidersTable.vue';
-import ProviderToolbar from '@/views/purchases/providers/componentsProviders/ProviderToolbar.vue';
+import ProviderFormDialog from './componentsProviders/ProviderFormDialog.vue';
+import ProvidersTable from './componentsProviders/ProvidersTable.vue';
+import ProviderToolbar from './componentsProviders/ProviderToolbar.vue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 

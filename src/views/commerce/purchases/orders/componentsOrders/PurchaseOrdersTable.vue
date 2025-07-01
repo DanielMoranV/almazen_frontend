@@ -4,12 +4,17 @@ import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
 import { useRouter } from 'vue-router';
 import PrintOrderDialog from './PrintOrderDialog.vue';
+import PurchaseOrderTimeline from './PurchaseOrderTimeline.vue';
 
 // --- Estados y métodos para Dialog de items ---
 const showItemsDialog = ref(false);
 const selectedOrderItems = ref([]);
 const selectedOrderId = ref(null);
 const selectedOrderNumber = ref(null);
+
+// --- Estados para Dialog de tracking ---
+const showTrackingDialog = ref(false);
+const selectedOrderTracking = ref(null);
 
 function openItemsDialog(order) {
     selectedOrderItems.value = order.details || [];
@@ -25,6 +30,17 @@ function closeItemsDialog() {
     selectedOrderNumber.value = null;
 }
 
+// Métodos para Dialog de tracking
+function openTrackingDialog(order) {
+    selectedOrderTracking.value = order;
+    showTrackingDialog.value = true;
+}
+
+function closeTrackingDialog() {
+    showTrackingDialog.value = false;
+    selectedOrderTracking.value = null;
+}
+
 // Métodos auxiliares para el diálogo
 const getTotalQuantity = () => {
     if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
@@ -34,6 +50,37 @@ const getTotalQuantity = () => {
 const getTotalAmount = () => {
     if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
     return selectedOrderItems.value.reduce((total, item) => total + (Number(item.total_amount) || 0), 0);
+};
+
+// Métodos para manejar bonificaciones
+const getRegularItems = (order) => {
+    return order.regular_details || order.details?.filter(d => !d.is_bonus) || [];
+};
+
+const getBonusItems = (order) => {
+    return order.bonuses || order.details?.filter(d => d.is_bonus) || [];
+};
+
+const getTotalBonusQuantity = (order) => {
+    return order.totals?.bonus_quantity || getBonusItems(order).reduce((total, item) => total + (item.quantity || 0), 0);
+};
+
+const getLastUserAction = (order) => {
+    if (!order.status_tracking) return null;
+    
+    const tracking = order.status_tracking;
+    switch (order.status) {
+        case 'PENDIENTE':
+            return tracking.requested_by;
+        case 'APROBADO':
+            return tracking.approved_by;
+        case 'RECIBIDO':
+            return tracking.received_by;
+        case 'ANULADO':
+            return tracking.cancelled_by;
+        default:
+            return null;
+    }
 };
 
 const handleImageError = (event) => {
@@ -256,13 +303,40 @@ const getStatusIcon = (status) => {
             </template>
         </Column>
         <Column field="user.name" header="Creado por" sortable />
-        <Column field="status" header="Estado" sortable>
+        
+        <!-- Nueva columna de seguimiento -->
+        <Column header="Seguimiento" style="width: 180px">
             <template #body="slotProps">
-                <div class="status-container">
-                    <i :class="['status-icon', getStatusIcon(slotProps.data.status), getStatusClass(slotProps.data.status)]" v-tooltip.top="getStatusLabel(slotProps.data.status)"></i>
-                    <span :class="['status-label', getStatusClass(slotProps.data.status)]">
-                        {{ getStatusLabel(slotProps.data.status) }}
-                    </span>
+                <div class="tracking-info">
+                    <div class="status-container">
+                        <i :class="['status-icon', getStatusIcon(slotProps.data.status), getStatusClass(slotProps.data.status)]" v-tooltip.top="getStatusLabel(slotProps.data.status)"></i>
+                        <span :class="['status-label', getStatusClass(slotProps.data.status)]">
+                            {{ getStatusLabel(slotProps.data.status) }}
+                        </span>
+                    </div>
+                    
+                    <!-- Usuario de la última acción -->
+                    <div v-if="getLastUserAction(slotProps.data)" class="last-action-user">
+                        <i class="pi pi-user"></i>
+                        <span>{{ getLastUserAction(slotProps.data).name }}</span>
+                    </div>
+                    
+                    <!-- Indicador de bonificaciones -->
+                    <div v-if="getTotalBonusQuantity(slotProps.data) > 0" class="bonus-indicator">
+                        <i class="pi pi-gift"></i>
+                        <span>{{ getTotalBonusQuantity(slotProps.data) }} bonus</span>
+                    </div>
+                    
+                    <!-- Botón para ver timeline completo -->
+                    <Button 
+                        icon="pi pi-history" 
+                        text 
+                        size="small" 
+                        severity="info"
+                        @click.stop="openTrackingDialog(slotProps.data)" 
+                        v-tooltip.top="'Ver timeline completo'"
+                        class="tracking-btn"
+                    />
                 </div>
             </template>
         </Column>
@@ -411,6 +485,45 @@ const getStatusIcon = (status) => {
         </Dialog>
     </DataTable>
     <PrintOrderDialog v-if="showPrintDialog" :order="orderToPrint" @close="showPrintDialog = false" />
+    
+    <!-- Dialog de Timeline de Seguimiento -->
+    <Dialog 
+        v-model:visible="showTrackingDialog" 
+        :style="{ width: '800px' }" 
+        header="Seguimiento de Orden"
+        :modal="true"
+        class="timeline-dialog"
+        @hide="closeTrackingDialog"
+    >
+        <template #header>
+            <div class="dialog-header">
+                <h3 class="dialog-title">
+                    <i class="pi pi-history"></i>
+                    Seguimiento de Orden #{{ selectedOrderTracking?.order_number }}
+                </h3>
+                <div class="order-summary">
+                    <span class="provider-name">{{ selectedOrderTracking?.provider?.name }}</span>
+                    <span class="order-total">{{ formatCurrency(selectedOrderTracking?.total_amount) }}</span>
+                </div>
+            </div>
+        </template>
+        
+        <PurchaseOrderTimeline 
+            v-if="selectedOrderTracking"
+            :status-timeline="selectedOrderTracking.status_timeline || []"
+            :status-tracking="selectedOrderTracking.status_tracking || {}"
+            :current-status="selectedOrderTracking.status"
+        />
+        
+        <template #footer>
+            <Button 
+                label="Cerrar" 
+                icon="pi pi-times" 
+                @click="closeTrackingDialog" 
+                autofocus 
+            />
+        </template>
+    </Dialog>
 </template>
 
 <style scoped>
@@ -751,6 +864,52 @@ const getStatusIcon = (status) => {
     @apply text-xs text-gray-500 dark:text-gray-400;
 }
 
+/* Estilos para la nueva columna de tracking */
+.tracking-info {
+    @apply space-y-2;
+}
+
+.last-action-user {
+    @apply flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400;
+}
+
+.last-action-user i {
+    @apply text-xs;
+}
+
+.bonus-indicator {
+    @apply flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 font-medium;
+}
+
+.bonus-indicator i {
+    @apply text-xs;
+}
+
+.tracking-btn {
+    @apply mt-1;
+}
+
+/* Estilos para el diálogo de timeline */
+.timeline-dialog .dialog-header {
+    @apply flex flex-col gap-2;
+}
+
+.dialog-title {
+    @apply text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2;
+}
+
+.order-summary {
+    @apply flex justify-between items-center text-sm;
+}
+
+.provider-name {
+    @apply text-gray-600 dark:text-gray-400;
+}
+
+.order-total {
+    @apply font-semibold text-green-600 dark:text-green-400;
+}
+
 /* Estilos mínimos para el diálogo - usando Tailwind */
 :deep(.items-dialog .p-dialog-header) {
     padding: 0;
@@ -764,5 +923,9 @@ const getStatusIcon = (status) => {
 :deep(.items-dialog .p-dialog-footer) {
     padding: 0;
     border: none;
+}
+
+:deep(.timeline-dialog .p-dialog-content) {
+    @apply p-0;
 }
 </style>

@@ -33,7 +33,7 @@ const handleLogin = async () => {
     if (authStore.isAuthenticated) {
         toast.add({ severity: 'success', summary: 'Bienvenido', detail: authStore.message, life: 3000 });
         setTimeout(() => {
-            router.push('/profile');
+            router.push('/dashboard');
         }, 1000);
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {

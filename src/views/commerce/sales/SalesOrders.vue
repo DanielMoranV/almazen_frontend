@@ -82,13 +82,23 @@ const loadOrders = () => {
 };
 
 const createNewOrder = () => {
-    // Navegar a la página de creación de nueva orden
-    router.push('/sales-orders/new');
+    // Por ahora mostrar toast, luego se implementará la ruta
+    toast.add({
+        severity: 'info', 
+        summary: 'Funcionalidad en Desarrollo', 
+        detail: 'La creación de órdenes estará disponible pronto', 
+        life: 3000
+    });
 };
 
 const viewOrderDetails = (order) => {
-    // Navegar a la página de detalles de la orden
-    router.push(`/sales-orders/${order.id}`);
+    // Por ahora mostrar toast, luego se implementará la ruta
+    toast.add({
+        severity: 'info', 
+        summary: 'Funcionalidad en Desarrollo', 
+        detail: `Detalles de orden ${order.id} estarán disponibles pronto`, 
+        life: 3000
+    });
 };
 
 const getStatusClass = (status) => {

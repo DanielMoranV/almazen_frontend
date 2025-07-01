@@ -208,6 +208,39 @@ const props = defineProps({
                     </template>
                 </div>
             </div>
+
+            <!-- Bonificaciones - Nueva tarjeta -->
+            <div class="stat-card" v-if="statistics.totalBonusItems > 0">
+                <div class="stat-content stat-gradient-orange">
+                    <template v-if="loading">
+                        <div class="skeleton-content-small">
+                            <div class="skeleton-header-small">
+                                <div class="skeleton-icon-small"></div>
+                                <div class="skeleton-number-small"></div>
+                            </div>
+                            <div class="skeleton-label-small"></div>
+                            <div class="skeleton-progress"></div>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="stat-header-small">
+                            <i class="pi pi-gift stat-icon-small"></i>
+                            <span class="stat-number-small">{{ statistics.totalBonusItems || 0 }}</span>
+                        </div>
+                        <span class="stat-label-small">Bonificaciones</span>
+                        <div class="stat-progress-container">
+                            <div class="stat-progress">
+                                <div
+                                    class="progress-bar bg-orange-400"
+                                    :style="{
+                                        width: statistics.ordersWithBonuses > 0 ? Math.min(statistics.bonusPercentage, 100) + '%' : '0%'
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -226,7 +259,7 @@ const props = defineProps({
 }
 
 .all-stats {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
 }
 
 /* Todas las tarjetas ocupan el mismo tamaño (1 columna cada una) */
@@ -356,6 +389,11 @@ const props = defineProps({
 
 .stat-gradient-red {
     background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+    color: white;
+}
+
+.stat-gradient-orange {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #fb923c 100%);
     color: white;
 }
 

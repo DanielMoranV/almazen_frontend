@@ -19,8 +19,8 @@ const goToProfile = () => {
     router.push({ name: 'profile' });
 };
 
-const goToConfig = () => {
-    router.push({ name: 'config' });
+const goToCompanyConfig = () => {
+    router.push({ name: 'companyConfig' });
 };
 
 const goToRefresh = () => {
@@ -93,10 +93,10 @@ onBeforeMount(() => {
                         <i class="pi pi-refresh"></i>
                         <span>Actualizar</span>
                     </button>
-                    <!-- <button @click="goToConfig()" type="button" class="layout-topbar-action">
+                    <button @click="goToCompanyConfig()" type="button" class="layout-topbar-action" v-if="authStore.currentUser?.position === 'Developer' || authStore.currentUser?.position === 'Administrador'">
                         <i class="pi pi-cog"></i>
                         <span>Configuración</span>
-                    </button> -->
+                    </button>
                     <button @click="goToProfile()" type="button" class="layout-topbar-action">
                         <i class="pi pi-user"></i>
                         <span>Perfil</span>

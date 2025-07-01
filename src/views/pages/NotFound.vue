@@ -1,36 +1,57 @@
-<script setup>
-import FloatingConfigurator from '@/components/FloatingConfigurator.vue';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
-
-const goHome = () => {
-    router.push('/');
-};
-</script>
-
 <template>
-    <FloatingConfigurator />
-
-    <div class="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4 text-center">
-        <!-- Logo AlmaZen -->
-        <img src="/images/almazenlogo.png" alt="AlmaZen" class="w-50 h-24 mb-6" />
-
-        <!-- Mensaje principal -->
-        <h1 class="text-6xl font-bold text-primary mb-4">404</h1>
-        <h2 class="text-2xl font-semibold text-gray-800 mb-2">Página no encontrada</h2>
-        <p class="text-gray-600 max-w-md mb-6">Lo sentimos, la página que estás buscando no existe o ha sido movida. Puedes regresar al inicio o contactarnos si necesitas ayuda.</p>
-
-        <!-- Botón de regreso -->
-        <button @click="goHome" class="px-6 py-3 bg-primary text-white rounded-2xl shadow hover:bg-primary/90 transition">Volver al inicio</button>
+    <div class="notfound-page">
+        <div class="notfound-content">
+            <i class="pi pi-exclamation-triangle notfound-icon"></i>
+            <h1>404</h1>
+            <h2>Página No Encontrada</h2>
+            <p>La página que busca no existe o ha sido movida.</p>
+            <Button 
+                label="Ir al Dashboard" 
+                @click="$router.push('/dashboard')"
+                icon="pi pi-home"
+            />
+        </div>
     </div>
 </template>
 
 <style scoped>
-.text-primary {
-    color: var(--primary-color);
+.notfound-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    background: var(--surface-ground);
 }
-.bg-primary {
-    background-color: var(--primary-color);
+
+.notfound-content {
+    text-align: center;
+    max-width: 500px;
+}
+
+.notfound-icon {
+    font-size: 5rem;
+    color: var(--red-500);
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: 6rem;
+    font-weight: bold;
+    color: var(--red-500);
+    margin: 0;
+    line-height: 1;
+}
+
+h2 {
+    color: var(--text-color);
+    margin: 1rem 0;
+    font-size: 2rem;
+}
+
+p {
+    color: var(--text-color-secondary);
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
 }
 </style>

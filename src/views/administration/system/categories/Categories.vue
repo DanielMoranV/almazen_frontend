@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useCategoriesStore } from '@/stores/categoriesStore';
-import CategoriesTable from '@/views/config/categories/componentsCategories/CategoriesTable.vue';
-import CategoryFormDialog from '@/views/config/categories/componentsCategories/CategoryFormDialog.vue';
+import CategoriesTable from './componentsCategories/CategoriesTable.vue';
+import CategoryFormDialog from './componentsCategories/CategoryFormDialog.vue';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 
 const toast = useToast();

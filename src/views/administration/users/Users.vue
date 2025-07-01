@@ -1,9 +1,9 @@
 <script setup>
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useUsersStore } from '@/stores/usersStore';
-import UserFormDialog from '@/views/users/componentsUsers/UserFormDialog.vue';
-import UsersTable from '@/views/users/componentsUsers/UsersTable.vue';
-import UserToolbar from '@/views/users/componentsUsers/UserToolbar.vue';
+import UserFormDialog from './componentsUsers/UserFormDialog.vue';
+import UsersTable from './componentsUsers/UsersTable.vue';
+import UserToolbar from './componentsUsers/UserToolbar.vue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 

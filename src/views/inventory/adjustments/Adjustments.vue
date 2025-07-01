@@ -126,23 +126,25 @@ const createAdjustment = () => {
         return;
     }
     
-    // Aquí se redireccionaría a la página de creación de ajuste con los datos del formulario
-    router.push({
-        path: '/inventory/adjustments/new',
-        query: {
-            warehouse: adjustmentForm.value.warehouse,
-            type: adjustmentForm.value.type,
-            date: adjustmentForm.value.date,
-            reason: adjustmentForm.value.reason
-        }
+    // Por ahora mostrar toast, luego se implementará la ruta
+    toast.add({
+        severity: 'info', 
+        summary: 'Funcionalidad en Desarrollo', 
+        detail: 'La creación de ajustes estará disponible pronto', 
+        life: 3000
     });
     
     displayAdjustmentDialog.value = false;
 };
 
 const viewAdjustmentDetails = (adjustment) => {
-    // Navegar a la página de detalles del ajuste
-    router.push(`/inventory/adjustments/${adjustment.id}`);
+    // Por ahora mostrar toast, luego se implementará la ruta
+    toast.add({
+        severity: 'info', 
+        summary: 'Funcionalidad en Desarrollo', 
+        detail: `Detalles de ajuste ${adjustment.id} estarán disponibles pronto`, 
+        life: 3000
+    });
 };
 
 const filteredAdjustments = computed(() => {
