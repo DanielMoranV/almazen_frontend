@@ -32,7 +32,9 @@ const initFilters = () => ({
     description: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     unit_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
     brand: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    is_active: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
+    is_active: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    requires_batches: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    auto_generate_batches: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
 });
 
 const localFilters = ref(initFilters());
@@ -56,6 +58,8 @@ const exportProducts = async () => {
         { header: 'Presentación', key: 'presentation', width: 15 },
         { header: 'Categorias', key: 'categories', width: 15 },
         { header: 'Marca', key: 'brand', width: 30 },
+        { header: 'Requiere lotes', key: 'requires_batches', width: 15 },
+        { header: 'Auto-genera lotes', key: 'auto_generate_batches', width: 15 },
         { header: 'Activo', key: 'is_active', width: 15 }
     ];
 
@@ -239,6 +243,22 @@ const handleImageError = (event) => {
                         class="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-600" 
                         @error="handleImageError"
                     />
+                </div>
+            </template>
+        </Column>
+        <Column field="requires_batches" header="Lotes" sortable style="min-width: 4rem; max-width: 5rem">
+            <template #body="{ data }">
+                <div class="flex justify-center">
+                    <i class="pi pi-check-circle text-blue-500 text-xl" v-if="data.requires_batches" v-tooltip.top="'Requiere lotes'" />
+                    <i class="pi pi-times-circle text-gray-400 text-xl" v-else v-tooltip.top="'No requiere lotes'" />
+                </div>
+            </template>
+        </Column>
+        <Column field="auto_generate_batches" header="Auto" sortable style="min-width: 4rem; max-width: 5rem">
+            <template #body="{ data }">
+                <div class="flex justify-center">
+                    <i class="pi pi-cog text-purple-500 text-xl" v-if="data.requires_batches && data.auto_generate_batches" v-tooltip.top="'Auto-genera lotes'" />
+                    <i class="pi pi-minus text-gray-300 text-xl" v-else v-tooltip.top="'No auto-genera lotes'" />
                 </div>
             </template>
         </Column>

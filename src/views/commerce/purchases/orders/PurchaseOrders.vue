@@ -1,15 +1,18 @@
 <script setup>
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
+import { useAuthStore } from '@/stores/authStore';
 import { usePurchaseStore } from '@/stores/purchaseStore';
-import PurchaseOrderFormDialog from './componentsOrders/PurchaseOrderFormDialog.vue';
-import PurchaseOrdersTable from './componentsOrders/PurchaseOrdersTable.vue';
-import PurchaseOrderStatistics from './componentsOrders/PurchaseOrderStatistics.vue';
 import { DatePicker, InputNumber, InputText, Select } from 'primevue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+import PurchaseOrderFormDialog from './componentsOrders/PurchaseOrderFormDialog.vue';
+import PurchaseOrdersTable from './componentsOrders/PurchaseOrdersTable.vue';
+import PurchaseOrderStatistics from './componentsOrders/PurchaseOrderStatistics.vue';
+import BatchManagementDialog from './componentsOrders/BatchManagementDialog.vue';
 
 const toast = useToast();
 const purchaseStore = usePurchaseStore();
+const authStore = useAuthStore();
 
 // Estados
 const purchaseOrders = ref([]);
@@ -56,6 +59,7 @@ const periodFilterOptions = ref([
 // Inicialización
 onMounted(async () => {
     await Promise.all([loadPurchaseOrders(), loadAuxiliaryData()]);
+    console.log(authStore.user);
 });
 
 // Métodos
@@ -70,12 +74,80 @@ const handleApproveOrder = async (order) => {
 };
 
 const handleReceiveOrder = async (order) => {
+    // Validar workflow de compras
+    if (authStore.user?.company_config?.purchase_workflow === 'standard' && order.status === 'APROBADO') {
+        // Verificar si hay productos que requieren lotes
+        const productsRequiringBatches = order.details?.filter(detail => 
+            detail.product?.requires_batches === true
+        ) || [];
+        
+        if (productsRequiringBatches.length > 0) {
+            // Separar productos que auto-generan lotes de los que no
+            const autoGenerateProducts = productsRequiringBatches.filter(detail => 
+                detail.product?.auto_generate_batches === true
+            );
+            const manualBatchProducts = productsRequiringBatches.filter(detail => 
+                detail.product?.auto_generate_batches !== true
+            );
+            
+            if (manualBatchProducts.length > 0) {
+                // Mostrar diálogo para gestionar lotes manualmente
+                showBatchManagementDialog(order, manualBatchProducts, autoGenerateProducts);
+                return;
+            }
+            
+            // Si solo hay productos con auto-generación, continuar con el proceso
+            if (autoGenerateProducts.length > 0) {
+                showSuccess('Procesando lotes', 'Generando lotes automáticamente para productos configurados...');
+                // Los lotes se generarán automáticamente en el backend
+            }
+        }
+    }
+    
+    // Proceder con la recepción normal
     await purchaseStore.receivePurchaseOrder(order.id);
     if (purchaseStore.success) {
         purchaseOrders.value = purchaseStore.purchaseOrdersList;
         showSuccess('Orden recibida', `Orden #${order.order_number} marcada como recibida`);
     } else {
         handleError('Error al recibir orden', purchaseStore.message, purchaseStore.validationErrors);
+    }
+};
+
+// Estado para gestión de lotes
+const showBatchDialog = ref(false);
+const selectedOrderForBatch = ref(null);
+const batchManagementData = ref({
+    manualProducts: [],
+    autoProducts: []
+});
+
+const showBatchManagementDialog = (order, manualProducts, autoProducts) => {
+    selectedOrderForBatch.value = order;
+    batchManagementData.value = {
+        manualProducts,
+        autoProducts
+    };
+    showBatchDialog.value = true;
+};
+
+const handleBatchManagementSubmit = async (batchData) => {
+    try {
+        // Aquí se enviarían los datos de lotes al backend
+        console.log('Datos de lotes:', batchData);
+        
+        // Proceder con la recepción de la orden
+        await purchaseStore.receivePurchaseOrder(selectedOrderForBatch.value.id, batchData);
+        
+        if (purchaseStore.success) {
+            purchaseOrders.value = purchaseStore.purchaseOrdersList;
+            showSuccess('Orden recibida', `Orden #${selectedOrderForBatch.value.order_number} recibida con lotes asignados`);
+            showBatchDialog.value = false;
+        } else {
+            handleError('Error al recibir orden', purchaseStore.message, purchaseStore.validationErrors);
+        }
+    } catch (error) {
+        handleError('Error en gestión de lotes', error.message || 'Error inesperado');
     }
 };
 
@@ -298,28 +370,20 @@ const handleError = (summary, message, validationErrors = null) => {
 const statistics = computed(() => {
     const orders = purchaseOrders.value;
     const activeOrders = orders.filter((order) => order.status !== 'ANULADO');
-    
+
     // Calculaciones de bonificaciones
     const totalBonusItems = orders.reduce((total, order) => {
         return total + (order.totals?.bonus_quantity || 0);
     }, 0);
-    
-    const ordersWithBonuses = orders.filter(order => 
-        (order.totals?.bonus_quantity || 0) > 0
-    ).length;
-    
+
+    const ordersWithBonuses = orders.filter((order) => (order.totals?.bonus_quantity || 0) > 0).length;
+
     return {
         totalOrders: orders.length,
         totalAmount: activeOrders.reduce((total, order) => total + (Number(order.total_amount) || 0), 0),
-        averageAmount: activeOrders.length > 0 
-            ? activeOrders.reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / activeOrders.length 
-            : 0,
-        highestAmount: activeOrders.length > 0 
-            ? Math.max(...activeOrders.map((order) => Number(order.total_amount) || 0)) 
-            : 0,
-        lowestAmount: activeOrders.length > 0 
-            ? Math.min(...activeOrders.map((order) => Number(order.total_amount) || 0)) 
-            : 0,
+        averageAmount: activeOrders.length > 0 ? activeOrders.reduce((total, order) => total + (Number(order.total_amount) || 0), 0) / activeOrders.length : 0,
+        highestAmount: activeOrders.length > 0 ? Math.max(...activeOrders.map((order) => Number(order.total_amount) || 0)) : 0,
+        lowestAmount: activeOrders.length > 0 ? Math.min(...activeOrders.map((order) => Number(order.total_amount) || 0)) : 0,
         pendingOrders: orders.filter((order) => order.status === 'PENDIENTE').length,
         approvedOrders: orders.filter((order) => order.status === 'APROBADO').length,
         receivedOrders: orders.filter((order) => order.status === 'RECIBIDO').length,
@@ -360,7 +424,7 @@ function formatCurrencyPEN(value) {
                 </div>
                 <div class="header-actions">
                     <Button icon="pi pi-refresh" label="Actualizar" outlined class="refresh-btn" @click="loadPurchaseOrders" :loading="purchaseStore.isLoadingPurchaseOrders" v-tooltip.top="'Actualizar lista de órdenes'" />
-                    <Button icon="pi pi-plus" label="Nueva Orden" severity="success"  @click="openCreateDialog" v-tooltip.top="'Crear nueva orden de compra'" />
+                    <Button icon="pi pi-plus" label="Nueva Orden" severity="success" @click="openCreateDialog" v-tooltip.top="'Crear nueva orden de compra'" />
                 </div>
             </div>
         </div>
@@ -525,6 +589,13 @@ function formatCurrencyPEN(value) {
         <!-- Diálogos -->
         <PurchaseOrderFormDialog v-model:visible="showPurchaseOrderDialog" :order="selectedOrder" @submit="handlePurchaseOrderSubmit" :loading="purchaseStore.isLoadingPurchaseOrders" />
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.order_number ? `Orden #${selectedOrder.order_number}` : ''" @confirm="handlePurchaseOrderDelete" />
+        <BatchManagementDialog 
+            v-model:visible="showBatchDialog" 
+            :order="selectedOrderForBatch" 
+            :batch-data="batchManagementData" 
+            @submit="handleBatchManagementSubmit" 
+            :loading="purchaseStore.isLoadingPurchaseOrders" 
+        />
     </div>
 </template>
 <style scoped>
@@ -572,7 +643,7 @@ function formatCurrencyPEN(value) {
 }
 
 .refresh-btn {
-    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white ;
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white;
 }
 
 .create-btn {

@@ -4,6 +4,7 @@ import { useUnitsStore } from '@/stores/unitsStore';
 import { useCategoriesStore } from '@/stores/categoriesStore';
 import { fetchProductByBarcode } from '@/api/openFoodFacts';
 import { BarcodeType } from '@/constants/barcode_type';
+import Checkbox from 'primevue/checkbox';
 
 const unitsStore = useUnitsStore();
 const categoriesStore = useCategoriesStore();
@@ -56,6 +57,8 @@ const form = ref({
     presentation: '',
     is_active: true,
     categories: [],
+    requires_batches: false,
+    auto_generate_batches: false,
 });
 
 const resetForm = () => {
@@ -72,6 +75,8 @@ const resetForm = () => {
         presentation: '',
         is_active: true,
         categories: [],
+        requires_batches: false,
+        auto_generate_batches: false,
     };
 };
 
@@ -228,6 +233,24 @@ const searchProduct = async () => {
                 <label for="categories" class="font-medium mb-2 block">Categorías</label>
                 <MultiSelect id="categories" v-model="form.categories" :options="categories" optionLabel="name" optionValue="id" placeholder="Seleccione las categorías" display="chip" filter class="w-full" />
                 <small class="text-gray-500">Puede seleccionar múltiples categorías</small>
+            </div>
+
+            <!-- Gestión de Lotes -->
+            <div class="field">
+                <div class="field-checkbox">
+                    <Checkbox id="requires_batches" v-model="form.requires_batches" :binary="true" />
+                    <label for="requires_batches" class="font-medium">Requiere lotes</label>
+                </div>
+                <small class="text-gray-500">Activar si el producto requiere gestión por lotes</small>
+            </div>
+
+            <!-- Auto-generar lotes (solo visible si requires_batches es true) -->
+            <div v-if="form.requires_batches" class="field">
+                <div class="field-checkbox">
+                    <Checkbox id="auto_generate_batches" v-model="form.auto_generate_batches" :binary="true" />
+                    <label for="auto_generate_batches" class="font-medium">Auto-generar lotes</label>
+                </div>
+                <small class="text-gray-500">Generar automáticamente lotes cuando se reciba inventario</small>
             </div>
         </div>
 
