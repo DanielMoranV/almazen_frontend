@@ -2,6 +2,8 @@
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useAuthStore } from '@/stores/authStore';
 import { usePurchaseStore } from '@/stores/purchaseStore';
+import { useBatchesStore } from '@/stores/batchesStore';
+import { addPurchaseBonuses } from '@/api/index';
 import { DatePicker, InputNumber, InputText, Select } from 'primevue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
@@ -9,10 +11,12 @@ import PurchaseOrderFormDialog from './componentsOrders/PurchaseOrderFormDialog.
 import PurchaseOrdersTable from './componentsOrders/PurchaseOrdersTable.vue';
 import PurchaseOrderStatistics from './componentsOrders/PurchaseOrderStatistics.vue';
 import BatchManagementDialog from './componentsOrders/BatchManagementDialog.vue';
+import BonusManagementDialog from './componentsOrders/BonusManagementDialog.vue';
 
 const toast = useToast();
 const purchaseStore = usePurchaseStore();
 const authStore = useAuthStore();
+const batchesStore = useBatchesStore();
 
 // Estados
 const purchaseOrders = ref([]);
@@ -122,6 +126,10 @@ const batchManagementData = ref({
     autoProducts: []
 });
 
+// Estados para gestión de bonificaciones
+const showBonusDialog = ref(false);
+const selectedOrderForBonus = ref(null);
+
 const showBatchManagementDialog = (order, manualProducts, autoProducts) => {
     selectedOrderForBatch.value = order;
     batchManagementData.value = {
@@ -133,11 +141,62 @@ const showBatchManagementDialog = (order, manualProducts, autoProducts) => {
 
 const handleBatchManagementSubmit = async (batchData) => {
     try {
-        // Aquí se enviarían los datos de lotes al backend
-        console.log('Datos de lotes:', batchData);
+        // Procesar lotes y obtener IDs antes de la recepción
+        const details = [];
+
+        // Procesar lotes manuales
+        for (const productBatch of batchData.manualBatches || []) {
+            for (const batch of productBatch.batches) {
+                let batchId = null;
+
+                if (batch.batchType === 'existing') {
+                    // Usar lote existente
+                    batchId = batch.existingBatchId;
+                } else {
+                    // Crear nuevo lote
+                    const newBatchData = {
+                        product_id: productBatch.productId,
+                        code: batch.batchNumber,
+                        expiration_date: batch.expirationDate ? 
+                            new Date(batch.expirationDate).toISOString().split('T')[0] : null,
+                        notes: batch.notes || null
+                    };
+
+                    console.log('Creando nuevo lote:', newBatchData);
+                    
+                    // Crear el lote usando el batchesStore
+                    await batchesStore.createBatch(newBatchData);
+                    
+                    if (batchesStore.success && batchesStore.batch) {
+                        batchId = batchesStore.batch.id;
+                        console.log('Lote creado con ID:', batchId);
+                    } else {
+                        throw new Error(`Error al crear lote: ${batchesStore.message}`);
+                    }
+                }
+
+                // Agregar al array de detalles
+                details.push({
+                    purchase_detail_id: productBatch.purchaseDetailId,
+                    batch_id: batchId
+                });
+            }
+        }
+
+        // Procesar productos con auto-generación (batch_id = null para auto-generación)
+        batchData.autoGenerateProducts?.forEach(product => {
+            details.push({
+                purchase_detail_id: product.purchaseDetailId,
+                batch_id: null // null indica auto-generación en el backend
+            });
+        });
+
+        const requestData = details.length > 0 ? { details } : null;
+        
+        console.log('Datos para recepción de orden:', requestData);
         
         // Proceder con la recepción de la orden
-        await purchaseStore.receivePurchaseOrder(selectedOrderForBatch.value.id, batchData);
+        await purchaseStore.receivePurchaseOrder(selectedOrderForBatch.value.id, requestData);
         
         if (purchaseStore.success) {
             purchaseOrders.value = purchaseStore.purchaseOrdersList;
@@ -148,6 +207,39 @@ const handleBatchManagementSubmit = async (batchData) => {
         }
     } catch (error) {
         handleError('Error en gestión de lotes', error.message || 'Error inesperado');
+    }
+};
+
+// Funciones para gestión de bonificaciones
+const handleManageBonuses = (order) => {
+    selectedOrderForBonus.value = order;
+    showBonusDialog.value = true;
+};
+
+const handleBonusSubmit = async (bonusData) => {
+    try {
+        console.log('Agregando bonificaciones:', bonusData);
+        
+        const response = await addPurchaseBonuses(selectedOrderForBonus.value.id, bonusData);
+        
+        if (response && response.data) {
+            // Recargar la lista de órdenes para mostrar las bonificaciones
+            await loadPurchaseOrders();
+            
+            showSuccess(
+                'Bonificaciones agregadas', 
+                `Se agregaron ${bonusData.bonuses.length} bonificaciones a la orden #${selectedOrderForBonus.value.order_number}`
+            );
+            showBonusDialog.value = false;
+        }
+    } catch (error) {
+        console.error('Error al agregar bonificaciones:', error);
+        
+        if (error.response && error.response.data && error.response.data.message) {
+            handleError('Error al agregar bonificaciones', error.response.data.message);
+        } else {
+            handleError('Error al agregar bonificaciones', 'Error inesperado al procesar las bonificaciones');
+        }
     }
 };
 
@@ -583,6 +675,7 @@ function formatCurrencyPEN(value) {
                 @approve-order="handleApproveOrder"
                 @receive-order="handleReceiveOrder"
                 @cancel-order="handleCancelOrder"
+                @manage-bonuses="handleManageBonuses"
             />
         </div>
 
@@ -595,6 +688,11 @@ function formatCurrencyPEN(value) {
             :batch-data="batchManagementData" 
             @submit="handleBatchManagementSubmit" 
             :loading="purchaseStore.isLoadingPurchaseOrders" 
+        />
+        <BonusManagementDialog 
+            v-model:visible="showBonusDialog" 
+            :order="selectedOrderForBonus" 
+            @submit="handleBonusSubmit" 
         />
     </div>
 </template>

@@ -1,9 +1,10 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import { batchService } from '@/api/batchService';
+import { useBatchesStore } from '@/stores/batchesStore';
 
 const toast = useToast();
+const batchesStore = useBatchesStore();
 
 const props = defineProps({
     visible: Boolean,
@@ -51,6 +52,7 @@ const initializeBatchForm = async () => {
         productId: product.product.id,
         productName: product.product.name,
         productSku: product.product.sku,
+        purchaseDetailId: product.id, // ID del detalle de la orden de compra
         requiredQuantity: Number(product.quantity),
         batches: [
             {
@@ -78,11 +80,11 @@ const loadAvailableBatches = async () => {
         
         const batchPromises = productIds.map(async (productId) => {
             try {
-                const response = await batchService.getAvailableBatchesForProduct(productId);
+                const response = await batchesStore.getAvailableBatchesForProduct(productId);
                 
                 if (response.success) {
                     const formattedBatches = response.data.batches.map(batch => 
-                        batchService.formatBatchForDropdown(batch)
+                        batchesStore.formatBatchForDropdown(batch)
                     );
                     
                     return {
@@ -181,13 +183,22 @@ const handleBatchTypeChange = (productIndex, batchIndex) => {
 };
 
 // Manejar selección de lote existente
-const handleExistingBatchSelect = (productIndex, batchIndex, selectedBatch) => {
+const handleExistingBatchSelect = (productIndex, batchIndex, event) => {
     const batch = batchForm.value.batches[productIndex].batches[batchIndex];
+    const productId = batchForm.value.batches[productIndex].productId;
     
-    if (selectedBatch) {
-        batch.existingBatchId = selectedBatch.id;
-        batch.batchNumber = selectedBatch.code;
-        batch.expirationDate = selectedBatch.expirationDate ? new Date(selectedBatch.expirationDate) : null;
+    // Extraer el valor real del evento de PrimeVue
+    const selectedBatchId = event?.value || event;
+    
+    if (selectedBatchId) {
+        // Buscar el lote completo por ID
+        const selectedBatch = getAvailableBatchesForProduct(productId).find(b => b.id === selectedBatchId);
+        
+        if (selectedBatch) {
+            batch.existingBatchId = selectedBatch.id;
+            batch.batchNumber = selectedBatch.code;
+            batch.expirationDate = selectedBatch.expirationDate ? new Date(selectedBatch.expirationDate) : null;
+        }
     } else {
         batch.existingBatchId = null;
         batch.batchNumber = '';
@@ -244,6 +255,7 @@ const handleSubmit = () => {
         manualBatches: batchForm.value.batches,
         autoGenerateProducts: autoProducts.value.map(product => ({
             productId: product.product.id,
+            purchaseDetailId: product.id, // ID del detalle de la orden de compra
             quantity: product.quantity
         }))
     };
@@ -390,9 +402,11 @@ const formatDate = (date) => {
                                     <div v-if="batch.batchType === 'existing'" class="field">
                                         <label>Seleccionar Lote Existente</label>
                                         <Select 
-                                            :model-value="getAvailableBatchesForProduct(productBatch.productId).find(b => b.id === batch.existingBatchId)"
+                                            :model-value="batch.existingBatchId"
                                             :options="getAvailableBatchesForProduct(productBatch.productId)"
                                             optionLabel="label"
+                                            optionValue="id"
+                                            dataKey="id"
                                             placeholder="Seleccionar lote disponible"
                                             filter
                                             filterPlaceholder="Buscar lote..."

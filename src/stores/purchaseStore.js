@@ -164,10 +164,10 @@ export const usePurchaseStore = defineStore('purchaseStore', {
             }
         },
 
-        async receivePurchaseOrder(id) {
+        async receivePurchaseOrder(id, batchData = null) {
             this.isLoading = true;
             try {
-                const res = await receivePurchaseOrder(id);
+                const res = await receivePurchaseOrder(id, batchData);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
                     // Recargar la lista completa para mantener sincronización

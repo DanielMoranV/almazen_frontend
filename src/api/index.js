@@ -74,8 +74,35 @@ export const deletePurchaseOrder = (id) => axios.delete(`/purchases/${id}`);
 export const updatePurchaseOrder = (payload, id) => axios.put(`/purchases/${id}`, payload);
 export const approvePurchaseOrder = (id) => axios.patch(`/purchases/${id}/approve`);
 export const rejectPurchaseOrder = (id) => axios.patch(`/purchases/${id}/reject`);
-export const receivePurchaseOrder = (id) => axios.patch(`/purchases/${id}/receive`);
+export const receivePurchaseOrder = (id, batchData = null) => {
+    // Si hay datos de lotes, enviarlos directamente (ya vienen en formato { details: [...] })
+    // Si no hay datos, enviar petición vacía (recepción simple)
+    return axios.patch(`/purchases/${id}/receive`, batchData || {});
+};
 export const cancelPurchaseOrder = (id) => axios.patch(`/purchases/${id}/cancel`);
+
+// Batches
+export const fetchBatches = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/batches${queryString ? `?${queryString}` : ''}`);
+};
+export const createBatch = (payload) => axios.post('/batches', payload);
+export const deleteBatch = (id) => axios.delete(`/batches/${id}`);
+export const updateBatch = (payload, id) => axios.put(`/batches/${id}`, payload);
+export const getBatchesByProduct = (productId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/products/${productId}/batches${queryString ? `?${queryString}` : ''}`);
+};
+
+// Bonificaciones
+export const addPurchaseBonuses = (purchaseId, bonusData) => {
+    return axios.post(`/purchases/${purchaseId}/bonuses`, bonusData);
+};
+
+export const getPurchaseBonuses = (purchaseId) => {
+    return axios.get(`/purchases/${purchaseId}/bonuses`);
+};
+
 
 // Dashboard
 export const fetchDashboardMetrics = () => axios.get('/dashboard/metrics');

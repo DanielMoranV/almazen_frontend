@@ -94,7 +94,7 @@ const props = defineProps({
     loading: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['view-details', 'receive-order', 'cancel-order', 'approve-order', 'update:selection', 'edit', 'delete']);
+const emit = defineEmits(['view-details', 'receive-order', 'cancel-order', 'approve-order', 'update:selection', 'edit', 'delete', 'manage-bonuses']);
 
 const selectedOrders = ref([]);
 
@@ -362,6 +362,20 @@ const getStatusIcon = (status) => {
                         <template v-else-if="slotProps.data.status === 'APROBADO'">
                             <Button icon="pi pi-check-square" severity="success" text rounded size="small" @click.stop="emit('receive-order', slotProps.data)" v-tooltip.top="'Marcar como recibida'" class="action-btn receive-btn" />
                             <Button icon="pi pi-times-circle" severity="danger" text rounded size="small" @click.stop="emit('cancel-order', slotProps.data)" v-tooltip.top="'Cancelar orden'" class="action-btn cancel-btn" />
+                        </template>
+
+                        <!-- Estado RECIBIDO -->
+                        <template v-else-if="slotProps.data.status === 'RECIBIDO'">
+                            <Button 
+                                icon="pi pi-gift" 
+                                severity="secondary" 
+                                text 
+                                rounded 
+                                size="small" 
+                                @click.stop="emit('manage-bonuses', slotProps.data)" 
+                                v-tooltip.top="'Gestionar bonificaciones'" 
+                                class="action-btn bonus-btn" 
+                            />
                         </template>
 
                         <!-- Estados finales (sin acciones adicionales) -->
@@ -806,6 +820,10 @@ const getStatusIcon = (status) => {
 
 .cancel-btn:hover {
     @apply bg-red-50 dark:bg-red-900/20;
+}
+
+.bonus-btn:hover {
+    @apply bg-orange-50 dark:bg-orange-900/20;
 }
 
 .no-actions-text {
