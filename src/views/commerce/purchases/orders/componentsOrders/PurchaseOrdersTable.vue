@@ -12,12 +12,71 @@ const selectedOrderItems = ref([]);
 const selectedOrderId = ref(null);
 const selectedOrderNumber = ref(null);
 
+// Validar si se pueden gestionar bonificaciones
+const canManageBonuses = (order) => {
+    console.log('Table - Full order object:', order);
+    
+    // Buscar la fecha de recepción en diferentes posibles ubicaciones
+    let receivedDate = null;
+    
+    // Opción 1: Campo directo received_date
+    if (order?.received_date) {
+        receivedDate = order.received_date;
+        console.log('Table - Found received_date:', receivedDate);
+    }
+    // Opción 2: En status_tracking.received_at
+    else if (order?.status_tracking?.received_at) {
+        receivedDate = order.status_tracking.received_at;
+        console.log('Table - Found status_tracking.received_at:', receivedDate);
+    }
+    // Opción 3: En status_timeline
+    else if (order?.status_timeline) {
+        const receivedEntry = order.status_timeline.find(entry => entry.status === 'RECIBIDO');
+        if (receivedEntry?.created_at) {
+            receivedDate = receivedEntry.created_at;
+            console.log('Table - Found in status_timeline:', receivedDate);
+        }
+    }
+    
+    if (!receivedDate) {
+        console.log('Table - No received date found, checking available fields:', Object.keys(order || {}));
+        return false;
+    }
+    
+    // Extraer solo la parte de la fecha (YYYY-MM-DD) ignorando la zona horaria
+    const receivedDateStr = receivedDate.split('T')[0];
+    const todayStr = new Date().toISOString().split('T')[0];
+    
+    console.log('Table - Received date (original):', receivedDate);
+    console.log('Table - Received date (date only):', receivedDateStr);
+    console.log('Table - Today (date only):', todayStr);
+    console.log('Table - Are equal?', receivedDateStr === todayStr);
+    
+    // Comparar solo las fechas como strings (YYYY-MM-DD)
+    return receivedDateStr === todayStr;
+};
+
 // --- Estados para Dialog de tracking ---
 const showTrackingDialog = ref(false);
 const selectedOrderTracking = ref(null);
 
+// --- Estados para Dialog de bonificaciones ---
+const showBonusDialog = ref(false);
+const selectedOrderBonuses = ref([]);
+const selectedOrderForBonuses = ref(null);
+
 function openItemsDialog(order) {
-    selectedOrderItems.value = order.details || [];
+    // Combinar items regulares y bonificaciones
+    const regularItems = getRegularItems(order);
+    const bonusItems = getBonusItems(order);
+    
+    // Marcar los items de bonificación para poder distinguirlos
+    const markedBonusItems = bonusItems.map(item => ({
+        ...item,
+        is_bonus: true
+    }));
+    
+    selectedOrderItems.value = [...regularItems, ...markedBonusItems];
     selectedOrderId.value = order.id;
     selectedOrderNumber.value = order.order_number;
     showItemsDialog.value = true;
@@ -45,6 +104,16 @@ function closeTrackingDialog() {
 const getTotalQuantity = () => {
     if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
     return selectedOrderItems.value.reduce((total, item) => total + (Math.trunc(item.quantity) || 0), 0);
+};
+
+const getRegularItemsCount = () => {
+    if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
+    return selectedOrderItems.value.filter(item => !item.is_bonus).length;
+};
+
+const getBonusItemsCount = () => {
+    if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
+    return selectedOrderItems.value.filter(item => item.is_bonus).length;
 };
 
 const getTotalAmount = () => {
@@ -367,6 +436,7 @@ const getStatusIcon = (status) => {
                         <!-- Estado RECIBIDO -->
                         <template v-else-if="slotProps.data.status === 'RECIBIDO'">
                             <Button 
+                                v-if="canManageBonuses(slotProps.data)"
                                 icon="pi pi-gift" 
                                 severity="secondary" 
                                 text 
@@ -376,6 +446,13 @@ const getStatusIcon = (status) => {
                                 v-tooltip.top="'Gestionar bonificaciones'" 
                                 class="action-btn bonus-btn" 
                             />
+                            <span 
+                                v-else 
+                                class="time-restriction-notice"
+                                v-tooltip.top="'Las bonificaciones solo pueden gestionarse el mismo día de recepción'"
+                            >
+                                <i class="pi pi-clock text-gray-400"></i>
+                            </span>
                         </template>
 
                         <!-- Estados finales (sin acciones adicionales) -->
@@ -400,7 +477,11 @@ const getStatusIcon = (status) => {
                 <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Orden #{{ selectedOrderNumber }}</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ selectedOrderItems?.length || 0 }} items • {{ formatCurrency(getTotalAmount()) }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ getRegularItemsCount() }} items
+                            <span v-if="getBonusItemsCount() > 0" class="ml-2 text-orange-600 dark:text-orange-400">• {{ getBonusItemsCount() }} bonificaciones</span>
+                            • {{ formatCurrency(getTotalAmount()) }}
+                        </p>
                     </div>
                 </div>
             </template>
@@ -434,8 +515,12 @@ const getStatusIcon = (status) => {
                                         />
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <div class="font-medium text-gray-900 dark:text-white text-sm truncate">
+                                        <div class="font-medium text-gray-900 dark:text-white text-sm truncate flex items-center gap-2">
                                             {{ slotProps.data.product?.name }}
+                                            <span v-if="slotProps.data.is_bonus" class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                                <i class="pi pi-gift text-xs"></i>
+                                                Bonificación
+                                            </span>
                                         </div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400 font-mono">
                                             {{ slotProps.data.product?.sku }}
@@ -449,7 +534,7 @@ const getStatusIcon = (status) => {
                         <!-- Cantidad -->
                         <Column field="quantity" header="Cant." :style="{ width: '80px' }" sortable>
                             <template #body="slotProps">
-                                <div class="text-center font-medium text-gray-900 dark:text-white">
+                                <div class="text-center font-medium" :class="slotProps.data.is_bonus ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'">
                                     {{ Math.trunc(slotProps.data.quantity) }}
                                 </div>
                             </template>
@@ -458,8 +543,9 @@ const getStatusIcon = (status) => {
                         <!-- Precio unitario -->
                         <Column field="unit_price" header="Precio" :style="{ width: '100px' }" sortable>
                             <template #body="slotProps">
-                                <div class="text-right font-mono text-sm text-gray-700 dark:text-gray-300">
-                                    {{ formatCurrency(slotProps.data.unit_price) }}
+                                <div class="text-right font-mono text-sm" :class="slotProps.data.is_bonus ? 'text-orange-600 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300'">
+                                    <span v-if="slotProps.data.is_bonus">GRATIS</span>
+                                    <span v-else>{{ formatCurrency(slotProps.data.unit_price) }}</span>
                                 </div>
                             </template>
                         </Column>
@@ -467,8 +553,9 @@ const getStatusIcon = (status) => {
                         <!-- Subtotal -->
                         <Column field="total_amount" header="Total" :style="{ width: '100px' }" sortable>
                             <template #body="slotProps">
-                                <div class="text-right font-mono text-sm font-semibold text-gray-900 dark:text-white">
-                                    {{ formatCurrency(slotProps.data.total_amount) }}
+                                <div class="text-right font-mono text-sm font-semibold" :class="slotProps.data.is_bonus ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'">
+                                    <span v-if="slotProps.data.is_bonus">GRATIS</span>
+                                    <span v-else>{{ formatCurrency(slotProps.data.total_amount) }}</span>
                                 </div>
                             </template>
                         </Column>
@@ -480,7 +567,8 @@ const getStatusIcon = (status) => {
                 <div class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3">
                     <div class="flex justify-between items-center">
                         <div class="text-sm text-gray-600 dark:text-gray-400">
-                            {{ getTotalQuantity() }} items
+                            {{ getRegularItemsCount() }} items
+                            <span v-if="getBonusItemsCount() > 0" class="ml-2 text-orange-600 dark:text-orange-400">+ {{ getBonusItemsCount() }} bonificaciones</span>
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="text-lg font-semibold text-gray-900 dark:text-white font-mono">
@@ -828,6 +916,10 @@ const getStatusIcon = (status) => {
 
 .no-actions-text {
     @apply text-xs text-gray-400 dark:text-gray-500 italic text-center py-2;
+}
+
+.time-restriction-notice {
+    @apply inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-help;
 }
 
 /* Ajustes responsivos para pantallas pequeñas */

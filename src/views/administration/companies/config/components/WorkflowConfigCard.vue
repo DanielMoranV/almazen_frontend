@@ -10,10 +10,18 @@ const props = defineProps({
     saving: {
         type: Boolean,
         default: false
+    },
+    availableWorkflows: {
+        type: Object,
+        default: () => ({})
+    },
+    currentWorkflowDescription: {
+        type: Object,
+        default: () => ({})
     }
 });
 
-const emit = defineEmits(['update']);
+const emit = defineEmits(['update', 'preview']);
 
 const confirm = useConfirm();
 
@@ -43,10 +51,18 @@ const workflowOptions = [
 ];
 
 const saveConfig = () => {
+    console.log('saveConfig called');
+    console.log('Current config:', props.config);
+    console.log('Local config:', localConfig.value);
+    
     const currentWorkflow = props.config.purchase_workflow;
     const newWorkflow = localConfig.value.purchase_workflow;
     
+    console.log('Current workflow:', currentWorkflow);
+    console.log('New workflow:', newWorkflow);
+    
     if (currentWorkflow !== newWorkflow) {
+        console.log('Workflows are different, showing confirmation');
         confirm.require({
             message: `¿Está seguro de cambiar el flujo de compras de "${getWorkflowLabel(currentWorkflow)}" a "${getWorkflowLabel(newWorkflow)}"?`,
             header: 'Confirmar Cambio de Flujo',
@@ -55,14 +71,17 @@ const saveConfig = () => {
             rejectLabel: 'Cancelar',
             acceptLabel: 'Confirmar',
             accept: () => {
+                console.log('User confirmed, emitting update');
                 emit('update', localConfig.value);
             },
             reject: () => {
+                console.log('User rejected, reverting change');
                 // Revertir cambio
                 localConfig.value.purchase_workflow = currentWorkflow;
             }
         });
     } else {
+        console.log('No workflow change, emitting update directly');
         emit('update', localConfig.value);
     }
 };

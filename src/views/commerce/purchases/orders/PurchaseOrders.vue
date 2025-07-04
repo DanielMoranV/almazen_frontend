@@ -3,7 +3,7 @@ import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue'
 import { useAuthStore } from '@/stores/authStore';
 import { usePurchaseStore } from '@/stores/purchaseStore';
 import { useBatchesStore } from '@/stores/batchesStore';
-import { addPurchaseBonuses } from '@/api/index';
+import { addPurchaseBonuses, updatePurchaseBonus } from '@/api/index';
 import { DatePicker, InputNumber, InputText, Select } from 'primevue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
@@ -129,6 +129,7 @@ const batchManagementData = ref({
 // Estados para gestión de bonificaciones
 const showBonusDialog = ref(false);
 const selectedOrderForBonus = ref(null);
+const bonusDialogMode = ref('add'); // 'add' | 'edit' | 'view'
 
 const showBatchManagementDialog = (order, manualProducts, autoProducts) => {
     selectedOrderForBatch.value = order;
@@ -213,6 +214,11 @@ const handleBatchManagementSubmit = async (batchData) => {
 // Funciones para gestión de bonificaciones
 const handleManageBonuses = (order) => {
     selectedOrderForBonus.value = order;
+    
+    // Determinar el modo basado en si ya tiene bonificaciones
+    const hasExistingBonuses = order.bonuses && order.bonuses.length > 0;
+    bonusDialogMode.value = hasExistingBonuses ? 'edit' : 'add';
+    
     showBonusDialog.value = true;
 };
 
@@ -235,10 +241,53 @@ const handleBonusSubmit = async (bonusData) => {
     } catch (error) {
         console.error('Error al agregar bonificaciones:', error);
         
-        if (error.response && error.response.data && error.response.data.message) {
-            handleError('Error al agregar bonificaciones', error.response.data.message);
+        if (error.response?.data) {
+            const errorData = error.response.data;
+            
+            // Verificar si es error de restricción de tiempo
+            if (errorData.details?.error_message?.includes('mismo día de recepción')) {
+                handleError(
+                    'Restricción de tiempo', 
+                    'Las bonificaciones solo pueden agregarse el mismo día de recepción de la mercadería'
+                );
+            } else if (errorData.message) {
+                handleError('Error al agregar bonificaciones', errorData.message);
+            } else {
+                handleError('Error al agregar bonificaciones', 'Error inesperado al procesar las bonificaciones');
+            }
         } else {
             handleError('Error al agregar bonificaciones', 'Error inesperado al procesar las bonificaciones');
+        }
+    }
+};
+
+const handleBonusUpdate = async ({ bonusId, updateData }) => {
+    try {
+        console.log('Actualizando bonificación:', { bonusId, updateData });
+        
+        const response = await updatePurchaseBonus(selectedOrderForBonus.value.id, bonusId, updateData);
+        
+        if (response && response.data) {
+            // Recargar la lista de órdenes para mostrar los cambios
+            await loadPurchaseOrders();
+            
+            showSuccess(
+                'Bonificación actualizada', 
+                `Bonificación actualizada exitosamente en la orden #${selectedOrderForBonus.value.order_number}`
+            );
+        }
+    } catch (error) {
+        console.error('Error al actualizar bonificación:', error);
+        
+        if (error.response?.status === 403) {
+            handleError(
+                'Acceso denegado', 
+                'No se pueden editar bonificaciones fuera del día de recepción'
+            );
+        } else if (error.response?.data?.message) {
+            handleError('Error al actualizar bonificación', error.response.data.message);
+        } else {
+            handleError('Error al actualizar bonificación', 'Error inesperado al procesar la actualización');
         }
     }
 };
@@ -692,7 +741,9 @@ function formatCurrencyPEN(value) {
         <BonusManagementDialog 
             v-model:visible="showBonusDialog" 
             :order="selectedOrderForBonus" 
+            :mode="bonusDialogMode"
             @submit="handleBonusSubmit" 
+            @update="handleBonusUpdate"
         />
     </div>
 </template>

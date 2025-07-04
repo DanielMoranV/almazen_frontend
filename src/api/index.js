@@ -19,6 +19,13 @@ export const fetchCompanies = () => axios.get('/companies');
 export const createCompany = (payload) => axios.post('/companies', payload);
 export const deleteCompany = (id) => axios.delete(`/companies/${id}`);
 export const updateCompany = (payload, id) => axios.put(`/companies/${id}`, payload);
+// Company Configuration
+export const getCompanyConfig = () => axios.get('/company-config');
+export const previewWorkflowChange = (targetWorkflow) => axios.post('/company-config/preview-workflow-change', { target_workflow: targetWorkflow });
+export const updateCompanyConfig = (config) => axios.patch('/company-config', config);
+
+// Legacy endpoint (keep for backward compatibility)
+export const updateCompanyConfigLegacy = (companyId, config) => axios.put(`/companies/${companyId}/config`, config);
 
 // Products
 export const fetchProducts = (params = {}) => {
@@ -101,6 +108,10 @@ export const addPurchaseBonuses = (purchaseId, bonusData) => {
 
 export const getPurchaseBonuses = (purchaseId) => {
     return axios.get(`/purchases/${purchaseId}/bonuses`);
+};
+
+export const updatePurchaseBonus = (purchaseId, bonusId, bonusData) => {
+    return axios.patch(`/purchases/${purchaseId}/bonuses/${bonusId}`, bonusData);
 };
 
 

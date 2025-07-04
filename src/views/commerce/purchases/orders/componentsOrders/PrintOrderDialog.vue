@@ -124,15 +124,27 @@
                 <div class="signatures">
                     <div class="signature-box">
                         <div class="signature-line"></div>
-                        <p>Solicitado por</p>
+                        <div class="signature-info">
+                            <p class="signature-role"><strong>Solicitado por:</strong></p>
+                            <p class="signature-name">{{ getRequestedBy() }}</p>
+                            <p class="signature-date">{{ getRequestedDate() }}</p>
+                        </div>
                     </div>
-                    <div class="signature-box">
+                    <div class="signature-box" v-if="order.status !== 'PENDIENTE'">
                         <div class="signature-line"></div>
-                        <p>Autorizado por</p>
+                        <div class="signature-info">
+                            <p class="signature-role"><strong>Aprobado por:</strong></p>
+                            <p class="signature-name">{{ getApprovedBy() }}</p>
+                            <p class="signature-date">{{ getApprovedDate() }}</p>
+                        </div>
                     </div>
-                    <div class="signature-box">
+                    <div class="signature-box" v-if="order.status === 'RECIBIDO'">
                         <div class="signature-line"></div>
-                        <p>Recibido por</p>
+                        <div class="signature-info">
+                            <p class="signature-role"><strong>Recibido por:</strong></p>
+                            <p class="signature-name">{{ getReceivedBy() }}</p>
+                            <p class="signature-date">{{ getReceivedDate() }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -238,8 +250,12 @@ function generatePrintContent() {
                 .print-footer { border-top: 1px solid #ddd; padding-top: 20px; }
                 .footer-info { margin-bottom: 30px; }
                 .signatures { display: flex; justify-content: space-between; }
-                .signature-box { text-align: center; width: 150px; }
-                .signature-line { height: 1px; background: #333; margin-bottom: 5px; margin-top: 40px; }
+                .signature-box { text-align: center; width: 180px; padding: 0 10px; }
+                .signature-line { height: 1px; background: #333; margin: 40px 0 10px 0; }
+                .signature-info { font-size: 0.85rem; }
+                .signature-role { font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
+                .signature-name { color: #666; margin-bottom: 3px; font-weight: 500; }
+                .signature-date { color: #999; font-size: 0.8rem; }
                 .status-pendiente { color: #f39c12; }
                 .status-aprobado { color: #27ae60; }
                 .status-recibido { color: #3498db; }
@@ -366,6 +382,40 @@ function getStatusLabel(status) {
 
 function getStatusClass(status) {
     return `status-${status?.toLowerCase()}`;
+}
+
+// Funciones para obtener información de responsables
+function getRequestedBy() {
+    return props.order?.user?.name || 'N/A';
+}
+
+function getRequestedDate() {
+    return props.order?.created_at ? formatDateOnly(props.order.created_at) : 'N/A';
+}
+
+function getApprovedBy() {
+    return props.order?.status_tracking?.approved_by?.name || 'N/A';
+}
+
+function getApprovedDate() {
+    return props.order?.status_tracking?.approved_at ? formatDateOnly(props.order.status_tracking.approved_at) : 'N/A';
+}
+
+function getReceivedBy() {
+    return props.order?.status_tracking?.received_by?.name || 'N/A';
+}
+
+function getReceivedDate() {
+    return props.order?.status_tracking?.received_at ? formatDateOnly(props.order.status_tracking.received_at) : 'N/A';
+}
+
+function formatDateOnly(value) {
+    if (!value) return 'N/A';
+    return new Intl.DateTimeFormat('es-PE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date(value));
 }
 </script>
 
@@ -587,13 +637,35 @@ function getStatusClass(status) {
 
 .signature-box {
     text-align: center;
-    width: 150px;
+    width: 180px;
+    padding: 0 10px;
 }
 
 .signature-line {
     height: 1px;
     background: #333;
-    margin: 3rem 0 0.5rem 0;
+    margin: 3rem 0 1rem 0;
+}
+
+.signature-info {
+    font-size: 0.85rem;
+}
+
+.signature-role {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.signature-name {
+    color: #666;
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+}
+
+.signature-date {
+    color: #999;
+    font-size: 0.8rem;
 }
 
 .dialog-footer {
