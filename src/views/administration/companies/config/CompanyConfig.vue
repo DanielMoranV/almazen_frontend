@@ -1,10 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useCompaniesStore } from '@/stores/companiesStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useCompaniesStore } from '@/stores/companiesStore';
 import { useToast } from 'primevue/usetoast';
-import WorkflowConfigCard from './components/WorkflowConfigCard.vue';
+import { computed, onMounted, ref } from 'vue';
 import ConfigPreview from './components/ConfigPreview.vue';
+import WorkflowConfigCard from './components/WorkflowConfigCard.vue';
 
 const companiesStore = useCompaniesStore();
 const authStore = useAuthStore();
@@ -73,6 +73,7 @@ const updateWorkflowConfig = async (newConfig) => {
 </script>
 
 <template>
+    <ConfirmDialog />
     <div class="company-config-container">
         <div class="page-header">
             <div class="header-content">
