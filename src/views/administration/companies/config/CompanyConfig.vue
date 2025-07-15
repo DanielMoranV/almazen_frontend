@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useCompaniesStore } from '@/stores/companiesStore';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+
 import ConfigPreview from './components/ConfigPreview.vue';
 import WorkflowConfigCard from './components/WorkflowConfigCard.vue';
 
@@ -18,7 +19,7 @@ const companyConfig = ref({
     purchase_workflow: 'standard'
 });
 
-const currentCompany = computed(() => authStore.currentUser?.company);
+const currentCompany = computed(() => authStore.currentUser?.company_config);
 
 onMounted(async () => {
     if (currentCompany.value) {
@@ -29,17 +30,21 @@ onMounted(async () => {
 const loadCompanyConfig = async () => {
     loading.value = true;
     try {
-        // En el futuro, esto vendrá de una API específica de configuración
-        // Por ahora usamos datos básicos de la empresa
+        const processed = await companiesStore.fetchCompanyConfig();
+        if (!processed.success) throw new Error(processed.message);
+        const cfg = processed.data;
+
         companyConfig.value = {
-            company_id: currentCompany.value.id,
-            purchase_workflow: currentCompany.value.purchase_workflow || 'standard'
+            company_id: cfg.company_id,
+            purchase_workflow: cfg.purchase_workflow || 'standard'
         };
+        // Mantén la configuración también en el authStore para uso global
+        authStore.setCompanyConfig(companyConfig.value);
     } catch (error) {
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Error al cargar la configuración de la empresa',
+            detail: error.message || 'Error al cargar la configuración de la empresa',
             life: 3000
         });
     } finally {
@@ -50,20 +55,39 @@ const loadCompanyConfig = async () => {
 const updateWorkflowConfig = async (newConfig) => {
     saving.value = true;
     try {
-        // Aquí se hará la llamada a la API para guardar la configuración
-        companyConfig.value = { ...companyConfig.value, ...newConfig };
-        
+        // 1. Vista previa del impacto del cambio de flujo
+        const preview = await companiesStore.previewWorkflowChangeAction(newConfig.purchase_workflow);
+        const blocking = preview?.data?.blocking_purchases ?? preview?.blocking_purchases ?? 0;
+
+        if (blocking > 0) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Cambio bloqueado',
+                detail: `Existen ${blocking} compras pendientes o aprobadas que impiden el cambio de flujo.`,
+                life: 5000
+            });
+            saving.value = false;
+            return;
+        }
+
+        // 2. Persistir la configuración
+        const processedSave = await companiesStore.updateCompanyConfigAction(newConfig);
+        if (!processedSave.success) throw new Error(processedSave.message);
+        const updatedCfg = processedSave.data ?? newConfig;
+        companyConfig.value = { ...companyConfig.value, ...updatedCfg };
+        authStore.setCompanyConfig(companyConfig.value);
+
         toast.add({
             severity: 'success',
             summary: 'Configuración Guardada',
-            detail: 'La configuración de flujo de compras ha sido actualizada',
+            detail: processedSave.message || 'La configuración de flujo de compras ha sido actualizada',
             life: 3000
         });
     } catch (error) {
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Error al guardar la configuración',
+            detail: error.message || 'Error al guardar la configuración',
             life: 3000
         });
     } finally {
@@ -81,9 +105,7 @@ const updateWorkflowConfig = async (newConfig) => {
                     <i class="pi pi-cog"></i>
                     Configuración de Empresa
                 </h1>
-                <p class="page-subtitle">
-                    Configure las preferencias de flujo de trabajo para su empresa
-                </p>
+                <p class="page-subtitle">Configure las preferencias de flujo de trabajo para su empresa</p>
             </div>
         </div>
 
@@ -94,17 +116,11 @@ const updateWorkflowConfig = async (newConfig) => {
 
         <div v-else class="config-grid">
             <!-- Configuración de Flujo de Compras -->
-            <WorkflowConfigCard 
-                :config="companyConfig"
-                :saving="saving"
-                @update="updateWorkflowConfig"
-            />
-            
+            <WorkflowConfigCard :config="companyConfig" :saving="saving" @update="updateWorkflowConfig" />
+
             <!-- Vista Previa del Flujo -->
-            <ConfigPreview 
-                :workflow="companyConfig.purchase_workflow"
-            />
-            
+            <ConfigPreview :workflow="companyConfig.purchase_workflow" />
+
             <!-- Panel de Configuraciones Futuras -->
             <Card class="future-config-card">
                 <template #header>
@@ -113,7 +129,7 @@ const updateWorkflowConfig = async (newConfig) => {
                         <h3>Próximas Configuraciones</h3>
                     </div>
                 </template>
-                
+
                 <template #content>
                     <div class="future-features">
                         <div class="feature-item">
@@ -133,9 +149,7 @@ const updateWorkflowConfig = async (newConfig) => {
                             <span>Configuración de Facturación</span>
                         </div>
                     </div>
-                    <p class="future-note">
-                        Estas configuraciones estarán disponibles en futuras actualizaciones.
-                    </p>
+                    <p class="future-note">Estas configuraciones estarán disponibles en futuras actualizaciones.</p>
                 </template>
             </Card>
         </div>
@@ -151,10 +165,10 @@ const updateWorkflowConfig = async (newConfig) => {
 
 .page-header {
     margin-bottom: 2rem;
-    
+
     .header-content {
         text-align: center;
-        
+
         .page-title {
             display: flex;
             align-items: center;
@@ -164,12 +178,12 @@ const updateWorkflowConfig = async (newConfig) => {
             font-size: 2rem;
             font-weight: 600;
             color: var(--primary-color);
-            
+
             i {
                 font-size: 1.75rem;
             }
         }
-        
+
         .page-subtitle {
             margin: 0;
             color: var(--text-color-secondary);
@@ -185,7 +199,7 @@ const updateWorkflowConfig = async (newConfig) => {
     justify-content: center;
     padding: 4rem;
     gap: 1rem;
-    
+
     p {
         color: var(--text-color-secondary);
         margin: 0;
@@ -196,7 +210,7 @@ const updateWorkflowConfig = async (newConfig) => {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
-    
+
     @media (max-width: 1024px) {
         grid-template-columns: 1fr;
     }
@@ -208,24 +222,24 @@ const updateWorkflowConfig = async (newConfig) => {
         align-items: center;
         gap: 0.75rem;
         padding: 1rem;
-        
+
         i {
             color: var(--primary-color);
             font-size: 1.25rem;
         }
-        
+
         h3 {
             margin: 0;
             color: var(--text-color);
         }
     }
-    
+
     .future-features {
         display: flex;
         flex-direction: column;
         gap: 1rem;
         margin-bottom: 1.5rem;
-        
+
         .feature-item {
             display: flex;
             align-items: center;
@@ -234,21 +248,21 @@ const updateWorkflowConfig = async (newConfig) => {
             background: var(--surface-ground);
             border-radius: var(--border-radius);
             opacity: 0.7;
-            
+
             i {
                 color: var(--primary-color);
                 font-size: 1.1rem;
                 width: 1.5rem;
                 text-align: center;
             }
-            
+
             span {
                 color: var(--text-color);
                 font-weight: 500;
             }
         }
     }
-    
+
     .future-note {
         margin: 0;
         color: var(--text-color-secondary);

@@ -1,7 +1,7 @@
-import { createCompany, deleteCompany, fetchCompanies, updateCompany } from '@/api';
+import { createCompany, deleteCompany, fetchCompanies, getCompanyConfig, previewWorkflowChange, updateCompany, updateCompanyConfig } from '@/api';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 // Normaliza la estructura de una empresa para asegurar que tenga todos los campos
 function normalizeCompany(company) {
@@ -20,6 +20,7 @@ function normalizeCompany(company) {
 
 export const useCompaniesStore = defineStore('companiesStore', {
     state: () => ({
+        companyConfig: cache.getItem('companyConfig') || null,
         companies: [],
         company: cache.getItem('company') || null,
         message: '',
@@ -31,6 +32,7 @@ export const useCompaniesStore = defineStore('companiesStore', {
     getters: {
         companiesList: (state) => state.companies,
         currentCompany: (state) => state.company,
+        companyConfigState: (state) => state.companyConfig,
         isLoadingCompanies: (state) => state.isLoading
     },
 
@@ -92,6 +94,54 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        async updateCompanyConfigAction(config) {
+            this.isLoading = true;
+            try {
+                const res = await updateCompanyConfig(config);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.companyConfig = processed.data ?? config;
+                    cache.setItem('companyConfig', this.companyConfig);
+                }
+                return processed;
+            } catch (error) {
+                console.error('Error al actualizar la configuración de la empresa', error);
+                handleProcessError(error, this);
+                throw error;
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async fetchCompanyConfig() {
+            this.isLoading = true;
+            try {
+                const res = await getCompanyConfig();
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.companyConfig = processed.data;
+                    cache.setItem('companyConfig', processed.data);
+                }
+                return processed;
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async previewWorkflowChangeAction(targetWorkflow) {
+            try {
+                const res = await previewWorkflowChange(targetWorkflow);
+                return res;
+            } catch (error) {
+                // No actual state change, solo relay error
+                console.error('previewWorkflowChange', error);
+                throw error;
             }
         },
 

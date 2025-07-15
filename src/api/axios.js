@@ -34,15 +34,15 @@ instance.interceptors.response.use(
     },
     async function (error) {
         const originalRequest = error.config;
-        
+
         // Auto-refresh en 401 si no es retry y no es endpoint de auth
         if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
             originalRequest._retry = true;
-            
+
             try {
                 const { refreshToken, getToken } = useAuthStore();
                 await refreshToken();
-                
+
                 // Retry con nuevo token
                 const newToken = getToken;
                 if (newToken) {
@@ -57,7 +57,7 @@ instance.interceptors.response.use(
                 return Promise.reject(refreshError);
             }
         }
-        
+
         // Si el backend responde, intenta adaptar la estructura al estándar
         let backendData = error.response && error.response.data;
         let errResponse = {
@@ -89,6 +89,7 @@ instance.interceptors.response.use(
                 case 422:
                     // Si errors es un objeto tipo { campo: [mensajes] }
                     let validationMsgs = [];
+                    console.log('Backend Data', backendData);
                     if (backendData?.errors && typeof backendData.errors === 'object' && !Array.isArray(backendData.errors)) {
                         validationMsgs = Object.entries(backendData.errors).flatMap(([field, messages]) => messages.map((msg) => `${field}: ${msg}`));
                         errResponse.validationErrors = validationMsgs;
@@ -99,7 +100,9 @@ instance.interceptors.response.use(
                         validationMsgs = backendData.details;
                         errResponse.validationErrors = validationMsgs;
                     }
-                    errResponse.message = 'Error de validación. Por favor, revise los campos.';
+                    if (!errResponse.message) {
+                        errResponse.message = 'Error de validación. Por favor, revise los campos.';
+                    }
                     break;
                 case 500:
                     errResponse.message = 'Error interno del servidor. Intente más tarde.';
