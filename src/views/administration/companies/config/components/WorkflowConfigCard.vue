@@ -51,44 +51,44 @@ const workflowOptions = [
 ];
 
 const saveConfig = () => {
-    console.log('saveConfig called');
-    console.log('Current config:', props.config);
-    console.log('Local config:', localConfig.value);
+    if (!localConfig.value.purchase_workflow) {
+        return;
+    }
     
     const currentWorkflow = props.config.purchase_workflow;
     const newWorkflow = localConfig.value.purchase_workflow;
     
-    console.log('Current workflow:', currentWorkflow);
-    console.log('New workflow:', newWorkflow);
-    
     if (currentWorkflow !== newWorkflow) {
-        console.log('Workflows are different, showing confirmation');
+        const currentLabel = getWorkflowLabel(currentWorkflow);
+        const newLabel = getWorkflowLabel(newWorkflow);
+        
         confirm.require({
-            message: `¿Está seguro de cambiar el flujo de compras de "${getWorkflowLabel(currentWorkflow)}" a "${getWorkflowLabel(newWorkflow)}"?`,
+            message: `¿Confirma el cambio del flujo de compras?\n\nDe: ${currentLabel}\nA: ${newLabel}\n\nEste cambio afectará todas las compras futuras.`,
             header: 'Confirmar Cambio de Flujo',
             icon: 'pi pi-exclamation-triangle',
             rejectClass: 'p-button-secondary p-button-outlined',
             rejectLabel: 'Cancelar',
-            acceptLabel: 'Confirmar',
+            acceptLabel: 'Confirmar Cambio',
             accept: () => {
-                console.log('User confirmed, emitting update');
                 emit('update', localConfig.value);
             },
             reject: () => {
-                console.log('User rejected, reverting change');
-                // Revertir cambio
                 localConfig.value.purchase_workflow = currentWorkflow;
             }
         });
     } else {
-        console.log('No workflow change, emitting update directly');
         emit('update', localConfig.value);
     }
 };
 
 const getWorkflowLabel = (workflow) => {
     const option = workflowOptions.find(opt => opt.value === workflow);
-    return option ? option.label : workflow;
+    return option ? option.label : (workflow || 'Desconocido');
+};
+
+const getWorkflowDescription = (workflow) => {
+    const option = workflowOptions.find(opt => opt.value === workflow);
+    return option ? option.description : '';
 };
 
 const isWorkflowSelected = (workflow) => {
@@ -139,19 +139,24 @@ const isWorkflowSelected = (workflow) => {
             <div class="workflow-impact" v-if="localConfig.purchase_workflow">
                 <h5>
                     <i class="pi pi-info-circle"></i>
-                    Impacto del Flujo Seleccionado
+                    Características del Flujo: {{ getWorkflowLabel(localConfig.purchase_workflow) }}
                 </h5>
+                <div class="workflow-description">
+                    <p class="flow-path">{{ getWorkflowDescription(localConfig.purchase_workflow) }}</p>
+                </div>
                 <ul v-if="localConfig.purchase_workflow === 'standard'">
-                    <li>Las compras requieren aprobación manual</li>
-                    <li>Stock se actualiza solo al recibir la mercancía</li>
-                    <li>Permite cancelar órdenes pendientes</li>
-                    <li>Mayor control sobre el proceso de compras</li>
+                    <li><i class="pi pi-check text-green-500"></i> Control total sobre cada compra</li>
+                    <li><i class="pi pi-check text-green-500"></i> Aprobación manual requerida</li>
+                    <li><i class="pi pi-check text-green-500"></i> Posibilidad de cancelar órdenes</li>
+                    <li><i class="pi pi-check text-green-500"></i> Stock actualizado al recibir mercancía</li>
+                    <li><i class="pi pi-check text-green-500"></i> Historial completo de decisiones</li>
                 </ul>
                 <ul v-else>
-                    <li>Las compras se procesan automáticamente</li>
-                    <li>Stock se actualiza inmediatamente</li>
-                    <li>Genera lotes de manera automática</li>
-                    <li>Proceso más rápido para operaciones simples</li>
+                    <li><i class="pi pi-bolt text-yellow-500"></i> Procesamiento automático e instantáneo</li>
+                    <li><i class="pi pi-bolt text-yellow-500"></i> Stock actualizado inmediatamente</li>
+                    <li><i class="pi pi-bolt text-yellow-500"></i> Generación automática de lotes</li>
+                    <li><i class="pi pi-bolt text-yellow-500"></i> Ideal para operaciones rutinarias</li>
+                    <li><i class="pi pi-bolt text-yellow-500"></i> Menor intervención manual</li>
                 </ul>
             </div>
         </template>
@@ -273,21 +278,49 @@ const isWorkflowSelected = (workflow) => {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin: 0 0 0.75rem 0;
+        margin: 0 0 1rem 0;
         color: var(--text-color);
+        font-size: 1rem;
         
         i {
             color: var(--primary-color);
         }
     }
     
+    .workflow-description {
+        margin-bottom: 1rem;
+        
+        .flow-path {
+            font-family: 'Courier New', monospace;
+            background: var(--surface-card);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0;
+            color: var(--text-color-secondary);
+            font-size: 0.875rem;
+            border-left: 3px solid var(--primary-color);
+        }
+    }
+    
     ul {
         margin: 0;
-        padding-left: 1.25rem;
+        padding: 0;
+        list-style: none;
         
         li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             margin-bottom: 0.5rem;
             color: var(--text-color-secondary);
+            font-size: 0.875rem;
+            
+            i {
+                font-size: 0.75rem;
+                width: 1rem;
+                text-align: center;
+                flex-shrink: 0;
+            }
             
             &:last-child {
                 margin-bottom: 0;
@@ -308,5 +341,9 @@ const isWorkflowSelected = (workflow) => {
 
 .text-green-500 {
     color: #10b981;
+}
+
+.text-yellow-500 {
+    color: #eab308;
 }
 </style>

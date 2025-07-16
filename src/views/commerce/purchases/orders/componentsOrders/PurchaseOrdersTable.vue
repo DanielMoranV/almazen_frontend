@@ -1,8 +1,7 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useToast } from 'primevue/usetoast';
-import { useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
 import PrintOrderDialog from './PrintOrderDialog.vue';
 import PurchaseOrderTimeline from './PurchaseOrderTimeline.vue';
 
@@ -15,10 +14,10 @@ const selectedOrderNumber = ref(null);
 // Validar si se pueden gestionar bonificaciones
 const canManageBonuses = (order) => {
     console.log('Table - Full order object:', order);
-    
+
     // Buscar la fecha de recepción en diferentes posibles ubicaciones
     let receivedDate = null;
-    
+
     // Opción 1: Campo directo received_date
     if (order?.received_date) {
         receivedDate = order.received_date;
@@ -31,27 +30,27 @@ const canManageBonuses = (order) => {
     }
     // Opción 3: En status_timeline
     else if (order?.status_timeline) {
-        const receivedEntry = order.status_timeline.find(entry => entry.status === 'RECIBIDO');
+        const receivedEntry = order.status_timeline.find((entry) => entry.status === 'RECIBIDO');
         if (receivedEntry?.created_at) {
             receivedDate = receivedEntry.created_at;
             console.log('Table - Found in status_timeline:', receivedDate);
         }
     }
-    
+
     if (!receivedDate) {
         console.log('Table - No received date found, checking available fields:', Object.keys(order || {}));
         return false;
     }
-    
+
     // Extraer solo la parte de la fecha (YYYY-MM-DD) ignorando la zona horaria
     const receivedDateStr = receivedDate.split('T')[0];
     const todayStr = new Date().toISOString().split('T')[0];
-    
+
     console.log('Table - Received date (original):', receivedDate);
     console.log('Table - Received date (date only):', receivedDateStr);
     console.log('Table - Today (date only):', todayStr);
     console.log('Table - Are equal?', receivedDateStr === todayStr);
-    
+
     // Comparar solo las fechas como strings (YYYY-MM-DD)
     return receivedDateStr === todayStr;
 };
@@ -69,13 +68,13 @@ function openItemsDialog(order) {
     // Combinar items regulares y bonificaciones
     const regularItems = getRegularItems(order);
     const bonusItems = getBonusItems(order);
-    
+
     // Marcar los items de bonificación para poder distinguirlos
-    const markedBonusItems = bonusItems.map(item => ({
+    const markedBonusItems = bonusItems.map((item) => ({
         ...item,
         is_bonus: true
     }));
-    
+
     selectedOrderItems.value = [...regularItems, ...markedBonusItems];
     selectedOrderId.value = order.id;
     selectedOrderNumber.value = order.order_number;
@@ -108,12 +107,12 @@ const getTotalQuantity = () => {
 
 const getRegularItemsCount = () => {
     if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
-    return selectedOrderItems.value.filter(item => !item.is_bonus).length;
+    return selectedOrderItems.value.filter((item) => !item.is_bonus).length;
 };
 
 const getBonusItemsCount = () => {
     if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
-    return selectedOrderItems.value.filter(item => item.is_bonus).length;
+    return selectedOrderItems.value.filter((item) => item.is_bonus).length;
 };
 
 const getTotalAmount = () => {
@@ -123,11 +122,11 @@ const getTotalAmount = () => {
 
 // Métodos para manejar bonificaciones
 const getRegularItems = (order) => {
-    return order.regular_details || order.details?.filter(d => !d.is_bonus) || [];
+    return order.regular_details || order.details?.filter((d) => !d.is_bonus) || [];
 };
 
 const getBonusItems = (order) => {
-    return order.bonuses || order.details?.filter(d => d.is_bonus) || [];
+    return order.bonuses || order.details?.filter((d) => d.is_bonus) || [];
 };
 
 const getTotalBonusQuantity = (order) => {
@@ -136,7 +135,7 @@ const getTotalBonusQuantity = (order) => {
 
 const getLastUserAction = (order) => {
     if (!order.status_tracking) return null;
-    
+
     const tracking = order.status_tracking;
     switch (order.status) {
         case 'PENDIENTE':
@@ -372,9 +371,9 @@ const getStatusIcon = (status) => {
             </template>
         </Column>
         <Column field="user.name" header="Creado por" sortable />
-        
+
         <!-- Nueva columna de seguimiento -->
-        <Column header="Seguimiento" style="width: 180px">
+        <Column field="status" header="Seguimiento" style="width: 180px" sortable>
             <template #body="slotProps">
                 <div class="tracking-info">
                     <div class="status-container">
@@ -383,29 +382,21 @@ const getStatusIcon = (status) => {
                             {{ getStatusLabel(slotProps.data.status) }}
                         </span>
                     </div>
-                    
+
                     <!-- Usuario de la última acción -->
                     <div v-if="getLastUserAction(slotProps.data)" class="last-action-user">
                         <i class="pi pi-user"></i>
                         <span>{{ getLastUserAction(slotProps.data).name }}</span>
                     </div>
-                    
+
                     <!-- Indicador de bonificaciones -->
                     <div v-if="getTotalBonusQuantity(slotProps.data) > 0" class="bonus-indicator">
                         <i class="pi pi-gift"></i>
                         <span>{{ getTotalBonusQuantity(slotProps.data) }} bonus</span>
                     </div>
-                    
+
                     <!-- Botón para ver timeline completo -->
-                    <Button 
-                        icon="pi pi-history" 
-                        text 
-                        size="small" 
-                        severity="info"
-                        @click.stop="openTrackingDialog(slotProps.data)" 
-                        v-tooltip.top="'Ver timeline completo'"
-                        class="tracking-btn"
-                    />
+                    <Button icon="pi pi-history" text size="small" severity="info" @click.stop="openTrackingDialog(slotProps.data)" v-tooltip.top="'Ver timeline completo'" class="tracking-btn" />
                 </div>
             </template>
         </Column>
@@ -435,22 +426,18 @@ const getStatusIcon = (status) => {
 
                         <!-- Estado RECIBIDO -->
                         <template v-else-if="slotProps.data.status === 'RECIBIDO'">
-                            <Button 
+                            <Button
                                 v-if="canManageBonuses(slotProps.data)"
-                                icon="pi pi-gift" 
-                                severity="secondary" 
-                                text 
-                                rounded 
-                                size="small" 
-                                @click.stop="emit('manage-bonuses', slotProps.data)" 
-                                v-tooltip.top="'Gestionar bonificaciones'" 
-                                class="action-btn bonus-btn" 
+                                icon="pi pi-gift"
+                                severity="secondary"
+                                text
+                                rounded
+                                size="small"
+                                @click.stop="emit('manage-bonuses', slotProps.data)"
+                                v-tooltip.top="'Gestionar bonificaciones'"
+                                class="action-btn bonus-btn"
                             />
-                            <span 
-                                v-else 
-                                class="time-restriction-notice"
-                                v-tooltip.top="'Las bonificaciones solo pueden gestionarse el mismo día de recepción'"
-                            >
+                            <span v-else class="time-restriction-notice" v-tooltip.top="'Las bonificaciones solo pueden gestionarse el mismo día de recepción'">
                                 <i class="pi pi-clock text-gray-400"></i>
                             </span>
                         </template>
@@ -465,14 +452,7 @@ const getStatusIcon = (status) => {
         </Column>
 
         <!-- Dialog minimalista para items de la orden -->
-        <Dialog 
-            v-model:visible="showItemsDialog" 
-            :modal="true" 
-            :closable="true" 
-            :style="{ width: '90vw', maxWidth: '900px' }" 
-            class="items-dialog"
-            @hide="closeItemsDialog"
-        >
+        <Dialog v-model:visible="showItemsDialog" :modal="true" :closable="true" :style="{ width: '90vw', maxWidth: '900px' }" class="items-dialog" @hide="closeItemsDialog">
             <template #header>
                 <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
                     <div>
@@ -507,12 +487,7 @@ const getStatusIcon = (status) => {
                             <template #body="slotProps">
                                 <div class="flex items-center gap-3 py-1">
                                     <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                        <img 
-                                            :src="slotProps.data.product?.image_url || '/placeholder-product.png'" 
-                                            :alt="slotProps.data.product?.name || 'Producto'"
-                                            class="w-full h-full object-cover"
-                                            @error="handleImageError"
-                                        />
+                                        <img :src="slotProps.data.product?.image_url || '/placeholder-product.png'" :alt="slotProps.data.product?.name || 'Producto'" class="w-full h-full object-cover" @error="handleImageError" />
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <div class="font-medium text-gray-900 dark:text-white text-sm truncate flex items-center gap-2">
@@ -574,12 +549,7 @@ const getStatusIcon = (status) => {
                             <div class="text-lg font-semibold text-gray-900 dark:text-white font-mono">
                                 {{ formatCurrency(getTotalAmount()) }}
                             </div>
-                            <Button 
-                                label="Cerrar" 
-                                @click="closeItemsDialog"
-                                size="small"
-                                autofocus
-                            />
+                            <Button label="Cerrar" @click="closeItemsDialog" size="small" autofocus />
                         </div>
                     </div>
                 </div>
@@ -587,16 +557,9 @@ const getStatusIcon = (status) => {
         </Dialog>
     </DataTable>
     <PrintOrderDialog v-if="showPrintDialog" :order="orderToPrint" @close="showPrintDialog = false" />
-    
+
     <!-- Dialog de Timeline de Seguimiento -->
-    <Dialog 
-        v-model:visible="showTrackingDialog" 
-        :style="{ width: '800px' }" 
-        header="Seguimiento de Orden"
-        :modal="true"
-        class="timeline-dialog"
-        @hide="closeTrackingDialog"
-    >
+    <Dialog v-model:visible="showTrackingDialog" :style="{ width: '800px' }" header="Seguimiento de Orden" :modal="true" class="timeline-dialog" @hide="closeTrackingDialog">
         <template #header>
             <div class="dialog-header">
                 <h3 class="dialog-title">
@@ -609,21 +572,11 @@ const getStatusIcon = (status) => {
                 </div>
             </div>
         </template>
-        
-        <PurchaseOrderTimeline 
-            v-if="selectedOrderTracking"
-            :status-timeline="selectedOrderTracking.status_timeline || []"
-            :status-tracking="selectedOrderTracking.status_tracking || {}"
-            :current-status="selectedOrderTracking.status"
-        />
-        
+
+        <PurchaseOrderTimeline v-if="selectedOrderTracking" :status-timeline="selectedOrderTracking.status_timeline || []" :status-tracking="selectedOrderTracking.status_tracking || {}" :current-status="selectedOrderTracking.status" />
+
         <template #footer>
-            <Button 
-                label="Cerrar" 
-                icon="pi pi-times" 
-                @click="closeTrackingDialog" 
-                autofocus 
-            />
+            <Button label="Cerrar" icon="pi pi-times" @click="closeTrackingDialog" autofocus />
         </template>
     </Dialog>
 </template>

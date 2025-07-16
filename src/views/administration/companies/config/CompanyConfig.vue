@@ -1,6 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/authStore';
 import { useCompaniesStore } from '@/stores/companiesStore';
+import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 
@@ -10,6 +11,7 @@ import WorkflowConfigCard from './components/WorkflowConfigCard.vue';
 const companiesStore = useCompaniesStore();
 const authStore = useAuthStore();
 const toast = useToast();
+const confirm = useConfirm();
 
 const loading = ref(false);
 const saving = ref(false);
@@ -20,75 +22,132 @@ const companyConfig = ref({
 });
 
 const currentCompany = computed(() => authStore.currentUser?.company_config);
+const workflowPreview = computed(() => companiesStore.workflowPreviewState);
+const hasValidCompany = computed(() => currentCompany.value && currentCompany.value.id);
+
+// Nuevos computed para manejar la estructura del preview
+const canChangeWorkflow = computed(() => companiesStore.canChangeWorkflow);
+const blockingIssues = computed(() => companiesStore.workflowBlockingIssues);
+const previewWarnings = computed(() => companiesStore.workflowWarnings);
+const recommendedActions = computed(() => companiesStore.workflowRecommendedActions);
+const currentData = computed(() => companiesStore.workflowCurrentData);
 
 onMounted(async () => {
-    if (currentCompany.value) {
+    if (hasValidCompany.value) {
         await loadCompanyConfig();
+    } else {
+        toast.add({
+            severity: 'error',
+            summary: 'Error de Configuración',
+            detail: 'No se pudo cargar la información de la empresa',
+            life: 5000
+        });
     }
 });
 
 const loadCompanyConfig = async () => {
     loading.value = true;
     try {
-        const processed = await companiesStore.fetchCompanyConfig();
-        if (!processed.success) throw new Error(processed.message);
-        const cfg = processed.data;
+        await companiesStore.fetchCompanyConfig();
+
+        if (!companiesStore.success) {
+            throw new Error(companiesStore.message || 'Error al obtener la configuración');
+        }
+
+        const cfg = companiesStore.companyConfigState?.config;
+        if (!cfg) {
+            throw new Error('Configuración no encontrada');
+        }
 
         companyConfig.value = {
-            company_id: cfg.company_id,
+            company_id: cfg.company_id || currentCompany.value?.id,
             purchase_workflow: cfg.purchase_workflow || 'standard'
         };
-        // Mantén la configuración también en el authStore para uso global
-        authStore.setCompanyConfig(companyConfig.value);
+
+        if (companyConfig.value.company_id) {
+            authStore.setCompanyConfig(companyConfig.value);
+        }
     } catch (error) {
+        console.error('Error loading company config:', error);
         toast.add({
             severity: 'error',
-            summary: 'Error',
-            detail: error.message || 'Error al cargar la configuración de la empresa',
-            life: 3000
+            summary: 'Error de Carga',
+            detail: error.message || 'No se pudo cargar la configuración de la empresa',
+            life: 5000
         });
+
+        companyConfig.value = {
+            company_id: currentCompany.value?.id || null,
+            purchase_workflow: 'standard'
+        };
     } finally {
         loading.value = false;
     }
 };
 
 const updateWorkflowConfig = async (newConfig) => {
-    saving.value = true;
-    try {
-        // 1. Vista previa del impacto del cambio de flujo
-        const preview = await companiesStore.previewWorkflowChangeAction(newConfig.purchase_workflow);
-        const blocking = preview?.data?.blocking_purchases ?? preview?.blocking_purchases ?? 0;
-
-        if (blocking > 0) {
-            toast.add({
-                severity: 'warn',
-                summary: 'Cambio bloqueado',
-                detail: `Existen ${blocking} compras pendientes o aprobadas que impiden el cambio de flujo.`,
-                life: 5000
-            });
-            saving.value = false;
-            return;
-        }
-
-        // 2. Persistir la configuración
-        const processedSave = await companiesStore.updateCompanyConfigAction(newConfig);
-        if (!processedSave.success) throw new Error(processedSave.message);
-        const updatedCfg = processedSave.data ?? newConfig;
-        companyConfig.value = { ...companyConfig.value, ...updatedCfg };
-        authStore.setCompanyConfig(companyConfig.value);
-
-        toast.add({
-            severity: 'success',
-            summary: 'Configuración Guardada',
-            detail: processedSave.message || 'La configuración de flujo de compras ha sido actualizada',
-            life: 3000
-        });
-    } catch (error) {
+    // Mantener referencia al flujo actual por si necesitamos revertir
+    const previousWorkflow = companyConfig.value.purchase_workflow;
+    if (!newConfig || !newConfig.purchase_workflow) {
         toast.add({
             severity: 'error',
-            summary: 'Error',
-            detail: error.message || 'Error al guardar la configuración',
+            summary: 'Error de Validación',
+            detail: 'Configuración inválida',
             life: 3000
+        });
+        return;
+    }
+
+    saving.value = true;
+    try {
+        await companiesStore.previewWorkflowChangeAction(newConfig.purchase_workflow);
+
+        const blocking = companiesStore.workflowBlockingIssues;
+        const canChange = companiesStore.canChangeWorkflow;
+
+        console.log('canChange', canChange);
+        console.log('blocking', blocking);
+
+        if (!canChange || blocking > 0) {
+            const warnings = companiesStore.workflowWarnings;
+            const warningMessage = warnings.length > 0 ? warnings[0] : `Hay ${blocking} compra${blocking > 1 ? 's' : ''} que impide${blocking > 1 ? 'n' : ''} el cambio de flujo.`;
+
+            toast.add({
+                severity: 'warn',
+                summary: 'Cambio Bloqueado',
+                detail: warningMessage,
+                life: 7000
+            });
+            saving.value = false;
+            // Revertir visualmente al flujo anterior y limpiar vista previa
+            companyConfig.value.purchase_workflow = previousWorkflow;
+            companiesStore.clearWorkflowPreview();
+            return;
+        } else {
+            await persistWorkflow(newConfig);
+        }
+
+        async function persistWorkflow(configToSave) {
+            await companiesStore.updateCompanyConfigAction(configToSave);
+
+            if (!companiesStore.success) {
+                throw new Error(companiesStore.message || 'Error al guardar la configuración');
+            }
+
+            toast.add({
+                severity: 'success',
+                summary: 'Configuración Actualizada',
+                detail: companiesStore.message || 'El flujo de compras ha sido configurado exitosamente',
+                life: 4000
+            });
+        } // fin persistWorkflow
+    } catch (error) {
+        console.error('Error updating workflow config:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Error al Guardar',
+            detail: error.message || 'No se pudo actualizar la configuración',
+            life: 5000
         });
     } finally {
         saving.value = false;
@@ -119,7 +178,7 @@ const updateWorkflowConfig = async (newConfig) => {
             <WorkflowConfigCard :config="companyConfig" :saving="saving" @update="updateWorkflowConfig" />
 
             <!-- Vista Previa del Flujo -->
-            <ConfigPreview :workflow="companyConfig.purchase_workflow" />
+            <ConfigPreview :workflow="companyConfig.purchase_workflow" :preview="workflowPreview" :can-change="canChangeWorkflow" :blocking-issues="blockingIssues" :current-data="currentData" />
 
             <!-- Panel de Configuraciones Futuras -->
             <Card class="future-config-card">

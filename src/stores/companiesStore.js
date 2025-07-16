@@ -21,6 +21,7 @@ function normalizeCompany(company) {
 export const useCompaniesStore = defineStore('companiesStore', {
     state: () => ({
         companyConfig: cache.getItem('companyConfig') || null,
+        workflowPreview: null,
         companies: [],
         company: cache.getItem('company') || null,
         message: '',
@@ -33,7 +34,18 @@ export const useCompaniesStore = defineStore('companiesStore', {
         companiesList: (state) => state.companies,
         currentCompany: (state) => state.company,
         companyConfigState: (state) => state.companyConfig,
-        isLoadingCompanies: (state) => state.isLoading
+        workflowPreviewState: (state) => state.workflowPreview,
+        isLoadingCompanies: (state) => state.isLoading,
+
+        // Getters específicos para el workflow preview
+        canChangeWorkflow: (state) => state.workflowPreview?.data?.can_change ?? state.workflowPreview?.can_change ?? true,
+        workflowBlockingIssues: (state) => state.workflowPreview?.data?.impact_analysis?.blocking_issues ?? state.workflowPreview?.impact_analysis?.blocking_issues ?? 0,
+        workflowWarnings: (state) => state.workflowPreview?.data?.impact_analysis?.warnings ?? state.workflowPreview?.impact_analysis?.warnings ?? [],
+        workflowRecommendedActions: (state) => state.workflowPreview?.data?.impact_analysis?.recommended_actions ?? state.workflowPreview?.impact_analysis?.recommended_actions ?? [],
+        workflowCurrentData: (state) => state.workflowPreview?.data?.impact_analysis?.current_data ?? state.workflowPreview?.impact_analysis?.current_data ?? {},
+        workflowBenefits: (state) => state.workflowPreview?.data?.recommendations?.benefits ?? state.workflowPreview?.recommendations?.benefits ?? [],
+        workflowRequirements: (state) => state.workflowPreview?.data?.recommendations?.requirements ?? state.workflowPreview?.recommendations?.requirements ?? [],
+        workflowEstimatedImpact: (state) => state.workflowPreview?.data?.estimated_impact ?? state.workflowPreview?.estimated_impact ?? {}
     },
 
     actions: {
@@ -103,14 +115,18 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 const res = await updateCompanyConfig(config);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.companyConfig = processed.data ?? config;
+                    this.companyConfig = processed.data.config ?? config;
                     cache.setItem('companyConfig', this.companyConfig);
+                    this.success = true;
+                    this.message = processed.message || 'Configuración actualizada correctamente';
+                    console.log('respuesta', this.companyConfig);
+                } else {
+                    this.success = false;
+                    this.message = processed.message || 'Error al actualizar configuración';
                 }
-                return processed;
             } catch (error) {
                 console.error('Error al actualizar la configuración de la empresa', error);
                 handleProcessError(error, this);
-                throw error;
             } finally {
                 this.isLoading = false;
             }
@@ -124,11 +140,14 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 if (processed.success) {
                     this.companyConfig = processed.data;
                     cache.setItem('companyConfig', processed.data);
+                    this.success = true;
+                    this.message = processed.message || 'Configuración obtenida correctamente';
+                } else {
+                    this.success = false;
+                    this.message = processed.message || 'Error al obtener configuración';
                 }
-                return processed;
             } catch (error) {
                 handleProcessError(error, this);
-                throw error;
             } finally {
                 this.isLoading = false;
             }
@@ -137,12 +156,25 @@ export const useCompaniesStore = defineStore('companiesStore', {
         async previewWorkflowChangeAction(targetWorkflow) {
             try {
                 const res = await previewWorkflowChange(targetWorkflow);
-                return res;
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    this.workflowPreview = processed;
+                    this.success = true;
+                    this.message = processed.message || '';
+                } else {
+                    this.workflowPreview = null;
+                    this.success = false;
+                    this.message = processed.message || 'No se pudo obtener vista previa';
+                }
             } catch (error) {
-                // No actual state change, solo relay error
                 console.error('previewWorkflowChange', error);
-                throw error;
+                this.workflowPreview = null;
+                handleProcessError(error, this);
             }
+        },
+
+        clearWorkflowPreview() {
+            this.workflowPreview = null;
         },
 
         async removeCompany(id) {

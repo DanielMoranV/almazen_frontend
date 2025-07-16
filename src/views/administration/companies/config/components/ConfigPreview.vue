@@ -6,6 +6,23 @@ const props = defineProps({
         type: String,
         required: true,
         default: 'standard'
+    },
+    preview: {
+        type: Object,
+        required: false,
+        default: () => null
+    },
+    canChange: {
+        type: Boolean,
+        default: true
+    },
+    blockingIssues: {
+        type: Number,
+        default: 0
+    },
+    currentData: {
+        type: Object,
+        default: () => ({})
     }
 });
 
@@ -85,6 +102,37 @@ const workflowDescription = computed(() => {
         ? 'Proceso automático sin intervención manual'
         : 'Proceso con aprobación manual requerida';
 });
+const blockingIssues = computed(() => {
+    return props.blockingIssues || props.preview?.impact_analysis?.blocking_issues || 0;
+});
+
+const warnings = computed(() => {
+    return props.preview?.impact_analysis?.warnings || [];
+});
+
+const recommendedActions = computed(() => {
+    return props.preview?.impact_analysis?.recommended_actions || [];
+});
+
+const benefits = computed(() => {
+    return props.preview?.recommendations?.benefits || [];
+});
+
+const requirements = computed(() => {
+    return props.preview?.recommendations?.requirements || [];
+});
+
+const estimatedImpact = computed(() => {
+    return props.preview?.estimated_impact || {};
+});
+
+const currentWorkflow = computed(() => {
+    return props.preview?.current_workflow || props.workflow;
+});
+
+const targetWorkflow = computed(() => {
+    return props.preview?.target_workflow || props.workflow;
+});
 </script>
 
 <template>
@@ -130,6 +178,117 @@ const workflowDescription = computed(() => {
                 </div>
             </div>
             
+            <!-- Estadísticas Actuales -->
+            <div v-if="currentData && Object.keys(currentData).length > 0" class="current-stats">
+                <h5>
+                    <i class="pi pi-chart-bar"></i>
+                    Estado Actual de Compras
+                </h5>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Total</span>
+                        <span class="stat-value">{{ currentData.total_purchases || 0 }}</span>
+                    </div>
+                    <div class="stat-item pending">
+                        <span class="stat-label">Pendientes</span>
+                        <span class="stat-value">{{ currentData.pending_purchases || 0 }}</span>
+                    </div>
+                    <div class="stat-item approved">
+                        <span class="stat-label">Aprobadas</span>
+                        <span class="stat-value">{{ currentData.approved_purchases || 0 }}</span>
+                    </div>
+                    <div class="stat-item received">
+                        <span class="stat-label">Recibidas</span>
+                        <span class="stat-value">{{ currentData.received_purchases || 0 }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impacto del Cambio -->
+            <div v-if="blockingIssues > 0 || warnings.length > 0 || recommendedActions.length > 0" class="preview-impact">
+                <h5>
+                    <i class="pi pi-exclamation-triangle"></i>
+                    Impacto Detectado
+                </h5>
+                <div v-if="blockingIssues > 0" class="impact-item text-red-500">
+                    <i class="pi pi-ban"></i>
+                    <span>{{ blockingIssues }} compra{{ blockingIssues > 1 ? 's' : '' }} {{ blockingIssues > 1 ? 'bloquean' : 'bloquea' }} el cambio de flujo</span>
+                </div>
+                <div v-if="warnings.length > 0" class="impact-item text-yellow-500">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <div class="impact-content">
+                        <strong>Advertencias:</strong>
+                        <ul>
+                            <li v-for="(warning, index) in warnings" :key="index">{{ warning }}</li>
+                        </ul>
+                    </div>
+                </div>
+                <div v-if="recommendedActions.length > 0" class="impact-item text-blue-500">
+                    <i class="pi pi-lightbulb"></i>
+                    <div class="impact-content">
+                        <strong>Recomendaciones:</strong>
+                        <ul>
+                            <li v-for="(action, index) in recommendedActions" :key="index">{{ action }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beneficios y Requisitos -->
+            <div v-if="benefits.length > 0 || requirements.length > 0" class="workflow-recommendations">
+                <div class="recommendation-section" v-if="benefits.length > 0">
+                    <h5>
+                        <i class="pi pi-thumbs-up text-green-500"></i>
+                        Beneficios del Cambio
+                    </h5>
+                    <ul class="benefit-list">
+                        <li v-for="(benefit, index) in benefits" :key="index">
+                            <i class="pi pi-check-circle text-green-500"></i>
+                            {{ benefit }}
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="recommendation-section" v-if="requirements.length > 0">
+                    <h5>
+                        <i class="pi pi-exclamation-triangle text-orange-500"></i>
+                        Requisitos Importantes
+                    </h5>
+                    <ul class="requirement-list">
+                        <li v-for="(requirement, index) in requirements" :key="index">
+                            <i class="pi pi-info-circle text-orange-500"></i>
+                            {{ requirement }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Impacto Estimado -->
+            <div v-if="Object.keys(estimatedImpact).length > 0" class="estimated-impact">
+                <h5>
+                    <i class="pi pi-trending-up"></i>
+                    Impacto Estimado
+                </h5>
+                <div class="impact-grid">
+                    <div class="impact-item" v-if="estimatedImpact.process_time">
+                        <span class="impact-label">Tiempo de Proceso:</span>
+                        <span class="impact-value">{{ estimatedImpact.process_time }}</span>
+                    </div>
+                    <div class="impact-item" v-if="estimatedImpact.control_level">
+                        <span class="impact-label">Nivel de Control:</span>
+                        <span class="impact-value">{{ estimatedImpact.control_level }}</span>
+                    </div>
+                    <div class="impact-item" v-if="estimatedImpact.complexity">
+                        <span class="impact-label">Complejidad:</span>
+                        <span class="impact-value">{{ estimatedImpact.complexity }}</span>
+                    </div>
+                    <div class="impact-item" v-if="estimatedImpact.recommendation">
+                        <span class="impact-label">Recomendación:</span>
+                        <span class="impact-value">{{ estimatedImpact.recommendation }}</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="workflow-features">
                 <h5>
                     <i class="pi pi-star"></i>
@@ -347,4 +506,227 @@ const workflowDescription = computed(() => {
 .text-yellow-500 { color: #eab308; }
 .text-green-500 { color: #10b981; }
 .text-orange-500 { color: #f97316; }
+
+.current-stats {
+    background: var(--surface-ground);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    
+    h5 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 1rem 0;
+        color: var(--text-color);
+        
+        i {
+            color: var(--primary-color);
+        }
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--surface-card);
+            border-radius: var(--border-radius);
+            border: 2px solid var(--surface-border);
+            
+            &.pending {
+                border-color: #f59e0b;
+                background: #fef3c7;
+            }
+            
+            &.approved {
+                border-color: #8b5cf6;
+                background: #f3e8ff;
+            }
+            
+            &.received {
+                border-color: #10b981;
+                background: #d1fae5;
+            }
+            
+            .stat-label {
+                display: block;
+                font-size: 0.75rem;
+                color: var(--text-color-secondary);
+                margin-bottom: 0.25rem;
+                text-transform: uppercase;
+                font-weight: 600;
+            }
+            
+            .stat-value {
+                display: block;
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-color);
+            }
+        }
+    }
+}
+
+.workflow-recommendations {
+    background: var(--surface-ground);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    
+    .recommendation-section {
+        margin-bottom: 1.5rem;
+        
+        &:last-child {
+            margin-bottom: 0;
+        }
+        
+        h5 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0 0 0.75rem 0;
+            color: var(--text-color);
+            font-size: 0.95rem;
+        }
+        
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            
+            li {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.5rem;
+                margin-bottom: 0.5rem;
+                color: var(--text-color-secondary);
+                font-size: 0.875rem;
+                
+                i {
+                    font-size: 0.75rem;
+                    margin-top: 0.125rem;
+                    flex-shrink: 0;
+                }
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+        }
+    }
+}
+
+.estimated-impact {
+    background: var(--surface-ground);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    
+    h5 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 1rem 0;
+        color: var(--text-color);
+        
+        i {
+            color: var(--primary-color);
+        }
+    }
+    
+    .impact-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        
+        .impact-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--surface-card);
+            border-radius: var(--border-radius);
+            
+            .impact-label {
+                font-weight: 600;
+                color: var(--text-color);
+                font-size: 0.875rem;
+            }
+            
+            .impact-value {
+                color: var(--text-color-secondary);
+                font-size: 0.875rem;
+                text-align: right;
+                max-width: 60%;
+            }
+        }
+    }
+}
+
+.preview-impact {
+    background: var(--surface-ground);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+
+    h5 {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 1rem 0;
+        color: var(--text-color);
+    }
+
+    .impact-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: var(--surface-card);
+        border-radius: var(--border-radius);
+        border-left: 4px solid currentColor;
+
+        i {
+            font-size: 1.1rem;
+            margin-top: 0.125rem;
+            flex-shrink: 0;
+        }
+
+        .impact-content {
+            flex: 1;
+            
+            strong {
+                display: block;
+                margin-bottom: 0.5rem;
+                color: var(--text-color);
+            }
+
+            ul {
+                margin: 0;
+                padding-left: 1.25rem;
+                
+                li {
+                    color: var(--text-color-secondary);
+                    font-size: 0.875rem;
+                    margin-bottom: 0.25rem;
+                    
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+        }
+        
+        span {
+            color: var(--text-color-secondary);
+            font-size: 0.875rem;
+        }
+    }
+}
+
 </style>
