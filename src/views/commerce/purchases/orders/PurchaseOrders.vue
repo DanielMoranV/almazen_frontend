@@ -1,17 +1,20 @@
 <script setup>
+import { addPurchaseBonuses, updatePurchaseBonus } from '@/api/index';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useAuthStore } from '@/stores/authStore';
-import { usePurchaseStore } from '@/stores/purchaseStore';
 import { useBatchesStore } from '@/stores/batchesStore';
-import { addPurchaseBonuses, updatePurchaseBonus } from '@/api/index';
+import { useCompaniesStore } from '@/stores/companiesStore';
+import { usePurchaseStore } from '@/stores/purchaseStore';
 import { DatePicker, InputNumber, InputText, Select } from 'primevue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+import BatchManagementDialog from './componentsOrders/BatchManagementDialog.vue';
+import BonusManagementDialog from './componentsOrders/BonusManagementDialog.vue';
 import PurchaseOrderFormDialog from './componentsOrders/PurchaseOrderFormDialog.vue';
 import PurchaseOrdersTable from './componentsOrders/PurchaseOrdersTable.vue';
 import PurchaseOrderStatistics from './componentsOrders/PurchaseOrderStatistics.vue';
-import BatchManagementDialog from './componentsOrders/BatchManagementDialog.vue';
-import BonusManagementDialog from './componentsOrders/BonusManagementDialog.vue';
+
+const companiesStore = useCompaniesStore();
 
 const toast = useToast();
 const purchaseStore = usePurchaseStore();
@@ -64,6 +67,9 @@ const periodFilterOptions = ref([
 onMounted(async () => {
     await Promise.all([loadPurchaseOrders(), loadAuxiliaryData()]);
     console.log(authStore.user);
+    console.log(companiesStore.companyConfigState);
+    const { purchase_workflow } = companiesStore.companyConfigState;
+    console.log(purchase_workflow);
 });
 
 // Métodos
@@ -81,25 +87,19 @@ const handleReceiveOrder = async (order) => {
     // Validar workflow de compras
     if (authStore.user?.company_config?.purchase_workflow === 'standard' && order.status === 'APROBADO') {
         // Verificar si hay productos que requieren lotes
-        const productsRequiringBatches = order.details?.filter(detail => 
-            detail.product?.requires_batches === true
-        ) || [];
-        
+        const productsRequiringBatches = order.details?.filter((detail) => detail.product?.requires_batches === true) || [];
+
         if (productsRequiringBatches.length > 0) {
             // Separar productos que auto-generan lotes de los que no
-            const autoGenerateProducts = productsRequiringBatches.filter(detail => 
-                detail.product?.auto_generate_batches === true
-            );
-            const manualBatchProducts = productsRequiringBatches.filter(detail => 
-                detail.product?.auto_generate_batches !== true
-            );
-            
+            const autoGenerateProducts = productsRequiringBatches.filter((detail) => detail.product?.auto_generate_batches === true);
+            const manualBatchProducts = productsRequiringBatches.filter((detail) => detail.product?.auto_generate_batches !== true);
+
             if (manualBatchProducts.length > 0) {
                 // Mostrar diálogo para gestionar lotes manualmente
                 showBatchManagementDialog(order, manualBatchProducts, autoGenerateProducts);
                 return;
             }
-            
+
             // Si solo hay productos con auto-generación, continuar con el proceso
             if (autoGenerateProducts.length > 0) {
                 showSuccess('Procesando lotes', 'Generando lotes automáticamente para productos configurados...');
@@ -107,7 +107,7 @@ const handleReceiveOrder = async (order) => {
             }
         }
     }
-    
+
     // Proceder con la recepción normal
     await purchaseStore.receivePurchaseOrder(order.id);
     if (purchaseStore.success) {
@@ -158,16 +158,15 @@ const handleBatchManagementSubmit = async (batchData) => {
                     const newBatchData = {
                         product_id: productBatch.productId,
                         code: batch.batchNumber,
-                        expiration_date: batch.expirationDate ? 
-                            new Date(batch.expirationDate).toISOString().split('T')[0] : null,
+                        expiration_date: batch.expirationDate ? new Date(batch.expirationDate).toISOString().split('T')[0] : null,
                         notes: batch.notes || null
                     };
 
                     console.log('Creando nuevo lote:', newBatchData);
-                    
+
                     // Crear el lote usando el batchesStore
                     await batchesStore.createBatch(newBatchData);
-                    
+
                     if (batchesStore.success && batchesStore.batch) {
                         batchId = batchesStore.batch.id;
                         console.log('Lote creado con ID:', batchId);
@@ -185,7 +184,7 @@ const handleBatchManagementSubmit = async (batchData) => {
         }
 
         // Procesar productos con auto-generación (batch_id = null para auto-generación)
-        batchData.autoGenerateProducts?.forEach(product => {
+        batchData.autoGenerateProducts?.forEach((product) => {
             details.push({
                 purchase_detail_id: product.purchaseDetailId,
                 batch_id: null // null indica auto-generación en el backend
@@ -193,12 +192,12 @@ const handleBatchManagementSubmit = async (batchData) => {
         });
 
         const requestData = details.length > 0 ? { details } : null;
-        
+
         console.log('Datos para recepción de orden:', requestData);
-        
+
         // Proceder con la recepción de la orden
         await purchaseStore.receivePurchaseOrder(selectedOrderForBatch.value.id, requestData);
-        
+
         if (purchaseStore.success) {
             purchaseOrders.value = purchaseStore.purchaseOrdersList;
             showSuccess('Orden recibida', `Orden #${selectedOrderForBatch.value.order_number} recibida con lotes asignados`);
@@ -214,42 +213,36 @@ const handleBatchManagementSubmit = async (batchData) => {
 // Funciones para gestión de bonificaciones
 const handleManageBonuses = (order) => {
     selectedOrderForBonus.value = order;
-    
+
     // Determinar el modo basado en si ya tiene bonificaciones
     const hasExistingBonuses = order.bonuses && order.bonuses.length > 0;
     bonusDialogMode.value = hasExistingBonuses ? 'edit' : 'add';
-    
+
     showBonusDialog.value = true;
 };
 
 const handleBonusSubmit = async (bonusData) => {
     try {
         console.log('Agregando bonificaciones:', bonusData);
-        
+
         const response = await addPurchaseBonuses(selectedOrderForBonus.value.id, bonusData);
-        
+
         if (response && response.data) {
             // Recargar la lista de órdenes para mostrar las bonificaciones
             await loadPurchaseOrders();
-            
-            showSuccess(
-                'Bonificaciones agregadas', 
-                `Se agregaron ${bonusData.bonuses.length} bonificaciones a la orden #${selectedOrderForBonus.value.order_number}`
-            );
+
+            showSuccess('Bonificaciones agregadas', `Se agregaron ${bonusData.bonuses.length} bonificaciones a la orden #${selectedOrderForBonus.value.order_number}`);
             showBonusDialog.value = false;
         }
     } catch (error) {
         console.error('Error al agregar bonificaciones:', error);
-        
+
         if (error.response?.data) {
             const errorData = error.response.data;
-            
+
             // Verificar si es error de restricción de tiempo
             if (errorData.details?.error_message?.includes('mismo día de recepción')) {
-                handleError(
-                    'Restricción de tiempo', 
-                    'Las bonificaciones solo pueden agregarse el mismo día de recepción de la mercadería'
-                );
+                handleError('Restricción de tiempo', 'Las bonificaciones solo pueden agregarse el mismo día de recepción de la mercadería');
             } else if (errorData.message) {
                 handleError('Error al agregar bonificaciones', errorData.message);
             } else {
@@ -264,26 +257,20 @@ const handleBonusSubmit = async (bonusData) => {
 const handleBonusUpdate = async ({ bonusId, updateData }) => {
     try {
         console.log('Actualizando bonificación:', { bonusId, updateData });
-        
+
         const response = await updatePurchaseBonus(selectedOrderForBonus.value.id, bonusId, updateData);
-        
+
         if (response && response.data) {
             // Recargar la lista de órdenes para mostrar los cambios
             await loadPurchaseOrders();
-            
-            showSuccess(
-                'Bonificación actualizada', 
-                `Bonificación actualizada exitosamente en la orden #${selectedOrderForBonus.value.order_number}`
-            );
+
+            showSuccess('Bonificación actualizada', `Bonificación actualizada exitosamente en la orden #${selectedOrderForBonus.value.order_number}`);
         }
     } catch (error) {
         console.error('Error al actualizar bonificación:', error);
-        
+
         if (error.response?.status === 403) {
-            handleError(
-                'Acceso denegado', 
-                'No se pueden editar bonificaciones fuera del día de recepción'
-            );
+            handleError('Acceso denegado', 'No se pueden editar bonificaciones fuera del día de recepción');
         } else if (error.response?.data?.message) {
             handleError('Error al actualizar bonificación', error.response.data.message);
         } else {
@@ -562,6 +549,13 @@ function formatCurrencyPEN(value) {
                         Gestión de Órdenes de Compra
                     </h1>
                     <p class="page-description">Administra y controla todas las órdenes de compra de tu empresa</p>
+                    <div class="workflow-indicator">
+                        <i class="pi pi-cog"></i>
+                        <span class="workflow-label">Flujo de Trabajo:</span>
+                        <span class="workflow-type" :class="{ 'simplified': companiesStore.companyConfigState?.purchase_workflow === 'simplified', 'standard': companiesStore.companyConfigState?.purchase_workflow === 'standard' }">
+                            {{ companiesStore.companyConfigState?.purchase_workflow === 'simplified' ? 'Simplificado' : 'Estándar' }}
+                        </span>
+                    </div>
                 </div>
                 <div class="header-actions">
                     <Button icon="pi pi-refresh" label="Actualizar" outlined class="refresh-btn" @click="loadPurchaseOrders" :loading="purchaseStore.isLoadingPurchaseOrders" v-tooltip.top="'Actualizar lista de órdenes'" />
@@ -731,20 +725,8 @@ function formatCurrencyPEN(value) {
         <!-- Diálogos -->
         <PurchaseOrderFormDialog v-model:visible="showPurchaseOrderDialog" :order="selectedOrder" @submit="handlePurchaseOrderSubmit" :loading="purchaseStore.isLoadingPurchaseOrders" />
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.order_number ? `Orden #${selectedOrder.order_number}` : ''" @confirm="handlePurchaseOrderDelete" />
-        <BatchManagementDialog 
-            v-model:visible="showBatchDialog" 
-            :order="selectedOrderForBatch" 
-            :batch-data="batchManagementData" 
-            @submit="handleBatchManagementSubmit" 
-            :loading="purchaseStore.isLoadingPurchaseOrders" 
-        />
-        <BonusManagementDialog 
-            v-model:visible="showBonusDialog" 
-            :order="selectedOrderForBonus" 
-            :mode="bonusDialogMode"
-            @submit="handleBonusSubmit" 
-            @update="handleBonusUpdate"
-        />
+        <BatchManagementDialog v-model:visible="showBatchDialog" :order="selectedOrderForBatch" :batch-data="batchManagementData" @submit="handleBatchManagementSubmit" :loading="purchaseStore.isLoadingPurchaseOrders" />
+        <BonusManagementDialog v-model:visible="showBonusDialog" :order="selectedOrderForBonus" :mode="bonusDialogMode" @submit="handleBonusSubmit" @update="handleBonusUpdate" />
     </div>
 </template>
 <style scoped>
@@ -785,6 +767,26 @@ function formatCurrencyPEN(value) {
 
 .page-description {
     @apply text-white/90 text-lg;
+}
+
+.workflow-indicator {
+    @apply flex items-center gap-2 mt-3 text-white/90 text-sm;
+}
+
+.workflow-label {
+    @apply font-medium;
+}
+
+.workflow-type {
+    @apply px-3 py-1 rounded-full text-xs font-semibold;
+}
+
+.workflow-type.simplified {
+    @apply bg-green-500/20 text-green-100 border border-green-400/30;
+}
+
+.workflow-type.standard {
+    @apply bg-blue-500/20 text-blue-100 border border-blue-400/30;
 }
 
 .header-actions {

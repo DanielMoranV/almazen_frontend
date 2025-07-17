@@ -54,14 +54,25 @@ const timelineSteps = computed(() => {
         const timelineData = props.statusTimeline?.find(t => t.status === step.status);
         const trackingData = getTrackingForStatus(step.status);
         
+        // Verificar si el usuario y timestamp tienen datos válidos
+        const hasValidUser = trackingData?.user && trackingData.user.name && trackingData.user.name !== 'N/A';
+        const hasValidTimestamp = trackingData?.timestamp && trackingData.timestamp !== 'N/A';
+        
         return {
             ...step,
             completed: timelineData?.completed || false,
-            user: timelineData?.user || trackingData?.user,
-            timestamp: timelineData?.timestamp || trackingData?.timestamp,
+            user: hasValidUser ? trackingData.user : null,
+            timestamp: hasValidTimestamp ? trackingData.timestamp : null,
             isActive: props.currentStatus === step.status,
-            isFuture: !timelineData?.completed && props.currentStatus !== step.status
+            isFuture: !timelineData?.completed && props.currentStatus !== step.status,
+            hasValidData: hasValidUser && hasValidTimestamp
         };
+    }).filter(step => {
+        // Filtrar el estado APROBADO si no tiene datos válidos
+        if (step.status === 'APROBADO' && !step.hasValidData) {
+            return false;
+        }
+        return true;
     });
 });
 
@@ -201,7 +212,7 @@ const formatFullDate = (dateString) => {
                     </div>
                 </div>
                 
-                <div v-if="statusTracking.approved_by" class="summary-item">
+                <div v-if="statusTracking.approved_by && statusTracking.approved_by.name && statusTracking.approved_by.name !== 'N/A'" class="summary-item">
                     <i class="pi pi-check-circle text-green-500"></i>
                     <div>
                         <span class="summary-label">Aprobado por:</span>

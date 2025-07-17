@@ -130,7 +130,7 @@
                             <p class="signature-date">{{ getRequestedDate() }}</p>
                         </div>
                     </div>
-                    <div class="signature-box" v-if="order.status !== 'PENDIENTE'">
+                    <div class="signature-box" v-if="order.status !== 'PENDIENTE' && hasApprovalData()">
                         <div class="signature-line"></div>
                         <div class="signature-info">
                             <p class="signature-role"><strong>Aprobado por:</strong></p>
@@ -399,6 +399,12 @@ function getApprovedBy() {
 
 function getApprovedDate() {
     return props.order?.status_tracking?.approved_at ? formatDateOnly(props.order.status_tracking.approved_at) : 'N/A';
+}
+
+function hasApprovalData() {
+    const approvedBy = props.order?.status_tracking?.approved_by?.name;
+    const approvedAt = props.order?.status_tracking?.approved_at;
+    return approvedBy && approvedBy !== 'N/A' && approvedAt && approvedAt !== 'N/A';
 }
 
 function getReceivedBy() {

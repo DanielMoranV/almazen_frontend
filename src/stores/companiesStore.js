@@ -119,7 +119,6 @@ export const useCompaniesStore = defineStore('companiesStore', {
                     cache.setItem('companyConfig', this.companyConfig);
                     this.success = true;
                     this.message = processed.message || 'Configuración actualizada correctamente';
-                    console.log('respuesta', this.companyConfig);
                 } else {
                     this.success = false;
                     this.message = processed.message || 'Error al actualizar configuración';

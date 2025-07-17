@@ -193,7 +193,9 @@ const formatCurrency = (value) => {
     if (typeof value === 'string') {
         value = parseFloat(value);
     }
-    if (isNaN(value)) return '-';
+    if (isNaN(value) || value === null || value === undefined) return '-';
+    // Ocultar cuando el valor es 0
+    if (value === 0) return '-';
     return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value);
 };
 
@@ -337,7 +339,14 @@ const getStatusIcon = (status) => {
                 </div>
             </template>
         </Column>
-        <Column field="provider.name" header="Proveedor" sortable />
+        <Column field="provider.name" header="Proveedor" sortable>
+            <template #body="slotProps">
+                <span v-if="slotProps.data.provider?.name && slotProps.data.provider?.name !== 'N/A'">
+                    {{ slotProps.data.provider.name }}
+                </span>
+                <span v-else class="text-gray-400 italic">Sin asignar</span>
+            </template>
+        </Column>
         <Column field="purchase_date" header="Fecha" sortable>
             <template #body="slotProps">
                 <div class="flex align-items-center">
@@ -346,7 +355,14 @@ const getStatusIcon = (status) => {
                 </div>
             </template>
         </Column>
-        <Column field="document_number" header="Comprobante" sortable />
+        <Column field="document_number" header="Comprobante" sortable>
+            <template #body="slotProps">
+                <span v-if="slotProps.data.document_number && slotProps.data.document_number !== 'N/A'">
+                    {{ slotProps.data.document_number }}
+                </span>
+                <span v-else class="text-gray-400 italic">Sin comprobante</span>
+            </template>
+        </Column>
 
         <Column field="discount_amount" header="Descuento" sortable>
             <template #body="slotProps">
@@ -370,7 +386,14 @@ const getStatusIcon = (status) => {
                 </div>
             </template>
         </Column>
-        <Column field="user.name" header="Creado por" sortable />
+        <Column field="user.name" header="Creado por" sortable>
+            <template #body="slotProps">
+                <span v-if="slotProps.data.user?.name && slotProps.data.user?.name !== 'N/A'">
+                    {{ slotProps.data.user.name }}
+                </span>
+                <span v-else class="text-gray-400 italic">Sistema</span>
+            </template>
+        </Column>
 
         <!-- Nueva columna de seguimiento -->
         <Column field="status" header="Seguimiento" style="width: 180px" sortable>
