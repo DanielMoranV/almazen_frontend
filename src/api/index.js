@@ -115,6 +115,12 @@ export const updatePurchaseBonus = (purchaseId, bonusId, bonusData) => {
 };
 
 
+// Product Stocks
+export const fetchProductStocks = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/product-stocks${queryString ? `?${queryString}` : ''}`);
+};
+
 // Dashboard
 export const fetchDashboardMetrics = () => axios.get('/dashboard/metrics');
 export const fetchLowStockProducts = () => axios.get('/dashboard/low-stock');
