@@ -1,199 +1,267 @@
 <template>
-    <div class="stock-table">
-        <!-- Loading state -->
-        <div v-if="loading" class="loading-state">
-            <div class="loading-content">
-                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
-                <p class="loading-text">Cargando inventario...</p>
+    <DataTable
+        stripedRows
+        :value="stockItems"
+        :loading="loading"
+        responsiveLayout="scroll"
+        scrollable
+        scrollHeight="500px"
+        removableSort
+        dataKey="id"
+        :filters="localFilters"
+        v-model:filters="localFilters"
+        :globalFilterFields="['name', 'sku', 'barcode']"
+        :paginator="true"
+        :rows="15"
+        :rowsPerPageOptions="[10, 15, 25, 50, 100]"
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos en stock"
+        class="stock-table green-theme p-datatable-gridlines"
+        @row-click="handleRowClick"
+    >
+        <template #header>
+            <div class="table-header">
+                <div class="header-backdrop"></div>
+                <div class="header-content">
+                    <div class="search-section">
+                        <div class="search-container">
+                            <IconField>
+                                <InputIcon>
+                                    <i class="pi pi-search text-white" />
+                                </InputIcon>
+                                <InputText 
+                                    v-model="localFilters['global'].value" 
+                                    placeholder="Buscar por nombre, SKU, código de barras..." 
+                                    class="search-input" 
+                                    fluid 
+                                />
+                            </IconField>
+                        </div>
+                    </div>
+                    <div class="actions-section">
+                        <Button 
+                            type="button" 
+                            icon="pi pi-file-excel" 
+                            label="Exportar" 
+                            class="export-btn" 
+                            @click="exportStock()" 
+                            v-tooltip.top="'Exportar inventario a Excel'" 
+                            :disabled="!stockItems.length" 
+                        />
+                    </div>
+                </div>
             </div>
-        </div>
+        </template>
 
-        <!-- Empty state -->
-        <div v-else-if="!stockItems.length" class="empty-state">
-            <div class="empty-content">
+        <template #empty>
+            <div class="empty-table-state">
                 <div class="empty-icon">
                     <i class="pi pi-inbox"></i>
                 </div>
                 <h3 class="empty-title">No hay productos disponibles</h3>
                 <p class="empty-description">No se encontraron productos que coincidan con los filtros aplicados.</p>
-                <div class="empty-actions">
+                <Button 
+                    icon="pi pi-filter-slash" 
+                    label="Limpiar filtros" 
+                    class="p-button-outlined" 
+                    @click="clearFilters()" 
+                />
+            </div>
+        </template>
+
+        <template #loading>
+            <div class="loading-table-state">
+                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
+                <p class="loading-text">Cargando inventario...</p>
+            </div>
+        </template>
+
+        <!-- SKU Column -->
+        <Column field="sku" header="SKU" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="sku-cell">
+                    <div class="sku-badge">{{ data.sku || '-' }}</div>
+                    <div v-if="data.barcode" class="barcode">{{ data.barcode }}</div>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Producto Column -->
+        <Column field="name" header="Producto" sortable style="min-width: 12rem; max-width: 15rem">
+            <template #body="{ data }">
+                <div class="product-cell">
+                    <span class="product-name">{{ data.name }}</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Almacenes Column -->
+        <Column header="Almacenes" style="min-width: 10rem; max-width: 12rem">
+            <template #body="{ data }">
+                <div class="warehouses-cell">
+                    <div v-if="data.stock_by_warehouse?.length" class="warehouse-list">
+                        <div 
+                            v-for="warehouse in data.stock_by_warehouse" 
+                            :key="warehouse.warehouse_id" 
+                            class="warehouse-item"
+                        >
+                            <span class="warehouse-name">{{ warehouse.warehouse_name }}</span>
+                            <span class="warehouse-stock">{{ warehouse.total_stock || 0 }}</span>
+                        </div>
+                    </div>
+                    <span v-else class="no-data">-</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Stock Total Column -->
+        <Column field="total_stock" header="Stock Total" sortable style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="text-center">
+                    <span class="stock-amount" :class="getStockAmountClass(data.total_stock)">
+                        {{ data.total_stock || 0 }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Costo Promedio Column -->
+        <Column field="avg_unit_cost" header="Costo Promedio" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="cost-amount">
+                        {{ formatCurrency(data.avg_unit_cost) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Costo Total Column -->
+        <Column field="total_cost_value" header="Costo Total" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="total-cost-amount">
+                        {{ formatCurrency(data.total_cost_value) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Precio Promedio Venta Column -->
+        <Column field="avg_sale_price" header="Precio Promedio Venta" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="price-amount">
+                        {{ formatCurrency(data.avg_sale_price) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Valor Total Venta Column -->
+        <Column field="total_sale_value" header="Valor Total Venta" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="total-sale-amount">
+                        {{ formatCurrency(data.total_sale_value) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Lotes Column -->
+        <Column header="Lotes" style="min-width: 10rem; max-width: 12rem">
+            <template #body="{ data }">
+                <div class="batches-cell">
+                    <div v-if="data.requires_batches && hasAnyBatches(data)" class="batches-info">
+                        <div class="batch-count">
+                            <i class="pi pi-tags"></i>
+                            <span>{{ getTotalBatches(data) }} lote(s)</span>
+                        </div>
+                        <div class="batch-preview">
+                            <div 
+                                v-for="batch in getFirstBatches(data)" 
+                                :key="batch.stock_id"
+                                class="batch-item"
+                            >
+                                <span class="batch-code">{{ batch.batch_code }}</span>
+                                <span class="batch-stock">{{ batch.stock || 0 }}</span>
+                                <span v-if="batch.expiration_date" class="batch-expiry">
+                                    {{ formatDate(batch.expiration_date) }}
+                                </span>
+                            </div>
+                            <span v-if="getTotalBatches(data) > 2" class="more-batches">
+                                +{{ getTotalBatches(data) - 2 }} más
+                            </span>
+                        </div>
+                    </div>
+                    <span v-else-if="data.requires_batches" class="no-data">Sin lotes</span>
+                    <span v-else class="no-batches">No requiere lotes</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Estado Column -->
+        <Column field="total_stock" header="Estado" sortable style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="text-center">
+                    <span class="status-badge" :class="getStatusClass(data.total_stock)">
+                        {{ getStatusLabel(data.total_stock) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Acciones Column -->
+        <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="actions-cell">
                     <Button 
-                        icon="pi pi-filter-slash" 
-                        label="Limpiar Filtros" 
-                        class="secondary-action-btn" 
-                        @click="$emit('clear-filters')"
+                        icon="pi pi-eye" 
+                        class="p-button-rounded p-button-info" 
+                        size="small" 
+                        rounded 
+                        text 
+                        v-tooltip.top="'Ver detalles'"
+                        @click="$emit('view-details', data)"
+                    />
+                    <Button 
+                        icon="pi pi-pencil" 
+                        class="p-button-rounded p-button-success" 
+                        size="small" 
+                        rounded 
+                        text 
+                        v-tooltip.top="'Editar stock'"
+                        @click="$emit('edit-stock', data)"
+                    />
+                    <Button 
+                        icon="pi pi-cog" 
+                        class="p-button-rounded p-button-warning" 
+                        size="small" 
+                        rounded 
+                        text 
+                        v-tooltip.top="'Edición masiva'"
+                        @click="$emit('bulk-edit', data)"
                     />
                 </div>
-            </div>
-        </div>
-
-        <!-- Table with data -->
-        <div v-else class="table-container">
-            <div class="table-wrapper">
-                <table class="stock-data-table">
-                    <thead>
-                        <tr>
-                            <th class="table-header">SKU</th>
-                            <th class="table-header">Producto</th>
-                            <th class="table-header">Almacenes</th>
-                            <th class="table-header text-right">Stock Total</th>
-                            <th class="table-header text-right">Costo Promedio</th>
-                            <th class="table-header text-right">Costo Total</th>
-                            <th class="table-header text-right">Stock Máximo</th>
-                            <th class="table-header text-right">Stock Mínimo</th>
-                            <th class="table-header">Lotes</th>
-                            <th class="table-header text-center">Estado</th>
-                            <th class="table-header text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr 
-                            v-for="item in stockItems" 
-                            :key="item.id" 
-                            class="table-row"
-                            @click="$emit('view-details', item)"
-                        >
-                            <!-- SKU -->
-                            <td class="table-cell">
-                                <div class="sku-cell">
-                                    <span class="sku-code">{{ item.sku || '-' }}</span>
-                                    <span v-if="item.barcode" class="barcode">{{ item.barcode }}</span>
-                                </div>
-                            </td>
-
-                            <!-- Producto -->
-                            <td class="table-cell">
-                                <div class="product-cell">
-                                    <span class="product-name">{{ item.name }}</span>
-                                </div>
-                            </td>
-
-                            <!-- Almacenes -->
-                            <td class="table-cell">
-                                <div class="warehouses-cell">
-                                    <div v-if="item.warehouses?.length" class="warehouse-list">
-                                        <div 
-                                            v-for="warehouse in item.warehouses" 
-                                            :key="warehouse.id" 
-                                            class="warehouse-item"
-                                        >
-                                            <span class="warehouse-name">{{ warehouse.name }}</span>
-                                            <span class="warehouse-stock">{{ warehouse.stock }}</span>
-                                        </div>
-                                    </div>
-                                    <span v-else class="no-data">-</span>
-                                </div>
-                            </td>
-
-                            <!-- Stock Total -->
-                            <td class="table-cell text-right">
-                                <div class="stock-cell">
-                                    <span class="stock-amount" :class="getStockAmountClass(item.total_stock)">
-                                        {{ item.total_stock }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- Costo Promedio -->
-                            <td class="table-cell text-right">
-                                <div class="cost-cell">
-                                    <span class="cost-amount">
-                                        {{ item.avg_cost_unit ? `S/ ${item.avg_cost_unit.toFixed(2)}` : '-' }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- Costo Total -->
-                            <td class="table-cell text-right">
-                                <div class="total-cost-cell">
-                                    <span class="total-cost-amount">
-                                        {{ item.total_cost ? `S/ ${item.total_cost.toFixed(2)}` : '-' }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- Stock Máximo -->
-                            <td class="table-cell text-right">
-                                <div class="max-stock-cell">
-                                    <span class="max-stock-amount">
-                                        {{ item.max_stock || '-' }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- Stock Mínimo -->
-                            <td class="table-cell text-right">
-                                <div class="min-stock-cell">
-                                    <span class="min-stock-amount">
-                                        {{ item.min_stock || '-' }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- Lotes -->
-                            <td class="table-cell">
-                                <div class="batches-cell">
-                                    <div v-if="item.batches?.length" class="batches-info">
-                                        <div class="batch-count">
-                                            <i class="pi pi-tags"></i>
-                                            <span>{{ item.batches.length }} lote(s)</span>
-                                        </div>
-                                        <div class="batch-preview">
-                                            <div 
-                                                v-for="batch in item.batches.slice(0, 2)" 
-                                                :key="batch.id"
-                                                class="batch-item"
-                                            >
-                                                <span class="batch-code">{{ batch.code }}</span>
-                                                <span class="batch-stock">{{ batch.stock }}</span>
-                                            </div>
-                                            <span v-if="item.batches.length > 2" class="more-batches">
-                                                +{{ item.batches.length - 2 }} más
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <span v-else class="no-data">-</span>
-                                </div>
-                            </td>
-
-                            <!-- Estado -->
-                            <td class="table-cell text-center">
-                                <span class="status-badge" :class="getStatusClass(item.total_stock)">
-                                    {{ getStatusLabel(item.total_stock) }}
-                                </span>
-                            </td>
-
-                            <!-- Acciones -->
-                            <td class="table-cell text-center">
-                                <div class="actions-cell">
-                                    <Button 
-                                        icon="pi pi-eye" 
-                                        class="action-btn view-btn" 
-                                        v-tooltip.top="'Ver detalles'"
-                                        text
-                                        @click.stop="$emit('view-details', item)"
-                                    />
-                                    <Button 
-                                        icon="pi pi-pencil" 
-                                        class="action-btn edit-btn" 
-                                        v-tooltip.top="'Ajustar stock'"
-                                        text
-                                        @click.stop="$emit('adjust-stock', item)"
-                                    />
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+            </template>
+        </Column>
+    </DataTable>
 </template>
 
 <script setup>
-import { ProgressSpinner, Button } from 'primevue';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import { exportToExcel } from '@/utils/excelUtils';
+import Button from 'primevue/button';
+import Column from 'primevue/column';
+import DataTable from 'primevue/datatable';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
+import ProgressSpinner from 'primevue/progressspinner';
+import { ref, watch } from 'vue';
 
-defineProps({
+const props = defineProps({
     stockItems: {
         type: Array,
         default: () => []
@@ -204,7 +272,73 @@ defineProps({
     }
 });
 
-defineEmits(['view-details', 'adjust-stock', 'clear-filters']);
+const emit = defineEmits(['view-details', 'edit-stock', 'bulk-edit', 'clear-filters']);
+
+// Inicializar filtros
+const initFilters = () => ({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    sku: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    barcode: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
+    total_stock: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    avg_unit_cost: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
+    avg_sale_price: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
+});
+
+const localFilters = ref(initFilters());
+
+// Limpiar filtros cuando cambian los datos
+watch(
+    () => props.stockItems,
+    () => {
+        localFilters.value = { ...initFilters() };
+    },
+    { deep: true }
+);
+
+// Función para manejar click en fila
+const handleRowClick = (event) => {
+    emit('view-details', event.data);
+};
+
+// Función para limpiar filtros
+const clearFilters = () => {
+    localFilters.value = initFilters();
+    emit('clear-filters');
+};
+
+// Función para exportar a Excel
+const exportStock = async () => {
+    const columns = [
+        { header: 'SKU', key: 'sku', width: 15 },
+        { header: 'Producto', key: 'name', width: 30 },
+        { header: 'Stock Total', key: 'total_stock', width: 15 },
+        { header: 'Costo Promedio', key: 'avg_unit_cost', width: 15 },
+        { header: 'Costo Total', key: 'total_cost_value', width: 15 },
+        { header: 'Precio Promedio Venta', key: 'avg_sale_price', width: 15 },
+        { header: 'Valor Total Venta', key: 'total_sale_value', width: 15 },
+        { header: 'Requiere Lotes', key: 'requires_batches', width: 15 }
+    ];
+
+    const formattedStock = props.stockItems.map((item) => ({
+        ...item,
+        avg_unit_cost: item.avg_unit_cost ? `S/ ${item.avg_unit_cost.toFixed(2)}` : '-',
+        total_cost_value: item.total_cost_value ? `S/ ${item.total_cost_value.toFixed(2)}` : '-',
+        avg_sale_price: item.avg_sale_price ? `S/ ${item.avg_sale_price.toFixed(2)}` : '-',
+        total_sale_value: item.total_sale_value ? `S/ ${item.total_sale_value.toFixed(2)}` : '-',
+        requires_batches: item.requires_batches ? 'Sí' : 'No'
+    }));
+
+    await exportToExcel(columns, formattedStock, 'Inventario', 'Inventario_Stock');
+};
+
+// Función para formatear moneda
+const formatCurrency = (value) => {
+    if (!value || isNaN(value) || value === null || value === undefined) return '-';
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return '-';
+    return `S/ ${numValue.toFixed(2)}`;
+};
 
 // Métodos para clases y etiquetas
 const getStockAmountClass = (totalStock) => {
@@ -224,88 +358,294 @@ const getStatusLabel = (totalStock) => {
     if (totalStock <= 10) return 'Stock bajo';
     return 'En stock';
 };
+
+// Métodos para manejo de lotes según la nueva estructura de datos
+const hasAnyBatches = (item) => {
+    if (!item.stock_by_warehouse) return false;
+    return item.stock_by_warehouse.some(warehouse => 
+        warehouse.batches && warehouse.batches.length > 0
+    );
+};
+
+const getTotalBatches = (item) => {
+    if (!item.stock_by_warehouse) return 0;
+    return item.stock_by_warehouse.reduce((total, warehouse) => {
+        return total + (warehouse.batches ? warehouse.batches.length : 0);
+    }, 0);
+};
+
+const getFirstBatches = (item, limit = 2) => {
+    if (!item.stock_by_warehouse) return [];
+    
+    const allBatches = [];
+    item.stock_by_warehouse.forEach(warehouse => {
+        if (warehouse.batches) {
+            warehouse.batches.forEach(batch => {
+                allBatches.push({
+                    ...batch,
+                    warehouse_name: warehouse.warehouse_name
+                });
+            });
+        }
+    });
+    
+    return allBatches.slice(0, limit);
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit'
+        });
+    } catch (error) {
+        return dateString;
+    }
+};
 </script>
 
 <style scoped>
-.stock-table {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden;
+/* Encabezado de la tabla mejorado */
+.table-header {
+    @apply relative overflow-hidden mb-0 rounded-t-2xl;
+    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #3b82f6 100%);
+    padding: 1.5rem 2rem;
 }
 
-/* Loading state */
-.loading-state {
-    @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700;
+/* Fondo decorativo */
+.header-backdrop {
+    @apply absolute inset-0 opacity-10;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        40px 40px,
+        25px 25px;
+    animation: pattern-drift 25s linear infinite;
 }
 
-.loading-content {
-    @apply text-center px-8 py-12;
+.header-content {
+    @apply relative z-10 flex justify-between items-center gap-6;
+}
+
+/* Sección de búsqueda mejorada */
+.search-section {
+    @apply flex-1 max-w-md;
+}
+
+.search-container {
+    @apply relative;
+}
+
+.search-input {
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white placeholder-white/70 rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-input:focus {
+    @apply bg-white/30 border-white/50 ring-2 ring-white/20;
+    transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+    @apply text-white/70;
+}
+
+/* Icono de búsqueda */
+:deep(.search-container .p-icon-field .p-input-icon) {
+    @apply text-white/80;
+}
+
+/* Sección de acciones */
+.actions-section {
+    @apply flex gap-3;
+}
+
+/* Botón de exportar mejorado */
+.export-btn {
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-300;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.export-btn:hover:not(:disabled) {
+    @apply bg-white/30 border-white/40;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.export-btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+}
+
+/* Estados de tabla vacía y carga mejorados */
+.empty-table-state {
+    @apply text-center py-16 px-8;
+}
+
+.empty-icon {
+    @apply mx-auto mb-4 w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center;
+}
+
+.empty-icon i {
+    @apply text-3xl text-gray-400 dark:text-gray-500;
+}
+
+.empty-title {
+    @apply text-xl font-bold text-gray-700 dark:text-gray-300 mb-2;
+}
+
+.empty-description {
+    @apply text-gray-500 dark:text-gray-400 mb-6;
+}
+
+.loading-table-state {
+    @apply text-center py-16 px-8;
 }
 
 .loading-text {
     @apply text-gray-600 dark:text-gray-400 mt-4 text-lg font-medium;
 }
 
-/* Empty state */
-.empty-state {
-    @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-700;
+/* Animación del patrón */
+@keyframes pattern-drift {
+    0% {
+        background-position:
+            0% 0%,
+            0% 0%;
+    }
+    100% {
+        background-position:
+            100% 100%,
+            -100% -100%;
+    }
 }
 
-.empty-content {
-    @apply text-center px-8 py-12 max-w-md;
+/* Tema principal de la tabla mejorado */
+:deep(.green-theme) {
+    @apply rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.empty-icon {
-    @apply mx-auto mb-6 w-20 h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg;
+:deep(.green-theme .p-datatable-header) {
+    @apply bg-transparent border-none p-0;
 }
 
-.empty-icon i {
-    @apply text-4xl text-white;
+/* Encabezado de las columnas de la tabla */
+:deep(.green-theme .p-datatable-thead > tr > th) {
+    @apply sticky top-0 z-20 bg-green-600 text-white font-bold text-sm py-4 px-3 border-none text-center;
 }
 
-.empty-title {
-    @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4;
-    background: linear-gradient(135deg, #7c3aed, #3b82f6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+/* Cuerpo de la tabla */
+:deep(.green-theme .p-datatable-tbody > tr > td) {
+    @apply py-4 px-3 align-middle border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 font-medium;
 }
 
-.empty-description {
-    @apply text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed;
+/* Estilo para filas pares */
+:deep(.green-theme .p-datatable-tbody > tr:nth-child(even) > td) {
+    @apply bg-gray-50 dark:bg-gray-700/50;
 }
 
-.empty-actions {
-    @apply flex justify-center gap-4;
+/* Efecto hover en las filas */
+:deep(.green-theme .p-datatable-tbody > tr:hover > td) {
+    @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800;
 }
 
-.secondary-action-btn {
-    @apply bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold py-3 px-6 rounded-xl shadow-md transition-all duration-300;
+/* Botones de acción */
+:deep(.green-theme .p-button.p-button-info) {
+    @apply bg-blue-600 hover:bg-blue-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
 }
 
-/* Table container */
-.table-container {
-    @apply overflow-hidden;
+:deep(.green-theme .p-button.p-button-success) {
+    @apply bg-green-600 hover:bg-green-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
 }
 
-.table-wrapper {
-    @apply overflow-x-auto;
+:deep(.green-theme .p-button.p-button-warning) {
+    @apply bg-orange-600 hover:bg-orange-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
 }
 
-.stock-data-table {
-    @apply w-full min-w-full;
+/* Paginador */
+:deep(.green-theme .p-paginator) {
+    @apply bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 p-4 rounded-b-xl;
 }
 
-/* Table headers */
-.table-header {
-    @apply px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600;
+:deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page) {
+    @apply text-green-600 border border-green-600 font-semibold rounded-xl mx-1 w-10 h-10 transition-colors;
 }
 
-/* Table rows */
-.table-row {
-    @apply border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-200;
+:deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
+    @apply bg-green-600 text-white;
 }
 
-.table-cell {
-    @apply px-6 py-4 whitespace-nowrap;
+:deep(.green-theme .p-paginator .p-paginator-pages .p-paginator-page:hover) {
+    @apply bg-green-50 dark:bg-green-900/30 border-green-700;
+}
+
+:deep(.green-theme .p-paginator .p-dropdown) {
+    @apply border-green-600 font-medium rounded-xl;
+}
+
+/* Insignia de SKU */
+.sku-badge {
+    @apply font-mono text-sm px-3 py-1 rounded-xl font-semibold bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-700 text-center;
+}
+
+/* Mensaje de tabla vacía */
+:deep(.green-theme .p-datatable-emptymessage) {
+    @apply bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-12 font-medium rounded-xl m-6 border-2 border-dashed border-gray-300 dark:border-gray-600;
+}
+
+/* Ajustes responsivos para pantallas pequeñas */
+@media (max-width: 768px) {
+    .table-header {
+        @apply p-4;
+    }
+
+    .header-content {
+        @apply flex-col gap-4;
+    }
+
+    .search-section {
+        @apply max-w-none w-full;
+    }
+
+    .search-input {
+        @apply w-full;
+    }
+
+    .actions-section {
+        @apply w-full;
+    }
+
+    .export-btn {
+        @apply w-full justify-center;
+    }
+
+    :deep(.green-theme .p-datatable-thead > tr > th),
+    :deep(.green-theme .p-datatable-tbody > tr > td) {
+        @apply text-xs py-3 px-2;
+    }
+
+    .empty-table-state,
+    .loading-table-state {
+        @apply py-12 px-4;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-header {
+        @apply p-3;
+    }
+
+    .search-input {
+        @apply py-2.5 text-sm;
+    }
+
+    .export-btn {
+        @apply py-2.5 text-sm;
+    }
 }
 
 /* SKU cell */
@@ -388,6 +728,24 @@ const getStatusLabel = (totalStock) => {
 
 .total-cost-amount {
     @apply font-semibold text-green-700 dark:text-green-400;
+}
+
+/* Price cell */
+.price-cell {
+    @apply text-right;
+}
+
+.price-amount {
+    @apply font-medium text-blue-700 dark:text-blue-400;
+}
+
+/* Total sale cell */
+.total-sale-cell {
+    @apply text-right;
+}
+
+.total-sale-amount {
+    @apply font-semibold text-purple-700 dark:text-purple-400;
 }
 
 /* Max stock cell */
@@ -473,6 +831,10 @@ const getStatusLabel = (totalStock) => {
 
 .edit-btn:hover {
     @apply text-purple-600 dark:text-purple-400;
+}
+
+.bulk-btn:hover {
+    @apply text-orange-600 dark:text-orange-400;
 }
 
 /* No data placeholder */

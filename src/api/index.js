@@ -114,12 +114,31 @@ export const updatePurchaseBonus = (purchaseId, bonusId, bonusData) => {
     return axios.patch(`/purchases/${purchaseId}/bonuses/${bonusId}`, bonusData);
 };
 
-
-// Product Stocks
+// 1️⃣ Vista Consolidada de Inventarios - URL ACTUALIZADA
 export const fetchProductStocks = (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
-    return axios.get(`/product-stocks${queryString ? `?${queryString}` : ''}`);
+    return axios.get(`/products/stock${queryString ? `?${queryString}` : ''}`);
 };
+
+// 2️⃣ Gestión Individual de Stocks
+export const fetchStocks = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stocks${queryString ? `?${queryString}` : ''}`);
+};
+
+export const getStock = (stockId) => axios.get(`/stocks/${stockId}`);
+
+export const updateStock = (stockId, payload) => axios.put(`/stocks/${stockId}`, payload);
+
+export const deleteStock = (stockId) => axios.delete(`/stocks/${stockId}`);
+
+// 3️⃣ Gestión Masiva por Producto
+export const getBulkPreview = (productId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/products/${productId}/stocks/bulk-preview${queryString ? `?${queryString}` : ''}`);
+};
+
+export const bulkUpdateStocks = (productId, payload) => axios.put(`/products/${productId}/stocks/bulk-update`, payload);
 
 // Dashboard
 export const fetchDashboardMetrics = () => axios.get('/dashboard/metrics');

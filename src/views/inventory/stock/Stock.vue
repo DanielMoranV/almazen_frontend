@@ -5,6 +5,9 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 // Components
+import BulkEditDialog from './componentsStock/BulkEditDialog.vue';
+import StockDetailsModal from './componentsStock/StockDetailsModal.vue';
+import StockEditDialog from './componentsStock/StockEditDialog.vue';
 import StockFilters from './componentsStock/StockFilters.vue';
 import StockStatistics from './componentsStock/StockStatistics.vue';
 import StockTable from './componentsStock/StockTable.vue';
@@ -19,6 +22,14 @@ const searchQuery = ref('');
 const warehouseFilter = ref(null);
 const stockStatusFilter = ref(null);
 
+// Dialog refs
+const showStockEditDialog = ref(false);
+const showBulkEditDialog = ref(false);
+const showDetailsModal = ref(false);
+const selectedStockForEdit = ref(null);
+const selectedProductForBulk = ref(null);
+const selectedProductForDetails = ref(null);
+
 // Computed properties using store data
 const loading = computed(() => stocksStore.isLoadingStocks);
 const stockItems = computed(() => stocksStore.filteredStocks);
@@ -28,11 +39,8 @@ const totalItems = computed(() => stocksStore.totalProducts);
 const totalQuantity = computed(() => stocksStore.totalQuantity);
 const lowStockItems = computed(() => stocksStore.lowStockProducts);
 const outOfStockItems = computed(() => stocksStore.outOfStockProducts);
-const totalValue = computed(() => {
-    return stocksStore.stocksList.reduce((total, product) => {
-        return total + (product.total_cost || 0);
-    }, 0);
-});
+const totalCostValue = computed(() => stocksStore.totalCostValue);
+const totalSaleValue = computed(() => stocksStore.totalSaleValue);
 
 // Dynamic warehouse options based on actual data
 const warehouseOptions = computed(() => {
@@ -40,9 +48,12 @@ const warehouseOptions = computed(() => {
     warehouses.set(null, { label: 'Todos los almacenes', value: null });
 
     stocksStore.stocksList.forEach((product) => {
-        product.warehouses?.forEach((warehouse) => {
-            if (!warehouses.has(warehouse.id)) {
-                warehouses.set(warehouse.id, { label: warehouse.name, value: warehouse.id });
+        product.stock_by_warehouse?.forEach((warehouse) => {
+            if (!warehouses.has(warehouse.warehouse_id)) {
+                warehouses.set(warehouse.warehouse_id, { 
+                    label: warehouse.warehouse_name, 
+                    value: warehouse.warehouse_id 
+                });
             }
         });
     });
@@ -125,18 +136,70 @@ const printInventory = () => {
 };
 
 const viewProductDetails = (item) => {
-    // Navigate to product details page
-    router.push(`/products/${item.id}`);
+    selectedProductForDetails.value = item;
+    showDetailsModal.value = true;
 };
 
-const adjustStock = (item) => {
-    // TODO: Open stock adjustment dialog
+const editStock = async (item) => {
+    try {
+        // Get the first available stock_id from the product structure
+        let stockId = null;
+        
+        if (item.stock_by_warehouse && item.stock_by_warehouse.length > 0) {
+            const firstWarehouse = item.stock_by_warehouse[0];
+            
+            // Check if there's a direct stock_id (for products without batches)
+            if (firstWarehouse.stock_id) {
+                stockId = firstWarehouse.stock_id;
+            }
+            // Or get from the first batch if available
+            else if (firstWarehouse.batches && firstWarehouse.batches.length > 0) {
+                stockId = firstWarehouse.batches[0].stock_id;
+            }
+        }
+        
+        if (!stockId) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Advertencia',
+                detail: 'No se encontró información de stock editable para este producto',
+                life: 3000
+            });
+            return;
+        }
+
+        // Fetch detailed stock information
+        const stockData = await stocksStore.getStockById(stockId);
+        selectedStockForEdit.value = stockData;
+        showStockEditDialog.value = true;
+        
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar información del stock',
+            life: 3000
+        });
+    }
+};
+
+const bulkEdit = (item) => {
+    selectedProductForBulk.value = item;
+    showBulkEditDialog.value = true;
+};
+
+const handleStockUpdated = async () => {
+    await loadStockItems();
     toast.add({
-        severity: 'info',
-        summary: 'Ajuste de Stock',
-        detail: `Ajustando stock para ${item.name}`,
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Stock actualizado correctamente',
         life: 3000
     });
+};
+
+const handleBulkUpdated = async () => {
+    await loadStockItems();
 };
 
 const clearFilters = () => {
@@ -156,15 +219,48 @@ const clearFilters = () => {
         <StockToolbar :total-products="totalItems" :total-quantity="totalQuantity" :is-loading="loading" @refresh="handleRefresh" @export="exportToExcel" @print="printInventory" />
 
         <!-- Estadísticas -->
-        <StockStatistics :total-products="totalItems" :total-quantity="totalQuantity" :low-stock-products="lowStockItems" :out-of-stock-products="outOfStockItems" :total-value="totalValue" :loading="loading" />
+        <StockStatistics 
+            :total-products="totalItems" 
+            :total-quantity="totalQuantity" 
+            :low-stock-products="lowStockItems" 
+            :out-of-stock-products="outOfStockItems" 
+            :total-cost-value="totalCostValue"
+            :total-sale-value="totalSaleValue"
+            :loading="loading" 
+        />
 
         <!-- Filtros -->
         <StockFilters v-model:search-query="searchQuery" v-model:warehouse-filter="warehouseFilter" v-model:stock-status-filter="stockStatusFilter" :warehouse-options="warehouseOptions" @clear-filters="clearFilters" />
 
         <!-- Tabla de Stock -->
         <transition name="slide-up" appear>
-            <StockTable :stock-items="stockItems" :loading="loading" @view-details="viewProductDetails" @adjust-stock="adjustStock" @clear-filters="clearFilters" />
+            <StockTable 
+                :stock-items="stockItems" 
+                :loading="loading" 
+                @view-details="viewProductDetails" 
+                @edit-stock="editStock"
+                @bulk-edit="bulkEdit"
+                @clear-filters="clearFilters" 
+            />
         </transition>
+
+        <!-- Dialogs -->
+        <StockEditDialog 
+            v-model:visible="showStockEditDialog"
+            :stock-data="selectedStockForEdit"
+            @stock-updated="handleStockUpdated"
+        />
+
+        <BulkEditDialog 
+            v-model:visible="showBulkEditDialog"
+            :product-data="selectedProductForBulk"
+            @bulk-updated="handleBulkUpdated"
+        />
+
+        <StockDetailsModal 
+            v-model:visible="showDetailsModal"
+            :product-data="selectedProductForDetails"
+        />
     </div>
 </template>
 
