@@ -1,23 +1,12 @@
 <script setup>
-import { createSale } from '@/api';
+import { createCustomer, searchCustomers } from '@/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useProductsStore } from '@/stores/productsStore';
 import { useWarehousesStore } from '@/stores/warehousesStore';
+import { useSalesStore } from '@/stores/salesStore';
 import cache from '@/utils/cache.js';
 import { storeToRefs } from 'pinia';
-import Badge from 'primevue/badge';
-import Button from 'primevue/button';
-import Card from 'primevue/card';
-import Chip from 'primevue/chip';
-import Dialog from 'primevue/dialog';
-import Divider from 'primevue/divider';
-import InputText from 'primevue/inputtext';
-import Panel from 'primevue/panel';
-import ProgressSpinner from 'primevue/progressspinner';
-import Select from 'primevue/select';
-import Skeleton from 'primevue/skeleton';
-import Tag from 'primevue/tag';
-import Toast from 'primevue/toast';
+
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
 
@@ -33,14 +22,14 @@ const toast = useToast();
 const authStore = useAuthStore();
 const productsStore = useProductsStore();
 const warehousesStore = useWarehousesStore();
+const salesStore = useSalesStore();
 
 // Loading states
 const loading = ref(false);
 const isInitializing = ref(true);
 
 // Quick search for barcode scanner
-const quickSearch = ref('');
-const quickSearchRef = ref(null);
+
 
 // Session and warehouse management
 const activeSession = ref(null);
@@ -49,6 +38,7 @@ const selectedWarehouse = ref(null);
 // Cart and payment
 const cart = ref([]);
 const paymentMethod = ref('efectivo');
+const paymentStatus = ref('PAGADO'); // PAGADO o PENDIENTE
 const showPaymentDialog = ref(false);
 const showCartSummary = ref(false);
 const showBatchDialog = ref(false);
@@ -69,6 +59,23 @@ const { saleProductsList, isLoadingSaleProducts } = storeToRefs(productsStore);
 const searchQuery = ref('');
 const searchResults = ref([]);
 const isSearching = ref(false);
+
+// Customer search and selection
+const selectedCustomer = ref(null);
+const customerSearch = ref('');
+const customerResults = ref([]);
+const isSearchingCustomers = ref(false);
+const showCustomerDialog = ref(false);
+const showCreateCustomerDialog = ref(false);
+
+// New customer form
+const newCustomer = ref({
+    name: '',
+    email: '',
+    phone: '',
+    identity_document: '',
+    identity_document_type: 'dni'
+});
 
 // Image error tracking
 const imageErrors = ref({});
@@ -156,7 +163,7 @@ const searchProducts = async (query = '') => {
         }
 
         await productsStore.searchProductsForSale(query, selectedWarehouse.value);
-        searchResults.value = productsStore.saleProductsList || [];
+        searchResults.value = saleProductsList.value || [];
         console.log(searchResults.value);
 
         if (searchResults.value.length === 0) {
@@ -275,12 +282,29 @@ const addToCart = (product) => {
         return;
     }
 
-    // Para productos sin lotes, agregar directamente
+    // Para productos sin lotes, agregar directamente (stock_id se obtiene automáticamente)
     addProductToCart(product, null, null);
 };
 
 const addProductToCart = (product, batchId = null, stockId = null) => {
-    const cartItemKey = batchId ? `${product.id}-${batchId}` : product.id;
+    // Para productos sin lotes, necesitamos obtener el stock_id desde stock_info
+    if (!batchId && !stockId && product.stock_info) {
+        // Usar el primer stock disponible si no se especifica
+        stockId = product.stock_info.stock_id || product.stock_info.id;
+    }
+
+    // Validar que tenemos stock_id - OBLIGATORIO para la API
+    if (!stockId) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error de Stock',
+            detail: 'No se pudo obtener información de stock para este producto',
+            life: 3000
+        });
+        return;
+    }
+
+    const cartItemKey = batchId ? `${product.id}-${batchId}` : `${product.id}-${stockId}`;
     const existingItem = cart.value.find(item => item.cartKey === cartItemKey);
 
     if (existingItem) {
@@ -316,7 +340,7 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
             quantity: 1,
             subtotal: product.price,
             batch_id: batchId,
-            stock_id: stockId,
+            stock_id: stockId, // OBLIGATORIO - siempre debe tener valor
             requires_batches: product.requires_batches
         });
         toast.add({
@@ -433,45 +457,114 @@ const processPayment = async () => {
 
     loading.value = true;
 
+    // Validate customer for voucher type
+    const customerValidation = validateCustomerForVoucher();
+    if (customerValidation !== true) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error de validación',
+            detail: customerValidation,
+            life: 4000
+        });
+        return;
+    }
+
+    // Calcular impuestos (18% en Perú)
+    const calculateTax = (amount) => Math.round(amount * 0.18 * 100) / 100;
+    const totalTax = calculateTax(cartTotal.value);
+
     const payload = {
-        company_id: authStore.currentUser?.company_id,
-        customer_id: null,
-        warehouse_id: selectedWarehouse.value,
+        customer_id: selectedCustomer.value?.id || null,
         sale_date: new Date().toISOString().slice(0, 10),
         voucher_type: voucherType.value,
-        status: 'PAGADO',
-        notes: '',
+        payment_method: paymentMethod.value,
         total_amount: cartTotal.value,
-        tax_amount: 0,
+        tax_amount: totalTax,
         discount_amount: 0,
-        details: cart.value.map(item => ({
-            product_id: item.id,
-            batch_id: item.batch_id || null,
-            stock_id: item.stock_id || null,
-            quantity: item.quantity,
-            unit_price: item.price,
-            total_amount: item.subtotal,
-            tax_amount: 0,
-            discount_amount: 0
-        }))
+        notes: null, // null en lugar de string vacío
+        status: paymentStatus.value,
+        details: cart.value.map(item => {
+            const itemTax = calculateTax(item.subtotal);
+            return {
+                product_id: item.id,
+                batch_id: item.batch_id || null,
+                stock_id: item.stock_id, // OBLIGATORIO - removido || null
+                quantity: item.quantity,
+                unit_price: item.price,
+                total_amount: item.subtotal,
+                tax_amount: itemTax,
+                discount_amount: 0
+            };
+        })
     };
 
     try {
-        const { data } = await createSale(payload);
+        console.log('Payload enviado:', payload);
+        const response = await salesStore.createSale(payload);
+
+        console.log('Full API Response:', response); // Debug: ver estructura completa
+
+        // Manejar diferentes estructuras de respuesta posibles
+        let saleData, voucherLink;
+
+        if (response.data) {
+            // Si viene envuelto en { success: true, data: {...} }
+            saleData = response.data.sale || response.data;
+            voucherLink = response.data.voucher_link;
+        } else {
+            // Si viene directamente { sale: {...}, voucher_link: "..." }
+            saleData = response.sale || response;
+            voucherLink = response.voucher_link;
+        }
+
+        console.log('Sale data:', saleData); // Debug: ver datos de venta
+        console.log('Voucher link:', voucherLink); // Debug: ver link
+
+        // Construir mensaje de éxito con validación
+        let successMessage = 'Venta registrada exitosamente';
+
+        if (saleData && saleData.document_type && saleData.document_number) {
+            successMessage = `Venta registrada - ${saleData.document_type}: ${saleData.document_number}`;
+        } else if (saleData && saleData.id) {
+            successMessage = `Venta registrada - ID: ${saleData.id}`;
+        }
+
+        if (voucherLink) {
+            successMessage += ' (Comprobante disponible)';
+        }
+
         toast.add({
             severity: 'success',
             summary: 'Venta Exitosa',
-            detail: `Comprobante: ${data.document_number}`,
+            detail: successMessage,
             life: 5000
         });
+
+        // Limpiar carrito y cerrar modal
         cart.value = [];
         showPaymentDialog.value = false;
+
+        // Si hay link del comprobante, podríamos abrir en nueva ventana
+        if (voucherLink) {
+            console.log('Voucher link disponible:', voucherLink);
+        }
+
     } catch (error) {
-        const msg = error.response?.data?.error || 'Error al procesar la venta';
+        // Manejo mejorado de errores según la nueva API
+        let errorMessage = 'Error al procesar la venta';
+
+        if (error.status === 400) {
+            errorMessage = error.message || 'Error de stock - Verifique disponibilidad';
+        } else if (error.status === 422) {
+            errorMessage = error.validationErrors?.join(', ') || error.message || 'Error de validación';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+
         toast.add({
             severity: 'error',
-            summary: 'Error de Pago',
-            detail: msg,
+            summary: 'Error de Venta',
+            detail: errorMessage,
             life: 4500
         });
     } finally {
@@ -503,6 +596,115 @@ const handleImageLoad = (event) => {
     }
 };
 
+// Customer search functions
+const searchCustomersDebounced = async (query) => {
+    if (!query || query.length < 2) {
+        customerResults.value = [];
+        return;
+    }
+
+    isSearchingCustomers.value = true;
+    try {
+        const response = await searchCustomers(query);
+        customerResults.value = response.data || [];
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error de búsqueda',
+            detail: 'Error al buscar clientes',
+            life: 3000
+        });
+        customerResults.value = [];
+    } finally {
+        isSearchingCustomers.value = false;
+    }
+};
+
+const selectCustomer = (customer) => {
+    selectedCustomer.value = customer;
+    showCustomerDialog.value = false;
+    toast.add({
+        severity: 'success',
+        summary: 'Cliente seleccionado',
+        detail: `Cliente: ${customer.name}`,
+        life: 2000
+    });
+};
+
+const clearCustomer = () => {
+    selectedCustomer.value = null;
+    customerSearch.value = '';
+    customerResults.value = [];
+};
+
+const createQuickCustomer = async () => {
+    // Basic validation
+    if (!newCustomer.value.name.trim()) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error de validación',
+            detail: 'El nombre del cliente es requerido',
+            life: 3000
+        });
+        return;
+    }
+
+    try {
+        const response = await createCustomer(newCustomer.value);
+        selectedCustomer.value = response.data;
+        showCreateCustomerDialog.value = false;
+
+        // Reset form
+        newCustomer.value = {
+            name: '',
+            email: '',
+            phone: '',
+            identity_document: '',
+            identity_document_type: 'dni'
+        };
+
+        toast.add({
+            severity: 'success',
+            summary: 'Cliente creado',
+            detail: `Cliente ${response.data.name} creado y seleccionado`,
+            life: 3000
+        });
+    } catch (error) {
+        const msg = error.validationErrors?.join(', ') || error.message || 'Error al crear cliente';
+        toast.add({
+            severity: 'error',
+            summary: 'Error al crear cliente',
+            detail: msg,
+            life: 4000
+        });
+    }
+};
+
+const validateCustomerForVoucher = () => {
+    if (voucherType.value === 'ticket') {
+        return true; // Ticket no requiere cliente
+    }
+
+    if (!selectedCustomer.value) {
+        return 'Para generar boletas o facturas debe seleccionar un cliente';
+    }
+
+    if (voucherType.value === 'boleta' && !selectedCustomer.value.identity_document) {
+        return 'Para generar boletas el cliente debe tener número de documento';
+    }
+
+    if (voucherType.value === 'factura') {
+        if (!selectedCustomer.value.identity_document) {
+            return 'Para generar facturas el cliente debe tener RUC';
+        }
+        if (selectedCustomer.value.identity_document_type !== 'ruc') {
+            return 'Para generar facturas el cliente debe tener un RUC válido';
+        }
+    }
+
+    return true;
+};
+
 // Función para obtener el color del método de pago seleccionado
 const getPaymentMethodColor = (method) => {
     const paymentMethodObj = paymentMethods.value.find(pm => pm.value === method);
@@ -511,6 +713,7 @@ const getPaymentMethodColor = (method) => {
 </script>
 
 <template>
+    <Toast />
     <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <!-- Header -->
         <div class="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200">
@@ -536,8 +739,25 @@ const getPaymentMethodColor = (method) => {
                         </div>
                     </div>
 
-                    <!-- Cart Summary -->
+                    <!-- Customer and Cart Section -->
                     <div class="flex items-center space-x-4">
+                        <!-- Customer Selection -->
+                        <div class="flex items-center space-x-3">
+                            <Button @click="showCustomerDialog = true"
+                                :severity="selectedCustomer ? 'success' : 'secondary'" :outlined="!selectedCustomer"
+                                class="h-14 px-4" size="large">
+                                <i class="pi pi-user mr-2 text-lg"></i>
+                                <span class="font-semibold">
+                                    {{ selectedCustomer ? selectedCustomer.name.substring(0, 15) +
+                                        (selectedCustomer.name.length > 15 ? '...' : '') : 'Cliente' }}
+                                </span>
+                            </Button>
+
+                            <Button v-if="selectedCustomer" @click="clearCustomer" icon="pi pi-times" severity="danger"
+                                text rounded size="small" class="w-8 h-8" v-tooltip="'Quitar cliente'" />
+                        </div>
+
+                        <!-- Cart Summary -->
                         <Button @click="showCartSummary = true" class="relative h-14 px-6" severity="info" outlined
                             size="large">
                             <i class="pi pi-shopping-cart mr-3 text-xl"></i>
@@ -625,7 +845,7 @@ const getPaymentMethodColor = (method) => {
                                             <div v-if="selectedWarehouse" class="text-sm text-blue-700">
                                                 en <span class="font-semibold">{{warehousesList.find(w => w.id ===
                                                     selectedWarehouse)?.name
-                                                    }}</span>
+                                                }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -762,7 +982,7 @@ const getPaymentMethodColor = (method) => {
                                         <div class="flex-1 min-w-0">
                                             <h5 class="font-bold text-gray-900 truncate text-sm">{{ item.name }}</h5>
                                             <p class="text-blue-600 font-semibold text-sm">{{ formatCurrency(item.price)
-                                                }}</p>
+                                            }}</p>
                                         </div>
                                         <Button @click="removeFromCart(index)" icon="pi pi-trash" size="small"
                                             severity="danger" text rounded class="ml-2 hover:bg-red-100" />
@@ -792,7 +1012,7 @@ const getPaymentMethodColor = (method) => {
                                     <div class="flex justify-between items-center">
                                         <span class="text-xl font-bold text-gray-800">Total:</span>
                                         <span class="text-3xl font-black text-blue-600">{{ formatCurrency(cartTotal)
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                 </div>
 
@@ -910,7 +1130,7 @@ const getPaymentMethodColor = (method) => {
                             <div class="flex-1">
                                 <div class="font-semibold text-gray-900">{{ item.name }}</div>
                                 <div class="text-sm text-gray-600">{{ formatCurrency(item.price) }} × {{ item.quantity
-                                    }}</div>
+                                }}</div>
                             </div>
                             <div class="font-bold text-green-600">{{ formatCurrency(item.subtotal) }}</div>
                         </div>
@@ -972,6 +1192,30 @@ const getPaymentMethodColor = (method) => {
                             :severity="paymentMethod === method.value ? method.color : 'secondary'"
                             class="h-16 text-sm font-semibold transition-all duration-200 hover:scale-105"
                             :class="{ 'ring-2 ring-offset-2': paymentMethod === method.value }" />
+                    </div>
+                </div>
+
+                <!-- Payment Status -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-3">
+                        <i class="pi pi-check-circle mr-2 text-purple-600"></i>
+                        Estado del Pago
+                    </label>
+                    <div class="flex gap-3">
+                        <Button @click="paymentStatus = 'PAGADO'" :label="'Pagado'" :icon="'pi pi-check'"
+                            :outlined="paymentStatus !== 'PAGADO'"
+                            :severity="paymentStatus === 'PAGADO' ? 'success' : 'secondary'"
+                            class="flex-1 h-12 font-semibold" />
+                        <Button @click="paymentStatus = 'PENDIENTE'" :label="'Pendiente'" :icon="'pi pi-clock'"
+                            :outlined="paymentStatus !== 'PENDIENTE'"
+                            :severity="paymentStatus === 'PENDIENTE' ? 'warning' : 'secondary'"
+                            class="flex-1 h-12 font-semibold" />
+                    </div>
+                    <div class="text-xs text-gray-600 mt-2">
+                        <i class="pi pi-info-circle mr-1"></i>
+                        {{ paymentStatus === 'PAGADO' ? `Se generará comprobante inmediatamente` : `Venta quedará
+                        pendiente de
+                        pago` }}
                     </div>
                 </div>
 
@@ -1038,7 +1282,8 @@ const getPaymentMethodColor = (method) => {
 
                                     <div class="bg-blue-50 p-3 rounded-lg">
                                         <div class="text-blue-600 font-semibold mb-1">Stock Disponible</div>
-                                        <div class="text-xl font-bold text-blue-700">{{ parseFloat(batch.available_quantity).toFixed(2) }}
+                                        <div class="text-xl font-bold text-blue-700">{{
+                                            parseFloat(batch.available_quantity).toFixed(2) }}
                                         </div>
                                     </div>
 
@@ -1086,6 +1331,138 @@ const getPaymentMethodColor = (method) => {
                 <div class="flex justify-end pt-4 border-t border-gray-200">
                     <Button @click="showBatchDialog = false; selectedProductForBatch = null" label="Cancelar"
                         icon="pi pi-times" severity="secondary" outlined />
+                </div>
+            </div>
+        </Dialog>
+
+        <!-- Customer Selection Dialog -->
+        <Dialog v-model:visible="showCustomerDialog" header="Seleccionar Cliente" :modal="true"
+            :style="{ width: '95vw', maxWidth: '600px' }" :pt="{
+                header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
+                content: 'p-6'
+            }">
+            <template #header>
+                <div class="flex items-center space-x-3">
+                    <i class="pi pi-users text-xl"></i>
+                    <span class="text-xl font-bold">Buscar y Seleccionar Cliente</span>
+                </div>
+            </template>
+
+            <div class="space-y-6 mt-2">
+                <!-- Customer Search -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-3">
+                        <i class="pi pi-search mr-2 text-purple-600"></i>
+                        Buscar cliente por nombre o documento
+                    </label>
+                    <AutoComplete v-model="customerSearch" :suggestions="customerResults"
+                        @complete="searchCustomersDebounced($event.query)" option-label="name"
+                        placeholder="Escriba el nombre o documento del cliente..." :loading="isSearchingCustomers"
+                        :min-length="2" class="w-full" :pt="{
+                            root: 'w-full',
+                            input: 'w-full py-3 px-4 text-base border-2 border-gray-200 hover:border-purple-300 focus:border-purple-500 rounded-xl',
+                            panel: 'bg-white border border-gray-300 rounded-lg shadow-lg mt-1',
+                            list: 'max-h-60 overflow-auto p-2',
+                            item: 'p-3 hover:bg-purple-50 rounded-lg cursor-pointer border-b border-gray-100'
+                        }">
+                        <template #option="{ option }">
+                            <div @click="selectCustomer(option)" class="w-full">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="font-semibold text-gray-800">{{ option.name }}</div>
+                                        <div class="text-sm text-gray-600">
+                                            {{ option.identity_document_type?.toUpperCase() }}: {{
+                                                option.identity_document || 'Sin documento' }}
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ option.email || 'Sin email' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </AutoComplete>
+                    <div class="flex items-center mt-2 text-xs text-gray-600">
+                        <i class="pi pi-info-circle mr-1 text-purple-500"></i>
+                        Escriba al menos 2 caracteres para buscar
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="border-t border-gray-200 pt-6">
+                    <div class="flex justify-between items-center">
+                        <Button @click="showCreateCustomerDialog = true; showCustomerDialog = false"
+                            label="Crear Nuevo Cliente" icon="pi pi-plus" severity="success" outlined
+                            class="font-semibold" />
+
+                        <Button @click="showCustomerDialog = false" label="Cancelar" icon="pi pi-times"
+                            severity="secondary" outlined />
+                    </div>
+                </div>
+            </div>
+        </Dialog>
+
+        <!-- Create Customer Dialog -->
+        <Dialog v-model:visible="showCreateCustomerDialog" header="Crear Nuevo Cliente" :modal="true"
+            :style="{ width: '95vw', maxWidth: '500px' }" :pt="{
+                header: 'bg-gradient-to-r from-green-600 to-emerald-600 text-white',
+                content: 'p-6'
+            }">
+            <template #header>
+                <div class="flex items-center space-x-3">
+                    <i class="pi pi-user-plus text-xl"></i>
+                    <span class="text-xl font-bold">Nuevo Cliente</span>
+                </div>
+            </template>
+
+            <div class="space-y-4 mt-2">
+                <!-- Name -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        Nombre completo <span class="text-red-500">*</span>
+                    </label>
+                    <InputText v-model="newCustomer.name" placeholder="Nombre completo del cliente"
+                        class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                </div>
+
+                <!-- Identity Document -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Tipo</label>
+                        <Select v-model="newCustomer.identity_document_type" :options="[
+                            { label: 'DNI', value: 'dni' },
+                            { label: 'RUC', value: 'ruc' },
+                            { label: 'Pasaporte', value: 'passport' },
+                            { label: 'Otro', value: 'other' }
+                        ]" option-label="label" option-value="value" class="w-full" />
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Número de documento</label>
+                        <InputText v-model="newCustomer.identity_document" placeholder="Número de documento"
+                            class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
+                    <InputText v-model="newCustomer.email" type="email" placeholder="email@ejemplo.com"
+                        class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Teléfono</label>
+                    <InputText v-model="newCustomer.phone" placeholder="987654321"
+                        class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                </div>
+
+                <!-- Actions -->
+                <div class="flex space-x-3 pt-4 border-t border-gray-200">
+                    <Button @click="showCreateCustomerDialog = false; showCustomerDialog = true" label="Cancelar"
+                        icon="pi pi-times" severity="secondary" outlined class="flex-1" />
+                    <Button @click="createQuickCustomer" label="Crear Cliente" icon="pi pi-check" severity="success"
+                        class="flex-1 font-semibold" :loading="loading" />
                 </div>
             </div>
         </Dialog>

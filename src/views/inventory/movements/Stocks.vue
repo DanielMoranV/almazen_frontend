@@ -39,15 +39,18 @@ import StockMovementsToolbar from './componentsStockMovements/StockMovementsTool
 const toast = useToast();
 const movementsStore = useStockMovementsStore();
 
-// Function to get default date range (30 days back from today)
+// Function to get default date range (from 30 days ago up to tomorrow)
 const getDefaultDateRange = () => {
     const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(today.getDate() - 30);
 
     return {
         from: thirtyDaysAgo,
-        to: today
+        to: tomorrow
     };
 };
 
