@@ -28,9 +28,9 @@ const router = createRouter({
 
                 // Commerce - Ventas
                 {
-                    path: '/commerce/sales/orders',
-                    name: 'salesOrders',
-                    component: () => import('@/views/commerce/sales/SalesOrders.vue'),
+                    path: '/commerce/sales',
+                    name: 'sales',
+                    component: () => import('@/views/commerce/sales/Sales.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
                 {

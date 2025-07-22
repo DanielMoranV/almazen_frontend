@@ -156,11 +156,14 @@ export const deleteCustomer = (id) => axios.delete(`/customers/${id}`);
 export const searchCustomers = (q) => axios.get(`/customers/search?q=${encodeURIComponent(q)}`);
 
 // Sales
-export const createSale = (payload) => axios.post('/sales', payload);
 export const fetchSales = (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return axios.get(`/sales${queryString ? `?${queryString}` : ''}`);
 };
+export const getSale = (id) => axios.get(`/sales/${id}`);
+export const createSale = (payload) => axios.post('/sales', payload);
+export const updateSale = (payload, id) => axios.put(`/sales/${id}`, payload);
+export const deleteSale = (id) => axios.delete(`/sales/${id}`);
 
 // Stock Movements
 export const fetchStockMovements = (params = {}) => {

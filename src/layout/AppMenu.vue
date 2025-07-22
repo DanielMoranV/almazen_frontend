@@ -49,9 +49,9 @@ const model = ref([
                 icon: 'pi pi-shopping-bag',
                 items: [
                     {
-                        label: 'Órdenes',
-                        icon: 'pi pi-shopping-bag',
-                        to: '/commerce/sales/orders',
+                        label: 'Gestión de Ventas',
+                        icon: 'pi pi-shopping-cart',
+                        to: '/commerce/sales',
                         positions: ['Developer', 'Administrador', 'Ventas']
                     },
                     {
@@ -122,7 +122,7 @@ const model = ref([
             {
                 label: 'Movimientos Stock',
                 icon: 'pi pi-history',
-                to:'/inventory/movements/stocks',
+                to: '/inventory/movements/stocks',
                 positions: ['Developer', 'Administrador', 'Logística']
             },
             {
