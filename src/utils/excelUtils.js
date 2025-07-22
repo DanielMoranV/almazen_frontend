@@ -223,3 +223,140 @@ export const validateTime = (time) => {
 
     return null; // No es válida, devolver null
 };
+
+// Función específica para exportar inventario con múltiples pestañas
+export const exportInventoryToExcel = async (summaryData, detailData, fileName = 'Inventario') => {
+    const workbook = new ExcelJS.Workbook();
+
+    // Pestaña 1: Resumen por productos
+    const summarySheet = workbook.addWorksheet('Resumen por Productos');
+
+    const summaryColumns = [
+        { header: 'SKU', key: 'sku', width: 15 },
+        { header: 'Producto', key: 'name', width: 30 },
+        { header: 'Stock Total', key: 'total_stock', width: 15 },
+        { header: 'Costo Promedio', key: 'avg_unit_cost', width: 15 },
+        { header: 'Costo Total', key: 'total_cost_value', width: 15 },
+        { header: 'Precio Promedio Venta', key: 'avg_sale_price', width: 15 },
+        { header: 'Valor Total Venta', key: 'total_sale_value', width: 15 },
+        { header: 'Requiere Lotes', key: 'requires_batches', width: 15 }
+    ];
+
+    summarySheet.columns = summaryColumns;
+
+    // Agregar datos del resumen
+    if (summaryData && summaryData.length > 0) {
+        summaryData.forEach((item) => {
+            const row = summarySheet.addRow({
+                ...item,
+                avg_unit_cost: item.avg_unit_cost ? `S/ ${item.avg_unit_cost.toFixed(2)}` : '-',
+                total_cost_value: item.total_cost_value ? `S/ ${item.total_cost_value.toFixed(2)}` : '-',
+                avg_sale_price: item.avg_sale_price ? `S/ ${item.avg_sale_price.toFixed(2)}` : '-',
+                total_sale_value: item.total_sale_value ? `S/ ${item.total_sale_value.toFixed(2)}` : '-',
+                requires_batches: item.requires_batches ? 'Sí' : 'No'
+            });
+
+            // Aplicar estilo a las celdas de la fila
+            row.eachCell({ includeEmpty: true }, (cell) => {
+                cell.font = { color: { argb: '000000' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'CCCCCC' } },
+                    left: { style: 'thin', color: { argb: 'CCCCCC' } },
+                    bottom: { style: 'thin', color: { argb: 'CCCCCC' } },
+                    right: { style: 'thin', color: { argb: 'CCCCCC' } }
+                };
+            });
+        });
+    }
+
+    // Pestaña 2: Detalle completo
+    const detailSheet = workbook.addWorksheet('Detalle Completo');
+
+    const detailColumns = [
+        { header: 'SKU', key: 'sku', width: 15 },
+        { header: 'Producto', key: 'product_name', width: 30 },
+        { header: 'Almacén', key: 'warehouse_name', width: 20 },
+        { header: 'Stock', key: 'stock', width: 10 },
+        { header: 'Costo Unitario', key: 'unit_cost', width: 15 },
+        { header: 'Costo Total', key: 'total_cost', width: 15 },
+        { header: 'Precio Venta', key: 'sale_price', width: 15 },
+        { header: 'Valor Total', key: 'total_value', width: 15 },
+        { header: 'Stock Mínimo', key: 'min_stock', width: 12 },
+        { header: 'Stock Máximo', key: 'max_stock', width: 12 },
+        { header: 'Lote', key: 'batch_code', width: 15 },
+        { header: 'Fecha Vencimiento', key: 'expiration_date', width: 18 },
+        { header: 'Fecha Fabricación', key: 'manufacturing_date', width: 18 },
+        { header: 'Estado', key: 'status', width: 12 }
+    ];
+
+    detailSheet.columns = detailColumns;
+
+    // Agregar datos del detalle
+    if (detailData && detailData.length > 0) {
+        detailData.forEach((item) => {
+            // Función auxiliar para formatear valores numéricos
+            const formatCurrency = (value) => {
+                if (value === null || value === undefined || value === '' || isNaN(value)) return '-';
+                const numValue = parseFloat(value);
+                return isNaN(numValue) ? '-' : `S/ ${numValue.toFixed(2)}`;
+            };
+
+            const formatDate = (dateValue) => {
+                if (!dateValue) return '-';
+                try {
+                    const date = new Date(dateValue);
+                    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('es-ES');
+                } catch (error) {
+                    return '-';
+                }
+            };
+
+            const row = detailSheet.addRow({
+                ...item,
+                unit_cost: formatCurrency(item.unit_cost),
+                total_cost: formatCurrency(item.total_cost),
+                sale_price: formatCurrency(item.sale_price),
+                total_value: formatCurrency(item.total_value),
+                expiration_date: formatDate(item.expiration_date),
+                manufacturing_date: formatDate(item.manufacturing_date)
+            });
+
+            // Aplicar estilo a las celdas de la fila
+            row.eachCell({ includeEmpty: true }, (cell) => {
+                cell.font = { color: { argb: '000000' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'CCCCCC' } },
+                    left: { style: 'thin', color: { argb: 'CCCCCC' } },
+                    bottom: { style: 'thin', color: { argb: 'CCCCCC' } },
+                    right: { style: 'thin', color: { argb: 'CCCCCC' } }
+                };
+            });
+        });
+    }
+
+    // Aplicar estilo a los encabezados de ambas pestañas
+    [summarySheet, detailSheet].forEach(sheet => {
+        sheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFF' } };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '059669' } // Color verde
+            };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+    });
+
+    // Generar nombre de archivo único con timestamp
+    const timestamp = new Date()
+        .toISOString()
+        .replace(/[-T:.Z]/g, '')
+        .slice(0, 17);
+    const finalFileName = `${fileName}_${timestamp}.xlsx`;
+
+    // Guardar archivo
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), finalFileName);
+};

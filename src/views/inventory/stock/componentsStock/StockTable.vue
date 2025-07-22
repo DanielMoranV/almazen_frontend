@@ -251,7 +251,7 @@
 
 <script setup>
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
-import { exportToExcel } from '@/utils/excelUtils';
+import { exportInventoryToExcel } from '@/utils/excelUtils';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -307,29 +307,96 @@ const clearFilters = () => {
     emit('clear-filters');
 };
 
-// Función para exportar a Excel
+// Función para exportar a Excel con múltiples pestañas
 const exportStock = async () => {
-    const columns = [
-        { header: 'SKU', key: 'sku', width: 15 },
-        { header: 'Producto', key: 'name', width: 30 },
-        { header: 'Stock Total', key: 'total_stock', width: 15 },
-        { header: 'Costo Promedio', key: 'avg_unit_cost', width: 15 },
-        { header: 'Costo Total', key: 'total_cost_value', width: 15 },
-        { header: 'Precio Promedio Venta', key: 'avg_sale_price', width: 15 },
-        { header: 'Valor Total Venta', key: 'total_sale_value', width: 15 },
-        { header: 'Requiere Lotes', key: 'requires_batches', width: 15 }
-    ];
-
-    const formattedStock = props.stockItems.map((item) => ({
-        ...item,
-        avg_unit_cost: item.avg_unit_cost ? `S/ ${item.avg_unit_cost.toFixed(2)}` : '-',
-        total_cost_value: item.total_cost_value ? `S/ ${item.total_cost_value.toFixed(2)}` : '-',
-        avg_sale_price: item.avg_sale_price ? `S/ ${item.avg_sale_price.toFixed(2)}` : '-',
-        total_sale_value: item.total_sale_value ? `S/ ${item.total_sale_value.toFixed(2)}` : '-',
-        requires_batches: item.requires_batches ? 'Sí' : 'No'
+    // Datos del resumen (pestaña 1) - formato actual
+    const summaryData = props.stockItems.map((item) => ({
+        sku: item.sku || '-',
+        name: item.name || '-',
+        total_stock: item.total_stock || 0,
+        avg_unit_cost: item.avg_unit_cost || 0,
+        total_cost_value: item.total_cost_value || 0,
+        avg_sale_price: item.avg_sale_price || 0,
+        total_sale_value: item.total_sale_value || 0,
+        requires_batches: item.requires_batches || false
     }));
 
-    await exportToExcel(columns, formattedStock, 'Inventario', 'Inventario_Stock');
+    // Datos del detalle (pestaña 2) - desglosado por almacén y lotes
+    const detailData = [];
+    
+    props.stockItems.forEach((product) => {
+        if (product.stock_by_warehouse && product.stock_by_warehouse.length > 0) {
+            product.stock_by_warehouse.forEach((warehouse) => {
+                // Si el producto requiere lotes y tiene lotes
+                if (product.requires_batches && warehouse.batches && warehouse.batches.length > 0) {
+                    warehouse.batches.forEach((batch) => {
+                        detailData.push({
+                            sku: product.sku || '-',
+                            product_name: product.name || '-',
+                            warehouse_name: warehouse.warehouse_name || '-',
+                            stock: batch.stock || 0,
+                            unit_cost: batch.unit_cost || warehouse.avg_unit_cost || product.avg_unit_cost || 0,
+                            total_cost: (batch.stock || 0) * (batch.unit_cost || warehouse.avg_unit_cost || product.avg_unit_cost || 0),
+                            sale_price: batch.sale_price || warehouse.avg_sale_price || product.avg_sale_price || 0,
+                            total_value: (batch.stock || 0) * (batch.sale_price || warehouse.avg_sale_price || product.avg_sale_price || 0),
+                            min_stock: warehouse.min_stock || 0,
+                            max_stock: warehouse.max_stock || 0,
+                            batch_code: batch.batch_code || '-',
+                            expiration_date: batch.expiration_date || null,
+                            manufacturing_date: batch.manufacturing_date || null,
+                            status: getStockStatus(batch.stock || 0, warehouse.min_stock || 10)
+                        });
+                    });
+                } else {
+                    // Si no requiere lotes o no tiene lotes, crear entrada por almacén
+                    detailData.push({
+                        sku: product.sku || '-',
+                        product_name: product.name || '-',
+                        warehouse_name: warehouse.warehouse_name || '-',
+                        stock: warehouse.total_stock || 0,
+                        unit_cost: warehouse.avg_unit_cost || product.avg_unit_cost || 0,
+                        total_cost: (warehouse.total_stock || 0) * (warehouse.avg_unit_cost || product.avg_unit_cost || 0),
+                        sale_price: warehouse.avg_sale_price || product.avg_sale_price || 0,
+                        total_value: (warehouse.total_stock || 0) * (warehouse.avg_sale_price || product.avg_sale_price || 0),
+                        min_stock: warehouse.min_stock || 0,
+                        max_stock: warehouse.max_stock || 0,
+                        batch_code: product.requires_batches ? 'Sin lotes' : 'No requiere',
+                        expiration_date: null,
+                        manufacturing_date: null,
+                        status: getStockStatus(warehouse.total_stock || 0, warehouse.min_stock || 10)
+                    });
+                }
+            });
+        } else {
+            // Si no tiene información de almacenes, crear entrada básica
+            detailData.push({
+                sku: product.sku || '-',
+                product_name: product.name || '-',
+                warehouse_name: 'Sin almacén definido',
+                stock: product.total_stock || 0,
+                unit_cost: product.avg_unit_cost || 0,
+                total_cost: (product.total_stock || 0) * (product.avg_unit_cost || 0),
+                sale_price: product.avg_sale_price || 0,
+                total_value: (product.total_stock || 0) * (product.avg_sale_price || 0),
+                min_stock: 0,
+                max_stock: 0,
+                batch_code: product.requires_batches ? 'Sin lotes' : 'No requiere',
+                expiration_date: null,
+                manufacturing_date: null,
+                status: getStockStatus(product.total_stock || 0, 10)
+            });
+        }
+    });
+
+    // Exportar con ambas pestañas
+    await exportInventoryToExcel(summaryData, detailData, 'Inventario_Stock');
+};
+
+// Función auxiliar para determinar el estado del stock
+const getStockStatus = (stock, minStock = 10) => {
+    if (stock === 0) return 'Agotado';
+    if (stock <= minStock) return 'Stock bajo';
+    return 'En stock';
 };
 
 // Función para formatear moneda

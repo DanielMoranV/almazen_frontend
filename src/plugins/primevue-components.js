@@ -4,7 +4,6 @@ import { AutoComplete, Drawer, IconField, InputIcon, MultiSelect, Popover, Selec
 import Avatar from 'primevue/avatar';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
-import Calendar from 'primevue/calendar';
 import Card from 'primevue/card';
 import Checkbox from 'primevue/checkbox';
 import Column from 'primevue/column';
@@ -55,7 +54,6 @@ export default function registerPrimeVueComponents(app) {
     app.component('MultiSelect', MultiSelect);
     app.component('AutoComplete', AutoComplete);
     app.component('Toolbar', Toolbar);
-    app.component('Calendar', Calendar);
     app.component('Badge', Badge);
     app.component('ProgressSpinner', ProgressSpinner);
     app.component('Message', Message);

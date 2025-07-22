@@ -35,6 +35,10 @@ export const fetchProducts = (params = {}) => {
 export const createProduct = (payload) => axios.post('/products', payload);
 export const deleteProduct = (id) => axios.delete(`/products/${id}`);
 export const updateProduct = (payload, id) => axios.put(`/products/${id}`, payload);
+export const searchProductsForSale = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/products/search-sale${queryString ? `?${queryString}` : ''}`);
+};
 
 // Units
 export const fetchUnits = () => axios.get('/units');
@@ -139,6 +143,40 @@ export const getBulkPreview = (productId, params = {}) => {
 };
 
 export const bulkUpdateStocks = (productId, payload) => axios.put(`/products/${productId}/stocks/bulk-update`, payload);
+
+// Customers
+export const fetchCustomers = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/customers${queryString ? `?${queryString}` : ''}`);
+};
+export const getCustomer = (id) => axios.get(`/customers/${id}`);
+export const createCustomer = (payload) => axios.post('/customers', payload);
+export const updateCustomer = (payload, id) => axios.put(`/customers/${id}`, payload);
+export const deleteCustomer = (id) => axios.delete(`/customers/${id}`);
+export const searchCustomers = (q) => axios.get(`/customers/search?q=${encodeURIComponent(q)}`);
+
+// Sales
+export const createSale = (payload) => axios.post('/sales', payload);
+export const fetchSales = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/sales${queryString ? `?${queryString}` : ''}`);
+};
+
+// Stock Movements
+export const fetchStockMovements = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stock-movements${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchStockEntries = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stock-movements/entries/list${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchStockExits = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stock-movements/exits/list${queryString ? `?${queryString}` : ''}`);
+};
 
 // Dashboard
 export const fetchDashboardMetrics = () => axios.get('/dashboard/metrics');

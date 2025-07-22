@@ -1,374 +1,324 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
+import { useCustomersStore } from '@/stores/customersStore';
 import { useToast } from 'primevue/usetoast';
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref } from 'vue';
+import CustomerFormDialog from './componentsCustomers/CustomerFormDialog.vue';
+import CustomersTable from './componentsCustomers/CustomersTable.vue';
+import CustomersToolbar from './componentsCustomers/CustomersToolbar.vue';
 
 const toast = useToast();
-const router = useRouter();
-const loading = ref(false);
-const customers = ref([]);
-const searchQuery = ref('');
-const displayCustomerDialog = ref(false);
-const isEditMode = ref(false);
+const customersStore = useCustomersStore();
+
+// Estados locales
 const selectedCustomer = ref(null);
+const showCustomerDialog = ref(false);
+const showDeleteDialog = ref(false);
+const isCreating = ref(false);
 
-const customerForm = ref({
-    id: null,
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    taxId: '',
-    type: 'individual',
-    creditLimit: 0,
-    status: 'active'
+// Estados computados del store
+const totalCustomers = computed(() => customersStore.totalCustomers);
+const isLoading = computed(() => customersStore.isLoadingCustomers);
+const hasCustomers = computed(() => customersStore.customersList.length > 0);
+
+// Inicialización
+onMounted(async () => {
+    await loadCustomers();
+    console.log(customersStore.customersList);
 });
 
-// Datos de ejemplo para los clientes
-const mockCustomers = [
-    {
-        id: 1,
-        name: 'Empresa ABC',
-        email: 'contacto@empresaabc.com',
-        phone: '555-123-4567',
-        address: 'Av. Principal 123, Ciudad',
-        taxId: 'ABC123456789',
-        type: 'business',
-        creditLimit: 10000,
-        status: 'active',
-        totalPurchases: 25600,
-        lastPurchase: '2025-06-01'
-    },
-    {
-        id: 2,
-        name: 'Distribuidora XYZ',
-        email: 'ventas@distribuidoraxyz.com',
-        phone: '555-987-6543',
-        address: 'Calle Comercial 456, Ciudad',
-        taxId: 'XYZ987654321',
-        type: 'business',
-        creditLimit: 15000,
-        status: 'active',
-        totalPurchases: 42300,
-        lastPurchase: '2025-05-28'
-    },
-    {
-        id: 3,
-        name: 'Juan Pérez',
-        email: 'juan.perez@email.com',
-        phone: '555-555-5555',
-        address: 'Calle Residencial 789, Ciudad',
-        taxId: 'PERJ891234',
-        type: 'individual',
-        creditLimit: 2000,
-        status: 'active',
-        totalPurchases: 3500,
-        lastPurchase: '2025-06-02'
-    },
-    {
-        id: 4,
-        name: 'Comercial 123',
-        email: 'info@comercial123.com',
-        phone: '555-111-2222',
-        address: 'Av. Industrial 567, Ciudad',
-        taxId: 'COM123789456',
-        type: 'business',
-        creditLimit: 8000,
-        status: 'inactive',
-        totalPurchases: 12800,
-        lastPurchase: '2025-04-15'
-    },
-    {
-        id: 5,
-        name: 'María González',
-        email: 'maria.gonzalez@email.com',
-        phone: '555-444-3333',
-        address: 'Calle Central 321, Ciudad',
-        taxId: 'GONM765432',
-        type: 'individual',
-        creditLimit: 1500,
-        status: 'active',
-        totalPurchases: 2700,
-        lastPurchase: '2025-05-20'
+// Gestión de carga inicial
+const loadCustomers = async () => {
+    await customersStore.fetchCustomers();
+    if (customersStore.success) {
+        showSuccess('Clientes cargados', 'Lista actualizada correctamente');
     }
-];
-
-onMounted(() => {
-    loadCustomers();
-});
-
-const loadCustomers = () => {
-    loading.value = true;
-    // Simulación de carga de datos
-    setTimeout(() => {
-        customers.value = mockCustomers;
-        loading.value = false;
-    }, 500);
 };
 
-const openNewCustomerDialog = () => {
-    isEditMode.value = false;
-    customerForm.value = {
-        id: null,
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        taxId: '',
-        type: 'individual',
-        creditLimit: 0,
-        status: 'active'
-    };
-    displayCustomerDialog.value = true;
+// Gestión de clientes
+const openCreateDialog = () => {
+    selectedCustomer.value = null;
+    isCreating.value = true;
+    showCustomerDialog.value = true;
 };
 
-const openEditCustomerDialog = (customer) => {
-    isEditMode.value = true;
+const openEditDialog = (customer) => {
+    selectedCustomer.value = { ...customer };
+    isCreating.value = false;
+    showCustomerDialog.value = true;
+};
+
+const openDeleteDialog = (customer) => {
     selectedCustomer.value = customer;
-    customerForm.value = { ...customer };
-    displayCustomerDialog.value = true;
+    showDeleteDialog.value = true;
 };
 
-const saveCustomer = () => {
-    if (!customerForm.value.name || !customerForm.value.email) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Nombre y correo son campos obligatorios',
-            life: 3000
-        });
-        return;
+const handleCustomerSubmit = async (customerData) => {
+    const action = isCreating.value ? customersStore.createCustomer : customersStore.updateCustomer;
+    await action(customerData);
+
+    if (customersStore.success) {
+        const message = isCreating.value ? 'Cliente creado exitosamente' : 'Cliente actualizado exitosamente';
+        showSuccess(message, customersStore.message);
+        showCustomerDialog.value = false;
+        // Recargar la página actual para mostrar el nuevo/editado cliente
+        await customersStore.fetchCustomers();
+    } else {
+        handleApiErrors(customersStore);
     }
-
-    loading.value = true;
-
-    // Simulación de guardado
-    setTimeout(() => {
-        if (isEditMode.value) {
-            // Actualizar cliente existente
-            const index = customers.value.findIndex((c) => c.id === customerForm.value.id);
-            if (index !== -1) {
-                customers.value[index] = { ...customerForm.value };
-            }
-
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: 'Cliente actualizado correctamente',
-                life: 3000
-            });
-        } else {
-            // Crear nuevo cliente
-            const newCustomer = {
-                ...customerForm.value,
-                id: customers.value.length + 1,
-                totalPurchases: 0,
-                lastPurchase: '-'
-            };
-
-            customers.value.unshift(newCustomer);
-
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: 'Cliente creado correctamente',
-                life: 3000
-            });
-        }
-
-        displayCustomerDialog.value = false;
-        loading.value = false;
-    }, 1000);
 };
 
-const viewCustomerDetails = (customer) => {
-    // Navegar a la página de detalles del cliente
-    router.push(`/customers/${customer.id}`);
+const handleCustomerDelete = async () => {
+    await customersStore.removeCustomer(selectedCustomer.value.id);
+
+    if (customersStore.success) {
+        showSuccess('Cliente eliminado', customersStore.message);
+        showDeleteDialog.value = false;
+        // Recargar para reflejar la eliminación
+        await customersStore.fetchCustomers();
+    } else {
+        handleApiErrors(customersStore);
+        showDeleteDialog.value = false;
+    }
 };
 
-const filteredCustomers = computed(() => {
-    if (!searchQuery.value) return customers.value;
-
-    const query = searchQuery.value.toLowerCase();
-    return customers.value.filter((customer) => customer.name.toLowerCase().includes(query) || customer.email.toLowerCase().includes(query) || customer.taxId.toLowerCase().includes(query));
-});
-
-const getCustomerTypeLabel = (type) => {
-    return type === 'business' ? 'Empresa' : 'Individual';
+// Manejadores del toolbar
+const handleRefresh = async () => {
+    await customersStore.fetchCustomers();
+    showSuccess('Datos actualizados', 'Lista de clientes actualizada');
 };
 
-const getStatusClass = (status) => {
-    return status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+// Helpers para manejo de respuestas API
+const handleApiErrors = (store) => {
+    if (store.validationErrors && store.validationErrors.length > 0) {
+        store.validationErrors.forEach((err) => {
+            toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+        });
+    } else {
+        showError('Error', store.message || 'Ha ocurrido un error inesperado');
+    }
 };
 
-const getStatusLabel = (status) => {
-    return status === 'active' ? 'Activo' : 'Inactivo';
+const showSuccess = (summary, detail) => {
+    toast.add({ severity: 'success', summary, detail, life: 3000 });
 };
 
-const formatCurrency = (value) => {
-    return value ? `$${value.toLocaleString()}` : '-';
+const showError = (summary, detail) => {
+    toast.add({ severity: 'error', summary, detail, life: 4000 });
 };
 </script>
 
 <template>
-    <div class="grid">
-        <div class="col-12">
-            <div class="card">
-                <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
-                    <h5 class="m-0">Clientes</h5>
-                    <div class="mt-3 md:mt-0">
-                        <button class="p-button p-component" @click="openNewCustomerDialog">
-                            <i class="pi pi-plus mr-2"></i>
-                            <span class="p-button-label">Nuevo Cliente</span>
-                        </button>
-                    </div>
-                </div>
+    <div class="customers-page">
+        <!-- Toast y Confirmaciones -->
+        <Toast />
+        <ConfirmDialog />
 
-                <div class="flex justify-content-between mt-4">
-                    <div class="p-input-icon-left w-full md:w-4">
-                        <i class="pi pi-search"></i>
-                        <input type="text" v-model="searchQuery" class="p-inputtext p-component w-full" placeholder="Buscar cliente..." />
-                    </div>
-                </div>
+        <!-- Toolbar Principal Mejorado -->
+        <CustomersToolbar :total-customers="totalCustomers" :is-loading="isLoading" @refresh="handleRefresh"
+            @create="openCreateDialog" />
 
-                <div v-if="loading" class="flex justify-content-center mt-4">
-                    <i class="pi pi-spin pi-spinner text-2xl"></i>
-                </div>
-
-                <div v-else-if="customers.length === 0" class="text-center p-5">
-                    <i class="pi pi-users text-4xl text-500 mb-3"></i>
-                    <p>No hay clientes registrados</p>
-                </div>
-
-                <div v-else class="overflow-x-auto mt-4">
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th class="text-left p-3 border-bottom-1 surface-border">ID</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Nombre</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Email</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Teléfono</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">ID Fiscal</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Tipo</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Límite Crédito</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Total Compras</th>
-                                <th class="text-center p-3 border-bottom-1 surface-border">Estado</th>
-                                <th class="text-center p-3 border-bottom-1 surface-border">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="customer in filteredCustomers" :key="customer.id" class="cursor-pointer hover:surface-200" @click="viewCustomerDetails(customer)">
-                                <td class="p-3 border-bottom-1 surface-border">{{ customer.id }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ customer.name }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ customer.email }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ customer.phone }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ customer.taxId }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ getCustomerTypeLabel(customer.type) }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(customer.creditLimit) }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(customer.totalPurchases) }}</td>
-                                <td class="text-center p-3 border-bottom-1 surface-border">
-                                    <span class="px-2 py-1 text-xs border-round" :class="getStatusClass(customer.status)">
-                                        {{ getStatusLabel(customer.status) }}
-                                    </span>
-                                </td>
-                                <td class="text-center p-3 border-bottom-1 surface-border">
-                                    <div class="flex justify-content-center">
-                                        <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text mr-2" @click.stop="viewCustomerDetails(customer)">
-                                            <i class="pi pi-eye"></i>
-                                        </button>
-                                        <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text" @click.stop="openEditCustomerDialog(customer)">
-                                            <i class="pi pi-pencil"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Diálogo de Cliente -->
-        <div v-if="displayCustomerDialog" class="fixed top-0 left-0 w-full h-full flex justify-content-center align-items-center bg-black-alpha-40" style="z-index: 1000">
-            <div class="surface-card p-4 shadow-2 border-round w-full md:w-8">
-                <div class="flex justify-content-between align-items-center mb-4">
-                    <h5 class="m-0">{{ isEditMode ? 'Editar Cliente' : 'Nuevo Cliente' }}</h5>
-                    <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text" @click="displayCustomerDialog = false">
-                        <i class="pi pi-times"></i>
-                    </button>
-                </div>
-
-                <div class="grid formgrid">
-                    <div class="field col-12 md:col-6 mb-4">
-                        <label for="name" class="block mb-2">Nombre*</label>
-                        <input id="name" type="text" v-model="customerForm.name" class="p-inputtext p-component w-full" />
-                    </div>
-
-                    <div class="field col-12 md:col-6 mb-4">
-                        <label for="email" class="block mb-2">Email*</label>
-                        <input id="email" type="email" v-model="customerForm.email" class="p-inputtext p-component w-full" />
-                    </div>
-
-                    <div class="field col-12 md:col-6 mb-4">
-                        <label for="phone" class="block mb-2">Teléfono</label>
-                        <input id="phone" type="text" v-model="customerForm.phone" class="p-inputtext p-component w-full" />
-                    </div>
-
-                    <div class="field col-12 md:col-6 mb-4">
-                        <label for="taxId" class="block mb-2">ID Fiscal</label>
-                        <input id="taxId" type="text" v-model="customerForm.taxId" class="p-inputtext p-component w-full" />
-                    </div>
-
-                    <div class="field col-12 mb-4">
-                        <label for="address" class="block mb-2">Dirección</label>
-                        <textarea id="address" v-model="customerForm.address" rows="3" class="p-inputtextarea p-component w-full"></textarea>
-                    </div>
-
-                    <div class="field col-12 md:col-4 mb-4">
-                        <label for="type" class="block mb-2">Tipo</label>
-                        <select id="type" v-model="customerForm.type" class="p-inputtext p-component w-full">
-                            <option value="individual">Individual</option>
-                            <option value="business">Empresa</option>
-                        </select>
-                    </div>
-
-                    <div class="field col-12 md:col-4 mb-4">
-                        <label for="creditLimit" class="block mb-2">Límite de Crédito</label>
-                        <div class="p-inputgroup">
-                            <span class="p-inputgroup-addon">$</span>
-                            <input id="creditLimit" type="number" v-model="customerForm.creditLimit" class="p-inputtext p-component w-full" />
+        <!-- Área Principal de Contenido con Animaciones -->
+        <div class="content-wrapper">
+            <!-- Estado Vacío Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="!isLoading && !hasCustomers" class="empty-state">
+                    <div class="empty-content">
+                        <div class="empty-icon">
+                            <i class="pi pi-users"></i>
+                        </div>
+                        <h3 class="empty-title">
+                            {{ customersStore?.getCurrentSearchTerm ? 'No se encontraron clientes' : 'Aún no tienes clientes' }}
+                        </h3>
+                        <p class="empty-description">
+                            {{ customersStore?.getCurrentSearchTerm ? 'Intenta con otros términos de búsqueda o limpia los filtros.' : 'Crea tu primer cliente para empezar a gestionar tu cartera.' }}
+                        </p>
+                        <div class="empty-actions">
+                            <Button v-if="!customersStore.getCurrentSearchTerm" icon="pi pi-plus"
+                                label="Agregar Cliente" class="primary-action-btn" @click="openCreateDialog" />
+                            <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="secondary-action-btn"
+                                @click="customersStore.clearSearch && customersStore.clearSearch()" />
                         </div>
                     </div>
+                </div>
+            </transition>
 
-                    <div class="field col-12 md:col-4 mb-4">
-                        <label for="status" class="block mb-2">Estado</label>
-                        <select id="status" v-model="customerForm.status" class="p-inputtext p-component w-full">
-                            <option value="active">Activo</option>
-                            <option value="inactive">Inactivo</option>
-                        </select>
+            <!-- Tabla de Clientes con Animaciones -->
+            <transition name="slide-up" appear>
+                <div v-if="!isLoading && hasCustomers" class="table-container">
+                    <CustomersTable :customers="customersStore.customersList" :loading="isLoading"
+                        @edit="openEditDialog" @delete="openDeleteDialog" />
+                </div>
+            </transition>
+
+            <!-- Estado de Carga Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="isLoading" class="loading-state">
+                    <div class="loading-content">
+                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent"
+                            animationDuration="1s" />
+                        <p class="loading-text">Cargando clientes...</p>
                     </div>
                 </div>
-
-                <div class="flex justify-content-end">
-                    <button class="p-button p-component p-button-secondary mr-2" @click="displayCustomerDialog = false">
-                        <span class="p-button-label">Cancelar</span>
-                    </button>
-                    <button class="p-button p-component" :disabled="loading" @click="saveCustomer">
-                        <i v-if="loading" class="pi pi-spin pi-spinner mr-2"></i>
-                        <span class="p-button-label">Guardar</span>
-                    </button>
-                </div>
-            </div>
+            </transition>
         </div>
+
+        <!-- Diálogos -->
+        <CustomerFormDialog v-model:visible="showCustomerDialog" :customer="selectedCustomer" :loading="isLoading"
+            @submit="handleCustomerSubmit" />
+
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedCustomer?.name || ''"
+            @confirm="handleCustomerDelete" />
     </div>
 </template>
 
 <style scoped>
-.cursor-pointer {
-    cursor: pointer;
+/* Contenedor principal de la página de clientes */
+.customers-page {
+    @apply min-h-screen;
 }
 
-.overflow-x-auto {
-    overflow-x: auto;
+/* Contenedor de contenido con espaciado y diseño mejorado */
+.content-wrapper {
+    @apply mt-6 space-y-6;
+}
+
+/* Contenedor de tabla con efecto de elevación */
+.table-container {
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Estado vacío mejorado con diseño centrado */
+.empty-state {
+    @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl border-2 border-dashed border-purple-200 dark:border-gray-600;
+}
+
+.empty-content {
+    @apply text-center px-8 py-12 max-w-md;
+}
+
+/* Contenedor del ícono mejorado */
+.empty-icon {
+    @apply mx-auto mb-6 w-20 h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg;
+}
+
+/* Estilo del ícono con animación */
+.empty-icon i {
+    @apply text-4xl text-white;
+    animation: bounce 2s infinite;
+}
+
+/* Título del estado vacío mejorado */
+.empty-title {
+    @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Descripción del estado vacío */
+.empty-description {
+    @apply text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed;
+}
+
+/* Contenedor de acciones en estado vacío */
+.empty-actions {
+    @apply flex justify-center gap-4;
+}
+
+/* Botón de acción principal */
+.primary-action-btn {
+    @apply bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-none text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105;
+}
+
+/* Botón de acción secundaria */
+.secondary-action-btn {
+    @apply bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold py-3 px-6 rounded-xl shadow-md transition-all duration-300;
+}
+
+/* Estado de carga mejorado */
+.loading-state {
+    @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl;
+}
+
+.loading-content {
+    @apply text-center px-8 py-12;
+}
+
+.loading-text {
+    @apply text-gray-600 dark:text-gray-400 mt-4 text-lg font-medium;
+}
+
+/* Animaciones de transición */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.slide-up-enter-active {
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.slide-up-enter-from {
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+/* Animaciones de CSS */
+@keyframes bounce {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+        transform: translateY(0);
+    }
+
+    40% {
+        transform: translateY(-10px);
+    }
+
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Ajustes responsivos para pantallas pequeñas */
+@media (max-width: 640px) {
+    .empty-content {
+        @apply px-4 py-8;
+    }
+
+    .empty-title {
+        @apply text-2xl;
+    }
+
+    .empty-description {
+        @apply text-base;
+    }
+
+    .empty-actions {
+        @apply flex-col gap-3;
+    }
+
+    .primary-action-btn,
+    .secondary-action-btn {
+        @apply w-full;
+    }
+}
+
+/* Mejoras adicionales para modo oscuro */
+@media (prefers-color-scheme: dark) {
+    .table-container {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    }
 }
 </style>

@@ -96,9 +96,9 @@ const router = createRouter({
                     meta: { positions: ['Developer', 'Administrador', 'Logística', 'Ventas'] }
                 },
                 {
-                    path: '/inventory/movements/entries',
+                    path: '/inventory/movements/stocks',
                     name: 'inventoryMovements',
-                    component: () => import('@/views/inventory/movements/Entry.vue'),
+                    component: () => import('@/views/inventory/movements/Stocks.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
                 {

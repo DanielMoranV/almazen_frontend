@@ -8,7 +8,6 @@ import { useRouter } from 'vue-router';
 import BulkEditDialog from './componentsStock/BulkEditDialog.vue';
 import StockDetailsModal from './componentsStock/StockDetailsModal.vue';
 import StockEditDialog from './componentsStock/StockEditDialog.vue';
-import StockFilters from './componentsStock/StockFilters.vue';
 import StockStatistics from './componentsStock/StockStatistics.vue';
 import StockTable from './componentsStock/StockTable.vue';
 import StockToolbar from './componentsStock/StockToolbar.vue';
@@ -18,7 +17,6 @@ const router = useRouter();
 const stocksStore = useProductStocksStore();
 
 // Local reactive refs for UI
-const searchQuery = ref('');
 const warehouseFilter = ref(null);
 const stockStatusFilter = ref(null);
 
@@ -63,9 +61,8 @@ const warehouseOptions = computed(() => {
 
 // Watch for filter changes and update store
 watch(
-    [searchQuery, warehouseFilter, stockStatusFilter],
-    ([search, warehouse, status]) => {
-        stocksStore.setSearchTerm(search);
+    [warehouseFilter, stockStatusFilter],
+    ([warehouse, status]) => {
         stocksStore.setWarehouseFilter(warehouse);
         stocksStore.setStatusFilter(status);
     },
@@ -203,7 +200,6 @@ const handleBulkUpdated = async () => {
 };
 
 const clearFilters = () => {
-    searchQuery.value = '';
     warehouseFilter.value = null;
     stockStatusFilter.value = null;
     stocksStore.clearFilters();
@@ -215,8 +211,17 @@ const clearFilters = () => {
         <!-- Toast notifications -->
         <Toast />
 
-        <!-- Toolbar Principal -->
-        <StockToolbar :total-products="totalItems" :total-quantity="totalQuantity" :is-loading="loading" @refresh="handleRefresh" @export="exportToExcel" @print="printInventory" />
+        <!-- Toolbar Principal con Filtros Integrados -->
+        <StockToolbar 
+            :total-products="totalItems" 
+            :total-quantity="totalQuantity" 
+            :is-loading="loading" 
+            v-model:warehouse-filter="warehouseFilter" 
+            v-model:stock-status-filter="stockStatusFilter" 
+            :warehouse-options="warehouseOptions" 
+            @refresh="handleRefresh" 
+            @clear-filters="clearFilters" 
+        />
 
         <!-- Estadísticas -->
         <StockStatistics 
@@ -228,9 +233,6 @@ const clearFilters = () => {
             :total-sale-value="totalSaleValue"
             :loading="loading" 
         />
-
-        <!-- Filtros -->
-        <StockFilters v-model:search-query="searchQuery" v-model:warehouse-filter="warehouseFilter" v-model:stock-status-filter="stockStatusFilter" :warehouse-options="warehouseOptions" @clear-filters="clearFilters" />
 
         <!-- Tabla de Stock -->
         <transition name="slide-up" appear>

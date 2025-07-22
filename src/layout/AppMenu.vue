@@ -120,16 +120,9 @@ const model = ref([
                 positions: ['Developer', 'Administrador', 'Logística', 'Ventas']
             },
             {
-                label: 'Movimientos',
+                label: 'Movimientos Stock',
                 icon: 'pi pi-history',
-                items: [
-                    {
-                        label: 'Entradas',
-                        icon: 'pi pi-arrow-down',
-                        to: '/inventory/movements/entries',
-                        positions: ['Developer', 'Administrador', 'Logística']
-                    }
-                ],
+                to:'/inventory/movements/stocks',
                 positions: ['Developer', 'Administrador', 'Logística']
             },
             {
