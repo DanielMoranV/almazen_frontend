@@ -6,6 +6,7 @@ import { computed, onMounted, ref } from 'vue';
 import SaleFormDialog from './componentsSales/SaleFormDialog.vue';
 import SalesTable from './componentsSales/SalesTable.vue';
 import SalesToolbar from './componentsSales/SalesToolbar.vue';
+import SalesFilters from './componentsSales/SalesFilters.vue';
 
 const toast = useToast();
 const salesStore = useSalesStore();
@@ -92,6 +93,16 @@ const handleRefresh = async () => {
     showSuccess('Datos actualizados', 'Lista de ventas actualizada');
 };
 
+// Manejadores de filtros
+const handleFilterUpdate = (filters) => {
+    salesStore.updateFilters(filters);
+};
+
+const handleClearFilters = () => {
+    salesStore.clearFilters();
+    showSuccess('Filtros limpiados', 'Mostrando todas las ventas');
+};
+
 // Helpers para manejo de respuestas API
 const handleApiErrors = (store) => {
     if (store.validationErrors && store.validationErrors.length > 0) {
@@ -122,6 +133,15 @@ const showError = (summary, detail) => {
         <SalesToolbar :total-sales="totalSales" :is-loading="isLoading" @refresh="handleRefresh"
             @create="openCreateDialog" />
 
+        <!-- Filtros de Búsqueda -->
+        <SalesFilters 
+            :filters="salesStore.filters" 
+            :loading="isLoading"
+            @update:filters="handleFilterUpdate"
+            @clear="handleClearFilters"
+            @search="() => salesStore.applyLocalFilters()"
+        />
+
         <!-- Área Principal de Contenido -->
         <div class="content-wrapper">
             <!-- Estado Vacío -->
@@ -151,8 +171,12 @@ const showError = (summary, detail) => {
             <!-- Tabla de Ventas -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasSales" class="table-container">
-                    <SalesTable :sales="salesStore.salesList" :loading="isLoading" @edit="openEditDialog"
-                        @delete="openDeleteDialog" />
+                    <SalesTable 
+                        :sales="salesStore.salesList" 
+                        :loading="isLoading" 
+                        @edit="openEditDialog"
+                        @delete="openDeleteDialog" 
+                    />
                 </div>
             </transition>
 

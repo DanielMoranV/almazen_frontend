@@ -52,7 +52,12 @@ const exportSales = async () => {
 
 // Función para determinar si una venta se puede editar
 const canEditSale = (sale) => {
-    return sale.status === 'PENDIENTE';
+    return sale.status_info?.can_edit || sale.status === 'PENDIENTE';
+};
+
+// Función para determinar si una venta se puede eliminar
+const canDeleteSale = (sale) => {
+    return sale.status_info?.can_delete !== false && sale.status === 'PENDIENTE';
 };
 
 // Función para formatear moneda
@@ -72,6 +77,7 @@ const formatDate = (date) => {
         day: '2-digit'
     });
 };
+
 </script>
 
 <template>
@@ -88,8 +94,8 @@ const formatDate = (date) => {
         v-model:filters="localFilters"
         :globalFilterFields="['document_number', 'customer_name', 'document_type', 'status']"
         :paginator="true"
-        :rows="15"
-        :rowsPerPageOptions="[10, 15, 25, 50, 100]"
+        :rows="20"
+        :rowsPerPageOptions="[10, 15, 20, 25, 50, 100]"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ventas"
         class="sales-table green-theme p-datatable-gridlines"
@@ -178,7 +184,12 @@ const formatDate = (date) => {
                     <div class="customer-avatar">
                         {{ (data.customer_name || data.customer?.name || 'C')?.charAt(0)?.toUpperCase() }}
                     </div>
-                    <span class="customer-name">{{ data.customer_name || data.customer?.name || '-' }}</span>
+                    <div class="customer-details">
+                        <span class="customer-name">{{ data.customer_name || data.customer?.name || '-' }}</span>
+                        <span v-if="data.customer?.document_number" class="customer-document">
+                            {{ data.customer.document_number }}
+                        </span>
+                    </div>
                 </div>
             </template>
         </Column>
@@ -209,19 +220,33 @@ const formatDate = (date) => {
                     <div 
                         :class="{
                             'status-badge': true,
-                            'pending': data.status === 'PENDIENTE',
-                            'paid': data.status === 'PAGADO',
-                            'cancelled': data.status === 'ANULADO'
+                            'pending': data.status === 'PENDIENTE' || data.status_info?.is_pending,
+                            'paid': data.status === 'PAGADO' || data.status_info?.is_paid,
+                            'cancelled': data.status === 'ANULADO' || data.status_info?.is_cancelled
                         }"
+                        :title="data.status_display || data.status"
                     >
                         <i :class="{
-                            'pi pi-clock': data.status === 'PENDIENTE',
-                            'pi pi-check': data.status === 'PAGADO',
-                            'pi pi-times': data.status === 'ANULADO'
+                            'pi pi-clock': data.status === 'PENDIENTE' || data.status_info?.is_pending,
+                            'pi pi-check': data.status === 'PAGADO' || data.status_info?.is_paid,
+                            'pi pi-times': data.status === 'ANULADO' || data.status_info?.is_cancelled
                         }"></i>
-                        <span>{{ data.status || 'PENDIENTE' }}</span>
+                        <span>{{ data.status_display || data.status || 'PENDIENTE' }}</span>
                     </div>
                 </div>
+            </template>
+        </Column>
+        
+        <!-- Usuario que registró -->
+        <Column field="user" header="Usuario" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="user-info" v-if="data.user">
+                    <div class="user-avatar">
+                        {{ data.user.name?.charAt(0)?.toUpperCase() || 'U' }}
+                    </div>
+                    <span class="user-name">{{ data.user.name || '-' }}</span>
+                </div>
+                <span v-else class="text-gray-400">-</span>
             </template>
         </Column>
         
@@ -254,7 +279,8 @@ const formatDate = (date) => {
                         size="small" 
                         rounded 
                         text 
-                        v-tooltip.top="'Eliminar'" 
+                        :disabled="!canDeleteSale(slotProps.data)"
+                        v-tooltip.top="canDeleteSale(slotProps.data) ? 'Eliminar' : 'No se puede eliminar esta venta'" 
                         @click="$emit('delete', slotProps.data)" 
                     />
                 </div>
@@ -409,11 +435,31 @@ const formatDate = (date) => {
 }
 
 .customer-avatar {
-    @apply w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center font-bold text-sm;
+    @apply w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0;
+}
+
+.customer-details {
+    @apply flex flex-col gap-1;
 }
 
 .customer-name {
-    @apply font-semibold text-gray-800 dark:text-gray-200;
+    @apply font-semibold text-gray-800 dark:text-gray-200 text-sm;
+}
+
+.customer-document {
+    @apply text-xs text-gray-500 dark:text-gray-400 font-mono;
+}
+
+.user-info {
+    @apply flex items-center gap-2;
+}
+
+.user-avatar {
+    @apply w-6 h-6 bg-gray-600 text-white rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0;
+}
+
+.user-name {
+    @apply text-sm text-gray-700 dark:text-gray-300;
 }
 
 .date-container {

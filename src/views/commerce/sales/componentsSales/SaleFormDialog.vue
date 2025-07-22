@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
 import { useCustomersStore } from '@/stores/customersStore';
 import { useWarehousesStore } from '@/stores/warehousesStore';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const submitted = ref(false);
 const customersStore = useCustomersStore();
@@ -48,9 +48,16 @@ const statusOptions = [
 const isCreating = computed(() => !form.value.id);
 const isEditing = computed(() => !!form.value.id);
 
-// Validar si se puede cambiar el estado
+// Validar si se puede cambiar el estado basado en status_info de la API
 const canChangeStatus = computed(() => {
     if (isCreating.value) return true;
+
+    // Si tenemos status_info de la API, usar eso
+    if (props.sale?.status_info) {
+        return props.sale.status_info.can_edit;
+    }
+
+    // Fallback: solo pendientes se pueden cambiar
     return form.value.status === 'PENDIENTE';
 });
 
@@ -59,14 +66,30 @@ const availableStatusOptions = computed(() => {
     if (isCreating.value) {
         return statusOptions.filter(option => option.value === 'PENDIENTE');
     }
-    
+
     const currentStatus = form.value.status;
     if (currentStatus === 'PENDIENTE') {
         return statusOptions;
-    } else {
-        // Si ya está pagado o anulado, no se puede cambiar
-        return statusOptions.filter(option => option.value === currentStatus);
+    } else if (currentStatus === 'PAGADO') {
+        // Las ventas pagadas no se pueden cambiar de estado
+        return statusOptions.filter(option => option.value === 'PAGADO');
+    } else if (currentStatus === 'ANULADO') {
+        // Las ventas anuladas no se pueden cambiar de estado
+        return statusOptions.filter(option => option.value === 'ANULADO');
     }
+
+    return statusOptions;
+});
+
+// Validar si se puede eliminar (solo para mostrar información)
+const canDelete = computed(() => {
+    if (isCreating.value) return false;
+
+    if (props.sale?.status_info) {
+        return props.sale.status_info.can_delete;
+    }
+
+    return form.value.status === 'PENDIENTE';
 });
 
 const resetForm = () => {
@@ -100,7 +123,7 @@ watch(
     () => props.sale,
     (sale) => {
         if (sale) {
-            form.value = { 
+            form.value = {
                 ...sale,
                 sale_date: sale.sale_date ? sale.sale_date.split('T')[0] : new Date().toISOString().split('T')[0],
                 voucher_type: sale.voucher_type || sale.document_type || 'ticket',
@@ -122,12 +145,12 @@ watch(() => form.value.voucher_type, (newValue) => {
 const isValidAmount = computed(() => form.value.total_amount >= 0);
 const isValidTaxAmount = computed(() => form.value.tax_amount >= 0);
 const isValidDiscountAmount = computed(() => form.value.discount_amount >= 0);
-const isFormValid = computed(() => 
-    form.value.customer_id && 
-    form.value.sale_date && 
-    form.value.voucher_type && 
-    isValidAmount.value && 
-    isValidTaxAmount.value && 
+const isFormValid = computed(() =>
+    form.value.customer_id &&
+    form.value.sale_date &&
+    form.value.voucher_type &&
+    isValidAmount.value &&
+    isValidTaxAmount.value &&
     isValidDiscountAmount.value &&
     (form.value.status !== 'PAGADO' || form.value.warehouse_id) // Si está pagado, requiere warehouse
 );
@@ -142,7 +165,7 @@ const handleSubmit = () => {
             tax_amount: parseFloat(form.value.tax_amount) || 0,
             discount_amount: parseFloat(form.value.discount_amount) || 0
         };
-        
+
         emit('submit', saleData);
         resetForm();
     }
@@ -169,16 +192,9 @@ const selectedWarehouseName = computed(() => {
 </script>
 
 <template>
-    <Dialog 
-        :visible="visible" 
-        @update:visible="(val) => emit('update:visible', val)" 
-        :style="{ width: '600px', maxWidth: '95vw' }" 
-        :header="isCreating ? '🛒➕ Nueva Venta' : '✏️ Editar Venta'" 
-        :modal="true" 
-        class="p-fluid sale-dialog"
-        :closable="true"
-        :dismissableMask="false"
-    >
+    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)"
+        :style="{ width: '600px', maxWidth: '95vw' }" :header="isCreating ? '🛒➕ Nueva Venta' : '✏️ Editar Venta'"
+        :modal="true" class="p-fluid sale-dialog" :closable="true" :dismissableMask="false">
         <div class="form-content">
             <!-- Información general -->
             <div class="form-section">
@@ -192,47 +208,27 @@ const selectedWarehouseName = computed(() => {
                     <!-- Cliente -->
                     <div class="field col-span-2">
                         <label for="customer_id" class="field-label">Cliente *</label>
-                        <Select 
-                            id="customer_id" 
-                            v-model="form.customer_id" 
-                            :options="customersStore.customersList" 
-                            optionLabel="name" 
-                            optionValue="id" 
-                            placeholder="Seleccione un cliente" 
-                            :class="{ 'p-invalid': submitted && !form.customer_id }"
-                            class="form-select"
-                            filter
-                        />
+                        <Select id="customer_id" v-model="form.customer_id" :options="customersStore.customersList"
+                            optionLabel="name" optionValue="id" placeholder="Seleccione un cliente"
+                            :class="{ 'p-invalid': submitted && !form.customer_id }" class="form-select" filter />
                         <small class="p-error" v-if="submitted && !form.customer_id">El cliente es requerido.</small>
                     </div>
-                    
+
                     <!-- Fecha de venta -->
                     <div class="field">
                         <label for="sale_date" class="field-label">Fecha de Venta *</label>
-                        <Calendar 
-                            id="sale_date" 
-                            v-model="form.sale_date" 
-                            dateFormat="yy-mm-dd"
-                            :class="{ 'p-invalid': submitted && !form.sale_date }"
-                            class="form-input"
-                        />
+                        <Calendar id="sale_date" v-model="form.sale_date" dateFormat="yy-mm-dd"
+                            :class="{ 'p-invalid': submitted && !form.sale_date }" class="form-input" />
                         <small class="p-error" v-if="submitted && !form.sale_date">La fecha es requerida.</small>
                     </div>
-                    
+
                     <!-- Estado -->
                     <div class="field">
                         <label for="status" class="field-label">Estado *</label>
-                        <Select 
-                            id="status" 
-                            v-model="form.status" 
-                            :options="availableStatusOptions" 
-                            optionLabel="label" 
-                            optionValue="value" 
-                            placeholder="Seleccione estado" 
-                            :class="{ 'p-invalid': submitted && !form.status }"
-                            :disabled="!canChangeStatus"
-                            class="form-select"
-                        />
+                        <Select id="status" v-model="form.status" :options="availableStatusOptions" optionLabel="label"
+                            optionValue="value" placeholder="Seleccione estado"
+                            :class="{ 'p-invalid': submitted && !form.status }" :disabled="!canChangeStatus"
+                            class="form-select" />
                         <small class="p-info" v-if="!canChangeStatus">
                             Las ventas pagadas o anuladas no pueden cambiar de estado
                         </small>
@@ -252,28 +248,18 @@ const selectedWarehouseName = computed(() => {
                     <!-- Tipo de comprobante -->
                     <div class="field">
                         <label for="voucher_type" class="field-label">Tipo de Comprobante *</label>
-                        <Select 
-                            id="voucher_type" 
-                            v-model="form.voucher_type" 
-                            :options="voucherTypes" 
-                            optionLabel="label" 
-                            optionValue="value" 
-                            placeholder="Seleccione tipo" 
-                            :class="{ 'p-invalid': submitted && !form.voucher_type }"
-                            class="form-select"
-                        />
-                        <small class="p-error" v-if="submitted && !form.voucher_type">El tipo de comprobante es requerido.</small>
+                        <Select id="voucher_type" v-model="form.voucher_type" :options="voucherTypes"
+                            optionLabel="label" optionValue="value" placeholder="Seleccione tipo"
+                            :class="{ 'p-invalid': submitted && !form.voucher_type }" class="form-select" />
+                        <small class="p-error" v-if="submitted && !form.voucher_type">El tipo de comprobante es
+                            requerido.</small>
                     </div>
-                    
+
                     <!-- Número de documento -->
                     <div class="field">
                         <label for="document_number" class="field-label">Número de Documento</label>
-                        <InputText 
-                            id="document_number" 
-                            v-model="form.document_number" 
-                            placeholder="B001-0001" 
-                            class="form-input"
-                        />
+                        <InputText id="document_number" v-model="form.document_number" placeholder="B001-0001"
+                            class="form-input" />
                         <small class="p-info">Se generará automáticamente si se deja vacío</small>
                     </div>
                 </div>
@@ -291,49 +277,31 @@ const selectedWarehouseName = computed(() => {
                     <!-- Total -->
                     <div class="field">
                         <label for="total_amount" class="field-label">Total *</label>
-                        <InputNumber 
-                            id="total_amount" 
-                            v-model="form.total_amount" 
-                            mode="currency" 
-                            currency="PEN" 
-                            locale="es-PE"
-                            :min="0"
-                            :class="{ 'p-invalid': submitted && !isValidAmount }"
-                            class="form-input"
-                        />
-                        <small class="p-error" v-if="submitted && !isValidAmount">El monto debe ser mayor o igual a 0.</small>
+                        <InputNumber id="total_amount" v-model="form.total_amount" mode="currency" currency="PEN"
+                            locale="es-PE" :min="0" :class="{ 'p-invalid': submitted && !isValidAmount }"
+                            class="form-input" fluid />
+                        <small class="p-error" v-if="submitted && !isValidAmount">El monto debe ser mayor o igual a
+                            0.</small>
                     </div>
-                    
+
                     <!-- Impuestos -->
                     <div class="field">
                         <label for="tax_amount" class="field-label">Impuestos</label>
-                        <InputNumber 
-                            id="tax_amount" 
-                            v-model="form.tax_amount" 
-                            mode="currency" 
-                            currency="PEN" 
-                            locale="es-PE"
-                            :min="0"
-                            :class="{ 'p-invalid': submitted && !isValidTaxAmount }"
-                            class="form-input"
-                        />
-                        <small class="p-error" v-if="submitted && !isValidTaxAmount">El monto debe ser mayor o igual a 0.</small>
+                        <InputNumber id="tax_amount" v-model="form.tax_amount" mode="currency" currency="PEN"
+                            locale="es-PE" :min="0" :class="{ 'p-invalid': submitted && !isValidTaxAmount }"
+                            class="form-input" fluid />
+                        <small class="p-error" v-if="submitted && !isValidTaxAmount">El monto debe ser mayor o igual a
+                            0.</small>
                     </div>
-                    
+
                     <!-- Descuento -->
                     <div class="field">
                         <label for="discount_amount" class="field-label">Descuento</label>
-                        <InputNumber 
-                            id="discount_amount" 
-                            v-model="form.discount_amount" 
-                            mode="currency" 
-                            currency="PEN" 
-                            locale="es-PE"
-                            :min="0"
-                            :class="{ 'p-invalid': submitted && !isValidDiscountAmount }"
-                            class="form-input"
-                        />
-                        <small class="p-error" v-if="submitted && !isValidDiscountAmount">El monto debe ser mayor o igual a 0.</small>
+                        <InputNumber id="discount_amount" v-model="form.discount_amount" mode="currency" currency="PEN"
+                            locale="es-PE" :min="0" :class="{ 'p-invalid': submitted && !isValidDiscountAmount }"
+                            class="form-input" fluid />
+                        <small class="p-error" v-if="submitted && !isValidDiscountAmount">El monto debe ser mayor o
+                            igual a 0.</small>
                     </div>
                 </div>
             </div>
@@ -348,16 +316,10 @@ const selectedWarehouseName = computed(() => {
                 </div>
                 <div class="field">
                     <label for="warehouse_id" class="field-label">Almacén *</label>
-                    <Select 
-                        id="warehouse_id" 
-                        v-model="form.warehouse_id" 
-                        :options="warehousesStore.warehousesList" 
-                        optionLabel="name" 
-                        optionValue="id" 
-                        placeholder="Seleccione un almacén" 
+                    <Select id="warehouse_id" v-model="form.warehouse_id" :options="warehousesStore.warehousesList"
+                        optionLabel="name" optionValue="id" placeholder="Seleccione un almacén"
                         :class="{ 'p-invalid': submitted && form.status === 'PAGADO' && !form.warehouse_id }"
-                        class="form-select"
-                    />
+                        class="form-select" />
                     <small class="p-error" v-if="submitted && form.status === 'PAGADO' && !form.warehouse_id">
                         El almacén es requerido para ventas pagadas.
                     </small>
@@ -377,13 +339,8 @@ const selectedWarehouseName = computed(() => {
                 </div>
                 <div class="field">
                     <label for="notes" class="field-label">Notas</label>
-                    <Textarea 
-                        id="notes" 
-                        v-model="form.notes" 
-                        rows="3" 
-                        placeholder="Observaciones adicionales..."
-                        class="form-input"
-                    />
+                    <Textarea id="notes" v-model="form.notes" rows="3" placeholder="Observaciones adicionales..."
+                        class="form-input" />
                 </div>
             </div>
         </div>
@@ -392,13 +349,8 @@ const selectedWarehouseName = computed(() => {
         <template #footer>
             <div class="flex justify-between w-full">
                 <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="handleCancel" />
-                <Button 
-                    :label="isCreating ? 'Crear Venta' : 'Actualizar Venta'" 
-                    icon="pi pi-check" 
-                    class="p-button-primary" 
-                    @click="handleSubmit" 
-                    :loading="loading" 
-                />
+                <Button :label="isCreating ? 'Crear Venta' : 'Actualizar Venta'" icon="pi pi-check"
+                    class="p-button-primary" @click="handleSubmit" :loading="loading" />
             </div>
         </template>
     </Dialog>

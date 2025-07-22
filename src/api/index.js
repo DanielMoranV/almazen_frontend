@@ -160,6 +160,10 @@ export const fetchSales = (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return axios.get(`/sales${queryString ? `?${queryString}` : ''}`);
 };
+export const searchSales = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/sales/search${queryString ? `?${queryString}` : ''}`);
+};
 export const getSale = (id) => axios.get(`/sales/${id}`);
 export const createSale = (payload) => axios.post('/sales', payload);
 export const updateSale = (payload, id) => axios.put(`/sales/${id}`, payload);
