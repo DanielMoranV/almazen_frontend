@@ -1,335 +1,674 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useToast } from 'primevue/usetoast';
 import { useAuthStore } from '@/stores/authStore';
+import { useCashRegistersStore } from '@/stores/cashRegistersStore';
+import { useCashSessionsStore } from '@/stores/cashSessionsStore';
+import { storeToRefs } from 'pinia';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
 
 const toast = useToast();
 const authStore = useAuthStore();
+const cashSessionsStore = useCashSessionsStore();
+const cashRegistersStore = useCashRegistersStore();
+
+// Reactive data from stores
+const { sessionHistory, currentSession, hasActiveSession, isLoadingHistory } = storeToRefs(cashSessionsStore);
+const { availableForNewSession } = storeToRefs(cashRegistersStore);
+
 const loading = ref(false);
-const sessions = ref([]);
 const displayNewSessionDialog = ref(false);
 const displayCloseSessionDialog = ref(false);
+const displayReportDialog = ref(false);
 const selectedSession = ref(null);
-const initialAmount = ref(0);
-const closingAmount = ref(0);
-const closingNotes = ref('');
+const sessionReport = ref(null);
 
-// Datos de ejemplo para las sesiones
-const mockSessions = [
-    {
-        id: 1,
-        cashier: 'Juan Pérez',
-        openedAt: '2025-06-01 08:00:00',
-        closedAt: '2025-06-01 16:00:00',
-        initialAmount: 1000,
-        closingAmount: 5600,
-        status: 'closed',
-        sales: 15,
-        totalSales: 4600
-    },
-    {
-        id: 2,
-        cashier: 'María López',
-        openedAt: '2025-06-01 16:00:00',
-        closedAt: '2025-06-02 00:00:00',
-        initialAmount: 1000,
-        closingAmount: 3800,
-        status: 'closed',
-        sales: 10,
-        totalSales: 2800
-    },
-    {
-        id: 3,
-        cashier: 'Carlos Rodríguez',
-        openedAt: '2025-06-02 08:00:00',
-        closedAt: null,
-        initialAmount: 1000,
-        closingAmount: null,
-        status: 'active',
-        sales: 5,
-        totalSales: 1500
-    }
-];
-
-onMounted(() => {
-    loadSessions();
+// Form data
+const sessionForm = ref({
+    cash_register_id: null,
+    opening_amount: 100,
+    notes: ''
 });
 
-const loadSessions = () => {
+const closeForm = ref({
+    actual_amount: 0,
+    notes: ''
+});
+
+// Computed properties
+const sessions = computed(() => sessionHistory.value);
+const currentSessionInfo = computed(() => cashSessionsStore.currentSessionInfo);
+
+onMounted(async () => {
+    await loadInitialData();
+});
+
+const loadInitialData = async () => {
     loading.value = true;
-    // Simulación de carga de datos
-    setTimeout(() => {
-        sessions.value = mockSessions;
+    try {
+        await Promise.all([
+            cashSessionsStore.fetchSessionHistory(),
+            cashSessionsStore.getCurrentSession(),
+            cashRegistersStore.fetchCashRegisters()
+        ]);
+        // Advertir si no hay sesión activa
+        if (!hasActiveSession.value) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Sin Sesión Activa',
+                detail: 'No tiene una sesión de caja activa. Abra una para comenzar a operar.',
+                life: 4000
+            });
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error de carga',
+            detail: 'Error al cargar datos iniciales',
+            life: 4000
+        });
+    } finally {
         loading.value = false;
-    }, 500);
+    }
 };
 
 const openNewSessionDialog = () => {
-    // Verificar si ya hay una sesión activa
-    const activeSession = sessions.value.find(session => session.status === 'active');
-    if (activeSession) {
+    if (hasActiveSession.value) {
         toast.add({
             severity: 'warn',
-            summary: 'Advertencia',
-            detail: 'Ya existe una sesión activa. Debe cerrarla antes de abrir una nueva.',
-            life: 3000
+            summary: 'Sesión Activa',
+            detail: 'Ya tiene una sesión de caja activa. Debe cerrarla antes de abrir una nueva.',
+            life: 4000
         });
         return;
     }
-    
-    initialAmount.value = 1000; // Monto inicial predeterminado
+
+    // Reset form
+    sessionForm.value = {
+        cash_register_id: null,
+        opening_amount: 100,
+        notes: ''
+    };
+
     displayNewSessionDialog.value = true;
 };
 
-const createNewSession = () => {
-    if (initialAmount.value <= 0) {
+const createNewSession = async () => {
+    const validation = cashSessionsStore.validateOpenSession(sessionForm.value);
+    if (!validation.valid) {
         toast.add({
             severity: 'error',
-            summary: 'Error',
-            detail: 'El monto inicial debe ser mayor a cero',
+            summary: 'Error de Validación',
+            detail: validation.message,
+            life: 4000
+        });
+        return;
+    }
+
+    loading.value = true;
+
+    try {
+        await cashSessionsStore.openSession(sessionForm.value);
+
+        if (cashSessionsStore.success) {
+            displayNewSessionDialog.value = false;
+            await loadInitialData(); // Refresh data
+
+            toast.add({
+                severity: 'success',
+                summary: 'Sesión Abierta',
+                detail: 'Sesión de caja abierta correctamente',
+                life: 3000
+            });
+        } else {
+            handleStoreErrors();
+        }
+    } catch (error) {
+        handleStoreErrors();
+    } finally {
+        loading.value = false;
+    }
+};
+
+const openCloseSessionDialog = () => {
+    if (!currentSessionInfo.value) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Sin Sesión',
+            detail: 'No tiene una sesión activa para cerrar',
             life: 3000
         });
         return;
     }
-    
-    loading.value = true;
-    
-    // Simulación de creación de sesión
-    setTimeout(() => {
-        const newSession = {
-            id: sessions.value.length + 1,
-            cashier: authStore.currentUser?.name || 'Usuario Actual',
-            openedAt: new Date().toLocaleString(),
-            closedAt: null,
-            initialAmount: initialAmount.value,
-            closingAmount: null,
-            status: 'active',
-            sales: 0,
-            totalSales: 0
-        };
-        
-        sessions.value.unshift(newSession);
-        displayNewSessionDialog.value = false;
-        loading.value = false;
-        
-        toast.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Sesión de caja abierta correctamente',
-            life: 3000
-        });
-    }, 1000);
-};
 
-const openCloseSessionDialog = (session) => {
-    selectedSession.value = session;
-    closingAmount.value = session.initialAmount + session.totalSales;
-    closingNotes.value = '';
+    // Pre-fill with expected amount
+    closeForm.value = {
+        actual_amount: currentSessionInfo.value.expectedAmount,
+        notes: ''
+    };
+
     displayCloseSessionDialog.value = true;
 };
 
-const closeSession = () => {
-    if (closingAmount.value <= 0) {
+const closeCurrentSession = async () => {
+    if (!currentSession.value) return;
+
+    const validation = cashSessionsStore.validateCloseSession(closeForm.value);
+    if (!validation.valid) {
         toast.add({
             severity: 'error',
-            summary: 'Error',
-            detail: 'El monto de cierre debe ser mayor a cero',
-            life: 3000
+            summary: 'Error de Validación',
+            detail: validation.message,
+            life: 4000
         });
         return;
     }
-    
+
     loading.value = true;
-    
-    // Simulación de cierre de sesión
-    setTimeout(() => {
-        const index = sessions.value.findIndex(s => s.id === selectedSession.value.id);
-        if (index !== -1) {
-            sessions.value[index].closedAt = new Date().toLocaleString();
-            sessions.value[index].closingAmount = closingAmount.value;
-            sessions.value[index].status = 'closed';
+
+    try {
+        await cashSessionsStore.closeSession(currentSession.value.id, closeForm.value);
+
+        if (cashSessionsStore.success) {
+            displayCloseSessionDialog.value = false;
+            await loadInitialData(); // Refresh data
+
+            toast.add({
+                severity: 'success',
+                summary: 'Sesión Cerrada',
+                detail: 'Sesión de caja cerrada correctamente',
+                life: 3000
+            });
+        } else {
+            handleStoreErrors();
         }
-        
-        displayCloseSessionDialog.value = false;
-        selectedSession.value = null;
+    } catch (error) {
+        handleStoreErrors();
+    } finally {
         loading.value = false;
-        
-        toast.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Sesión de caja cerrada correctamente',
-            life: 3000
+    }
+};
+
+const showSessionReport = async (session) => {
+    loading.value = true;
+
+    try {
+        const result = await cashSessionsStore.getSessionReport(session.id);
+        console.log('showSessionReport result:', result);
+        if (result.success) {
+            sessionReport.value = cashSessionsStore.sessionReport;
+            displayReportDialog.value = true;
+        } else {
+            handleStoreErrors();
+        }
+    } catch (error) {
+        handleStoreErrors();
+    } finally {
+        loading.value = false;
+    }
+};
+
+// Utility functions
+const handleStoreErrors = () => {
+    const store = cashSessionsStore;
+    if (store.validationErrors.length > 0) {
+        store.validationErrors.forEach(error => {
+            toast.add({
+                severity: 'error',
+                summary: 'Error de Validación',
+                detail: error,
+                life: 4000
+            });
         });
-    }, 1000);
+    } else {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: store.message || 'Ocurrió un error inesperado',
+            life: 4000
+        });
+    }
 };
 
 const getSessionStatusClass = (status) => {
     return {
-        'bg-green-100 text-green-700': status === 'active',
-        'bg-blue-100 text-blue-700': status === 'closed'
+        'bg-green-100 text-green-700': status === 'OPEN',
+        'bg-blue-100 text-blue-700': status === 'CLOSED',
+        'bg-yellow-100 text-yellow-700': status === 'SUSPENDED'
     };
 };
 
+const getSessionStatusLabel = (status) => {
+    const labels = {
+        'OPEN': 'Activa',
+        'CLOSED': 'Cerrada',
+        'SUSPENDED': 'Suspendida'
+    };
+    return labels[status] || status;
+};
+
 const formatCurrency = (value) => {
-    return value ? `$${value.toLocaleString()}` : '-';
+    return value ? new Intl.NumberFormat('es-PE', {
+        style: 'currency',
+        currency: 'PEN'
+    }).format(value) : '-';
+};
+
+const formatDateTime = (dateTime) => {
+    return dateTime ? new Date(dateTime).toLocaleString('es-PE') : '-';
+};
+
+const calculateDifference = (expected, actual) => {
+    if (!expected || !actual) return 0;
+    return parseFloat(actual) - parseFloat(expected);
+};
+
+const getDifferenceClass = (difference) => {
+    if (difference === 0) return 'text-green-600';
+    return difference > 0 ? 'text-blue-600' : 'text-red-600';
 };
 </script>
 
 <template>
+    <Toast />
+
     <div class="grid">
         <div class="col-12">
-            <div class="card">
-                <div class="flex justify-content-between align-items-center mb-4">
-                    <h5 class="m-0">Sesiones de Caja</h5>
-                    <button class="p-button p-component" @click="openNewSessionDialog">
-                        <i class="pi pi-plus mr-2"></i>
-                        <span class="p-button-label">Nueva Sesión</span>
-                    </button>
-                </div>
-                
-                <div v-if="loading" class="flex justify-content-center">
-                    <i class="pi pi-spin pi-spinner text-2xl"></i>
-                </div>
-                
-                <div v-else-if="sessions.length === 0" class="text-center p-5">
-                    <i class="pi pi-clock text-4xl text-500 mb-3"></i>
-                    <p>No hay sesiones de caja registradas</p>
-                </div>
-                
-                <div v-else class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th class="text-left p-3 border-bottom-1 surface-border">ID</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Cajero</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Apertura</th>
-                                <th class="text-left p-3 border-bottom-1 surface-border">Cierre</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Monto Inicial</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Ventas</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Total Ventas</th>
-                                <th class="text-right p-3 border-bottom-1 surface-border">Monto Cierre</th>
-                                <th class="text-center p-3 border-bottom-1 surface-border">Estado</th>
-                                <th class="text-center p-3 border-bottom-1 surface-border">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="session in sessions" :key="session.id">
-                                <td class="p-3 border-bottom-1 surface-border">{{ session.id }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ session.cashier }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ session.openedAt }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ session.closedAt || '-' }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(session.initialAmount) }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ session.sales }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(session.totalSales) }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(session.closingAmount) }}</td>
-                                <td class="text-center p-3 border-bottom-1 surface-border">
-                                    <span class="px-2 py-1 text-xs border-round" :class="getSessionStatusClass(session.status)">
-                                        {{ session.status === 'active' ? 'Activa' : 'Cerrada' }}
-                                    </span>
-                                </td>
-                                <td class="text-center p-3 border-bottom-1 surface-border">
-                                    <button v-if="session.status === 'active'" 
-                                            class="p-button p-component p-button-sm p-button-danger" 
-                                            @click="openCloseSessionDialog(session)">
-                                        <span class="p-button-label">Cerrar</span>
-                                    </button>
-                                    <button v-else class="p-button p-component p-button-sm p-button-text">
-                                        <i class="pi pi-eye"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Diálogo para nueva sesión -->
-        <div v-if="displayNewSessionDialog" class="fixed top-0 left-0 w-full h-full flex justify-content-center align-items-center bg-black-alpha-40" style="z-index: 1000;">
-            <div class="surface-card p-4 shadow-2 border-round w-full md:w-6">
-                <div class="flex justify-content-between align-items-center mb-4">
-                    <h5 class="m-0">Nueva Sesión de Caja</h5>
-                    <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text" @click="displayNewSessionDialog = false">
-                        <i class="pi pi-times"></i>
-                    </button>
-                </div>
-                
-                <div class="field mb-4">
-                    <label for="initialAmount" class="block mb-2">Monto Inicial</label>
-                    <div class="p-inputgroup">
-                        <span class="p-inputgroup-addon">$</span>
-                        <input id="initialAmount" type="number" v-model="initialAmount" class="p-inputtext p-component w-full" />
-                    </div>
-                </div>
-                
-                <div class="flex justify-content-end">
-                    <button class="p-button p-component p-button-secondary mr-2" @click="displayNewSessionDialog = false">
-                        <span class="p-button-label">Cancelar</span>
-                    </button>
-                    <button class="p-button p-component" :disabled="loading" @click="createNewSession">
-                        <i v-if="loading" class="pi pi-spin pi-spinner mr-2"></i>
-                        <span class="p-button-label">Abrir Sesión</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Diálogo para cerrar sesión -->
-        <div v-if="displayCloseSessionDialog" class="fixed top-0 left-0 w-full h-full flex justify-content-center align-items-center bg-black-alpha-40" style="z-index: 1000;">
-            <div class="surface-card p-4 shadow-2 border-round w-full md:w-6">
-                <div class="flex justify-content-between align-items-center mb-4">
-                    <h5 class="m-0">Cerrar Sesión de Caja</h5>
-                    <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text" @click="displayCloseSessionDialog = false">
-                        <i class="pi pi-times"></i>
-                    </button>
-                </div>
-                
-                <div v-if="selectedSession" class="mb-4">
-                    <div class="grid">
-                        <div class="col-6">
-                            <p class="mb-2"><strong>Cajero:</strong></p>
-                            <p class="text-500">{{ selectedSession.cashier }}</p>
-                        </div>
-                        <div class="col-6">
-                            <p class="mb-2"><strong>Apertura:</strong></p>
-                            <p class="text-500">{{ selectedSession.openedAt }}</p>
-                        </div>
-                        <div class="col-6">
-                            <p class="mb-2"><strong>Monto Inicial:</strong></p>
-                            <p class="text-500">{{ formatCurrency(selectedSession.initialAmount) }}</p>
-                        </div>
-                        <div class="col-6">
-                            <p class="mb-2"><strong>Total Ventas:</strong></p>
-                            <p class="text-500">{{ formatCurrency(selectedSession.totalSales) }}</p>
+            <Card class="shadow-lg border-0">
+                <template #header>
+                    <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-t-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <i class="pi pi-clock text-2xl"></i>
+                                <div>
+                                    <h1 class="text-2xl font-bold">Sesiones de Caja</h1>
+                                    <p class="text-green-100">Control de turnos y movimientos de efectivo</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-3">
+                                <Button v-if="hasActiveSession" @click="openCloseSessionDialog" label="Cerrar Sesión"
+                                    icon="pi pi-sign-out" severity="contrast" size="large" />
+                                <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus"
+                                    severity="contrast" size="large" />
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="field mb-4">
-                    <label for="closingAmount" class="block mb-2">Monto de Cierre</label>
-                    <div class="p-inputgroup">
-                        <span class="p-inputgroup-addon">$</span>
-                        <input id="closingAmount" type="number" v-model="closingAmount" class="p-inputtext p-component w-full" />
+                </template>
+
+                <template #content>
+                    <!-- Current Session Info -->
+                    <div v-if="currentSessionInfo" class="mb-6">
+                        <Panel header="Sesión Actual" class="shadow-sm">
+                            <template #icons>
+                                <i class="pi pi-circle-fill text-green-500"></i>
+                            </template>
+
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="pi pi-user text-blue-600 text-xl"></i>
+                                        <div>
+                                            <div class="text-sm text-blue-600 font-medium">Cajero</div>
+                                            <div class="font-bold text-gray-800">{{ currentSessionInfo.cashier }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="pi pi-wallet text-green-600 text-xl"></i>
+                                        <div>
+                                            <div class="text-sm text-green-600 font-medium">Monto Inicial</div>
+                                            <div class="font-bold text-gray-800">{{
+                                                formatCurrency(currentSessionInfo.openingAmount) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="pi pi-shopping-cart text-purple-600 text-xl"></i>
+                                        <div>
+                                            <div class="text-sm text-purple-600 font-medium">Ventas</div>
+                                            <div class="font-bold text-gray-800">{{ currentSessionInfo.salesCount }} ({{
+                                                formatCurrency(currentSessionInfo.totalSales) }})</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="pi pi-calculator text-orange-600 text-xl"></i>
+                                        <div>
+                                            <div class="text-sm text-orange-600 font-medium">Esperado</div>
+                                            <div class="font-bold text-gray-800">{{
+                                                formatCurrency(currentSessionInfo.expectedAmount) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Panel>
                     </div>
-                </div>
-                
-                <div class="field mb-4">
-                    <label for="closingNotes" class="block mb-2">Notas de Cierre</label>
-                    <textarea id="closingNotes" v-model="closingNotes" rows="3" class="p-inputtextarea p-component w-full"></textarea>
-                </div>
-                
-                <div class="flex justify-content-end">
-                    <button class="p-button p-component p-button-secondary mr-2" @click="displayCloseSessionDialog = false">
-                        <span class="p-button-label">Cancelar</span>
-                    </button>
-                    <button class="p-button p-component p-button-danger" :disabled="loading" @click="closeSession">
-                        <i v-if="loading" class="pi pi-spin pi-spinner mr-2"></i>
-                        <span class="p-button-label">Cerrar Sesión</span>
-                    </button>
-                </div>
-            </div>
+
+                    <!-- Session History -->
+                    <div v-if="isLoadingHistory" class="flex justify-center py-8">
+                        <ProgressSpinner />
+                    </div>
+
+                    <div v-else-if="sessions.length === 0" class="text-center py-12">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="pi pi-clock text-4xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-600 mb-2">No hay sesiones registradas</h3>
+                        <p class="text-gray-500 mb-4">Abra la primera sesión de caja para comenzar</p>
+                        <Button @click="openNewSessionDialog" label="Abrir Primera Sesión" icon="pi pi-plus"
+                            severity="success" />
+                    </div>
+
+                    <DataTable v-else :value="sessions" :paginator="true" :rows="15" :loading="isLoadingHistory"
+                        stripedRows responsiveLayout="scroll" class="shadow-sm">
+
+                        <Column field="id" header="ID" sortable>
+                            <template #body="{ data }">
+                                <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#{{ data.id }}</span>
+                            </template>
+                        </Column>
+
+                        <Column field="user" header="Cajero" sortable>
+                            <template #body="{ data }">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i class="pi pi-user text-blue-600 text-sm"></i>
+                                    </div>
+                                    <span class="font-medium">{{ data.user?.name || 'Usuario' }}</span>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column field="cash_register" header="Caja" sortable>
+                            <template #body="{ data }">
+                                <div class="flex items-center space-x-2">
+                                    <i class="pi pi-desktop text-gray-600"></i>
+                                    <span>{{ data.cash_register?.name || 'N/A' }}</span>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column field="opened_at" header="Apertura" sortable>
+                            <template #body="{ data }">
+                                {{ formatDateTime(data.opened_at) }}
+                            </template>
+                        </Column>
+
+                        <Column field="closed_at" header="Cierre" sortable>
+                            <template #body="{ data }">
+                                {{ formatDateTime(data.closed_at) }}
+                            </template>
+                        </Column>
+
+                        <Column field="opening_amount" header="Monto Inicial" sortable>
+                            <template #body="{ data }">
+                                <span class="font-mono">{{ formatCurrency(data.opening_amount) }}</span>
+                            </template>
+                        </Column>
+
+                        <Column field="actual_amount" header="Monto Final" sortable>
+                            <template #body="{ data }">
+                                <span class="font-mono">{{ formatCurrency(data.actual_amount) }}</span>
+                            </template>
+                        </Column>
+
+                        <Column field="difference_amount" header="Diferencia" sortable>
+                            <template #body="{ data }">
+                                <span v-if="data.difference_amount !== null" class="font-mono font-bold"
+                                    :class="getDifferenceClass(parseFloat(data.difference_amount))">
+                                    {{ formatCurrency(data.difference_amount) }}
+                                </span>
+                                <span v-else class="text-gray-400">-</span>
+                            </template>
+                        </Column>
+
+                        <Column field="status" header="Estado" sortable>
+                            <template #body="{ data }">
+                                <Tag :value="getSessionStatusLabel(data.status)"
+                                    :severity="data.status === 'OPEN' ? 'success' : data.status === 'CLOSED' ? 'info' : 'warning'" />
+                            </template>
+                        </Column>
+
+                        <Column header="Acciones">
+                            <template #body="{ data }">
+                                <div class="flex space-x-2">
+                                    <Button v-if="data.status === 'CLOSED'" @click="showSessionReport(data)"
+                                        icon="pi pi-chart-bar" size="small" severity="info" outlined rounded
+                                        v-tooltip="'Ver Reporte'" />
+                                    <Button v-if="data.status === 'OPEN' && data.id === currentSession?.id"
+                                        @click="openCloseSessionDialog" icon="pi pi-sign-out" size="small"
+                                        severity="danger" outlined rounded v-tooltip="'Cerrar Sesión'" />
+                                </div>
+                            </template>
+                        </Column>
+                    </DataTable>
+                </template>
+            </Card>
         </div>
     </div>
+
+    <!-- New Session Dialog -->
+    <Dialog v-model:visible="displayNewSessionDialog" header="Nueva Sesión de Caja" :modal="true"
+        :style="{ width: '500px' }" :pt="{
+            header: 'bg-gradient-to-r from-green-600 to-emerald-600 text-white',
+            content: 'p-6'
+        }">
+
+        <div class="space-y-6">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Caja Registradora *
+                </label>
+                <Select v-model="sessionForm.cash_register_id" :options="availableForNewSession" option-label="name"
+                    option-value="id" placeholder="Seleccionar caja registradora..." class="w-full" :pt="{
+                        root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl',
+                        input: 'py-3 px-4 text-base'
+                    }" />
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Monto Inicial *
+                </label>
+                <div class="p-inputgroup">
+                    <span class="p-inputgroup-addon">S/</span>
+                    <InputNumber v-model="sessionForm.opening_amount" :min="0" mode="decimal" :minFractionDigits="2"
+                        :maxFractionDigits="2" class="flex-1" />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Notas (Opcional)
+                </label>
+                <Textarea v-model="sessionForm.notes" rows="3" placeholder="Observaciones del turno..." class="w-full"
+                    :pt="{
+                        root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl'
+                    }" />
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="flex justify-end space-x-3">
+                <Button @click="displayNewSessionDialog = false" label="Cancelar" icon="pi pi-times"
+                    severity="secondary" outlined />
+                <Button @click="createNewSession" label="Abrir Sesión" icon="pi pi-check" severity="success"
+                    :loading="loading" />
+            </div>
+        </template>
+    </Dialog>
+
+    <!-- Close Session Dialog -->
+    <Dialog v-model:visible="displayCloseSessionDialog" header="Cerrar Sesión de Caja" :modal="true"
+        :style="{ width: '600px' }" :pt="{
+            header: 'bg-gradient-to-r from-red-600 to-pink-600 text-white',
+            content: 'p-6'
+        }">
+
+        <div class="space-y-6" v-if="currentSessionInfo">
+            <!-- Session Summary -->
+            <div class="bg-gray-50 p-4 rounded-xl border">
+                <h3 class="font-bold text-gray-800 mb-4">Resumen de la Sesión</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="text-sm text-gray-600">Cajero</div>
+                        <div class="font-semibold">{{ currentSessionInfo.cashier }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600">Caja</div>
+                        <div class="font-semibold">{{ currentSession?.cash_register?.name }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600">Monto Inicial</div>
+                        <div class="font-semibold text-green-600">{{ formatCurrency(currentSessionInfo.openingAmount) }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600">Ventas Realizadas</div>
+                        <div class="font-semibold text-blue-600">{{ currentSessionInfo.salesCount }}</div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600">Total en Ventas</div>
+                        <div class="font-semibold text-purple-600">{{ formatCurrency(currentSessionInfo.totalSales) }}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-600">Monto Esperado</div>
+                        <div class="font-semibold text-orange-600">{{ formatCurrency(currentSessionInfo.expectedAmount)
+                            }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Close Form -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        Monto Real en Caja *
+                    </label>
+                    <div class="p-inputgroup">
+                        <span class="p-inputgroup-addon">S/</span>
+                        <InputNumber v-model="closeForm.actual_amount" :min="0" mode="decimal" :minFractionDigits="2"
+                            :maxFractionDigits="2" class="flex-1" />
+                    </div>
+                    <small class="text-gray-500">Cuente el dinero físico en la caja registradora</small>
+                </div>
+
+                <!-- Difference Calculation -->
+                <div v-if="closeForm.actual_amount" class="p-4 rounded-lg border-2" :class="cashSessionsStore.calculateDifference(closeForm.actual_amount) === 0
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-yellow-50 border-yellow-200'">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">Diferencia:</span>
+                        <span class="font-bold text-lg"
+                            :class="getDifferenceClass(cashSessionsStore.calculateDifference(closeForm.actual_amount))">
+                            {{ formatCurrency(cashSessionsStore.calculateDifference(closeForm.actual_amount)) }}
+                        </span>
+                    </div>
+                    <div v-if="cashSessionsStore.hasSignificantDiscrepancy(closeForm.actual_amount)"
+                        class="text-sm text-yellow-700 mt-2">
+                        <i class="pi pi-exclamation-triangle mr-1"></i>
+                        Diferencia significativa detectada
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        Notas de Cierre
+                    </label>
+                    <Textarea v-model="closeForm.notes" rows="3"
+                        placeholder="Observaciones, explicación de diferencias..." class="w-full" />
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="flex justify-end space-x-3">
+                <Button @click="displayCloseSessionDialog = false" label="Cancelar" icon="pi pi-times"
+                    severity="secondary" outlined />
+                <Button @click="closeCurrentSession" label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger"
+                    :loading="loading" />
+            </div>
+        </template>
+    </Dialog>
+
+    <!-- Session Report Dialog -->
+    <Dialog v-model:visible="displayReportDialog" header="Reporte de Sesión" :modal="true"
+        :style="{ width: '90vw', maxWidth: '800px' }" :pt="{
+            header: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white',
+            content: 'p-6'
+        }">
+
+        <div v-if="sessionReport" class="space-y-6">
+            <!-- Session Header -->
+            <div class="text-center pb-4 border-b">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    Reporte de Sesión #{{ sessionReport.session?.id }}
+                </h2>
+                <p class="text-gray-600">
+                    {{ sessionReport.session?.user?.name }} - {{ sessionReport.session?.cash_register?.name }}
+                </p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">
+                            {{ formatCurrency(sessionReport.summary?.total_sales || 0) }}
+                        </div>
+                        <div class="text-sm text-green-700">Total Ventas</div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">
+                            {{ sessionReport.summary?.sales_count || 0 }}
+                        </div>
+                        <div class="text-sm text-blue-700">Transacciones</div>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">
+                            {{ Math.round((sessionReport.summary?.duration_minutes || 0) / 60) }}h
+                        </div>
+                        <div class="text-sm text-purple-700">Duración</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods Breakdown -->
+            <div v-if="sessionReport.payment_methods_breakdown?.length">
+                <h3 class="font-bold text-gray-800 mb-3">Desglose por Método de Pago</h3>
+                <div class="space-y-2">
+                    <div v-for="method in sessionReport.payment_methods_breakdown" :key="method.method_id"
+                        class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <span class="font-medium">{{ method.method_name }}</span>
+                            <span class="text-sm text-gray-500 ml-2">({{ method.transaction_count }}
+                                transacciones)</span>
+                        </div>
+                        <span class="font-bold text-green-600">{{ formatCurrency(method.total_amount) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="flex justify-end">
+                <Button @click="displayReportDialog = false" label="Cerrar" icon="pi pi-times" severity="secondary" />
+            </div>
+        </template>
+    </Dialog>
 </template>
 
 <style scoped>

@@ -82,6 +82,26 @@ const router = createRouter({
                     meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Cajero'] }
                 },
 
+                // Commerce - Cash Management
+                {
+                    path: '/commerce/pos/payment-methods',
+                    name: 'paymentMethods',
+                    component: () => import('@/views/commerce/pos/PaymentMethods.vue'),
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/commerce/cash/registers',
+                    name: 'cashRegisters',
+                    component: () => import('@/views/commerce/pos/CashRegisters.vue'),
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+                {
+                    path: '/commerce/cash/movements',
+                    name: 'cashMovements',
+                    component: () => import('@/views/commerce/pos/CashMovements.vue'),
+                    meta: { positions: ['Developer', 'Administrador'] }
+                },
+
                 // Inventario
                 {
                     path: '/products',

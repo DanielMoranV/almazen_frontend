@@ -40,9 +40,35 @@ const model = ref([
                         icon: 'pi pi-clock',
                         to: '/commerce/pos/sessions',
                         positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
+                    },
+                    {
+                        label: 'Métodos de Pago',
+                        icon: 'pi pi-credit-card',
+                        to: '/commerce/pos/payment-methods',
+                        positions: ['Developer', 'Administrador']
+                    },
+                    {
+                        label: 'Movimientos de Caja',
+                        icon: 'pi pi-wallet',
+                        to: '/commerce/cash/movements',
+                        positions: ['Developer', 'Administrador']
                     }
+
                 ],
                 positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
+            },
+            {
+                label: 'Cajas',
+                icon: 'pi pi-box',
+                items: [
+                    {
+                        label: 'Cajas Registradoras',
+                        icon: 'pi pi-desktop',
+                        to: '/commerce/cash/registers',
+                        positions: ['Developer', 'Administrador']
+                    }
+                ],
+                positions: ['Developer', 'Administrador']
             },
             {
                 label: 'Ventas',

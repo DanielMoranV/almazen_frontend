@@ -189,3 +189,40 @@ export const fetchStockExits = (params = {}) => {
 export const fetchDashboardMetrics = () => axios.get('/dashboard/metrics');
 export const fetchLowStockProducts = () => axios.get('/dashboard/low-stock');
 export const fetchExpiringProducts = () => axios.get('/dashboard/expiring-products');
+
+// Payment Methods
+export const fetchPaymentMethods = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/payment-methods${queryString ? `?${queryString}` : ''}`);
+};
+export const getPaymentMethod = (id) => axios.get(`/payment-methods/${id}`);
+export const createPaymentMethod = (payload) => axios.post('/payment-methods', payload);
+export const updatePaymentMethod = (payload, id) => axios.put(`/payment-methods/${id}`, payload);
+export const deletePaymentMethod = (id) => axios.delete(`/payment-methods/${id}`);
+
+// Cash Registers
+export const fetchCashRegisters = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/cash-registers${queryString ? `?${queryString}` : ''}`);
+};
+export const getCashRegister = (id) => axios.get(`/cash-registers/${id}`);
+export const createCashRegister = (payload) => axios.post('/cash-registers', payload);
+export const updateCashRegister = (payload, id) => axios.put(`/cash-registers/${id}`, payload);
+export const deleteCashRegister = (id) => axios.delete(`/cash-registers/${id}`);
+
+// Cash Sessions
+export const openCashSession = (payload) => axios.post('/cash-sessions/open', payload);
+export const getCurrentCashSession = () => axios.get('/cash-sessions/current');
+export const closeCashSession = (id, payload) => axios.put(`/cash-sessions/${id}/close`, payload);
+export const getCashSessionReport = (id) => axios.get(`/cash-sessions/${id}/report`);
+export const getCashSessionHistory = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/cash-sessions/history${queryString ? `?${queryString}` : ''}`);
+};
+
+// Cash Movements
+export const fetchCashMovements = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/cash-movements${queryString ? `?${queryString}` : ''}`);
+};
+export const getCashMovement = (id) => axios.get(`/cash-movements/${id}`);

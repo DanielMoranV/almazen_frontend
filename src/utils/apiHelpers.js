@@ -6,7 +6,7 @@ import { processResponse } from '@/composables/useApiResponse';
  * @param {object} store - La instancia del store actual.
  */
 export function handleProcessError(error, store) {
-    console.log('error', error);
+    console.log('error handleProcessError', error);
     const processed = processResponse(error);
     console.log('processed', processed);
     store.message = processed.message || processed.details.error_message || 'Ha ocurrido un error.';

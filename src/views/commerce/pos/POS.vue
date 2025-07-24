@@ -1,14 +1,17 @@
 <script setup>
 import { createCustomer, searchCustomers } from '@/api';
 import { useAuthStore } from '@/stores/authStore';
+import { useCashSessionsStore } from '@/stores/cashSessionsStore';
+import { usePaymentMethodsStore } from '@/stores/paymentMethodsStore';
 import { useProductsStore } from '@/stores/productsStore';
-import { useWarehousesStore } from '@/stores/warehousesStore';
 import { useSalesStore } from '@/stores/salesStore';
+import { useWarehousesStore } from '@/stores/warehousesStore';
 import cache from '@/utils/cache.js';
 import { storeToRefs } from 'pinia';
 
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 // Constants for cache
 const CACHE_KEYS = {
@@ -17,12 +20,16 @@ const CACHE_KEYS = {
     VOUCHER_TYPE: 'pos_voucher_type'
 };
 
+// Stores y router
+const router = useRouter();
 // Stores and composables
 const toast = useToast();
 const authStore = useAuthStore();
 const productsStore = useProductsStore();
 const warehousesStore = useWarehousesStore();
 const salesStore = useSalesStore();
+const paymentMethodsStore = usePaymentMethodsStore();
+const cashSessionsStore = useCashSessionsStore();
 
 // Loading states
 const loading = ref(false);
@@ -37,23 +44,22 @@ const selectedWarehouse = ref(null);
 
 // Cart and payment
 const cart = ref([]);
-const paymentMethod = ref('efectivo');
+const selectedPaymentMethods = ref([]);
 const paymentStatus = ref('PAGADO'); // PAGADO o PENDIENTE
 const showPaymentDialog = ref(false);
 const showCartSummary = ref(false);
 const showBatchDialog = ref(false);
 const selectedProductForBatch = ref(null);
 
-const paymentMethods = ref([
-    { name: 'Efectivo', value: 'efectivo', icon: 'pi-money-bill', color: 'success' },
-    { name: 'Tarjeta de Crédito', value: 'credito', icon: 'pi-credit-card', color: 'info' },
-    { name: 'Tarjeta de Débito', value: 'debito', icon: 'pi-credit-card', color: 'warning' },
-    { name: 'Transferencia', value: 'transferencia', icon: 'pi-send', color: 'secondary' }
-]);
+// Payment methods management
+const availablePaymentMethods = ref([]);
+const showMultiplePaymentDialog = ref(false);
 
 // Store reactive data
 const { warehousesList, isLoadingWarehouses } = storeToRefs(warehousesStore);
 const { saleProductsList, isLoadingSaleProducts } = storeToRefs(productsStore);
+const { paymentMethodsList } = storeToRefs(paymentMethodsStore);
+const { currentSession, hasActiveSession, currentSessionInfo } = storeToRefs(cashSessionsStore);
 
 // Search and product data
 const searchQuery = ref('');
@@ -136,7 +142,6 @@ const voucherType = ref(availableVoucherTypes.value[0]?.value);
 
 // Load preferences from cache
 selectedWarehouse.value = cache.getItem(CACHE_KEYS.FAVORITE_WAREHOUSE);
-paymentMethod.value = cache.getItem(CACHE_KEYS.PAYMENT_METHOD) || 'efectivo';
 voucherType.value = cache.getItem(CACHE_KEYS.VOUCHER_TYPE) || availableVoucherTypes.value[0]?.value;
 
 // Persist preferences to cache
@@ -145,7 +150,6 @@ watch(selectedWarehouse, val => {
         cache.setItem(CACHE_KEYS.FAVORITE_WAREHOUSE, val);
     }
 });
-watch(paymentMethod, val => cache.setItem(CACHE_KEYS.PAYMENT_METHOD, val));
 watch(voucherType, val => cache.setItem(CACHE_KEYS.VOUCHER_TYPE, val));
 
 // Función para buscar productos usando el endpoint search-sale
@@ -208,16 +212,36 @@ watch(selectedWarehouse, () => {
     }
 });
 
+const getCurrentSession = async () => {
+    try {
+        await cashSessionsStore.getCurrentSession();
+        if (!cashSessionsStore.hasActiveSession) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Sin Sesión de Caja',
+                detail: 'Algunos métodos de pago requieren una sesión de caja activa',
+                life: 5000
+            });
+        }
+    } catch (error) {
+        console.error('Error al obtener sesión actual:', error);
+        // Si falla obtener la sesión, asumir que no hay sesión activa
+    }
+};
+
 onMounted(async () => {
     isInitializing.value = true;
 
     try {
-        // Cargar almacenes
-        if (warehousesList.value.length === 0) {
-            await warehousesStore.fetchWarehouses();
-        }
+        // Cargar datos iniciales en paralelo
+        await Promise.all([
+            warehousesList.value.length === 0 ? warehousesStore.fetchWarehouses() : Promise.resolve(),
+            paymentMethodsStore.fetchPaymentMethods({ active_only: true }),
+            getCurrentSession()
+        ]);
 
-        checkActiveSession();
+        // Configurar métodos de pago disponibles
+        availablePaymentMethods.value = paymentMethodsList.value.filter(pm => pm.is_active);
 
         toast.add({
             severity: 'success',
@@ -225,6 +249,17 @@ onMounted(async () => {
             detail: 'Punto de venta listo para usar',
             life: 3000
         });
+
+        // Validar sesión de caja si hay métodos que requieren caja
+        const cashRequiredMethods = availablePaymentMethods.value.filter(pm => pm.requires_cash_register);
+        if (cashRequiredMethods.length > 0 && !hasActiveSession.value) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Sin Sesión de Caja',
+                detail: 'Algunos métodos de pago requieren una sesión de caja activa',
+                life: 5000
+            });
+        }
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -234,6 +269,16 @@ onMounted(async () => {
         });
     } finally {
         isInitializing.value = false;
+        // Si no hay sesión activa, advertir y redirigir
+        if (!hasActiveSession.value) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Sin Sesión de Caja',
+                detail: 'Debes abrir tu sesión antes de vender',
+                life: 5000
+            });
+            router.replace('/commerce/pos/sessions');
+        }
     }
 });
 
@@ -431,11 +476,34 @@ const clearCart = () => {
 };
 
 const processPayment = async () => {
+    // Bloquear venta si no existe sesión de caja
+    if (!hasActiveSession.value) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Sesión de caja requerida',
+            detail: 'Debes abrir tu sesión antes de registrar ventas',
+            life: 4000
+        });
+        router.push('/commerce/pos/sessions');
+        return;
+    }
+
     if (cart.value.length === 0) {
         toast.add({
             severity: 'warn',
             summary: 'Carrito Vacío',
             detail: 'Agregue productos antes de procesar el pago',
+            life: 3000
+        });
+        return;
+    }
+
+    // Validar que hay métodos de pago seleccionados
+    if (selectedPaymentMethods.value.length === 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Sin Métodos de Pago',
+            detail: 'Debe seleccionar al menos un método de pago',
             life: 3000
         });
         return;
@@ -466,6 +534,20 @@ const processPayment = async () => {
             detail: customerValidation,
             life: 4000
         });
+        loading.value = false;
+        return;
+    }
+
+    // Validar métodos de pago
+    const paymentValidation = validateSelectedPaymentMethods();
+    if (!paymentValidation.valid) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error en Métodos de Pago',
+            detail: paymentValidation.message,
+            life: 4000
+        });
+        loading.value = false;
         return;
     }
 
@@ -477,50 +559,47 @@ const processPayment = async () => {
         customer_id: selectedCustomer.value?.id || null,
         sale_date: new Date().toISOString().slice(0, 10),
         voucher_type: voucherType.value,
-        payment_method: paymentMethod.value,
         total_amount: cartTotal.value,
         tax_amount: totalTax,
         discount_amount: 0,
-        notes: null, // null en lugar de string vacío
+        notes: null,
         status: paymentStatus.value,
         details: cart.value.map(item => {
             const itemTax = calculateTax(item.subtotal);
             return {
                 product_id: item.id,
                 batch_id: item.batch_id || null,
-                stock_id: item.stock_id, // OBLIGATORIO - removido || null
+                stock_id: item.stock_id,
                 quantity: item.quantity,
                 unit_price: item.price,
                 total_amount: item.subtotal,
                 tax_amount: itemTax,
                 discount_amount: 0
             };
-        })
+        }),
+        payment_methods: selectedPaymentMethods.value.map(pm => ({
+            method_id: pm.method_id,
+            amount: parseFloat(pm.amount),
+            reference: pm.reference || null
+        }))
     };
 
     try {
         console.log('Payload enviado:', payload);
         const response = await salesStore.createSale(payload);
 
-        console.log('Full API Response:', response); // Debug: ver estructura completa
-
         // Manejar diferentes estructuras de respuesta posibles
         let saleData, voucherLink;
 
         if (response.data) {
-            // Si viene envuelto en { success: true, data: {...} }
             saleData = response.data.sale || response.data;
             voucherLink = response.data.voucher_link;
         } else {
-            // Si viene directamente { sale: {...}, voucher_link: "..." }
             saleData = response.sale || response;
             voucherLink = response.voucher_link;
         }
 
-        console.log('Sale data:', saleData); // Debug: ver datos de venta
-        console.log('Voucher link:', voucherLink); // Debug: ver link
-
-        // Construir mensaje de éxito con validación
+        // Construir mensaje de éxito
         let successMessage = 'Venta registrada exitosamente';
 
         if (saleData && saleData.document_type && saleData.document_number) {
@@ -540,17 +619,21 @@ const processPayment = async () => {
             life: 5000
         });
 
-        // Limpiar carrito y cerrar modal
+        // Limpiar carrito, métodos de pago y cerrar modal
         cart.value = [];
+        selectedPaymentMethods.value = [];
         showPaymentDialog.value = false;
 
-        // Si hay link del comprobante, podríamos abrir en nueva ventana
+        // Refrescar sesión de caja si existe
+        if (hasActiveSession.value) {
+            await cashSessionsStore.refreshCurrentSession();
+        }
+
         if (voucherLink) {
             console.log('Voucher link disponible:', voucherLink);
         }
 
     } catch (error) {
-        // Manejo mejorado de errores según la nueva API
         let errorMessage = 'Error al procesar la venta';
 
         if (error.status === 400) {
@@ -577,6 +660,10 @@ const formatCurrency = (amount) => {
         style: 'currency',
         currency: 'PEN'
     }).format(amount);
+};
+
+const formatDateTime = (dateTime) => {
+    return dateTime ? new Date(dateTime).toLocaleString('es-PE') : '--';
 };
 
 // Functions for image handling
@@ -705,10 +792,170 @@ const validateCustomerForVoucher = () => {
     return true;
 };
 
-// Función para obtener el color del método de pago seleccionado
-const getPaymentMethodColor = (method) => {
-    const paymentMethodObj = paymentMethods.value.find(pm => pm.value === method);
-    return paymentMethodObj?.color || 'secondary';
+// Funciones para gestionar múltiples métodos de pago
+const addPaymentMethod = () => {
+    const remainingAmount = getRemainingAmount();
+    if (remainingAmount <= 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Pago Completo',
+            detail: 'El monto total ya está cubierto',
+            life: 3000
+        });
+        return;
+    }
+
+    selectedPaymentMethods.value.push({
+        method_id: null,
+        method_name: '',
+        amount: remainingAmount,
+        reference: '',
+        requires_reference: false
+    });
+};
+
+const removePaymentMethod = (index) => {
+    selectedPaymentMethods.value.splice(index, 1);
+};
+
+const updatePaymentMethod = (index, field, value) => {
+    const paymentMethod = selectedPaymentMethods.value[index];
+
+    if (field === 'method_id') {
+        const method = availablePaymentMethods.value.find(pm => pm.id === value);
+        if (method) {
+            paymentMethod.method_id = method.id;
+            paymentMethod.method_name = method.name;
+            paymentMethod.requires_reference = method.requires_reference;
+
+            // Limpiar referencia si ya no es requerida
+            if (!method.requires_reference) {
+                paymentMethod.reference = '';
+            }
+        }
+    } else {
+        paymentMethod[field] = value;
+    }
+};
+
+const getRemainingAmount = () => {
+    const totalPaid = selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
+    return Math.max(0, cartTotal.value - totalPaid);
+};
+
+const getTotalPaymentAmount = () => {
+    return selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
+};
+
+const validateSelectedPaymentMethods = () => {
+    // Verificar sesión activa antes de cualquier otra validación
+    if (!hasActiveSession.value) {
+        return { valid: false, message: 'Debe tener una sesión de caja activa' };
+    }
+
+    if (selectedPaymentMethods.value.length === 0) {
+        return { valid: false, message: 'Debe seleccionar al menos un método de pago' };
+    }
+
+    // Validar que todos los métodos tengan datos completos
+    for (let i = 0; i < selectedPaymentMethods.value.length; i++) {
+        const pm = selectedPaymentMethods.value[i];
+
+        if (!pm.method_id) {
+            return { valid: false, message: `Método de pago ${i + 1}: Debe seleccionar un método` };
+        }
+
+        if (!pm.amount || pm.amount <= 0) {
+            return { valid: false, message: `Método de pago ${i + 1}: Monto debe ser mayor a cero` };
+        }
+
+        if (pm.requires_reference && !pm.reference) {
+            return { valid: false, message: `Método de pago ${i + 1}: Requiere número de referencia` };
+        }
+
+        // Validar límites del método de pago
+        const method = availablePaymentMethods.value.find(m => m.id === pm.method_id);
+        if (method) {
+            const validation = paymentMethodsStore.validateMethod(pm.method_id, pm.amount, !!pm.reference);
+            if (!validation.valid) {
+                return { valid: false, message: `Método de pago ${i + 1}: ${validation.message}` };
+            }
+        }
+    }
+
+    // Validar suma total
+    const totalPayments = getTotalPaymentAmount();
+    const tolerance = 0.01;
+
+    if (Math.abs(totalPayments - cartTotal.value) > tolerance) {
+        return {
+            valid: false,
+            message: `La suma de pagos (${totalPayments.toFixed(2)}) debe coincidir con el total (${cartTotal.value.toFixed(2)})`
+        };
+    }
+
+    // Validar solo un método en efectivo
+    const cashMethods = selectedPaymentMethods.value.filter(pm => {
+        const method = availablePaymentMethods.value.find(m => m.id === pm.method_id);
+        return method && method.type === 'CASH';
+    });
+
+    if (cashMethods.length > 1) {
+        return { valid: false, message: 'Solo se permite un método de pago en efectivo por venta' };
+    }
+
+    // Validar sesión de caja para métodos que la requieren
+    const cashRegisterMethods = selectedPaymentMethods.value.filter(pm => {
+        const method = availablePaymentMethods.value.find(m => m.id === pm.method_id);
+        return method && method.requires_cash_register;
+    });
+
+    if (cashRegisterMethods.length > 0 && !hasActiveSession.value) {
+        return { valid: false, message: 'Debe tener un turno de caja activo para procesar pagos en efectivo' };
+    }
+
+    return { valid: true, message: 'Métodos de pago válidos' };
+};
+
+const openMultiplePaymentDialog = () => {
+    // Inicializar con un método de pago por defecto
+    selectedPaymentMethods.value = [{
+        method_id: null,
+        method_name: '',
+        amount: cartTotal.value,
+        reference: '',
+        requires_reference: false
+    }];
+
+    showMultiplePaymentDialog.value = true;
+};
+
+const getPaymentMethodIcon = (methodId) => {
+    const method = availablePaymentMethods.value.find(pm => pm.id === methodId);
+    if (!method) return 'pi-circle';
+
+    const iconMap = {
+        'CASH': 'pi-money-bill',
+        'CARD': 'pi-credit-card',
+        'TRANSFER': 'pi-send',
+        'CREDIT': 'pi-clock'
+    };
+
+    return iconMap[method.type] || 'pi-circle';
+};
+
+const getPaymentMethodColor = (methodId) => {
+    const method = availablePaymentMethods.value.find(pm => pm.id === methodId);
+    if (!method) return 'secondary';
+
+    const colorMap = {
+        'CASH': 'success',
+        'CARD': 'info',
+        'TRANSFER': 'warning',
+        'CREDIT': 'secondary'
+    };
+
+    return colorMap[method.type] || 'secondary';
 };
 </script>
 
@@ -728,14 +975,14 @@ const getPaymentMethodColor = (method) => {
                             </div>
                             <div>
                                 <span class="font-bold text-gray-900 text-lg">
-                                    {{ activeSession?.cashier || 'Cargando...' }}
+                                    {{ currentSessionInfo?.cashier || 'Sin sesión' }}
                                 </span>
                                 <div class="text-sm text-gray-500">Cajero</div>
                             </div>
                         </div>
                         <div class="hidden sm:flex items-center space-x-3 bg-gray-100 px-4 py-2 rounded-full">
                             <i class="pi pi-clock text-blue-600"></i>
-                            <span class="text-sm font-medium text-gray-700">{{ activeSession?.openedAt }}</span>
+                            <span class="text-sm font-medium text-gray-700">{{ currentSessionInfo ? formatDateTime(currentSessionInfo.openedAt) : '--' }}</span>
                         </div>
                     </div>
 
@@ -1018,7 +1265,7 @@ const getPaymentMethodColor = (method) => {
 
                                 <!-- Actions -->
                                 <div class="space-y-3 pt-4">
-                                    <Button @click="showPaymentDialog = true" label="Procesar Pago"
+                                    <Button @click="openMultiplePaymentDialog" label="Procesar Pago" :disabled="!hasActiveSession"
                                         icon="pi pi-credit-card" class="w-full h-14 text-lg font-bold" size="large"
                                         severity="success" :loading="loading" />
                                     <Button @click="clearCart" label="Limpiar Carrito" icon="pi pi-trash"
@@ -1092,7 +1339,7 @@ const getPaymentMethodColor = (method) => {
                 </div>
 
                 <div class="space-y-3 pt-4">
-                    <Button @click="showPaymentDialog = true; showCartSummary = false" label="Procesar Pago"
+                    <Button @click="openMultiplePaymentDialog(); showCartSummary = false" label="Procesar Pago" :disabled="!hasActiveSession"
                         icon="pi pi-credit-card" class="w-full h-14 text-lg font-bold" size="large" severity="success"
                         :loading="loading" />
                     <Button @click="clearCart" label="Limpiar Carrito" icon="pi pi-trash" severity="secondary" outlined
@@ -1101,53 +1348,158 @@ const getPaymentMethodColor = (method) => {
             </div>
         </Dialog>
 
-        <!-- Payment Dialog -->
-        <Dialog v-model:visible="showPaymentDialog" header="Procesar Pago" :modal="true"
-            :style="{ width: '95vw', maxWidth: '700px' }" :pt="{
+        <!-- Multiple Payment Methods Dialog -->
+        <Dialog v-model:visible="showMultiplePaymentDialog" header="Métodos de Pago" :modal="true"
+            :style="{ width: '95vw', maxWidth: '900px' }" :pt="{
                 header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
-                content: 'p-8'
+                content: 'p-6'
             }">
             <template #header>
                 <div class="flex items-center space-x-3">
                     <i class="pi pi-credit-card text-xl"></i>
-                    <span class="text-xl font-bold">Finalizar Venta</span>
+                    <span class="text-xl font-bold">Configurar Métodos de Pago</span>
                 </div>
             </template>
 
-            <div class="space-y-8 mt-2">
+            <div class="space-y-6 mt-2">
                 <!-- Order Summary -->
-                <Panel header="Resumen de la Orden" class="shadow-lg border-0">
-                    <template #header>
-                        <div class="flex items-center space-x-2">
-                            <i class="pi pi-list text-blue-600"></i>
-                            <span class="font-bold">Resumen de la Orden</span>
-                        </div>
-                    </template>
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-bold text-gray-800">TOTAL A PAGAR:</span>
+                        <span class="text-2xl font-black text-blue-600">{{ formatCurrency(cartTotal) }}</span>
+                    </div>
+                </div>
 
-                    <div class="space-y-3">
-                        <div v-for="item in cart" :key="item.id"
-                            class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900">{{ item.name }}</div>
-                                <div class="text-sm text-gray-600">{{ formatCurrency(item.price) }} × {{ item.quantity
-                                }}</div>
+                <!-- Payment Methods Configuration -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-gray-800">
+                            <i class="pi pi-wallet mr-2 text-purple-600"></i>
+                            Métodos de Pago
+                        </h3>
+                        <Button @click="addPaymentMethod" label="Agregar Método" icon="pi pi-plus" size="small"
+                            severity="success" outlined :disabled="selectedPaymentMethods.length >= 10" />
+                    </div>
+
+                    <!-- Payment Methods List -->
+                    <div class="space-y-3" v-if="selectedPaymentMethods.length > 0">
+                        <Card v-for="(payment, index) in selectedPaymentMethods" :key="index"
+                            class="shadow-sm border border-gray-200">
+                            <template #content>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-semibold text-gray-800">Método de Pago {{ index + 1 }}</h4>
+                                        <Button @click="removePaymentMethod(index)" icon="pi pi-trash" size="small"
+                                            severity="danger" text rounded v-if="selectedPaymentMethods.length > 1" />
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <!-- Method Selection -->
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">Método</label>
+                                            <Select v-model="payment.method_id"
+                                                @change="updatePaymentMethod(index, 'method_id', $event.value)"
+                                                :options="availablePaymentMethods" option-label="name" option-value="id"
+                                                placeholder="Seleccionar método..." class="w-full" :pt="{
+                                                    root: 'border-2 border-gray-200 hover:border-purple-300 focus:border-purple-500 rounded-lg',
+                                                    input: 'py-2 px-3 text-sm'
+                                                }">
+                                                <template #option="{ option }">
+                                                    <div class="flex items-center space-x-2">
+                                                        <i :class="getPaymentMethodIcon(option.id)" :style="{
+                                                            color: getPaymentMethodColor(option.id) === 'success' ? '#10b981' :
+                                                                getPaymentMethodColor(option.id) === 'info' ? '#3b82f6' :
+                                                                    getPaymentMethodColor(option.id) === 'warning' ? '#f59e0b' : '#6b7280'
+                                                        }"></i>
+                                                        <span>{{ option.name }}</span>
+                                                        <Tag :value="option.type" size="small"
+                                                            :severity="getPaymentMethodColor(option.id)" />
+                                                    </div>
+                                                </template>
+                                            </Select>
+                                        </div>
+
+                                        <!-- Amount -->
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">Monto</label>
+                                            <div class="p-inputgroup">
+                                                <span class="p-inputgroup-addon">S/</span>
+                                                <InputNumber v-model="payment.amount"
+                                                    @input="updatePaymentMethod(index, 'amount', $event)" :min="0"
+                                                    :max="cartTotal" mode="decimal" :minFractionDigits="2"
+                                                    :maxFractionDigits="2" class="flex-1" :pt="{
+                                                        input: 'py-2 px-3 text-sm border-l-0'
+                                                    }" />
+                                            </div>
+                                        </div>
+
+                                        <!-- Reference -->
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">
+                                                Referencia
+                                                <span v-if="payment.requires_reference" class="text-red-500">*</span>
+                                            </label>
+                                            <InputText v-model="payment.reference"
+                                                @input="updatePaymentMethod(index, 'reference', $event.target.value)"
+                                                :placeholder="payment.requires_reference ? 'Número de referencia' : 'Opcional'"
+                                                :disabled="!payment.method_id" class="w-full" :pt="{
+                                                    root: 'border-2 border-gray-200 hover:border-purple-300 focus:border-purple-500 rounded-lg',
+                                                    input: 'py-2 px-3 text-sm'
+                                                }" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Method Info -->
+                                    <div v-if="payment.method_id" class="bg-gray-50 p-3 rounded-lg">
+                                        <div class="flex items-center justify-between text-sm">
+                                            <div class="flex items-center space-x-2">
+                                                <i :class="getPaymentMethodIcon(payment.method_id)"
+                                                    class="text-gray-600"></i>
+                                                <span class="font-medium">{{ payment.method_name }}</span>
+                                            </div>
+                                            <div class="flex items-center space-x-4 text-xs text-gray-600">
+                                                <span v-if="payment.requires_reference">
+                                                    <i class="pi pi-info-circle mr-1"></i>
+                                                    Requiere referencia
+                                                </span>
+                                                <span>
+                                                    <i class="pi pi-calculator mr-1"></i>
+                                                    {{ formatCurrency(payment.amount || 0) }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </Card>
+                    </div>
+
+                    <!-- Payment Summary -->
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border-2 border-green-200">
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-sm text-gray-600">Total a Pagar</div>
+                                <div class="text-lg font-bold text-gray-800">{{ formatCurrency(cartTotal) }}</div>
                             </div>
-                            <div class="font-bold text-green-600">{{ formatCurrency(item.subtotal) }}</div>
-                        </div>
-
-                        <Divider class="my-4" />
-
-                        <div
-                            class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border-2 border-green-200">
-                            <div class="flex justify-between items-center">
-                                <span class="text-xl font-bold text-gray-800">TOTAL A PAGAR:</span>
-                                <span class="text-3xl font-black text-green-600">{{ formatCurrency(cartTotal) }}</span>
+                            <div>
+                                <div class="text-sm text-gray-600">Total Pagos</div>
+                                <div class="text-lg font-bold"
+                                    :class="getTotalPaymentAmount() === cartTotal ? 'text-green-600' : 'text-orange-600'">
+                                    {{ formatCurrency(getTotalPaymentAmount()) }}
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-600">Restante</div>
+                                <div class="text-lg font-bold"
+                                    :class="getRemainingAmount() === 0 ? 'text-green-600' : 'text-red-600'">
+                                    {{ formatCurrency(getRemainingAmount()) }}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </Panel>
+                </div>
 
-                <!-- Payment Options -->
+                <!-- Voucher Type and Payment Status -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-3">
@@ -1164,67 +1516,29 @@ const getPaymentMethodColor = (method) => {
 
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-3">
-                            <i class="pi pi-wallet mr-2 text-purple-600"></i>
-                            Método de Pago Seleccionado
+                            <i class="pi pi-check-circle mr-2 text-purple-600"></i>
+                            Estado del Pago
                         </label>
-                        <div class="bg-gray-50 p-4 rounded-xl border-2 border-gray-200">
-                            <Chip :label="paymentMethods.find(pm => pm.value === paymentMethod)?.name"
-                                :severity="getPaymentMethodColor(paymentMethod)" class="text-base font-bold">
-                                <template #icon>
-                                    <i :class="paymentMethods.find(pm => pm.value === paymentMethod)?.icon"
-                                        class="mr-2"></i>
-                                </template>
-                            </Chip>
+                        <div class="flex gap-3">
+                            <Button @click="paymentStatus = 'PAGADO'" :label="'Pagado'" :icon="'pi pi-check'"
+                                :outlined="paymentStatus !== 'PAGADO'"
+                                :severity="paymentStatus === 'PAGADO' ? 'success' : 'secondary'"
+                                class="flex-1 h-12 font-semibold" />
+                            <Button @click="paymentStatus = 'PENDIENTE'" :label="'Pendiente'" :icon="'pi pi-clock'"
+                                :outlined="paymentStatus !== 'PENDIENTE'"
+                                :severity="paymentStatus === 'PENDIENTE' ? 'warning' : 'secondary'"
+                                class="flex-1 h-12 font-semibold" />
                         </div>
-                    </div>
-                </div>
-
-                <!-- Payment Method Grid -->
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-4">
-                        <i class="pi pi-credit-card mr-2 text-purple-600"></i>
-                        Seleccionar Método de Pago
-                    </label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <Button v-for="method in paymentMethods" :key="method.value"
-                            @click="paymentMethod = method.value" :label="method.name" :icon="method.icon"
-                            :outlined="paymentMethod !== method.value"
-                            :severity="paymentMethod === method.value ? method.color : 'secondary'"
-                            class="h-16 text-sm font-semibold transition-all duration-200 hover:scale-105"
-                            :class="{ 'ring-2 ring-offset-2': paymentMethod === method.value }" />
-                    </div>
-                </div>
-
-                <!-- Payment Status -->
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-3">
-                        <i class="pi pi-check-circle mr-2 text-purple-600"></i>
-                        Estado del Pago
-                    </label>
-                    <div class="flex gap-3">
-                        <Button @click="paymentStatus = 'PAGADO'" :label="'Pagado'" :icon="'pi pi-check'"
-                            :outlined="paymentStatus !== 'PAGADO'"
-                            :severity="paymentStatus === 'PAGADO' ? 'success' : 'secondary'"
-                            class="flex-1 h-12 font-semibold" />
-                        <Button @click="paymentStatus = 'PENDIENTE'" :label="'Pendiente'" :icon="'pi pi-clock'"
-                            :outlined="paymentStatus !== 'PENDIENTE'"
-                            :severity="paymentStatus === 'PENDIENTE' ? 'warning' : 'secondary'"
-                            class="flex-1 h-12 font-semibold" />
-                    </div>
-                    <div class="text-xs text-gray-600 mt-2">
-                        <i class="pi pi-info-circle mr-1"></i>
-                        {{ paymentStatus === 'PAGADO' ? `Se generará comprobante inmediatamente` : `Venta quedará
-                        pendiente de
-                        pago` }}
                     </div>
                 </div>
 
                 <!-- Actions -->
                 <div class="flex space-x-4 pt-6 border-t border-gray-200">
-                    <Button @click="showPaymentDialog = false" label="Cancelar" icon="pi pi-times" severity="secondary"
-                        outlined class="flex-1 h-14 text-lg font-semibold" />
+                    <Button @click="showMultiplePaymentDialog = false" label="Cancelar" icon="pi pi-times"
+                        severity="secondary" outlined class="flex-1 h-14 text-lg font-semibold" />
                     <Button @click="processPayment" label="Confirmar Pago" icon="pi pi-check" severity="success"
-                        class="flex-1 h-14 text-lg font-bold" :loading="loading" />
+                        class="flex-1 h-14 text-lg font-bold" :loading="loading"
+                        :disabled="getRemainingAmount() !== 0 || selectedPaymentMethods.length === 0" />
                 </div>
             </div>
         </Dialog>
