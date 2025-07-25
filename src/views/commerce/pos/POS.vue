@@ -140,6 +140,92 @@ const availableVoucherTypes = computed(() => {
 
 const voucherType = ref(availableVoucherTypes.value[0]?.value);
 
+// Toast management system
+const toastShown = ref({
+    sessionWarning: false,
+    stockWarning: new Set(),
+    searchEmpty: false,
+    stockError: new Set(),
+    paymentError: false
+});
+
+// Toast configuration presets
+const TOAST_PRESETS = {
+    success: { severity: 'success', life: 3000 },
+    info: { severity: 'info', life: 3000 },
+    warn: { severity: 'warn', life: 4000 },
+    error: { severity: 'error', life: 4000 }
+};
+
+// Centralized toast management
+const showToast = (type, options = {}) => {
+    const preset = TOAST_PRESETS[options.severity] || TOAST_PRESETS.info;
+    const config = { ...preset, ...options };
+
+    // Prevent duplicate toasts for specific types
+    const preventDuplicates = ['sessionWarning', 'searchEmpty', 'paymentError'];
+    if (preventDuplicates.includes(type) && toastShown.value[type]) return;
+
+    // Special handling for stock errors (prevent per product)
+    if (type === 'stockError' && options.productId) {
+        if (toastShown.value.stockError.has(options.productId)) return;
+        toastShown.value.stockError.add(options.productId);
+        setTimeout(() => toastShown.value.stockError.delete(options.productId), 3000);
+    }
+
+    toast.add(config);
+
+    // Track shown toasts with auto-reset
+    if (preventDuplicates.includes(type)) {
+        toastShown.value[type] = true;
+        const resetTime = type === 'sessionWarning' ? 10000 : 5000;
+        setTimeout(() => { toastShown.value[type] = false; }, resetTime);
+    }
+};
+
+// Specific toast helpers
+const showSessionWarning = (detail) => {
+    showToast('sessionWarning', {
+        severity: 'warn',
+        summary: 'Sin Sesión de Caja',
+        detail,
+        life: 5000
+    });
+};
+
+const showStockError = (productName, productId) => {
+    showToast('stockError', {
+        severity: 'error',
+        summary: 'Sin Stock',
+        detail: `${productName} no tiene stock disponible`,
+        productId
+    });
+};
+
+const showValidationError = (detail) => {
+    showToast('validation', {
+        severity: 'error',
+        summary: 'Error de Validación',
+        detail
+    });
+};
+
+const showSuccessMessage = (summary, detail) => {
+    showToast('success', {
+        severity: 'success',
+        summary,
+        detail,
+        life: 3000
+    });
+};
+const requiresCashSession = computed(() => {
+    // Si la configuración aún no está cargada, asumimos que SÍ requiere sesión
+    return companyConfig.value?.requires_cash_session ?? true;
+});
+
+// Se puede operar si hay sesión activa o si la caja no es obligatoria
+const canOperateWithoutSession = computed(() => hasActiveSession.value || !requiresCashSession.value);
+
 // Load preferences from cache
 selectedWarehouse.value = cache.getItem(CACHE_KEYS.FAVORITE_WAREHOUSE);
 voucherType.value = cache.getItem(CACHE_KEYS.VOUCHER_TYPE) || availableVoucherTypes.value[0]?.value;
@@ -171,7 +257,7 @@ const searchProducts = async (query = '') => {
         console.log(searchResults.value);
 
         if (searchResults.value.length === 0) {
-            toast.add({
+            showToast('searchEmpty', {
                 severity: 'info',
                 summary: 'Sin resultados',
                 detail: 'No se encontraron productos disponibles',
@@ -179,11 +265,10 @@ const searchProducts = async (query = '') => {
             });
         }
     } catch (error) {
-        toast.add({
+        showToast('error', {
             severity: 'error',
             summary: 'Error de búsqueda',
-            detail: 'Error al buscar productos',
-            life: 3000
+            detail: 'Error al buscar productos'
         });
         searchResults.value = [];
     } finally {
@@ -215,13 +300,8 @@ watch(selectedWarehouse, () => {
 const getCurrentSession = async () => {
     try {
         await cashSessionsStore.getCurrentSession();
-        if (!cashSessionsStore.hasActiveSession) {
-            toast.add({
-                severity: 'warn',
-                summary: 'Sin Sesión de Caja',
-                detail: 'Algunos métodos de pago requieren una sesión de caja activa',
-                life: 5000
-            });
+        if (requiresCashSession.value && !cashSessionsStore.hasActiveSession) {
+            showSessionWarning('Algunos métodos de pago requieren una sesión de caja activa');
         }
     } catch (error) {
         console.error('Error al obtener sesión actual:', error);
@@ -243,40 +323,24 @@ onMounted(async () => {
         // Configurar métodos de pago disponibles
         availablePaymentMethods.value = paymentMethodsList.value.filter(pm => pm.is_active);
 
-        toast.add({
-            severity: 'success',
-            summary: 'Sistema Iniciado',
-            detail: 'Punto de venta listo para usar',
-            life: 3000
-        });
+        showSuccessMessage('Sistema Iniciado', 'Punto de venta listo para usar');
 
         // Validar sesión de caja si hay métodos que requieren caja
         const cashRequiredMethods = availablePaymentMethods.value.filter(pm => pm.requires_cash_register);
-        if (cashRequiredMethods.length > 0 && !hasActiveSession.value) {
-            toast.add({
-                severity: 'warn',
-                summary: 'Sin Sesión de Caja',
-                detail: 'Algunos métodos de pago requieren una sesión de caja activa',
-                life: 5000
-            });
+        if (cashRequiredMethods.length > 0 && requiresCashSession.value && !hasActiveSession.value) {
+            showSessionWarning('Algunos métodos de pago requieren una sesión de caja activa');
         }
     } catch (error) {
-        toast.add({
+        showToast('error', {
             severity: 'error',
             summary: 'Error de inicialización',
-            detail: 'Error al cargar datos iniciales',
-            life: 4000
+            detail: 'Error al cargar datos iniciales'
         });
     } finally {
         isInitializing.value = false;
         // Si no hay sesión activa, advertir y redirigir
-        if (!hasActiveSession.value) {
-            toast.add({
-                severity: 'warn',
-                summary: 'Sin Sesión de Caja',
-                detail: 'Debes abrir tu sesión antes de vender',
-                life: 5000
-            });
+        if (requiresCashSession.value && !hasActiveSession.value) {
+            showSessionWarning('Debes abrir tu sesión antes de vender');
             router.replace('/commerce/pos/sessions');
         }
     }
@@ -311,12 +375,7 @@ const filteredProducts = computed(() => {
 
 const addToCart = (product) => {
     if (product.stock === 0) {
-        toast.add({
-            severity: 'error',
-            summary: 'Sin Stock',
-            detail: 'Este producto no tiene stock disponible',
-            life: 3000
-        });
+        showStockError(product.name, product.id);
         return;
     }
 
@@ -340,12 +399,7 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
 
     // Validar que tenemos stock_id - OBLIGATORIO para la API
     if (!stockId) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error de Stock',
-            detail: 'No se pudo obtener información de stock para este producto',
-            life: 3000
-        });
+        showValidationError('No se pudo obtener información de stock para este producto');
         return;
     }
 
@@ -359,18 +413,12 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
 
         if (existingItem.quantity < availableStock) {
             existingItem.quantity++;
-            toast.add({
-                severity: 'success',
-                summary: 'Actualizado',
-                detail: `${product.name} cantidad: ${existingItem.quantity}`,
-                life: 2000
-            });
+            showSuccessMessage('Actualizado', `${product.name} cantidad: ${existingItem.quantity}`);
         } else {
-            toast.add({
+            showToast('stockWarning', {
                 severity: 'warn',
                 summary: 'Stock Limitado',
-                detail: `Solo quedan ${availableStock} unidades`,
-                life: 3000
+                detail: `Solo quedan ${availableStock} unidades`
             });
         }
     } else {
@@ -388,12 +436,7 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
             stock_id: stockId, // OBLIGATORIO - siempre debe tener valor
             requires_batches: product.requires_batches
         });
-        toast.add({
-            severity: 'success',
-            summary: 'Agregado',
-            detail: `${itemName} añadido al carrito`,
-            life: 2000
-        });
+        showSuccessMessage('Agregado', `${itemName} añadido al carrito`);
     }
 
     updateCartTotals();
@@ -411,11 +454,10 @@ const removeFromCart = (index) => {
     const item = cart.value[index];
     cart.value.splice(index, 1);
     updateCartTotals();
-    toast.add({
+    showToast('info', {
         severity: 'info',
         summary: 'Eliminado',
-        detail: `${item.name} removido del carrito`,
-        life: 2000
+        detail: `${item.name} removido del carrito`
     });
 };
 
@@ -439,11 +481,10 @@ const updateQuantity = (item, newQuantity) => {
             item.quantity = newQuantity;
             item.subtotal = item.price * newQuantity;
         } else {
-            toast.add({
+            showToast('stockWarning', {
                 severity: 'warn',
                 summary: 'Stock Insuficiente',
-                detail: `Solo hay ${availableStock} unidades disponibles`,
-                life: 3000
+                detail: `Solo hay ${availableStock} unidades disponibles`
             });
         }
     }
@@ -467,45 +508,29 @@ const cartItemsCount = computed(() => {
 
 const clearCart = () => {
     cart.value = [];
-    toast.add({
+    showToast('info', {
         severity: 'info',
         summary: 'Carrito Limpio',
-        detail: 'Todos los productos han sido removidos',
-        life: 2000
+        detail: 'Todos los productos han sido removidos'
     });
 };
 
 const processPayment = async () => {
     // Bloquear venta si no existe sesión de caja
-    if (!hasActiveSession.value) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Sesión de caja requerida',
-            detail: 'Debes abrir tu sesión antes de registrar ventas',
-            life: 4000
-        });
+    if (requiresCashSession.value && !hasActiveSession.value) {
+        showSessionWarning('Debes abrir tu sesión antes de registrar ventas');
         router.push('/commerce/pos/sessions');
         return;
     }
 
     if (cart.value.length === 0) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Carrito Vacío',
-            detail: 'Agregue productos antes de procesar el pago',
-            life: 3000
-        });
+        showValidationError('Agregue productos antes de procesar el pago');
         return;
     }
 
     // Validar que hay métodos de pago seleccionados
     if (selectedPaymentMethods.value.length === 0) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Sin Métodos de Pago',
-            detail: 'Debe seleccionar al menos un método de pago',
-            life: 3000
-        });
+        showValidationError('Debe seleccionar al menos un método de pago');
         return;
     }
 
@@ -514,11 +539,10 @@ const processPayment = async () => {
             throw new Error('Para usar boletas o facturas debe activar la configuración SUNAT');
         }
     } catch (err) {
-        toast.add({
+        showToast('error', {
             severity: 'error',
             summary: 'Error de Configuración',
-            detail: err.message,
-            life: 4000
+            detail: err.message
         });
         return;
     }
@@ -528,12 +552,7 @@ const processPayment = async () => {
     // Validate customer for voucher type
     const customerValidation = validateCustomerForVoucher();
     if (customerValidation !== true) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error de validación',
-            detail: customerValidation,
-            life: 4000
-        });
+        showValidationError(customerValidation);
         loading.value = false;
         return;
     }
@@ -541,11 +560,10 @@ const processPayment = async () => {
     // Validar métodos de pago
     const paymentValidation = validateSelectedPaymentMethods();
     if (!paymentValidation.valid) {
-        toast.add({
+        showToast('paymentError', {
             severity: 'error',
             summary: 'Error en Métodos de Pago',
-            detail: paymentValidation.message,
-            life: 4000
+            detail: paymentValidation.message
         });
         loading.value = false;
         return;
@@ -612,7 +630,7 @@ const processPayment = async () => {
             successMessage += ' (Comprobante disponible)';
         }
 
-        toast.add({
+        showToast('success', {
             severity: 'success',
             summary: 'Venta Exitosa',
             detail: successMessage,
@@ -644,7 +662,7 @@ const processPayment = async () => {
             errorMessage = error.message;
         }
 
-        toast.add({
+        showToast('error', {
             severity: 'error',
             summary: 'Error de Venta',
             detail: errorMessage,
@@ -695,11 +713,10 @@ const searchCustomersDebounced = async (query) => {
         const response = await searchCustomers(query);
         customerResults.value = response.data || [];
     } catch (error) {
-        toast.add({
+        showToast('error', {
             severity: 'error',
             summary: 'Error de búsqueda',
-            detail: 'Error al buscar clientes',
-            life: 3000
+            detail: 'Error al buscar clientes'
         });
         customerResults.value = [];
     } finally {
@@ -710,12 +727,7 @@ const searchCustomersDebounced = async (query) => {
 const selectCustomer = (customer) => {
     selectedCustomer.value = customer;
     showCustomerDialog.value = false;
-    toast.add({
-        severity: 'success',
-        summary: 'Cliente seleccionado',
-        detail: `Cliente: ${customer.name}`,
-        life: 2000
-    });
+    showSuccessMessage('Cliente seleccionado', `Cliente: ${customer.name}`);
 };
 
 const clearCustomer = () => {
@@ -727,12 +739,7 @@ const clearCustomer = () => {
 const createQuickCustomer = async () => {
     // Basic validation
     if (!newCustomer.value.name.trim()) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error de validación',
-            detail: 'El nombre del cliente es requerido',
-            life: 3000
-        });
+        showValidationError('El nombre del cliente es requerido');
         return;
     }
 
@@ -750,30 +757,20 @@ const createQuickCustomer = async () => {
             identity_document_type: 'dni'
         };
 
-        toast.add({
-            severity: 'success',
-            summary: 'Cliente creado',
-            detail: `Cliente ${response.data.name} creado y seleccionado`,
-            life: 3000
-        });
+        showSuccessMessage('Cliente creado', `Cliente ${response.data.name} creado y seleccionado`);
     } catch (error) {
         const msg = error.validationErrors?.join(', ') || error.message || 'Error al crear cliente';
-        toast.add({
+        showToast('error', {
             severity: 'error',
             summary: 'Error al crear cliente',
-            detail: msg,
-            life: 4000
+            detail: msg
         });
     }
 };
 
 const validateCustomerForVoucher = () => {
-    if (voucherType.value === 'ticket') {
-        return true; // Ticket no requiere cliente
-    }
-
     if (!selectedCustomer.value) {
-        return 'Para generar boletas o facturas debe seleccionar un cliente';
+        return 'Debe seleccionar un cliente antes de procesar la venta';
     }
 
     if (voucherType.value === 'boleta' && !selectedCustomer.value.identity_document) {
@@ -796,11 +793,10 @@ const validateCustomerForVoucher = () => {
 const addPaymentMethod = () => {
     const remainingAmount = getRemainingAmount();
     if (remainingAmount <= 0) {
-        toast.add({
+        showToast('warn', {
             severity: 'warn',
             summary: 'Pago Completo',
-            detail: 'El monto total ya está cubierto',
-            life: 3000
+            detail: 'El monto total ya está cubierto'
         });
         return;
     }
@@ -849,7 +845,7 @@ const getTotalPaymentAmount = () => {
 
 const validateSelectedPaymentMethods = () => {
     // Verificar sesión activa antes de cualquier otra validación
-    if (!hasActiveSession.value) {
+    if (requiresCashSession.value && !hasActiveSession.value) {
         return { valid: false, message: 'Debe tener una sesión de caja activa' };
     }
 
@@ -910,7 +906,7 @@ const validateSelectedPaymentMethods = () => {
         return method && method.requires_cash_register;
     });
 
-    if (cashRegisterMethods.length > 0 && !hasActiveSession.value) {
+    if (cashRegisterMethods.length > 0 && requiresCashSession.value && !hasActiveSession.value) {
         return { valid: false, message: 'Debe tener un turno de caja activo para procesar pagos en efectivo' };
     }
 
@@ -982,7 +978,8 @@ const getPaymentMethodColor = (methodId) => {
                         </div>
                         <div class="hidden sm:flex items-center space-x-3 bg-gray-100 px-4 py-2 rounded-full">
                             <i class="pi pi-clock text-blue-600"></i>
-                            <span class="text-sm font-medium text-gray-700">{{ currentSessionInfo ? formatDateTime(currentSessionInfo.openedAt) : '--' }}</span>
+                            <span class="text-sm font-medium text-gray-700">{{ currentSessionInfo ?
+                                formatDateTime(currentSessionInfo.openedAt) : '--' }}</span>
                         </div>
                     </div>
 
@@ -1265,9 +1262,10 @@ const getPaymentMethodColor = (methodId) => {
 
                                 <!-- Actions -->
                                 <div class="space-y-3 pt-4">
-                                    <Button @click="openMultiplePaymentDialog" label="Procesar Pago" :disabled="!hasActiveSession"
-                                        icon="pi pi-credit-card" class="w-full h-14 text-lg font-bold" size="large"
-                                        severity="success" :loading="loading" />
+                                    <Button @click="openMultiplePaymentDialog" label="Procesar Pago"
+                                        :disabled="!canOperateWithoutSession" icon="pi pi-credit-card"
+                                        class="w-full h-14 text-lg font-bold" size="large" severity="success"
+                                        :loading="loading" />
                                     <Button @click="clearCart" label="Limpiar Carrito" icon="pi pi-trash"
                                         severity="secondary" outlined class="w-full h-12" />
                                 </div>
@@ -1339,9 +1337,9 @@ const getPaymentMethodColor = (methodId) => {
                 </div>
 
                 <div class="space-y-3 pt-4">
-                    <Button @click="openMultiplePaymentDialog(); showCartSummary = false" label="Procesar Pago" :disabled="!hasActiveSession"
-                        icon="pi pi-credit-card" class="w-full h-14 text-lg font-bold" size="large" severity="success"
-                        :loading="loading" />
+                    <Button @click="openMultiplePaymentDialog(); showCartSummary = false" label="Procesar Pago"
+                        :disabled="!canOperateWithoutSession" icon="pi pi-credit-card"
+                        class="w-full h-14 text-lg font-bold" size="large" severity="success" :loading="loading" />
                     <Button @click="clearCart" label="Limpiar Carrito" icon="pi pi-trash" severity="secondary" outlined
                         class="w-full h-12" />
                 </div>

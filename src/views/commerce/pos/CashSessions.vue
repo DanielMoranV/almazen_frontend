@@ -1,4 +1,5 @@
 <script setup>
+import SessionReportPrint from '@/components/SessionReportPrint.vue';
 import { useAuthStore } from '@/stores/authStore';
 import { useCashRegistersStore } from '@/stores/cashRegistersStore';
 import { useCashSessionsStore } from '@/stores/cashSessionsStore';
@@ -13,7 +14,10 @@ const cashRegistersStore = useCashRegistersStore();
 
 // Reactive data from stores
 const { sessionHistory, currentSession, hasActiveSession, isLoadingHistory } = storeToRefs(cashSessionsStore);
-const { availableForNewSession } = storeToRefs(cashRegistersStore);
+const { availableForNewSession, cashRegistersList } = storeToRefs(cashRegistersStore);
+
+// Config de empresa
+const requiresCashSession = computed(() => authStore.getCompanyConfig?.requires_cash_session ?? true);
 
 const loading = ref(false);
 const displayNewSessionDialog = ref(false);
@@ -51,7 +55,7 @@ const loadInitialData = async () => {
             cashRegistersStore.fetchCashRegisters()
         ]);
         // Advertir si no hay sesión activa
-        if (!hasActiveSession.value) {
+        if (requiresCashSession.value && !hasActiveSession.value) {
             toast.add({
                 severity: 'warn',
                 summary: 'Sin Sesión Activa',
@@ -88,12 +92,27 @@ const openNewSessionDialog = () => {
         opening_amount: 100,
         notes: ''
     };
+    // Pre-seleccionar caja si solo existe una disponible
+    if (cashRegistersList.value.length === 1) {
+        sessionForm.value.cash_register_id = cashRegistersList.value[0].id;
+    }
 
+    if (availableForNewSession.length === 0) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Sin cajas disponibles',
+            detail: 'No existen cajas registradoras listas para abrir sesión',
+            life: 4000
+        });
+        return;
+    }
     displayNewSessionDialog.value = true;
 };
 
 const createNewSession = async () => {
-    const validation = cashSessionsStore.validateOpenSession(sessionForm.value);
+    // Parsear numéricos
+sessionForm.value.opening_amount = parseFloat(sessionForm.value.opening_amount || 0);
+const validation = cashSessionsStore.validateOpenSession(sessionForm.value);
     if (!validation.valid) {
         toast.add({
             severity: 'error',
@@ -142,7 +161,7 @@ const openCloseSessionDialog = () => {
 
     // Pre-fill with expected amount
     closeForm.value = {
-        actual_amount: currentSessionInfo.value.expectedAmount,
+        actual_amount: (currentSessionInfo.value?.expected_amount ?? currentSessionInfo.value?.expectedAmount),
         notes: ''
     };
 
@@ -152,7 +171,9 @@ const openCloseSessionDialog = () => {
 const closeCurrentSession = async () => {
     if (!currentSession.value) return;
 
-    const validation = cashSessionsStore.validateCloseSession(closeForm.value);
+    // Parsear numéricos
+closeForm.value.actual_amount = parseFloat(closeForm.value.actual_amount || 0);
+const validation = cashSessionsStore.validateCloseSession(closeForm.value);
     if (!validation.valid) {
         toast.add({
             severity: 'error',
@@ -266,6 +287,21 @@ const getDifferenceClass = (difference) => {
     if (difference === 0) return 'text-green-600';
     return difference > 0 ? 'text-blue-600' : 'text-red-600';
 };
+
+// Imprimir reporte
+const printRef = ref(null);
+
+const printReport = () => {
+    if (!printRef.value) return;
+    const html = printRef.value.$el.innerHTML || printRef.value.$el.outerHTML;
+    const win = window.open('', '', 'width=900,height=650');
+    win.document.write(`<!doctype html><html><head><title>Reporte de Sesión</title>` +
+        `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"></head><body class='p-6'>` + html + `</body></html>`);
+    win.document.close();
+    win.focus();
+    win.print();
+    win.close();
+};
 </script>
 
 <template>
@@ -278,7 +314,7 @@ const getDifferenceClass = (difference) => {
                     <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-t-lg">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
-                                <i class="pi pi-clock text-2xl"></i>
+                                
                                 <div>
                                     <h1 class="text-2xl font-bold">Sesiones de Caja</h1>
                                     <p class="text-green-100">Control de turnos y movimientos de efectivo</p>
@@ -287,7 +323,7 @@ const getDifferenceClass = (difference) => {
                             <div class="flex space-x-3">
                                 <Button v-if="hasActiveSession" @click="openCloseSessionDialog" label="Cerrar Sesión"
                                     icon="pi pi-sign-out" severity="contrast" size="large" />
-                                <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus"
+                                <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus" :disabled="availableForNewSession.length === 0"
                                     severity="contrast" size="large" />
                             </div>
                         </div>
@@ -341,7 +377,7 @@ const getDifferenceClass = (difference) => {
                                         <div>
                                             <div class="text-sm text-orange-600 font-medium">Esperado</div>
                                             <div class="font-bold text-gray-800">{{
-                                                formatCurrency(currentSessionInfo.expectedAmount) }}</div>
+                                                formatCurrency((currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount)) }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -539,7 +575,7 @@ const getDifferenceClass = (difference) => {
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Monto Esperado</div>
-                        <div class="font-semibold text-orange-600">{{ formatCurrency(currentSessionInfo.expectedAmount)
+                        <div class="font-semibold text-orange-600">{{ formatCurrency((currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount))
                             }}
                         </div>
                     </div>
@@ -605,7 +641,7 @@ const getDifferenceClass = (difference) => {
             content: 'p-6'
         }">
 
-        <div v-if="sessionReport" class="space-y-6">
+        <div v-if="sessionReport" class="space-y-6 printable">
             <!-- Session Header -->
             <div class="text-center pb-4 border-b">
                 <h2 class="text-2xl font-bold text-gray-800">
@@ -621,7 +657,7 @@ const getDifferenceClass = (difference) => {
                 <div class="bg-green-50 p-4 rounded-lg border border-green-200">
                     <div class="text-center">
                         <div class="text-2xl font-bold text-green-600">
-                            {{ formatCurrency(sessionReport.summary?.total_sales || 0) }}
+                            {{ formatCurrency(sessionReport.movements_summary?.total_sales || 0) }}
                         </div>
                         <div class="text-sm text-green-700">Total Ventas</div>
                     </div>
@@ -630,7 +666,7 @@ const getDifferenceClass = (difference) => {
                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <div class="text-center">
                         <div class="text-2xl font-bold text-blue-600">
-                            {{ sessionReport.summary?.sales_count || 0 }}
+                            {{ sessionReport.movements_summary?.sales_count || 0 }}
                         </div>
                         <div class="text-sm text-blue-700">Transacciones</div>
                     </div>
@@ -643,6 +679,35 @@ const getDifferenceClass = (difference) => {
                         </div>
                         <div class="text-sm text-purple-700">Duración</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Sales Detail -->
+            <div v-if="sessionReport.sales?.length" class="mt-6">
+                <h3 class="font-bold text-gray-800 mb-3">Ventas Detalladas</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700">
+                                <th class="px-2 py-1 text-left">#</th>
+                                <th class="px-2 py-1 text-left">Comprobante</th>
+                                <th class="px-2 py-1 text-right">Total</th>
+                                <th class="px-2 py-1 text-left">Pagos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="sale in sessionReport.sales" :key="sale.sale_id || sale.id" class="border-b">
+                                <td class="px-2 py-1">{{ sale.sale_id || sale.id }}</td>
+                                <td class="px-2 py-1">{{ sale.document_number || sale.voucher_number || '-' }}</td>
+                                <td class="px-2 py-1 text-right">{{ formatCurrency(sale.total_amount) }}</td>
+                                <td class="px-2 py-1">
+                                    <span v-for="p in sale.payments" :key="p.payment_method_name" class="mr-2">
+                                        {{ p.payment_method_name }} ({{ formatCurrency(p.amount) }})
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -664,15 +729,32 @@ const getDifferenceClass = (difference) => {
         </div>
 
         <template #footer>
-            <div class="flex justify-end">
+            <div class="flex justify-between w-full">
+                <Button @click="printReport" label="Imprimir" icon="pi pi-print" severity="info" />
                 <Button @click="displayReportDialog = false" label="Cerrar" icon="pi pi-times" severity="secondary" />
             </div>
         </template>
     </Dialog>
+
+<!-- Componente oculto para impresión -->
+<SessionReportPrint v-if="sessionReport" :report="sessionReport" ref="printRef" style="display:none" />
 </template>
 
 <style scoped>
 .overflow-x-auto {
     overflow-x: auto;
+}
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .printable, .printable * {
+        visibility: visible;
+    }
+    .p-dialog {
+        position: static !important;
+        width: 100% !important;
+        overflow: visible !important;
+    }
 }
 </style>
