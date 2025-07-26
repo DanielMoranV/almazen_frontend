@@ -1,5 +1,12 @@
 import { createSale, deleteSale, fetchSales, getSale, updateSale } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
+
+// Fechas por defecto para filtros (hoy y mañana)
+const today = new Date();
+const defaultDateFrom = today.toISOString().split('T')[0];
+const tomorrow = new Date(today);
+ tomorrow.setDate(today.getDate() + 1);
+const defaultDateTo = tomorrow.toISOString().split('T')[0];
 import { defineStore } from 'pinia';
 
 /**
@@ -14,8 +21,8 @@ export const useSalesStore = defineStore('salesStore', {
             status: '',
             customer_id: null,
             document_number: '',
-            date_from: '',
-            date_to: '',
+            date_from: defaultDateFrom,
+            date_to: defaultDateTo,
             user_id: null
         },
         isLoading: false,

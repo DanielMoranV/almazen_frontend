@@ -26,6 +26,7 @@
         "pinia": "^2.2.6",
         "primeicons": "^6.0.1",
         "primevue": "^4.3.4",
+        "print-js": "^1.6.0",
         "sweetalert2": "^11.15.10",
         "vee-validate": "^4.15.0",
         "vue": "^3.4.34",

@@ -1,12 +1,13 @@
 <script setup>
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import Button from 'primevue/button';
-import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
+import DataTable from 'primevue/datatable';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
-import { ref, watch, computed } from 'vue';
+import InputText from 'primevue/inputtext';
+import { ref, watch } from 'vue';
+
 import { exportToExcel } from '@/utils/excelUtils';
 
 const { sales, loading } = defineProps({
@@ -68,38 +69,34 @@ const formatCurrency = (amount) => {
     }).format(amount || 0);
 };
 
-// Función para formatear fecha
+// Abrir comprobante: el backend se encarga de print() y close().
+const openVoucher = (url) => {
+    if (!url) return;
+    window.open(url, '_blank');
+};
+
+// Función para formatear fecha sin alterar el día (evita desfases de zona horaria)
 const formatDate = (date) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('es-PE', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    });
+
+    // Si viene con formato ISO ("YYYY-MM-DD" o "YYYY-MM-DDTHH:MM:SSZ"), extraer la parte de la fecha
+    const rawDate = date.split('T')[0]; // "YYYY-MM-DD"
+    const [year, month, day] = rawDate.split('-');
+
+    // Formatear manualmente al estilo dd/mm/yyyy
+    return `${day}/${month}/${year}`;
 };
 
 </script>
 
 <template>
-    <DataTable
-        stripedRows
-        :value="sales"
-        :loading="loading"
-        responsiveLayout="scroll"
-        scrollable
-        scrollHeight="500px"
-        removableSort
-        dataKey="id"
-        :filters="localFilters"
-        v-model:filters="localFilters"
-        :globalFilterFields="['document_number', 'customer_name', 'document_type', 'status']"
-        :paginator="true"
-        :rows="20"
-        :rowsPerPageOptions="[10, 15, 20, 25, 50, 100]"
+    <DataTable stripedRows :value="sales" :loading="loading" responsiveLayout="scroll" scrollable scrollHeight="500px"
+        removableSort dataKey="id" :filters="localFilters" v-model:filters="localFilters"
+        :globalFilterFields="['document_number', 'customer_name', 'document_type', 'status']" :paginator="true"
+        :rows="20" :rowsPerPageOptions="[10, 15, 20, 25, 50, 100]"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ventas"
-        class="sales-table green-theme p-datatable-gridlines"
-    >
+        class="sales-table green-theme p-datatable-gridlines">
         <template #header>
             <div class="table-header">
                 <div class="header-backdrop"></div>
@@ -110,30 +107,20 @@ const formatDate = (date) => {
                                 <InputIcon>
                                     <i class="pi pi-search text-white" />
                                 </InputIcon>
-                                <InputText 
-                                    v-model="localFilters.global.value" 
-                                    placeholder="Buscar por documento, cliente, tipo..." 
-                                    class="search-input" 
-                                    fluid 
-                                />
+                                <InputText v-model="localFilters.global.value"
+                                    placeholder="Buscar por documento, cliente, tipo..." class="search-input" fluid />
                             </IconField>
                         </div>
                     </div>
                     <div class="actions-section">
-                        <Button 
-                            type="button" 
-                            icon="pi pi-file-excel" 
-                            label="Exportar" 
-                            class="export-btn" 
-                            @click="exportSales()" 
-                            v-tooltip.top="'Exportar ventas a Excel'" 
-                            :disabled="!sales.length" 
-                        />
+                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn"
+                            @click="exportSales()" v-tooltip.top="'Exportar ventas a Excel'"
+                            :disabled="!sales.length" />
                     </div>
                 </div>
             </div>
         </template>
-        
+
         <!-- Mostrar mensaje cuando no hay registros -->
         <template #empty>
             <div class="empty-table-state">
@@ -142,22 +129,18 @@ const formatDate = (date) => {
                 </div>
                 <h3 class="empty-title">No se encontraron ventas</h3>
                 <p class="empty-description">Intenta ajustar los filtros o términos de búsqueda</p>
-                <Button 
-                    icon="pi pi-filter-slash" 
-                    label="Limpiar filtros" 
-                    class="p-button-outlined" 
-                    @click="localFilters = initFilters()" 
-                />
+                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined"
+                    @click="localFilters = initFilters()" />
             </div>
         </template>
-        
+
         <template #loading>
             <div class="loading-table-state">
                 <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
                 <p class="loading-text">Cargando ventas...</p>
             </div>
         </template>
-        
+
         <!-- Número de documento -->
         <Column field="document_number" header="N° Documento" sortable style="min-width: 10rem; max-width: 12rem">
             <template #body="{ data }">
@@ -166,7 +149,7 @@ const formatDate = (date) => {
                 </div>
             </template>
         </Column>
-        
+
         <!-- Tipo de documento -->
         <Column field="document_type" header="Tipo" sortable style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
@@ -176,7 +159,7 @@ const formatDate = (date) => {
                 </div>
             </template>
         </Column>
-        
+
         <!-- Cliente -->
         <Column field="customer_name" header="Cliente" sortable style="min-width: 12rem; max-width: 15rem">
             <template #body="{ data }">
@@ -193,7 +176,7 @@ const formatDate = (date) => {
                 </div>
             </template>
         </Column>
-        
+
         <!-- Fecha de venta -->
         <Column field="sale_date" header="Fecha" sortable style="min-width: 8rem; max-width: 10rem">
             <template #body="{ data }">
@@ -203,7 +186,7 @@ const formatDate = (date) => {
                 </div>
             </template>
         </Column>
-        
+
         <!-- Total -->
         <Column field="total_amount" header="Total" sortable style="min-width: 8rem; max-width: 10rem">
             <template #body="{ data }">
@@ -212,20 +195,17 @@ const formatDate = (date) => {
                 </div>
             </template>
         </Column>
-        
+
         <!-- Estado -->
         <Column field="status" header="Estado" sortable style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
-                    <div 
-                        :class="{
-                            'status-badge': true,
-                            'pending': data.status === 'PENDIENTE' || data.status_info?.is_pending,
-                            'paid': data.status === 'PAGADO' || data.status_info?.is_paid,
-                            'cancelled': data.status === 'ANULADO' || data.status_info?.is_cancelled
-                        }"
-                        :title="data.status_display || data.status"
-                    >
+                    <div :class="{
+                        'status-badge': true,
+                        'pending': data.status === 'PENDIENTE' || data.status_info?.is_pending,
+                        'paid': data.status === 'PAGADO' || data.status_info?.is_paid,
+                        'cancelled': data.status === 'ANULADO' || data.status_info?.is_cancelled
+                    }" :title="data.status_display || data.status">
                         <i :class="{
                             'pi pi-clock': data.status === 'PENDIENTE' || data.status_info?.is_pending,
                             'pi pi-check': data.status === 'PAGADO' || data.status_info?.is_paid,
@@ -236,7 +216,20 @@ const formatDate = (date) => {
                 </div>
             </template>
         </Column>
-        
+
+        <!-- Imprimir comprobante -->
+        <Column header="Imprimir" :exportable="false" style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="flex gap-1 justify-center" v-if="data.status === 'PAGADO' && data.voucher_urls">
+                    <Button icon="pi pi-print" class="p-button-sm p-button-success" v-tooltip.top="'Ticket'"
+                        @click="openVoucher(data.voucher_urls.ticket)" />
+                    <Button icon="pi pi-file" class="p-button-sm p-button-info" v-tooltip.top="'A4'"
+                        @click="openVoucher(data.voucher_urls.a4)" />
+                </div>
+                <span v-else class="text-gray-400">-</span>
+            </template>
+        </Column>
+
         <!-- Usuario que registró -->
         <Column field="user" header="Usuario" sortable style="min-width: 8rem; max-width: 10rem">
             <template #body="{ data }">
@@ -249,7 +242,7 @@ const formatDate = (date) => {
                 <span v-else class="text-gray-400">-</span>
             </template>
         </Column>
-        
+
         <!-- Notas -->
         <Column field="notes" header="Notas" style="min-width: 12rem; max-width: 20rem">
             <template #body="{ data }">
@@ -258,31 +251,19 @@ const formatDate = (date) => {
                 </div>
             </template>
         </Column>
-        
+
         <!-- Acciones -->
         <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
-                    <Button 
-                        icon="pi pi-pencil" 
-                        class="p-button-rounded p-button-info" 
-                        size="small" 
-                        rounded 
-                        text 
+                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text
                         :disabled="!canEditSale(slotProps.data)"
-                        v-tooltip.top="canEditSale(slotProps.data) ? 'Editar' : 'Solo se pueden editar ventas pendientes'" 
-                        @click="$emit('edit', slotProps.data)" 
-                    />
-                    <Button 
-                        icon="pi pi-trash" 
-                        class="p-button-rounded p-button-danger" 
-                        size="small" 
-                        rounded 
-                        text 
+                        v-tooltip.top="canEditSale(slotProps.data) ? 'Editar' : 'Solo se pueden editar ventas pendientes'"
+                        @click="$emit('edit', slotProps.data)" />
+                    <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text
                         :disabled="!canDeleteSale(slotProps.data)"
-                        v-tooltip.top="canDeleteSale(slotProps.data) ? 'Eliminar' : 'No se puede eliminar esta venta'" 
-                        @click="$emit('delete', slotProps.data)" 
-                    />
+                        v-tooltip.top="canDeleteSale(slotProps.data) ? 'Eliminar' : 'No se puede eliminar esta venta'"
+                        @click="$emit('delete', slotProps.data)" />
                 </div>
             </template>
         </Column>
@@ -530,6 +511,7 @@ const formatDate = (date) => {
     0% {
         background-position: 0% 0%, 0% 0%;
     }
+
     100% {
         background-position: 100% 100%, -100% -100%;
     }
