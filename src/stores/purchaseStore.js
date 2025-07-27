@@ -39,7 +39,6 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await fetchPurchaseOrders(params);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    console.log(processed.data);
                     this.purchaseOrders = processed.data;
                     this.isInitialLoad = false;
                 }
@@ -138,7 +137,6 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await updatePurchaseOrder(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    console.log('updatePurchaseOrder', processed);
                     this.purchaseOrders = this.purchaseOrders.map((purchaseOrder) => (purchaseOrder.id === payload.id ? processed.data.purchase : purchaseOrder));
                 }
             } catch (error) {

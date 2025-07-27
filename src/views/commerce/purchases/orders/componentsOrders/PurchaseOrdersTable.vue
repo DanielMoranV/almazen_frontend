@@ -12,32 +12,25 @@ const selectedOrderNumber = ref(null);
 
 // Validar si se pueden gestionar bonificaciones
 const canManageBonuses = (order) => {
-    console.log('Table - Full order object:', order);
-
-    // Buscar la fecha de recepción en diferentes posibles ubicaciones
     let receivedDate = null;
 
     // Opción 1: Campo directo received_date
     if (order?.received_date) {
         receivedDate = order.received_date;
-        console.log('Table - Found received_date:', receivedDate);
     }
     // Opción 2: En status_tracking.received_at
     else if (order?.status_tracking?.received_at) {
         receivedDate = order.status_tracking.received_at;
-        console.log('Table - Found status_tracking.received_at:', receivedDate);
     }
     // Opción 3: En status_timeline
     else if (order?.status_timeline) {
         const receivedEntry = order.status_timeline.find((entry) => entry.status === 'RECIBIDO');
         if (receivedEntry?.created_at) {
             receivedDate = receivedEntry.created_at;
-            console.log('Table - Found in status_timeline:', receivedDate);
         }
     }
 
     if (!receivedDate) {
-        console.log('Table - No received date found, checking available fields:', Object.keys(order || {}));
         return false;
     }
 
@@ -45,12 +38,6 @@ const canManageBonuses = (order) => {
     const receivedDateStr = receivedDate.split('T')[0];
     const todayStr = new Date().toISOString().split('T')[0];
 
-    console.log('Table - Received date (original):', receivedDate);
-    console.log('Table - Received date (date only):', receivedDateStr);
-    console.log('Table - Today (date only):', todayStr);
-    console.log('Table - Are equal?', receivedDateStr === todayStr);
-
-    // Comparar solo las fechas como strings (YYYY-MM-DD)
     return receivedDateStr === todayStr;
 };
 

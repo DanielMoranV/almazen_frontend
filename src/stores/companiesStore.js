@@ -112,7 +112,6 @@ export const useCompaniesStore = defineStore('companiesStore', {
         async updateCompanyConfigAction(config) {
             this.isLoading = true;
             try {
-                console.log('updateCompanyConfigAction', config);
                 const res = await updateCompanyConfig(config);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {

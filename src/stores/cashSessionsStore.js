@@ -95,7 +95,6 @@ export const useCashSessionsStore = defineStore('cashSessionsStore', {
                 const processed = handleProcessSuccess(res, this);
 
                 if (processed.success) {
-                    console.log('getCurrentSession processed:', processed);
                     const sessionData = processed.data?.session || null;
                     const summaryData = processed.data?.summary || null;
                     this.currentSession = sessionData ? { ...sessionData, summary: summaryData } : null;
@@ -139,7 +138,6 @@ export const useCashSessionsStore = defineStore('cashSessionsStore', {
                 const processed = handleProcessSuccess(res, this);
 
                 if (processed.success) {
-                    console.log('getSessionReport processed:', processed);
                     this.sessionReport = processed.data;
                 }
                 return processed;
@@ -290,7 +288,7 @@ export const useCashSessionsStore = defineStore('cashSessionsStore', {
         hasSignificantDiscrepancy(actualAmount, maxDiscrepancy = 5) {
             // Si no hay monto actual o no hay sesión, no hay discrepancia
             if (!actualAmount || !this.currentSession) return false;
-            
+
             const difference = Math.abs(this.calculateDifference(actualAmount));
             // Solo mostrar discrepancia si la diferencia es mayor que el umbral
             return difference > maxDiscrepancy;
