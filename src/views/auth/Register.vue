@@ -12,6 +12,7 @@ import { RouterLink, useRouter } from 'vue-router';
 const authStore = useAuthStore();
 
 const categoriesCompany = ref([]);
+const loadingCategories = ref(false);
 
 const router = useRouter();
 const toast = useToast();
@@ -88,9 +89,10 @@ const onSubmit = async () => {
 };
 
 onMounted(async () => {
+    loadingCategories.value = true;
     await authStore.fetchCategoriesCompany();
     categoriesCompany.value = authStore.getCategories;
-    console.log('Categorías cargadas:', categoriesCompany.value);
+    loadingCategories.value = false;
 });
 </script>
 
@@ -148,6 +150,7 @@ onMounted(async () => {
                             class="w-full"
                             :filter="true"
                             filterPlaceholder="Buscar categorías..."
+                            :loading="loadingCategories"
                         >
                             <template #chip="slotProps">
                                 <div class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">

@@ -111,6 +111,13 @@ const clearFilters = async () => {
                                 }).format(data.amount)
                             }}</template>
                         </Column>
+                        <template #empty>
+                            <div class="text-center py-8">
+                                <i class="pi pi-inbox text-5xl text-gray-400"></i>
+                                <h3 class="text-xl font-semibold text-gray-600 mt-4">No se encontraron movimientos</h3>
+                                <p class="text-gray-500">Parece que no hay registros que coincidan con los filtros seleccionados.</p>
+                            </div>
+                        </template>
                     </DataTable>
                 </template>
             </Card>

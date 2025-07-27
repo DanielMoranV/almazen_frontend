@@ -3,7 +3,7 @@ import { useReportsStore } from '@/stores/reportsStore';
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
@@ -269,7 +269,7 @@ const getPopularityBadge = (popularity) => {
                             <InputText v-model="searchTerm" placeholder="Buscar reportes..." class="w-full pl-10" size="large" />
                         </IconField>
                     </div>
-                    <Dropdown v-model="selectedCategory" :options="categories" optionLabel="label" optionValue="value" placeholder="Filtrar por categoría" class="w-full" size="large" />
+                    <Select v-model="selectedCategory" :options="categories" optionLabel="label" optionValue="value" placeholder="Filtrar por categoría" class="w-full" size="large" />
                 </div>
             </div>
 
