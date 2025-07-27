@@ -58,7 +58,7 @@ const model = ref([
                     {
                         label: 'Métodos de Pago',
                         icon: 'pi pi-credit-card',
-                        to: '/commerce/pos/payment-methods',
+                        to: '/commerce/cash/payment-methods',
                         positions: ['Developer', 'Administrador']
                     },
                     {
@@ -136,19 +136,25 @@ const model = ref([
             {
                 label: 'Productos',
                 icon: 'pi pi-tags',
-                to: '/products',
+                to: '/inventory/products',
                 positions: ['Developer', 'Administrador', 'Logística', 'Compras']
             },
             {
                 label: 'Stock Actual',
                 icon: 'pi pi-list',
-                to: '/stock',
+                to: '/inventory/stock',
                 positions: ['Developer', 'Administrador', 'Logística', 'Ventas']
             },
             {
                 label: 'Movimientos Stock',
                 icon: 'pi pi-history',
                 to: '/inventory/movements/stocks',
+                positions: ['Developer', 'Administrador', 'Logística']
+            },
+            {
+                label: 'Almacenes',
+                icon: 'pi pi-building',
+                to: '/inventory/warehouses',
                 positions: ['Developer', 'Administrador', 'Logística']
             }
             // {

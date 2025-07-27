@@ -48,8 +48,14 @@ export default {
      * @returns {Object}
      */
     getItem: (key) => {
-        if (storage.getItem(key) !== null) {
-            return JSON.parse(base64DecodeUnicode(storage.getItem(key)));
+        const item = storage.getItem(key);
+        if (item !== null && typeof item !== 'undefined') {
+            try {
+                return JSON.parse(base64DecodeUnicode(item));
+            } catch (e) {
+                console.error('Error parsing cached item:', e);
+                return null;
+            }
         }
         return null;
     },

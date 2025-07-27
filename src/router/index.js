@@ -87,33 +87,33 @@ const router = createRouter({
 
                 // Commerce - Cash Management
                 {
-                    path: '/commerce/pos/payment-methods',
+                    path: '/commerce/cash/payment-methods',
                     name: 'paymentMethods',
-                    component: () => import('@/views/commerce/pos/PaymentMethods.vue'),
+                    component: () => import('@/views/commerce/cash/PaymentMethods.vue'),
                     meta: { positions: ['Developer', 'Administrador'] }
                 },
                 {
                     path: '/commerce/cash/registers',
                     name: 'cashRegisters',
-                    component: () => import('@/views/commerce/pos/CashRegisters.vue'),
+                    component: () => import('@/views/commerce/cash/CashRegisters.vue'),
                     meta: { positions: ['Developer', 'Administrador'] }
                 },
                 {
                     path: '/commerce/cash/movements',
                     name: 'cashMovements',
-                    component: () => import('@/views/commerce/pos/CashMovements.vue'),
+                    component: () => import('@/views/commerce/cash/CashMovements.vue'),
                     meta: { positions: ['Developer', 'Administrador'] }
                 },
 
                 // Inventario
                 {
-                    path: '/products',
+                    path: '/inventory/products',
                     name: 'products',
                     component: () => import('@/views/inventory/products/Products.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística', 'Compras'] }
                 },
                 {
-                    path: '/stock',
+                    path: '/inventory/stock',
                     name: 'stock',
                     component: () => import('@/views/inventory/stock/Stock.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística', 'Ventas'] }
@@ -145,7 +145,7 @@ const router = createRouter({
 
                 // Logística
                 {
-                    path: '/warehouses',
+                    path: '/inventory/warehouses',
                     name: 'warehouses',
                     component: () => import('@/views/inventory/warehouses/Warehouses.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }

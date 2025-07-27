@@ -118,12 +118,9 @@ const fillForm = (method) => {
 
 const handleMethodSubmit = async () => {
     const payload = { ...methodForm.value };
-
     try {
         const action = isCreating.value ? paymentMethodsStore.createPaymentMethod : (data) => paymentMethodsStore.updatePaymentMethod(data, selectedMethod.value.id);
-
         await action(payload);
-
         if (paymentMethodsStore.success) {
             const message = isCreating.value ? 'Método de pago creado exitosamente' : 'Método de pago actualizado exitosamente';
             showSuccess(message, paymentMethodsStore.message);
@@ -140,7 +137,6 @@ const handleMethodSubmit = async () => {
 const handleMethodDelete = async () => {
     try {
         await paymentMethodsStore.removePaymentMethod(selectedMethod.value.id);
-
         if (paymentMethodsStore.success) {
             showSuccess('Método eliminado', paymentMethodsStore.message);
             showDeleteDialog.value = false;
@@ -178,21 +174,11 @@ const handleRefresh = async () => {
 
 // Utilidades
 const showSuccess = (summary, detail) => {
-    toast.add({
-        severity: 'success',
-        summary,
-        detail,
-        life: 3000
-    });
+    toast.add({ severity: 'success', summary, detail, life: 3000 });
 };
 
 const showError = (summary, detail) => {
-    toast.add({
-        severity: 'error',
-        summary,
-        detail,
-        life: 4000
-    });
+    toast.add({ severity: 'error', summary, detail, life: 4000 });
 };
 
 const handleApiErrors = () => {
@@ -226,12 +212,7 @@ const getMethodTypeColor = (type) => {
 };
 
 const formatCurrency = (amount) => {
-    return amount
-        ? new Intl.NumberFormat('es-PE', {
-              style: 'currency',
-              currency: 'PEN'
-          }).format(amount)
-        : '-';
+    return amount ? new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount) : '-';
 };
 
 const generateCodeFromName = () => {
@@ -247,7 +228,6 @@ const generateCodeFromName = () => {
 
 <template>
     <Toast />
-
     <div class="grid">
         <div class="col-12">
             <Card class="shadow-lg border-0">
@@ -272,35 +252,27 @@ const generateCodeFromName = () => {
                         <template #icons>
                             <i class="pi pi-filter text-purple-600"></i>
                         </template>
-
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Estado</label>
                                 <Select v-model="filters.active_only" :options="filterOptions.activeOnly" option-label="label" option-value="value" @change="handleFilterUpdate" class="w-full" />
                             </div>
-
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Tipo</label>
                                 <Select v-model="filters.type" :options="filterOptions.types" option-label="label" option-value="value" @change="handleFilterUpdate" class="w-full" />
                             </div>
-
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Caja Registradora</label>
                                 <Select v-model="filters.requires_cash_register" :options="filterOptions.cashRegister" option-label="label" option-value="value" @change="handleFilterUpdate" class="w-full" />
                             </div>
-
                             <div class="flex items-end space-x-2">
                                 <Button @click="clearFilters" label="Limpiar" icon="pi pi-filter-slash" severity="secondary" outlined />
                                 <Button @click="handleRefresh" label="Actualizar" icon="pi pi-refresh" severity="info" />
                             </div>
                         </div>
                     </Panel>
-
                     <!-- Tabla -->
-                    <div v-if="isLoading" class="flex justify-center py-8">
-                        <ProgressSpinner />
-                    </div>
-
+                    <div v-if="isLoading" class="flex justify-center py-8"><ProgressSpinner /></div>
                     <div v-else-if="!hasMethods" class="text-center py-12">
                         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <i class="pi pi-credit-card text-4xl text-gray-400"></i>
@@ -309,7 +281,6 @@ const generateCodeFromName = () => {
                         <p class="text-gray-500 mb-4">Crea el primer método de pago para comenzar</p>
                         <Button @click="openCreateDialog" label="Crear Método de Pago" icon="pi pi-plus" severity="success" />
                     </div>
-
                     <DataTable v-else :value="methods" :paginator="true" :rows="15" :loading="isLoading" stripedRows responsiveLayout="scroll" class="shadow-sm">
                         <Column field="name" header="Método" sortable>
                             <template #body="{ data }">
@@ -324,43 +295,24 @@ const generateCodeFromName = () => {
                                 </div>
                             </template>
                         </Column>
-
                         <Column field="type" header="Tipo" sortable>
-                            <template #body="{ data }">
-                                <Tag :value="data.type" :severity="getMethodTypeColor(data.type)" />
-                            </template>
+                            <template #body="{ data }"><Tag :value="data.type" :severity="getMethodTypeColor(data.type)" /></template>
                         </Column>
-
                         <Column field="requires_cash_register" header="Requiere Caja" sortable>
-                            <template #body="{ data }">
-                                <Tag :value="data.requires_cash_register ? 'Sí' : 'No'" :severity="data.requires_cash_register ? 'warning' : 'secondary'" />
-                            </template>
+                            <template #body="{ data }"><Tag :value="data.requires_cash_register ? 'Sí' : 'No'" :severity="data.requires_cash_register ? 'warning' : 'secondary'" /></template>
                         </Column>
-
                         <Column field="requires_reference" header="Requiere Ref." sortable>
-                            <template #body="{ data }">
-                                <Tag :value="data.requires_reference ? 'Sí' : 'No'" :severity="data.requires_reference ? 'info' : 'secondary'" />
-                            </template>
+                            <template #body="{ data }"><Tag :value="data.requires_reference ? 'Sí' : 'No'" :severity="data.requires_reference ? 'info' : 'secondary'" /></template>
                         </Column>
-
                         <Column field="min_amount" header="Monto Mín." sortable>
-                            <template #body="{ data }">
-                                {{ formatCurrency(data.min_amount) }}
-                            </template>
+                            <template #body="{ data }">{{ formatCurrency(data.min_amount) }}</template>
                         </Column>
-
                         <Column field="max_amount" header="Monto Máx." sortable>
-                            <template #body="{ data }">
-                                {{ formatCurrency(data.max_amount) }}
-                            </template>
+                            <template #body="{ data }">{{ formatCurrency(data.max_amount) }}</template>
                         </Column>
-
                         <Column field="is_active" header="Estado" sortable>
-                            <template #body="{ data }">
-                                <Tag :value="data.is_active ? 'Activo' : 'Inactivo'" :severity="data.is_active ? 'success' : 'danger'" />
-                            </template>
+                            <template #body="{ data }"><Tag :value="data.is_active ? 'Activo' : 'Inactivo'" :severity="data.is_active ? 'success' : 'danger'" /></template>
                         </Column>
-
                         <Column header="Acciones">
                             <template #body="{ data }">
                                 <div class="flex space-x-2">
@@ -381,60 +333,40 @@ const generateCodeFromName = () => {
         :header="isCreating ? 'Nuevo Método de Pago' : 'Editar Método de Pago'"
         :modal="true"
         :style="{ width: '600px' }"
-        :pt="{
-            header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
-            content: 'p-6'
-        }"
+        :pt="{ header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white', content: 'p-6' }"
     >
         <div class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col-span-2">
-                    <label class="block text-sm font-bold text-gray-700 mb-2"> Nombre del Método * </label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Nombre del Método *</label>
                     <InputText v-model="methodForm.name" @input="generateCodeFromName" placeholder="Ej: Efectivo, Visa, Yape" class="w-full" />
                 </div>
-
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2"> Código * </label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Código *</label>
                     <InputText v-model="methodForm.code" placeholder="Ej: CASH, VISA, YAPE" class="w-full" />
                     <small class="text-gray-500">Solo letras mayúsculas, números y guiones bajos</small>
                 </div>
-
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2"> Tipo * </label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Tipo *</label>
                     <Select v-model="methodForm.type" :options="methodTypes" option-label="label" option-value="value" class="w-full" />
                 </div>
-
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Mínimo </label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Monto Mínimo</label>
                     <InputNumber v-model="methodForm.min_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="w-full" />
                 </div>
-
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Máximo </label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Monto Máximo</label>
                     <InputNumber v-model="methodForm.max_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="w-full" />
                 </div>
-
                 <div class="col-span-2">
                     <div class="space-y-3">
-                        <div class="flex items-center">
-                            <Checkbox v-model="methodForm.requires_cash_register" binary />
-                            <label class="ml-3 text-sm font-medium text-gray-700"> Requiere caja registradora activa </label>
-                        </div>
-
-                        <div class="flex items-center">
-                            <Checkbox v-model="methodForm.requires_reference" binary />
-                            <label class="ml-3 text-sm font-medium text-gray-700"> Requiere número de referencia </label>
-                        </div>
-
-                        <div class="flex items-center">
-                            <Checkbox v-model="methodForm.is_active" binary />
-                            <label class="ml-3 text-sm font-medium text-gray-700"> Método activo </label>
-                        </div>
+                        <div class="flex items-center"><Checkbox v-model="methodForm.requires_cash_register" binary /><label class="ml-3 text-sm font-medium text-gray-700">Requiere caja registradora activa</label></div>
+                        <div class="flex items-center"><Checkbox v-model="methodForm.requires_reference" binary /><label class="ml-3 text-sm font-medium text-gray-700">Requiere número de referencia</label></div>
+                        <div class="flex items-center"><Checkbox v-model="methodForm.is_active" binary /><label class="ml-3 text-sm font-medium text-gray-700">Método activo</label></div>
                     </div>
                 </div>
             </div>
         </div>
-
         <template #footer>
             <div class="flex justify-end space-x-3">
                 <Button @click="showMethodDialog = false" label="Cancelar" icon="pi pi-times" severity="secondary" outlined />
@@ -442,7 +374,6 @@ const generateCodeFromName = () => {
             </div>
         </template>
     </Dialog>
-
     <!-- Diálogo de Confirmación de Eliminación -->
     <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedMethod?.name" item-type="método de pago" @confirm="handleMethodDelete" :loading="isLoading" />
 </template>
@@ -453,24 +384,19 @@ const generateCodeFromName = () => {
     grid-template-columns: 1fr;
     gap: 1rem;
 }
-
 .col-12 {
     grid-column: span 12;
 }
-
 .col-span-2 {
     grid-column: span 2;
 }
-
 @media (min-width: 768px) {
     .grid-cols-1 {
         grid-template-columns: repeat(1, minmax(0, 1fr));
     }
-
     .grid-cols-4 {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-
     .grid-cols-2 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
