@@ -139,7 +139,7 @@ const showErrors = () => {
                             <div class="flex items-center space-x-3">
                                 <i class="pi pi-desktop text-2xl"></i>
                                 <div>
-                                    <h1 class="text-2xl font-bold">Cajas Registradoras</h1>
+                                    <h1 class="text-2xl font-bold text-white">Cajas Registradoras</h1>
                                     <p class="text-amber-100">Administración de puntos de cobro</p>
                                 </div>
                             </div>
@@ -149,12 +149,13 @@ const showErrors = () => {
                 </template>
 
                 <template #content>
-                    <div v-if="isLoading" class="flex justify-center py-8"><ProgressSpinner /></div>
-
-                    <div v-else-if="!registers.length" class="text-center py-12">
-                        <p class="text-gray-600 mb-4">No hay cajas registradoras registradas.</p>
-                        <Button label="Crear Caja" icon="pi pi-plus" severity="success" @click="openCreateDialog" />
-                    </div>
+                    <DataTable :value="registers" :paginator="true" :rows="15" :loading="isLoading" stripedRows responsiveLayout="scroll" class="shadow-sm">
+                        <template #empty>
+                            <div class="text-center py-12">
+                                <p class="text-gray-600 mb-4">No hay cajas registradoras registradas.</p>
+                                <Button label="Crear Caja" icon="pi pi-plus" severity="success" @click="openCreateDialog" />
+                            </div>
+                        </template>
 
                     <DataTable v-else :value="registers" :paginator="true" :rows="15" stripedRows responsiveLayout="scroll" class="shadow-sm">
                         <Column field="name" header="Nombre" sortable />

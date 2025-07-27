@@ -246,13 +246,13 @@ const handleStoreErrors = () => {
     }
 };
 
-const getSessionStatusClass = (status) => {
-    return {
-        'bg-green-100 text-green-700': status === 'OPEN',
-        'bg-blue-100 text-blue-700': status === 'CLOSED',
-        'bg-yellow-100 text-yellow-700': status === 'SUSPENDED'
-    };
-};
+// const getSessionStatusClass = (status) => {
+//     return {
+//         'bg-green-100 text-green-700': status === 'OPEN',
+//         'bg-blue-100 text-blue-700': status === 'CLOSED',
+//         'bg-yellow-100 text-yellow-700': status === 'SUSPENDED'
+//     };
+// };
 
 const getSessionStatusLabel = (status) => {
     const labels = {
@@ -276,14 +276,14 @@ const formatDateTime = (dateTime) => {
     return dateTime ? new Date(dateTime).toLocaleString('es-PE') : '-';
 };
 
-const calculateDifference = (expected, actual) => {
-    if (!expected || !actual) return 0;
-    return parseFloat(actual) - parseFloat(expected);
-};
+// const calculateDifference = (expected, actual) => {
+//     if (!expected || !actual) return 0;
+//     return parseFloat(actual) - parseFloat(expected);
+// };
 
 const getDifferenceClass = (difference) => {
-    if (difference === 0) return 'text-green-600';
-    return difference > 0 ? 'text-blue-600' : 'text-red-600';
+    if (difference === 0) return 'text-green-600 dark:text-green-400';
+    return difference > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400';
 };
 
 // Imprimir reporte
@@ -304,177 +304,173 @@ const printReport = () => {
 <template>
     <Toast />
 
-    <div class="min-h-screen bg-gray-50 py-8 px-4">
-        <div class="max-w-7xl mx-auto">
-            <Card class="shadow-lg border-0">
-                <template #header>
-                    <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-t-lg">
-                        <div class="flex items-center justify-between">
+    <Card class="shadow-lg border-0 dark:bg-gray-800 dark:border-gray-700">
+        <template #header>
+            <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-t-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">Sesiones de Caja</h1>
+                            <p class="text-green-100">Control de turnos y movimientos de efectivo</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <Button v-if="hasActiveSession" @click="openCloseSessionDialog" label="Cerrar Sesión" icon="pi pi-sign-out" severity="contrast" size="large" />
+                        <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus" :disabled="availableForNewSession.length === 0" severity="contrast" size="large" />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template #content>
+            <!-- Current Session Info -->
+            <div v-if="currentSessionInfo" class="mb-6">
+                <Panel header="Sesión Actual" class="shadow-sm dark:bg-gray-700">
+                    <template #icons>
+                        <i class="pi pi-circle-fill text-green-500"></i>
+                    </template>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-blue-50 dark:bg-blue-900/50 p-4 rounded-lg border dark:border-blue-800">
                             <div class="flex items-center space-x-3">
+                                <i class="pi pi-user text-blue-600 text-xl"></i>
                                 <div>
-                                    <h1 class="text-2xl font-bold">Sesiones de Caja</h1>
-                                    <p class="text-green-100">Control de turnos y movimientos de efectivo</p>
+                                    <div class="text-sm text-blue-600 dark:text-blue-400 font-medium">Cajero</div>
+                                    <div class="font-bold text-gray-800 dark:text-gray-200">
+                                        {{ currentSessionInfo.cashier }}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                                <Button v-if="hasActiveSession" @click="openCloseSessionDialog" label="Cerrar Sesión" icon="pi pi-sign-out" severity="contrast" size="large" />
-                                <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus" :disabled="availableForNewSession.length === 0" severity="contrast" size="large" />
+                        </div>
+
+                        <div class="bg-green-50 dark:bg-green-900/50 p-4 rounded-lg border dark:border-green-800">
+                            <div class="flex items-center space-x-3">
+                                <i class="pi pi-wallet text-green-600 text-xl"></i>
+                                <div>
+                                    <div class="text-sm text-green-600 dark:text-green-400 font-medium">Monto Inicial</div>
+                                    <div class="font-bold text-gray-800 dark:text-gray-200">
+                                        {{ formatCurrency(currentSessionInfo.openingAmount) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-purple-50 dark:bg-purple-900/50 p-4 rounded-lg border dark:border-purple-800">
+                            <div class="flex items-center space-x-3">
+                                <i class="pi pi-shopping-cart text-purple-600 text-xl"></i>
+                                <div>
+                                    <div class="text-sm text-purple-600 dark:text-purple-400 font-medium">Ventas</div>
+                                    <div class="font-bold text-gray-800 dark:text-gray-200">{{ currentSessionInfo.salesCount }} ({{ formatCurrency(currentSessionInfo.totalSales) }})</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-orange-50 dark:bg-orange-900/50 p-4 rounded-lg border dark:border-orange-800">
+                            <div class="flex items-center space-x-3">
+                                <i class="pi pi-calculator text-orange-600 text-xl"></i>
+                                <div>
+                                    <div class="text-sm text-orange-600 dark:text-orange-400 font-medium">Esperado</div>
+                                    <div class="font-bold text-gray-800 dark:text-gray-200">
+                                        {{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </template>
+                </Panel>
+            </div>
 
-                <template #content>
-                    <!-- Current Session Info -->
-                    <div v-if="currentSessionInfo" class="mb-6">
-                        <Panel header="Sesión Actual" class="shadow-sm">
-                            <template #icons>
-                                <i class="pi pi-circle-fill text-green-500"></i>
-                            </template>
+            <!-- Session History -->
+            <div v-if="isLoadingHistory" class="flex justify-center py-8">
+                <ProgressSpinner />
+            </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                    <div class="flex items-center space-x-3">
-                                        <i class="pi pi-user text-blue-600 text-xl"></i>
-                                        <div>
-                                            <div class="text-sm text-blue-600 font-medium">Cajero</div>
-                                            <div class="font-bold text-gray-800">
-                                                {{ currentSessionInfo.cashier }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+            <div v-else-if="sessions.length === 0" class="text-center py-12">
+                <div class="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="pi pi-clock text-4xl text-gray-400 dark:text-gray-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-600 dark:text-gray-300 mb-2">No hay sesiones registradas</h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4">Abra la primera sesión de caja para comenzar</p>
+                <Button @click="openNewSessionDialog" label="Abrir Primera Sesión" icon="pi pi-plus" severity="success" />
+            </div>
 
-                                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                                    <div class="flex items-center space-x-3">
-                                        <i class="pi pi-wallet text-green-600 text-xl"></i>
-                                        <div>
-                                            <div class="text-sm text-green-600 font-medium">Monto Inicial</div>
-                                            <div class="font-bold text-gray-800">
-                                                {{ formatCurrency(currentSessionInfo.openingAmount) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+            <DataTable v-else :value="sessions" :paginator="true" :rows="15" :loading="isLoadingHistory" stripedRows responsiveLayout="scroll" class="shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <Column field="id" header="ID" sortable>
+                    <template #body="{ data }">
+                        <span class="font-mono text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-gray-200">#{{ data.id }}</span>
+                    </template>
+                </Column>
 
-                                <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                    <div class="flex items-center space-x-3">
-                                        <i class="pi pi-shopping-cart text-purple-600 text-xl"></i>
-                                        <div>
-                                            <div class="text-sm text-purple-600 font-medium">Ventas</div>
-                                            <div class="font-bold text-gray-800">{{ currentSessionInfo.salesCount }} ({{ formatCurrency(currentSessionInfo.totalSales) }})</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                                    <div class="flex items-center space-x-3">
-                                        <i class="pi pi-calculator text-orange-600 text-xl"></i>
-                                        <div>
-                                            <div class="text-sm text-orange-600 font-medium">Esperado</div>
-                                            <div class="font-bold text-gray-800">
-                                                {{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                <Column field="user" header="Cajero" sortable>
+                    <template #body="{ data }">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                                <i class="pi pi-user text-blue-600 dark:text-blue-400 text-sm"></i>
                             </div>
-                        </Panel>
-                    </div>
-
-                    <!-- Session History -->
-                    <div v-if="isLoadingHistory" class="flex justify-center py-8">
-                        <ProgressSpinner />
-                    </div>
-
-                    <div v-else-if="sessions.length === 0" class="text-center py-12">
-                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="pi pi-clock text-4xl text-gray-400"></i>
+                            <span class="font-medium dark:text-gray-200">{{ data.user?.name || 'Usuario' }}</span>
                         </div>
-                        <h3 class="text-xl font-bold text-gray-600 mb-2">No hay sesiones registradas</h3>
-                        <p class="text-gray-500 mb-4">Abra la primera sesión de caja para comenzar</p>
-                        <Button @click="openNewSessionDialog" label="Abrir Primera Sesión" icon="pi pi-plus" severity="success" />
-                    </div>
+                    </template>
+                </Column>
 
-                    <DataTable v-else :value="sessions" :paginator="true" :rows="15" :loading="isLoadingHistory" stripedRows responsiveLayout="scroll" class="shadow-sm">
-                        <Column field="id" header="ID" sortable>
-                            <template #body="{ data }">
-                                <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#{{ data.id }}</span>
-                            </template>
-                        </Column>
+                <Column field="cash_register" header="Caja" sortable>
+                    <template #body="{ data }">
+                        <div class="flex items-center space-x-2">
+                            <i class="pi pi-desktop text-gray-600 dark:text-gray-400"></i>
+                            <span class="dark:text-gray-200">{{ data.cash_register?.name || 'N/A' }}</span>
+                        </div>
+                    </template>
+                </Column>
 
-                        <Column field="user" header="Cajero" sortable>
-                            <template #body="{ data }">
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <i class="pi pi-user text-blue-600 text-sm"></i>
-                                    </div>
-                                    <span class="font-medium">{{ data.user?.name || 'Usuario' }}</span>
-                                </div>
-                            </template>
-                        </Column>
+                <Column field="opened_at" header="Apertura" sortable>
+                    <template #body="{ data }">
+                        <span class="dark:text-gray-200">{{ formatDateTime(data.opened_at) }}</span>
+                    </template>
+                </Column>
 
-                        <Column field="cash_register" header="Caja" sortable>
-                            <template #body="{ data }">
-                                <div class="flex items-center space-x-2">
-                                    <i class="pi pi-desktop text-gray-600"></i>
-                                    <span>{{ data.cash_register?.name || 'N/A' }}</span>
-                                </div>
-                            </template>
-                        </Column>
+                <Column field="closed_at" header="Cierre" sortable>
+                    <template #body="{ data }">
+                        <span class="dark:text-gray-200">{{ formatDateTime(data.closed_at) }}</span>
+                    </template>
+                </Column>
 
-                        <Column field="opened_at" header="Apertura" sortable>
-                            <template #body="{ data }">
-                                {{ formatDateTime(data.opened_at) }}
-                            </template>
-                        </Column>
+                <Column field="opening_amount" header="Monto Inicial" sortable>
+                    <template #body="{ data }">
+                        <span class="font-mono dark:text-gray-200">{{ formatCurrency(data.opening_amount) }}</span>
+                    </template>
+                </Column>
 
-                        <Column field="closed_at" header="Cierre" sortable>
-                            <template #body="{ data }">
-                                {{ formatDateTime(data.closed_at) }}
-                            </template>
-                        </Column>
+                <Column field="actual_amount" header="Monto Final" sortable>
+                    <template #body="{ data }">
+                        <span class="font-mono dark:text-gray-200">{{ formatCurrency(data.actual_amount) }}</span>
+                    </template>
+                </Column>
 
-                        <Column field="opening_amount" header="Monto Inicial" sortable>
-                            <template #body="{ data }">
-                                <span class="font-mono">{{ formatCurrency(data.opening_amount) }}</span>
-                            </template>
-                        </Column>
+                <Column field="difference_amount" header="Diferencia" sortable>
+                    <template #body="{ data }">
+                        <span v-if="data.difference_amount !== null" class="font-mono font-bold" :class="getDifferenceClass(parseFloat(data.difference_amount))">
+                            {{ formatCurrency(data.difference_amount) }}
+                        </span>
+                        <span v-else class="text-gray-400 dark:text-gray-500">-</span>
+                    </template>
+                </Column>
 
-                        <Column field="actual_amount" header="Monto Final" sortable>
-                            <template #body="{ data }">
-                                <span class="font-mono">{{ formatCurrency(data.actual_amount) }}</span>
-                            </template>
-                        </Column>
+                <Column field="status" header="Estado" sortable>
+                    <template #body="{ data }">
+                        <Tag :value="getSessionStatusLabel(data.status)" :severity="data.status === 'OPEN' ? 'success' : data.status === 'CLOSED' ? 'info' : 'warning'" />
+                    </template>
+                </Column>
 
-                        <Column field="difference_amount" header="Diferencia" sortable>
-                            <template #body="{ data }">
-                                <span v-if="data.difference_amount !== null" class="font-mono font-bold" :class="getDifferenceClass(parseFloat(data.difference_amount))">
-                                    {{ formatCurrency(data.difference_amount) }}
-                                </span>
-                                <span v-else class="text-gray-400">-</span>
-                            </template>
-                        </Column>
-
-                        <Column field="status" header="Estado" sortable>
-                            <template #body="{ data }">
-                                <Tag :value="getSessionStatusLabel(data.status)" :severity="data.status === 'OPEN' ? 'success' : data.status === 'CLOSED' ? 'info' : 'warning'" />
-                            </template>
-                        </Column>
-
-                        <Column header="Acciones">
-                            <template #body="{ data }">
-                                <div class="flex space-x-2">
-                                    <Button v-if="data.status === 'CLOSED'" @click="showSessionReport(data)" icon="pi pi-chart-bar" size="small" severity="info" outlined rounded v-tooltip="'Ver Reporte'" />
-                                    <Button v-if="data.status === 'OPEN' && data.id === currentSession?.id" @click="openCloseSessionDialog" icon="pi pi-sign-out" size="small" severity="danger" outlined rounded v-tooltip="'Cerrar Sesión'" />
-                                </div>
-                            </template>
-                        </Column>
-                    </DataTable>
-                </template>
-            </Card>
-        </div>
-    </div>
+                <Column header="Acciones">
+                    <template #body="{ data }">
+                        <div class="flex space-x-2">
+                            <Button v-if="data.status === 'CLOSED'" @click="showSessionReport(data)" icon="pi pi-chart-bar" size="small" severity="info" outlined rounded v-tooltip="'Ver Reporte'" />
+                            <Button v-if="data.status === 'OPEN' && data.id === currentSession?.id" @click="openCloseSessionDialog" icon="pi pi-sign-out" size="small" severity="danger" outlined rounded v-tooltip="'Cerrar Sesión'" />
+                        </div>
+                    </template>
+                </Column>
+            </DataTable>
+        </template>
+    </Card>
 
     <!-- New Session Dialog -->
     <Dialog
@@ -484,12 +480,12 @@ const printReport = () => {
         :style="{ width: '90vw', maxWidth: '500px' }"
         :pt="{
             header: 'bg-gradient-to-r from-green-600 to-emerald-600 text-white',
-            content: 'p-6'
+            content: 'p-6 bg-white dark:bg-gray-800'
         }"
     >
         <div class="space-y-6">
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2"> Caja Registradora * </label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"> Caja Registradora * </label>
                 <Select
                     v-model="sessionForm.cash_register_id"
                     :options="availableForNewSession"
@@ -498,29 +494,29 @@ const printReport = () => {
                     placeholder="Seleccionar caja registradora..."
                     class="w-full"
                     :pt="{
-                        root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl',
+                        root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200',
                         input: 'py-3 px-4 text-base'
                     }"
                 />
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Inicial * </label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"> Monto Inicial * </label>
                 <div class="p-inputgroup">
-                    <span class="p-inputgroup-addon">S/</span>
-                    <InputNumber v-model="sessionForm.opening_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="flex-1" />
+                    <span class="p-inputgroup-addon dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">S/</span>
+                    <InputNumber v-model="sessionForm.opening_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="flex-1 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600" />
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2"> Notas (Opcional) </label>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"> Notas (Opcional) </label>
                 <Textarea
                     v-model="sessionForm.notes"
                     rows="3"
                     placeholder="Observaciones del turno..."
                     class="w-full"
                     :pt="{
-                        root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl'
+                        root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600'
                     }"
                 />
             </div>
@@ -542,43 +538,43 @@ const printReport = () => {
         :style="{ width: '90vw', maxWidth: '600px' }"
         :pt="{
             header: 'bg-gradient-to-r from-red-600 to-pink-600 text-white',
-            content: 'p-6'
+            content: 'p-6 bg-white dark:bg-gray-800'
         }"
     >
         <div class="space-y-6" v-if="currentSessionInfo">
             <!-- Session Summary -->
-            <div class="bg-gray-50 p-4 rounded-xl border">
-                <h3 class="font-bold text-gray-800 mb-4">Resumen de la Sesión</h3>
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border dark:border-gray-600">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-4">Resumen de la Sesión</h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <div class="text-sm text-gray-600">Cajero</div>
-                        <div class="font-semibold">{{ currentSessionInfo.cashier }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Cajero</div>
+                        <div class="font-semibold dark:text-gray-200">{{ currentSessionInfo.cashier }}</div>
                     </div>
                     <div>
-                        <div class="text-sm text-gray-600">Caja</div>
-                        <div class="font-semibold">{{ currentSession?.cash_register?.name }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Caja</div>
+                        <div class="font-semibold dark:text-gray-200">{{ currentSession?.cash_register?.name }}</div>
                     </div>
                     <div>
-                        <div class="text-sm text-gray-600">Monto Inicial</div>
-                        <div class="font-semibold text-green-600">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Monto Inicial</div>
+                        <div class="font-semibold text-green-600 dark:text-green-400">
                             {{ formatCurrency(currentSessionInfo.openingAmount) }}
                         </div>
                     </div>
                     <div>
-                        <div class="text-sm text-gray-600">Ventas Realizadas</div>
-                        <div class="font-semibold text-blue-600">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Ventas Realizadas</div>
+                        <div class="font-semibold text-blue-600 dark:text-blue-400">
                             {{ currentSessionInfo.salesCount }}
                         </div>
                     </div>
                     <div>
-                        <div class="text-sm text-gray-600">Total en Ventas</div>
-                        <div class="font-semibold text-purple-600">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Total en Ventas</div>
+                        <div class="font-semibold text-purple-600 dark:text-purple-400">
                             {{ formatCurrency(currentSessionInfo.totalSales) }}
                         </div>
                     </div>
                     <div>
-                        <div class="text-sm text-gray-600">Monto Esperado</div>
-                        <div class="font-semibold text-orange-600">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Monto Esperado</div>
+                        <div class="font-semibold text-orange-600 dark:text-orange-400">
                             {{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}
                         </div>
                     </div>
@@ -588,31 +584,37 @@ const printReport = () => {
             <!-- Close Form -->
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Real en Caja * </label>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"> Monto Real en Caja * </label>
                     <div class="p-inputgroup">
-                        <span class="p-inputgroup-addon">S/</span>
-                        <InputNumber v-model="closeForm.actual_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="flex-1" />
+                        <span class="p-inputgroup-addon dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">S/</span>
+                        <InputNumber v-model="closeForm.actual_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="flex-1 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600" />
                     </div>
-                    <small class="text-gray-500">Cuente el dinero físico en la caja registradora</small>
+                    <small class="text-gray-500 dark:text-gray-400">Cuente el dinero físico en la caja registradora</small>
                 </div>
 
                 <!-- Difference Calculation -->
-                <div v-if="closeForm.actual_amount" class="p-4 rounded-lg border-2" :class="cashSessionsStore.calculateDifference(closeForm.actual_amount) === 0 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'">
+                <div
+                    v-if="closeForm.actual_amount"
+                    class="p-4 rounded-lg border-2"
+                    :class="
+                        cashSessionsStore.calculateDifference(closeForm.actual_amount) === 0 ? 'bg-green-50 border-green-200 dark:bg-green-900/50 dark:border-green-800' : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/50 dark:border-yellow-800'
+                    "
+                >
                     <div class="flex justify-between items-center">
-                        <span class="font-medium">Diferencia:</span>
+                        <span class="font-medium dark:text-gray-200">Diferencia:</span>
                         <span class="font-bold text-lg" :class="getDifferenceClass(cashSessionsStore.calculateDifference(closeForm.actual_amount))">
                             {{ formatCurrency(cashSessionsStore.calculateDifference(closeForm.actual_amount)) }}
                         </span>
                     </div>
-                    <div v-if="cashSessionsStore.hasSignificantDiscrepancy(closeForm.actual_amount)" class="text-sm text-yellow-700 mt-2">
+                    <div v-if="cashSessionsStore.hasSignificantDiscrepancy(closeForm.actual_amount)" class="text-sm text-yellow-700 dark:text-yellow-400 mt-2">
                         <i class="pi pi-exclamation-triangle mr-1"></i>
                         Diferencia significativa detectada
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2"> Notas de Cierre </label>
-                    <Textarea v-model="closeForm.notes" rows="3" placeholder="Observaciones, explicación de diferencias..." class="w-full" />
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"> Notas de Cierre </label>
+                    <Textarea v-model="closeForm.notes" rows="3" placeholder="Observaciones, explicación de diferencias..." class="w-full dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600" />
                 </div>
             </div>
         </div>
@@ -633,14 +635,14 @@ const printReport = () => {
         :style="{ width: '90vw', maxWidth: '800px' }"
         :pt="{
             header: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white',
-            content: 'p-6'
+            content: 'p-6 bg-white dark:bg-gray-800'
         }"
     >
         <div v-if="sessionReport" class="space-y-6 printable">
             <!-- Session Header -->
-            <div class="text-center pb-4 border-b">
-                <h2 class="text-2xl font-bold text-gray-800">Reporte de Sesión #{{ sessionReport.session?.id }}</h2>
-                <p class="text-gray-600">
+            <div class="text-center pb-4 border-b dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Reporte de Sesión #{{ sessionReport.session?.id }}</h2>
+                <p class="text-gray-600 dark:text-gray-400">
                     {{ sessionReport.session?.user?.name }} -
                     {{ sessionReport.session?.cash_register?.name }}
                 </p>
@@ -648,39 +650,39 @@ const printReport = () => {
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                <div class="bg-green-50 dark:bg-green-900/50 p-4 rounded-lg border dark:border-green-800">
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-green-600">
+                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                             {{ formatCurrency(sessionReport.movements_summary?.total_sales || 0) }}
                         </div>
-                        <div class="text-sm text-green-700">Total Ventas</div>
+                        <div class="text-sm text-green-700 dark:text-green-400">Total Ventas</div>
                     </div>
                 </div>
 
-                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div class="bg-blue-50 dark:bg-blue-900/50 p-4 rounded-lg border dark:border-blue-800">
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-blue-600">
+                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
                             {{ sessionReport.movements_summary?.sales_count || 0 }}
                         </div>
-                        <div class="text-sm text-blue-700">Transacciones</div>
+                        <div class="text-sm text-blue-700 dark:text-blue-400">Transacciones</div>
                     </div>
                 </div>
 
-                <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div class="bg-purple-50 dark:bg-purple-900/50 p-4 rounded-lg border dark:border-purple-800">
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-purple-600">{{ Math.round((sessionReport.summary?.duration_minutes || 0) / 60) }}h</div>
-                        <div class="text-sm text-purple-700">Duración</div>
+                        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ Math.round((sessionReport.summary?.duration_minutes || 0) / 60) }}h</div>
+                        <div class="text-sm text-purple-700 dark:text-purple-400">Duración</div>
                     </div>
                 </div>
             </div>
 
             <!-- Sales Detail -->
             <div v-if="sessionReport.sales?.length" class="mt-6">
-                <h3 class="font-bold text-gray-800 mb-3">Ventas Detalladas</h3>
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">Ventas Detalladas</h3>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-700">
+                            <tr class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                                 <th class="px-2 py-1 text-left">#</th>
                                 <th class="px-2 py-1 text-left">Comprobante</th>
                                 <th class="px-2 py-1 text-right">Total</th>
@@ -688,15 +690,15 @@ const printReport = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="sale in sessionReport.sales" :key="sale.sale_id || sale.id" class="border-b">
-                                <td class="px-2 py-1">{{ sale.sale_id || sale.id }}</td>
-                                <td class="px-2 py-1">
+                            <tr v-for="sale in sessionReport.sales" :key="sale.sale_id || sale.id" class="border-b dark:border-gray-700">
+                                <td class="px-2 py-1 dark:text-gray-300">{{ sale.sale_id || sale.id }}</td>
+                                <td class="px-2 py-1 dark:text-gray-300">
                                     {{ sale.document_number || sale.voucher_number || '-' }}
                                 </td>
-                                <td class="px-2 py-1 text-right">
+                                <td class="px-2 py-1 text-right dark:text-gray-300">
                                     {{ formatCurrency(sale.total_amount) }}
                                 </td>
-                                <td class="px-2 py-1">
+                                <td class="px-2 py-1 dark:text-gray-300">
                                     <span v-for="p in sale.payments" :key="p.payment_method_name" class="mr-2"> {{ p.payment_method_name }} ({{ formatCurrency(p.amount) }}) </span>
                                 </td>
                             </tr>
@@ -707,14 +709,14 @@ const printReport = () => {
 
             <!-- Payment Methods Breakdown -->
             <div v-if="sessionReport.payment_methods_breakdown?.length">
-                <h3 class="font-bold text-gray-800 mb-3">Desglose por Método de Pago</h3>
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">Desglose por Método de Pago</h3>
                 <div class="space-y-2">
-                    <div v-for="method in sessionReport.payment_methods_breakdown" :key="method.method_id" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div v-for="method in sessionReport.payment_methods_breakdown" :key="method.method_id" class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <div>
-                            <span class="font-medium">{{ method.method_name }}</span>
-                            <span class="text-sm text-gray-500 ml-2">({{ method.transaction_count }} transacciones)</span>
+                            <span class="font-medium dark:text-gray-200">{{ method.method_name }}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">({{ method.transaction_count }} transacciones)</span>
                         </div>
-                        <span class="font-bold text-green-600">{{ formatCurrency(method.total_amount) }}</span>
+                        <span class="font-bold text-green-600 dark:text-green-400">{{ formatCurrency(method.total_amount) }}</span>
                     </div>
                 </div>
             </div>

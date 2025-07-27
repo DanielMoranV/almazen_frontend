@@ -237,7 +237,7 @@ const generateCodeFromName = () => {
                             <div class="flex items-center space-x-3">
                                 <i class="pi pi-credit-card text-2xl"></i>
                                 <div>
-                                    <h1 class="text-2xl font-bold">Métodos de Pago</h1>
+                                    <h1 class="text-2xl font-bold text-white">Métodos de Pago</h1>
                                     <p class="text-purple-100">Gestión de formas de cobro y pago</p>
                                 </div>
                             </div>
@@ -272,16 +272,17 @@ const generateCodeFromName = () => {
                         </div>
                     </Panel>
                     <!-- Tabla -->
-                    <div v-if="isLoading" class="flex justify-center py-8"><ProgressSpinner /></div>
-                    <div v-else-if="!hasMethods" class="text-center py-12">
-                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="pi pi-credit-card text-4xl text-gray-400"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-600 mb-2">No hay métodos de pago</h3>
-                        <p class="text-gray-500 mb-4">Crea el primer método de pago para comenzar</p>
-                        <Button @click="openCreateDialog" label="Crear Método de Pago" icon="pi pi-plus" severity="success" />
-                    </div>
-                    <DataTable v-else :value="methods" :paginator="true" :rows="15" :loading="isLoading" stripedRows responsiveLayout="scroll" class="shadow-sm">
+                    <DataTable :value="methods" :paginator="true" :rows="15" :loading="isLoading" stripedRows responsiveLayout="scroll" class="shadow-sm">
+                        <template #empty>
+                            <div class="text-center py-12">
+                                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="pi pi-credit-card text-4xl text-gray-400" />
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-600 mb-2">No hay métodos de pago</h3>
+                                <p class="text-gray-500 mb-4">Crea el primer método de pago para comenzar</p>
+                                <Button @click="openCreateDialog" label="Crear Método de Pago" icon="pi pi-plus" severity="success" />
+                            </div>
+                        </template>
                         <Column field="name" header="Método" sortable>
                             <template #body="{ data }">
                                 <div class="flex items-center space-x-3">

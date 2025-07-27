@@ -58,7 +58,7 @@ const clearFilters = async () => {
                             <div class="flex items-center space-x-3">
                                 <i class="pi pi-wallet text-2xl"></i>
                                 <div>
-                                    <h1 class="text-2xl font-bold">Movimientos de Caja</h1>
+                                    <h1 class="text-2xl font-bold text-white">Movimientos de Caja</h1>
                                     <p class="text-cyan-100">Ingresos y egresos de efectivo</p>
                                 </div>
                             </div>
@@ -90,10 +90,7 @@ const clearFilters = async () => {
                     </Panel>
 
                     <!-- Tabla -->
-                    <div v-if="isLoading" class="flex justify-center py-8">
-                        <ProgressSpinner />
-                    </div>
-                    <DataTable v-else :value="movements" :paginator="true" :rows="15" stripedRows responsiveLayout="scroll">
+                    <DataTable :value="movements" :loading="isLoading" :paginator="true" :rows="15" stripedRows responsiveLayout="scroll">
                         <Column field="created_at" header="Fecha" sortable>
                             <template #body="{ data }">{{ new Date(data.created_at).toLocaleString('es-PE') }}</template>
                         </Column>
