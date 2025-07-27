@@ -257,9 +257,11 @@ const getPopularityBadge = (popularity) => {
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6 mb-8 sticky top-4 z-10">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="relative sm:col-span-2">
-                        <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <InputText v-model="searchTerm" placeholder="Buscar reportes..." class="w-full pl-10"
-                            size="large" />
+                        <IconField>
+                            <InputIcon class="pi pi-search" />
+                            <InputText v-model="searchTerm" placeholder="Buscar reportes..." class="w-full pl-10"
+                                size="large" />
+                        </IconField>
                     </div>
                     <Dropdown v-model="selectedCategory" :options="categories" optionLabel="label" optionValue="value"
                         placeholder="Filtrar por categoría" class="w-full" size="large" />
