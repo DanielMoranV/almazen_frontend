@@ -23,7 +23,7 @@ const loading = ref(false);
 const displayNewSessionDialog = ref(false);
 const displayCloseSessionDialog = ref(false);
 const displayReportDialog = ref(false);
-const selectedSession = ref(null);
+// const selectedSession = ref(null);
 const sessionReport = ref(null);
 
 // Form data

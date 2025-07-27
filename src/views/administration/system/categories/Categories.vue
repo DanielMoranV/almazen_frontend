@@ -1,14 +1,29 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import { useToast } from 'primevue/usetoast';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useCategoriesStore } from '@/stores/categoriesStore';
+import { useToast } from 'primevue/usetoast';
+import { ref, onMounted, computed } from 'vue';
 import CategoriesTable from './componentsCategories/CategoriesTable.vue';
 import CategoryFormDialog from './componentsCategories/CategoryFormDialog.vue';
-import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import CategoryToolbar from './componentsCategories/CategoryToolbar.vue';
 
 const toast = useToast();
 const categoriesStore = useCategoriesStore();
+
+// Estados reactivos y propiedades computadas
+const isLoading = computed(() => categoriesStore.isLoadingCategories);
+const hasCategories = computed(() => categoriesStore.categoriesList.length > 0);
+const totalCategories = computed(() => categoriesStore.categoriesList.length);
+
+// Cargar categorías cuando el componente se monta
+onMounted(async () => {
+    await categoriesStore.fetchCategories();
+});
+
+// Método para refrescar las categorías
+const handleRefresh = async () => {
+    await categoriesStore.fetchCategories();
+};
 
 // Estados locales
 const handleOpenCreateDialog = () => {
@@ -16,12 +31,77 @@ const handleOpenCreateDialog = () => {
     isCreating.value = true;
     showCategoryDialog.value = true;
 };
+
+// Manejar el envío del formulario de categoría
+const handleCategorySubmit = async (categoryData) => {
+    try {
+        if (isCreating.value) {
+            // Crear nueva categoría
+            await categoriesStore.createCategory(categoryData);
+            if (categoriesStore.success) {
+                toast.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: 'Categoría creada correctamente',
+                    life: 3000
+                });
+                showCategoryDialog.value = false;
+            }
+        } else {
+            // Actualizar categoría existente
+            await categoriesStore.updateCategory({
+                ...categoryData,
+                id: selectedCategory.value.id
+            });
+            if (categoriesStore.success) {
+                toast.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: 'Categoría actualizada correctamente',
+                    life: 3000
+                });
+                showCategoryDialog.value = false;
+            }
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Ha ocurrido un error al procesar la categoría',
+            life: 3000
+        });
+    }
+};
+
+// Manejar la eliminación de una categoría
+const handleCategoryDelete = async () => {
+    try {
+        if (selectedCategory.value && selectedCategory.value.id) {
+            await categoriesStore.removeCategory(selectedCategory.value.id);
+            if (categoriesStore.success) {
+                toast.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: 'Categoría eliminada correctamente',
+                    life: 3000
+                });
+                showDeleteDialog.value = false;
+            }
+        }
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Ha ocurrido un error al eliminar la categoría',
+            life: 3000
+        });
+    }
+};
+
 const selectedCategory = ref(null);
 const showCategoryDialog = ref(false);
 const showDeleteDialog = ref(false);
 const isCreating = ref(false);
-
-
 </script>
 
 <template>
@@ -42,12 +122,8 @@ const isCreating = ref(false);
                         <div class="empty-icon">
                             <i class="pi pi-tags"></i>
                         </div>
-                        <h3 class="empty-title">
-                            No hay categorías
-                        </h3>
-                        <p class="empty-description">
-                            Crea tu primera categoría para empezar a gestionar el sistema.
-                        </p>
+                        <h3 class="empty-title">No hay categorías</h3>
+                        <p class="empty-description">Crea tu primera categoría para empezar a gestionar el sistema.</p>
                         <div class="empty-actions">
                             <Button icon="pi pi-plus" label="Agregar Categoría" class="primary-action-btn" @click="handleOpenCreateDialog" />
                         </div>
@@ -58,17 +134,23 @@ const isCreating = ref(false);
             <!-- Tabla de Categorías con Animaciones -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasCategories" class="table-container">
-                    <CategoriesTable :categories="categoriesStore.categoriesList" :loading="isLoading" @edit="
+                    <CategoriesTable
+                        :categories="categoriesStore.categoriesList"
+                        :loading="isLoading"
+                        @edit="
                             (category) => {
-                                selectedCategory = category;
-                                showCategoryDialog = true;
+                                selectedCategory.value = category;
+                                isCreating.value = false;
+                                showCategoryDialog.value = true;
                             }
-                        " @delete="
+                        "
+                        @delete="
                             (category) => {
-                                selectedCategory = category;
-                                showDeleteDialog = true;
+                                selectedCategory.value = category;
+                                showDeleteDialog.value = true;
                             }
-                        " />
+                        "
+                    />
                 </div>
             </transition>
 
@@ -236,8 +318,8 @@ const isCreating = ref(false);
 @media (prefers-color-scheme: dark) {
     .table-container {
         box-shadow:
-        0 10px 25px -5px rgba(0, 0, 0, 0.3),
-        0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
 </style>
