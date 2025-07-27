@@ -274,7 +274,8 @@ export const useCashSessionsStore = defineStore('cashSessionsStore', {
         calculateDifference(actualAmount) {
             if (!this.currentSession || !actualAmount) return 0;
 
-            const expected = parseFloat(this.currentSession.expected_amount || 0);
+            // Usar el valor correcto del monto esperado desde el summary o directamente
+            const expected = parseFloat(this.currentSession.summary?.expected_amount || this.currentSession.expected_amount || 0);
             const actual = parseFloat(actualAmount);
 
             return actual - expected;
@@ -282,9 +283,16 @@ export const useCashSessionsStore = defineStore('cashSessionsStore', {
 
         /**
          * Verifica si hay discrepancia significativa
+         * @param {number} actualAmount - Monto real ingresado
+         * @param {number} maxDiscrepancy - Diferencia máxima permitida (por defecto 5)
+         * @returns {boolean} - True si hay discrepancia significativa
          */
         hasSignificantDiscrepancy(actualAmount, maxDiscrepancy = 5) {
+            // Si no hay monto actual o no hay sesión, no hay discrepancia
+            if (!actualAmount || !this.currentSession) return false;
+            
             const difference = Math.abs(this.calculateDifference(actualAmount));
+            // Solo mostrar discrepancia si la diferencia es mayor que el umbral
             return difference > maxDiscrepancy;
         },
 

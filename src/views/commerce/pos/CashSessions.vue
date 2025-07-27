@@ -93,7 +93,7 @@ const openNewSessionDialog = () => {
         sessionForm.value.cash_register_id = cashRegistersList.value[0].id;
     }
 
-    if (availableForNewSession.length === 0) {
+    if (availableForNewSession.value.length === 0) {
         toast.add({
             severity: 'warn',
             summary: 'Sin cajas disponibles',
@@ -156,8 +156,9 @@ const openCloseSessionDialog = () => {
     }
 
     // Pre-fill with expected amount
+    const expectedAmount = currentSessionInfo.value?.expected_amount || currentSessionInfo.value?.expectedAmount || 0;
     closeForm.value = {
-        actual_amount: currentSessionInfo.value?.expected_amount ?? currentSessionInfo.value?.expectedAmount,
+        actual_amount: expectedAmount,
         notes: ''
     };
 
@@ -227,32 +228,47 @@ const showSessionReport = async (session) => {
 // Utility functions
 const handleStoreErrors = () => {
     const store = cashSessionsStore;
-    if (store.validationErrors.length > 0) {
-        store.validationErrors.forEach((error) => {
+    
+    try {
+        if (store.validationErrors && store.validationErrors.length > 0) {
+            // Mostrar errores de validación
+            store.validationErrors.forEach((error) => {
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de Validación',
+                    detail: error,
+                    life: 4000
+                });
+            });
+        } else if (store.message) {
+            // Mostrar mensaje de error del store
             toast.add({
                 severity: 'error',
-                summary: 'Error de Validación',
-                detail: error,
+                summary: 'Error',
+                detail: store.message,
                 life: 4000
             });
-        });
-    } else {
+        } else {
+            // Mensaje genérico si no hay detalles
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Ocurrió un error inesperado',
+                life: 4000
+            });
+        }
+    } catch (error) {
+        console.error('Error al mostrar notificaciones:', error);
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: store.message || 'Ocurrió un error inesperado',
+            detail: 'Ocurrió un error inesperado',
             life: 4000
         });
     }
 };
 
-// const getSessionStatusClass = (status) => {
-//     return {
-//         'bg-green-100 text-green-700': status === 'OPEN',
-//         'bg-blue-100 text-blue-700': status === 'CLOSED',
-//         'bg-yellow-100 text-yellow-700': status === 'SUSPENDED'
-//     };
-// };
+
 
 const getSessionStatusLabel = (status) => {
     const labels = {
@@ -276,10 +292,7 @@ const formatDateTime = (dateTime) => {
     return dateTime ? new Date(dateTime).toLocaleString('es-PE') : '-';
 };
 
-// const calculateDifference = (expected, actual) => {
-//     if (!expected || !actual) return 0;
-//     return parseFloat(actual) - parseFloat(expected);
-// };
+
 
 const getDifferenceClass = (difference) => {
     if (difference === 0) return 'text-green-600 dark:text-green-400';
@@ -371,7 +384,7 @@ const printReport = () => {
                                 <div>
                                     <div class="text-sm text-orange-600 dark:text-orange-400 font-medium">Esperado</div>
                                     <div class="font-bold text-gray-800 dark:text-gray-200">
-                                        {{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}
+                                        {{ formatCurrency(currentSessionInfo.expected_amount || currentSessionInfo.expectedAmount) }}
                                     </div>
                                 </div>
                             </div>
@@ -594,10 +607,10 @@ const printReport = () => {
 
                 <!-- Difference Calculation -->
                 <div
-                    v-if="closeForm.actual_amount"
+                    v-if="closeForm.actual_amount !== null && closeForm.actual_amount !== undefined"
                     class="p-4 rounded-lg border-2"
                     :class="
-                        cashSessionsStore.calculateDifference(closeForm.actual_amount) === 0 ? 'bg-green-50 border-green-200 dark:bg-green-900/50 dark:border-green-800' : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/50 dark:border-yellow-800'
+                        Math.abs(cashSessionsStore.calculateDifference(closeForm.actual_amount)) < 0.01 ? 'bg-green-50 border-green-200 dark:bg-green-900/50 dark:border-green-800' : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/50 dark:border-yellow-800'
                     "
                 >
                     <div class="flex justify-between items-center">
