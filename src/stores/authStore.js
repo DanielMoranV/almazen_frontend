@@ -101,15 +101,28 @@ export const useAuthStore = defineStore('authStore', {
 
         async refreshToken() {
             try {
+                console.log('[Auth Debug] Iniciando refresco de token');
+                console.log('[Auth Debug] Token anterior:', this.token?.substring(0, 10) + '...');
+
                 // Usar el endpoint de refresh sin enviar el refresh_token en el cuerpo
                 // El token actual ya se envía en el header de Authorization por el interceptor
                 const { data } = await refresh();
+
+                console.log('[Auth Debug] Respuesta del servidor recibida:', {
+                    access_token_recibido: !!data.access_token,
+                    expires_in: data.expires_in
+                });
+
                 this.setToken(data.access_token);
                 this.setExpiration(data.expires_in);
                 this.success = true;
-                console.log('[Auth] Token actualizado automáticamente');
+
+                console.log('[Auth Debug] Token actualizado correctamente');
+                console.log('[Auth Debug] Nuevo token:', data.access_token?.substring(0, 10) + '...');
+                console.log('[Auth Debug] Nueva expiración:', new Date(this.expiresAt).toLocaleString());
             } catch (error) {
-                console.warn('[Auth] Error al refrescar token:', error);
+                console.warn('[Auth Debug] ERROR al refrescar token:', error);
+                console.warn('[Auth Debug] Limpiando datos de autenticación...');
                 this.clearAuthData();
             }
         },
@@ -154,20 +167,29 @@ export const useAuthStore = defineStore('authStore', {
         startRefreshInterval() {
             if (this.refreshTimer) clearInterval(this.refreshTimer);
 
+            console.log('[Auth Debug] Iniciando temporizador de refresco de token');
+            console.log('[Auth Debug] Token actual:', this.token?.substring(0, 10) + '...');
+            console.log('[Auth Debug] Expira en:', new Date(this.expiresAt).toLocaleString());
+
             this.refreshTimer = setInterval(async () => {
-                if (!this.token || !this.expiresAt) return;
+                if (!this.token || !this.expiresAt) {
+                    console.log('[Auth Debug] No hay token o fecha de expiración');
+                    return;
+                }
 
                 const now = Date.now();
                 const timeLeft = this.expiresAt - now;
+                const timeLeftSeconds = Math.floor(timeLeft / 1000);
 
-                console.log('Token refresh check. Time left: ', timeLeft);
+                console.log(`[Auth Debug] Verificando token - Tiempo restante: ${timeLeftSeconds}s (${Math.floor(timeLeftSeconds / 60)}m ${timeLeftSeconds % 60}s)`);
 
                 // Refrescar cuando queden menos de 60 segundos (1 minuto) según la documentación
                 if (timeLeft < 60_000) {
-                    console.log('Intentando refrescar token como el tiempo restante es menor a 60 segundos.');
+                    console.log('[Auth Debug] ¡REFRESCANDO TOKEN! Quedan menos de 60 segundos.');
                     await this.refreshToken();
+                    console.log('[Auth Debug] Después del refresco - Nuevo tiempo de expiración:', new Date(this.expiresAt).toLocaleString());
                 }
-            }, 60_000); // Verifica cada 60s
+            }, 60_000); // Verificar cada 60s
         },
 
         setUser(user) {
