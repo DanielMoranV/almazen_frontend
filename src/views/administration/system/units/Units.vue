@@ -1,149 +1,168 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useUnitsStore } from '@/stores/unitsStore';
 import UnitsTable from './componentsUnits/UnitsTable.vue';
 import UnitsFormDialog from './componentsUnits/UnitsFormDialog.vue';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
+import UnitToolbar from './componentsUnits/UnitToolbar.vue';
 
 const toast = useToast();
 const unitsStore = useUnitsStore();
 
-// Estados
-const units = ref([]);
+// Estados locales
 const selectedUnit = ref(null);
 const showUnitDialog = ref(false);
 const showDeleteDialog = ref(false);
+const isCreating = ref(false);
+
+const openCreateDialog = () => {
+    selectedUnit.value = null;
+    isCreating.value = true;
+    showUnitDialog.value = true;
+};
+
+// Estados computados del store
+const totalUnits = computed(() => unitsStore.totalUnits);
+const isLoading = computed(() => unitsStore.isLoadingUnits);
+const hasUnits = computed(() => unitsStore.unitsList.length > 0);
 
 // Inicialización
 onMounted(async () => {
     await loadUnits();
 });
 
-// Métodos
+// Gestión de carga inicial
 const loadUnits = async () => {
     await unitsStore.fetchUnits();
-
     if (unitsStore.success) {
-        units.value = unitsStore.unitsList;
-        showSuccess('Unidades cargadas', unitsStore.message);
-    } else {
-        if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
-            unitsStore.validationErrors.forEach((err) => {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error de validación',
-                    detail: err,
-                    life: 4000
-                });
-            });
-        } else {
-            showError(unitsStore.message);
-        }
+        showSuccess('Unidades cargadas', 'Lista actualizada correctamente');
     }
 };
 
 const handleUnitSubmit = async (unitData) => {
-    const action = unitData.id ? unitsStore.updateUnit : unitsStore.createUnit;
+    const action = isCreating.value ? unitsStore.createUnit : unitsStore.updateUnit;
     await action(unitData);
 
     if (unitsStore.success) {
-        units.value = unitsStore.unitsList;
-        showSuccess(unitData.id ? 'Unidad actualizada' : 'Unidad creada', unitsStore.message);
+        const message = isCreating.value ? 'Unidad creada exitosamente' : 'Unidad actualizada exitosamente';
+        showSuccess(message, unitsStore.message);
         showUnitDialog.value = false;
+        await loadUnits();
     } else {
-        if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
-            unitsStore.validationErrors.forEach((err) => {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error de validación',
-                    detail: err,
-                    life: 4000
-                });
-            });
-        } else {
-            showError(unitsStore.message);
-        }
+        handleApiErrors(unitsStore);
     }
 };
 
 const handleUnitDelete = async () => {
     await unitsStore.removeUnit(selectedUnit.value.id);
     if (unitsStore.success) {
-        units.value = unitsStore.unitsList;
         showSuccess('Unidad eliminada', unitsStore.message);
         showDeleteDialog.value = false;
+        await loadUnits();
     } else {
-        if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
-            unitsStore.validationErrors.forEach((err) => {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error de validación',
-                    detail: err,
-                    life: 4000
-                });
-            });
-        } else {
-            showError(unitsStore.message);
-        }
+        handleApiErrors(unitsStore);
+        showDeleteDialog.value = false;
     }
 };
 
-const showSuccess = (title, message) => {
-    toast.add({
-        severity: 'success',
-        summary: title,
-        detail: message,
-        life: 3000
-    });
+// Manejadores del toolbar
+const handleRefresh = async () => {
+    await unitsStore.fetchUnits();
+    showSuccess('Datos actualizados', 'Lista de unidades actualizada');
 };
 
-const showError = (message) => {
-    toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: message,
-        life: 3000
-    });
+// Helpers para manejo de respuestas API
+const handleApiErrors = (store) => {
+    if (store.validationErrors && store.validationErrors.length > 0) {
+        store.validationErrors.forEach((err) => {
+            toast.add({
+                severity: 'error',
+                summary: 'Error de validación',
+                detail: err,
+                life: 4000
+            });
+        });
+    } else {
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: store.message || 'Ha ocurrido un error inesperado',
+            life: 4000
+        });
+    }
+};
+
+const showSuccess = (summary, detail) => {
+    toast.add({ severity: 'success', summary, detail, life: 3000 });
+};
+
+const showError = (summary, detail) => {
+    toast.add({ severity: 'error', summary, detail, life: 4000 });
 };
 </script>
 <template>
-    <div class="p-6 card">
+    <div class="users-page">
+        <!-- Toast y Confirmaciones -->
         <Toast />
         <ConfirmDialog />
 
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Gestión de Unidades</h2>
-            <Button
-                icon="pi pi-plus"
-                class="p-button-success"
-                @click="
-                    () => {
-                        selectedUnit = null;
-                        showUnitDialog = true;
-                    }
-                "
-            />
+        <!-- Toolbar Principal Mejorado -->
+        <UnitToolbar :total-units="totalUnits" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
+
+        <!-- Área Principal de Contenido con Animaciones -->
+        <div class="content-wrapper">
+            <!-- Estado Vacío Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="!isLoading && !hasUnits" class="empty-state">
+                    <div class="empty-content">
+                        <div class="empty-icon">
+                            <i class="pi pi-box"></i>
+                        </div>
+                        <h3 class="empty-title">
+                            No hay unidades
+                        </h3>
+                        <p class="empty-description">
+                            Crea tu primera unidad para empezar a gestionar el sistema.
+                        </p>
+                        <div class="empty-actions">
+                            <Button icon="pi pi-plus" label="Agregar Unidad" class="primary-action-btn" @click="openCreateDialog" />
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- Tabla de Unidades con Animaciones -->
+            <transition name="slide-up" appear>
+                <div v-if="!isLoading && hasUnits" class="table-container">
+                    <UnitsTable :units="unitsStore.unitsList" :loading="isLoading" @edit="
+                            (unit) => {
+                                selectedUnit = unit;
+                                showUnitDialog = true;
+                            }
+                        " @delete="
+                            (unit) => {
+                                selectedUnit = unit;
+                                showDeleteDialog = true;
+                            }
+                        " />
+                </div>
+            </transition>
+
+            <!-- Estado de Carga Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="isLoading" class="loading-state">
+                    <div class="loading-content">
+                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
+                        <p class="loading-text">Cargando unidades...</p>
+                    </div>
+                </div>
+            </transition>
         </div>
-        <UnitsTable
-            :units="units"
-            :loading="unitsStore.isLoadingUnits"
-            @edit="
-                (unit) => {
-                    selectedUnit = unit;
-                    showUnitDialog = true;
-                }
-            "
-            @delete="
-                (unit) => {
-                    selectedUnit = unit;
-                    showDeleteDialog = true;
-                }
-            "
-        />
 
-        <UnitsFormDialog v-model:visible="showUnitDialog" :unit="selectedUnit" @submit="handleUnitSubmit" :loading="unitsStore.isLoadingUnits" />
+        <!-- Diálogos -->
+        <UnitsFormDialog v-model:visible="showUnitDialog" :unit="selectedUnit" @submit="handleUnitSubmit" :loading="isLoading" />
 
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedUnit?.name || ''" @confirm="handleUnitDelete" />
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedUnit?.name || ''" item-type="unidad" @confirm="handleUnitDelete" :loading="isLoading" />
     </div>
 </template>
