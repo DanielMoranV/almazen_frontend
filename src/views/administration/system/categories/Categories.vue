@@ -11,6 +11,11 @@ const toast = useToast();
 const categoriesStore = useCategoriesStore();
 
 // Estados locales
+const handleOpenCreateDialog = () => {
+    selectedCategory.value = null;
+    isCreating.value = true;
+    showCategoryDialog.value = true;
+};
 const selectedCategory = ref(null);
 const showCategoryDialog = ref(false);
 const showDeleteDialog = ref(false);
