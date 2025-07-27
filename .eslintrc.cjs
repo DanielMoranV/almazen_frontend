@@ -18,12 +18,12 @@ module.exports = {
             {
                 order: ['script', 'template', 'style']
             }
+        ],
+        'prettier/prettier': [
+            'error',
+            {
+                endOfLine: 'auto'
+            }
         ]
-    },
-    'prettier/prettier': [
-        'error',
-        {
-            endOfLine: 'auto'
-        }
-    ]
+    }
 };

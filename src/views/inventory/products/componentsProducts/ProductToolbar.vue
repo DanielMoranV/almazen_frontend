@@ -1,3 +1,18 @@
+<script setup>
+defineProps({
+    totalProducts: {
+        type: Number,
+        default: 0
+    },
+    isLoading: {
+        type: Boolean,
+        default: false
+    }
+});
+
+defineEmits(['refresh', 'create']);
+</script>
+
 <template>
     <div class="product-toolbar">
         <!-- Header mejorado con gradiente y efectos visuales -->
@@ -19,21 +34,8 @@
 
                 <div class="actions-section">
                     <div class="action-buttons">
-                        <Button 
-                            icon="pi pi-refresh" 
-                            class="action-btn refresh-btn" 
-                            :loading="isLoading" 
-                            @click="$emit('refresh')" 
-                            v-tooltip.bottom="'Actualizar lista'"
-                            :disabled="isLoading"
-                        />
-                        <Button 
-                            icon="pi pi-plus" 
-                            label="Agregar Producto" 
-                            class="action-btn create-btn" 
-                            @click="$emit('create')" 
-                            v-tooltip.bottom="'Crear nuevo producto'"
-                        />
+                        <Button icon="pi pi-refresh" class="action-btn refresh-btn" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar lista'" :disabled="isLoading" />
+                        <Button icon="pi pi-plus" label="Agregar Producto" class="action-btn create-btn" @click="$emit('create')" v-tooltip.bottom="'Crear nuevo producto'" />
                     </div>
                 </div>
             </div>
@@ -41,26 +43,13 @@
     </div>
 </template>
 
-<script setup>
-defineProps({
-    totalProducts: {
-        type: Number,
-        default: 0
-    },
-    isLoading: {
-        type: Boolean,
-        default: false
-    }
-});
-
-defineEmits(['refresh', 'create']);
-</script>
-
 <style scoped>
 /* Contenedor principal del toolbar con efecto de elevación */
 .product-toolbar {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Encabezado del toolbar con gradiente mejorado y efecto de profundidad */
@@ -74,10 +63,10 @@ defineEmits(['refresh', 'create']);
 /* Fondo decorativo con patrón */
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
-    background-image: 
-        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 50px 50px, 30px 30px;
+    background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        50px 50px,
+        30px 30px;
     animation: pattern-move 20s linear infinite;
 }
 
@@ -168,10 +157,14 @@ defineEmits(['refresh', 'create']);
 /* Animación del patrón de fondo */
 @keyframes pattern-move {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 
@@ -240,7 +233,9 @@ defineEmits(['refresh', 'create']);
 /* Mejoras para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .product-toolbar {
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
 </style>

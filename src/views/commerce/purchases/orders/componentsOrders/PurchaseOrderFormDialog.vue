@@ -214,16 +214,7 @@ watch(
                         <i class="pi pi-building text-gray-500 text-xs"></i>
                         Proveedor
                     </label>
-                    <Select 
-                        v-model="form.provider_id" 
-                        :options="providers" 
-                        optionLabel="name" 
-                        optionValue="id" 
-                        placeholder="Seleccionar proveedor" 
-                        :class="{ 'p-invalid': submitted && !form.provider_id }" 
-                        filter 
-                        showClear 
-                    />
+                    <Select v-model="form.provider_id" :options="providers" optionLabel="name" optionValue="id" placeholder="Seleccionar proveedor" :class="{ 'p-invalid': submitted && !form.provider_id }" filter showClear />
                     <small class="p-error" v-if="submitted && !form.provider_id">Requerido</small>
                 </div>
 
@@ -233,16 +224,7 @@ watch(
                         <i class="pi pi-home text-gray-500 text-xs"></i>
                         Almacén
                     </label>
-                    <Select 
-                        v-model="form.warehouse_id" 
-                        :options="warehouses" 
-                        optionLabel="name" 
-                        optionValue="id" 
-                        placeholder="Seleccionar almacén" 
-                        :class="{ 'p-invalid': submitted && !form.warehouse_id }" 
-                        filter 
-                        showClear 
-                    />
+                    <Select v-model="form.warehouse_id" :options="warehouses" optionLabel="name" optionValue="id" placeholder="Seleccionar almacén" :class="{ 'p-invalid': submitted && !form.warehouse_id }" filter showClear />
                     <small class="p-error" v-if="submitted && !form.warehouse_id">Requerido</small>
                 </div>
 
@@ -252,14 +234,7 @@ watch(
                         <i class="pi pi-file text-gray-500 text-xs"></i>
                         Tipo de Documento
                     </label>
-                    <Select 
-                        v-model="form.document_type" 
-                        :options="documenTypeList" 
-                        optionLabel="name" 
-                        optionValue="value" 
-                        placeholder="Tipo documento" 
-                        :class="{ 'p-invalid': submitted && !form.document_type }" 
-                    />
+                    <Select v-model="form.document_type" :options="documenTypeList" optionLabel="name" optionValue="value" placeholder="Tipo documento" :class="{ 'p-invalid': submitted && !form.document_type }" />
                     <small class="p-error" v-if="submitted && !form.document_type">Requerido</small>
                 </div>
 
@@ -269,11 +244,7 @@ watch(
                         <i class="pi pi-hashtag text-gray-500 text-xs"></i>
                         N° Documento
                     </label>
-                    <InputText 
-                        v-model="form.document_number" 
-                        placeholder="001-001-000001" 
-                        :class="{ 'p-invalid': submitted && !form.document_number }" 
-                    />
+                    <InputText v-model="form.document_number" placeholder="001-001-000001" :class="{ 'p-invalid': submitted && !form.document_number }" />
                     <small class="p-error" v-if="submitted && !form.document_number">Requerido</small>
                 </div>
 
@@ -283,12 +254,7 @@ watch(
                         <i class="pi pi-calendar text-gray-500 text-xs"></i>
                         Fecha de Compra
                     </label>
-                    <DatePicker 
-                        v-model="form.purchase_date" 
-                        :class="{ 'p-invalid': submitted && !form.purchase_date }" 
-                        dateFormat="dd/mm/yy" 
-                        showIcon 
-                    />
+                    <DatePicker v-model="form.purchase_date" :class="{ 'p-invalid': submitted && !form.purchase_date }" dateFormat="dd/mm/yy" showIcon />
                     <small class="p-error" v-if="submitted && !form.purchase_date">Requerido</small>
                 </div>
 
@@ -298,14 +264,7 @@ watch(
                         <i class="pi pi-money-bill text-gray-500 text-xs"></i>
                         Total
                     </label>
-                    <InputNumber 
-                        v-model="form.total_amount" 
-                        :class="{ 'p-invalid': submitted && !form.total_amount }" 
-                        mode="currency" 
-                        currency="PEN" 
-                        locale="es-PE" 
-                        placeholder="0.00" 
-                    />
+                    <InputNumber v-model="form.total_amount" :class="{ 'p-invalid': submitted && !form.total_amount }" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" />
                     <small class="p-error" v-if="submitted && !form.total_amount">Requerido</small>
                 </div>
 
@@ -315,14 +274,7 @@ watch(
                         <i class="pi pi-percentage text-gray-500 text-xs"></i>
                         IGV
                     </label>
-                    <InputNumber 
-                        v-model="form.tax_amount" 
-                        mode="currency" 
-                        currency="PEN" 
-                        locale="es-PE" 
-                        placeholder="0.00" 
-                        :disabled="isFacturaOrBoleta" 
-                    />
+                    <InputNumber v-model="form.tax_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" :disabled="isFacturaOrBoleta" />
                 </div>
 
                 <!-- Descuento -->
@@ -331,13 +283,7 @@ watch(
                         <i class="pi pi-minus-circle text-gray-500 text-xs"></i>
                         Descuento
                     </label>
-                    <InputNumber 
-                        v-model="form.discount_amount" 
-                        mode="currency" 
-                        currency="PEN" 
-                        locale="es-PE" 
-                        placeholder="0.00" 
-                    />
+                    <InputNumber v-model="form.discount_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" />
                 </div>
 
                 <!-- Notas (span completo) -->
@@ -346,12 +292,7 @@ watch(
                         <i class="pi pi-comment text-gray-500 text-xs"></i>
                         Notas
                     </label>
-                    <Textarea 
-                        v-model="form.notes" 
-                        placeholder="Observaciones adicionales..." 
-                        :rows="2" 
-                        :autoResize="true" 
-                    />
+                    <Textarea v-model="form.notes" placeholder="Observaciones adicionales..." :rows="2" :autoResize="true" />
                 </div>
             </div>
 
@@ -374,14 +315,7 @@ watch(
                             {{ form.details.length === 0 ? 'Sin productos' : `${form.details.length} producto${form.details.length !== 1 ? 's' : ''}` }}
                         </span>
                     </div>
-                    <Button 
-                        label="Agregar Producto" 
-                        icon="pi pi-plus" 
-                        size="small" 
-                        outlined 
-                        @click="addDetail()" 
-                        :disabled="loading" 
-                    />
+                    <Button label="Agregar Producto" icon="pi pi-plus" size="small" outlined @click="addDetail()" :disabled="loading" />
                 </div>
 
                 <!-- Estado vacío -->
@@ -391,12 +325,7 @@ watch(
                     </div>
                     <h4 class="text-lg font-semibold mb-2">No hay productos agregados</h4>
                     <p class="text-gray-500 mb-4">Comienza agregando productos a tu orden de compra</p>
-                    <Button 
-                        label="Agregar Primer Producto" 
-                        icon="pi pi-plus" 
-                        @click="addDetail()" 
-                        :disabled="loading" 
-                    />
+                    <Button label="Agregar Primer Producto" icon="pi pi-plus" @click="addDetail()" :disabled="loading" />
                 </div>
 
                 <!-- Tabla de productos -->
@@ -413,87 +342,37 @@ watch(
                     >
                         <Column field="product_id" header="Producto" style="min-width: 180px">
                             <template #body="{ data }">
-                                <Select 
-                                    v-model="data.product_id" 
-                                    :options="products" 
-                                    optionLabel="name" 
-                                    optionValue="id" 
-                                    placeholder="Seleccionar..." 
-                                    filter 
-                                    size="small" 
-                                    class="w-full"
-                                />
+                                <Select v-model="data.product_id" :options="products" optionLabel="name" optionValue="id" placeholder="Seleccionar..." filter size="small" class="w-full" />
                             </template>
                         </Column>
 
                         <Column field="quantity" header="Cant." style="width: 80px">
                             <template #body="{ data }">
-                                <InputNumber 
-                                    v-model="data.quantity" 
-                                    :min="0" 
-                                    :step="1" 
-                                    placeholder="0" 
-                                    size="small"
-                                    class="w-full"
-                                    :inputClass="'text-center'"
-                                />
+                                <InputNumber v-model="data.quantity" :min="0" :step="1" placeholder="0" size="small" class="w-full" :inputClass="'text-center'" />
                             </template>
                         </Column>
 
                         <Column field="unit_price" header="P. Unit." style="width: 100px">
                             <template #body="{ data }">
-                                <InputNumber 
-                                    v-model="data.unit_price" 
-                                    mode="currency" 
-                                    currency="PEN" 
-                                    locale="es-PE" 
-                                    placeholder="0.00" 
-                                    size="small" 
-                                    class="w-full"
-                                />
+                                <InputNumber v-model="data.unit_price" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="w-full" />
                             </template>
                         </Column>
 
                         <Column field="discount_amount" header="Desc." style="width: 90px">
                             <template #body="{ data }">
-                                <InputNumber 
-                                    v-model="data.discount_amount" 
-                                    mode="currency" 
-                                    currency="PEN" 
-                                    locale="es-PE" 
-                                    placeholder="0.00" 
-                                    size="small" 
-                                    class="w-full"
-                                />
+                                <InputNumber v-model="data.discount_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="w-full" />
                             </template>
                         </Column>
 
                         <Column field="total_amount" header="Total" style="width: 100px">
                             <template #body="{ data }">
-                                <InputNumber 
-                                    :modelValue="data.total_amount" 
-                                    mode="currency" 
-                                    currency="PEN" 
-                                    locale="es-PE" 
-                                    placeholder="0.00" 
-                                    size="small" 
-                                    class="w-full opacity-60"
-                                    disabled 
-                                />
+                                <InputNumber :modelValue="data.total_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" size="small" class="w-full opacity-60" disabled />
                             </template>
                         </Column>
 
                         <Column header="" style="width: 50px" class="text-center">
                             <template #body="{ index }">
-                                <Button 
-                                    icon="pi pi-trash" 
-                                    severity="danger" 
-                                    text 
-                                    rounded 
-                                    size="small" 
-                                    @click="removeDetail(index)" 
-                                    v-tooltip.top="'Eliminar'" 
-                                />
+                                <Button icon="pi pi-trash" severity="danger" text rounded size="small" @click="removeDetail(index)" v-tooltip.top="'Eliminar'" />
                             </template>
                         </Column>
                     </DataTable>
@@ -517,20 +396,8 @@ watch(
                     {{ isFormValid ? 'Orden lista para guardar' : 'Complete los campos requeridos' }}
                 </small>
                 <div class="flex gap-3">
-                    <Button 
-                        label="Cancelar" 
-                        icon="pi pi-times" 
-                        text 
-                        severity="secondary" 
-                        @click="handleCancel" 
-                    />
-                    <Button 
-                        :label="form.id ? 'Actualizar Orden' : 'Crear Orden'" 
-                        icon="pi pi-check" 
-                        :loading="loading" 
-                        :disabled="!isFormValid" 
-                        @click="handleSubmit" 
-                    />
+                    <Button label="Cancelar" icon="pi pi-times" text severity="secondary" @click="handleCancel" />
+                    <Button :label="form.id ? 'Actualizar Orden' : 'Crear Orden'" icon="pi pi-check" :loading="loading" :disabled="!isFormValid" @click="handleSubmit" />
                 </div>
             </div>
         </template>

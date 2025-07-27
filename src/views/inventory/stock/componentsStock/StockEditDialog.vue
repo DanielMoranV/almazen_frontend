@@ -28,16 +28,20 @@ const formData = ref({
 
 const loading = computed(() => stocksStore.isLoadingStock);
 
-watch(() => props.stockData, (newData) => {
-    if (newData) {
-        formData.value = {
-            sale_price: newData.sale_price || null,
-            min_stock: newData.min_stock || null,
-            max_stock: newData.max_stock || null,
-            unit_cost: newData.unit_cost || null
-        };
-    }
-}, { immediate: true });
+watch(
+    () => props.stockData,
+    (newData) => {
+        if (newData) {
+            formData.value = {
+                sale_price: newData.sale_price || null,
+                min_stock: newData.min_stock || null,
+                max_stock: newData.max_stock || null,
+                unit_cost: newData.unit_cost || null
+            };
+        }
+    },
+    { immediate: true }
+);
 
 const closeDialog = () => {
     emit('update:visible', false);
@@ -66,9 +70,9 @@ const saveStock = async () => {
 
     try {
         const payload = {};
-        
+
         // Solo enviar campos que no sean null
-        Object.keys(formData.value).forEach(key => {
+        Object.keys(formData.value).forEach((key) => {
             if (formData.value[key] !== null && formData.value[key] !== '') {
                 payload[key] = formData.value[key];
             }
@@ -85,7 +89,7 @@ const saveStock = async () => {
         }
 
         await stocksStore.updateStockById(props.stockData.id, payload);
-        
+
         toast.add({
             severity: 'success',
             summary: 'Éxito',
@@ -107,14 +111,7 @@ const saveStock = async () => {
 </script>
 
 <template>
-    <Dialog
-        :visible="visible"
-        modal
-        header="Editar Stock Individual"
-        :style="{ width: '50rem' }"
-        :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
-        @update:visible="closeDialog"
-    >
+    <Dialog :visible="visible" modal header="Editar Stock Individual" :style="{ width: '50rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }" @update:visible="closeDialog">
         <div v-if="stockData" class="space-y-6">
             <!-- Información del Stock -->
             <div class="bg-gray-50 p-4 rounded-lg">
@@ -148,54 +145,24 @@ const saveStock = async () => {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Precio de Venta</label>
-                        <InputNumber
-                            v-model="formData.sale_price"
-                            mode="currency"
-                            currency="PEN"
-                            locale="es-PE"
-                            :min="0"
-                            :max-fraction-digits="2"
-                            placeholder="Ingrese precio de venta"
-                            class="w-full"
-                        />
+                        <InputNumber v-model="formData.sale_price" mode="currency" currency="PEN" locale="es-PE" :min="0" :max-fraction-digits="2" placeholder="Ingrese precio de venta" class="w-full" />
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium mb-2">Costo Unitario</label>
-                        <InputNumber
-                            v-model="formData.unit_cost"
-                            mode="currency"
-                            currency="PEN"
-                            locale="es-PE"
-                            :min="0"
-                            :max-fraction-digits="2"
-                            placeholder="Ingrese costo unitario"
-                            class="w-full"
-                        />
+                        <InputNumber v-model="formData.unit_cost" mode="currency" currency="PEN" locale="es-PE" :min="0" :max-fraction-digits="2" placeholder="Ingrese costo unitario" class="w-full" />
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Stock Mínimo</label>
-                        <InputNumber
-                            v-model="formData.min_stock"
-                            :min="0"
-                            :max-fraction-digits="0"
-                            placeholder="Ingrese stock mínimo"
-                            class="w-full"
-                        />
+                        <InputNumber v-model="formData.min_stock" :min="0" :max-fraction-digits="0" placeholder="Ingrese stock mínimo" class="w-full" />
                     </div>
-                    
+
                     <div>
                         <label class="block text-sm font-medium mb-2">Stock Máximo</label>
-                        <InputNumber
-                            v-model="formData.max_stock"
-                            :min="0"
-                            :max-fraction-digits="0"
-                            placeholder="Ingrese stock máximo"
-                            class="w-full"
-                        />
+                        <InputNumber v-model="formData.max_stock" :min="0" :max-fraction-digits="0" placeholder="Ingrese stock máximo" class="w-full" />
                     </div>
                 </div>
             </div>
@@ -213,18 +180,8 @@ const saveStock = async () => {
         </div>
 
         <template #footer>
-            <Button
-                label="Cancelar"
-                icon="pi pi-times"
-                text
-                @click="closeDialog"
-            />
-            <Button
-                label="Guardar"
-                icon="pi pi-check"
-                :loading="loading"
-                @click="saveStock"
-            />
+            <Button label="Cancelar" icon="pi pi-times" text @click="closeDialog" />
+            <Button label="Guardar" icon="pi pi-check" :loading="loading" @click="saveStock" />
         </template>
     </Dialog>
 </template>

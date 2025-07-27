@@ -1,3 +1,34 @@
+<script setup>
+import Skeleton from 'primevue/skeleton';
+
+defineProps({
+    totalMovements: {
+        type: Number,
+        default: 0
+    },
+    totalEntries: {
+        type: Number,
+        default: 0
+    },
+    totalExits: {
+        type: Number,
+        default: 0
+    },
+    totalAdjustments: {
+        type: Number,
+        default: 0
+    },
+    totalTransfers: {
+        type: Number,
+        default: 0
+    },
+    loading: {
+        type: Boolean,
+        default: false
+    }
+});
+</script>
+
 <template>
     <div class="stock-movements-statistics">
         <div class="statistics-container">
@@ -74,37 +105,6 @@
     </div>
 </template>
 
-<script setup>
-import Skeleton from 'primevue/skeleton';
-
-defineProps({
-    totalMovements: {
-        type: Number,
-        default: 0
-    },
-    totalEntries: {
-        type: Number,
-        default: 0
-    },
-    totalExits: {
-        type: Number,
-        default: 0
-    },
-    totalAdjustments: {
-        type: Number,
-        default: 0
-    },
-    totalTransfers: {
-        type: Number,
-        default: 0
-    },
-    loading: {
-        type: Boolean,
-        default: false
-    }
-});
-</script>
-
 <style scoped>
 /* Contenedor principal de estadísticas */
 .stock-movements-statistics {
@@ -118,11 +118,15 @@ defineProps({
 /* Tarjeta base de estadística */
 .stat-card {
     @apply bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .stat-card:hover {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* Layout interno de la tarjeta */
@@ -238,11 +242,15 @@ defineProps({
 /* Mejoras para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .stat-card {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 4px 6px -1px rgba(0, 0, 0, 0.3),
+            0 2px 4px -1px rgba(0, 0, 0, 0.2);
     }
 
     .stat-card:hover {
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.3),
+            0 10px 10px -5px rgba(0, 0, 0, 0.2);
     }
 }
 </style>

@@ -5,22 +5,10 @@
             <h1>Bienvenido a Almazen</h1>
             <p>Sistema de Gestión de Inventarios y Compras</p>
         </div>
-        
+
         <div class="landing-actions">
-            <Button 
-                label="Iniciar Sesión" 
-                @click="$router.push('/login')"
-                icon="pi pi-sign-in"
-                size="large"
-            />
-            <Button 
-                label="Registrarse" 
-                @click="$router.push('/register')"
-                icon="pi pi-user-plus"
-                severity="secondary"
-                outlined
-                size="large"
-            />
+            <Button label="Iniciar Sesión" @click="$router.push('/login')" icon="pi pi-sign-in" size="large" />
+            <Button label="Registrarse" @click="$router.push('/register')" icon="pi pi-user-plus" severity="secondary" outlined size="large" />
         </div>
     </div>
 </template>
@@ -71,7 +59,7 @@ p {
     h1 {
         font-size: 2rem;
     }
-    
+
     .landing-actions {
         flex-direction: column;
         width: 100%;

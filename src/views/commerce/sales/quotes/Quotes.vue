@@ -85,9 +85,9 @@ const loadQuotes = () => {
 const createNewQuote = () => {
     // Por ahora mostrar toast, luego se implementará la ruta
     toast.add({
-        severity: 'info', 
-        summary: 'Funcionalidad en Desarrollo', 
-        detail: 'La creación de cotizaciones estará disponible pronto', 
+        severity: 'info',
+        summary: 'Funcionalidad en Desarrollo',
+        detail: 'La creación de cotizaciones estará disponible pronto',
         life: 3000
     });
 };
@@ -95,16 +95,16 @@ const createNewQuote = () => {
 const viewQuoteDetails = (quote) => {
     // Por ahora mostrar toast, luego se implementará la ruta
     toast.add({
-        severity: 'info', 
-        summary: 'Funcionalidad en Desarrollo', 
-        detail: `Detalles de cotización ${quote.id} estarán disponibles pronto`, 
+        severity: 'info',
+        summary: 'Funcionalidad en Desarrollo',
+        detail: `Detalles de cotización ${quote.id} estarán disponibles pronto`,
         life: 3000
     });
 };
 
 const convertToOrder = (quote, event) => {
     event.stopPropagation();
-    
+
     if (quote.status !== 'approved') {
         toast.add({
             severity: 'warn',
@@ -114,23 +114,23 @@ const convertToOrder = (quote, event) => {
         });
         return;
     }
-    
+
     loading.value = true;
-    
+
     // Simulación de conversión a orden
     setTimeout(() => {
-        const index = quotes.value.findIndex(q => q.id === quote.id);
+        const index = quotes.value.findIndex((q) => q.id === quote.id);
         if (index !== -1) {
             quotes.value[index].status = 'converted';
         }
-        
+
         toast.add({
             severity: 'success',
             summary: 'Éxito',
             detail: `Cotización ${quote.id} convertida a orden de venta`,
             life: 3000
         });
-        
+
         loading.value = false;
     }, 1000);
 };
@@ -138,7 +138,7 @@ const convertToOrder = (quote, event) => {
 const sendQuoteByEmail = (quote, event) => {
     event.stopPropagation();
     loading.value = true;
-    
+
     // Simulación de envío por correo
     setTimeout(() => {
         toast.add({
@@ -153,21 +153,18 @@ const sendQuoteByEmail = (quote, event) => {
 
 const filteredQuotes = computed(() => {
     let result = quotes.value;
-    
+
     // Filtrar por búsqueda
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        result = result.filter(quote => 
-            quote.id.toLowerCase().includes(query) || 
-            quote.customer.toLowerCase().includes(query)
-        );
+        result = result.filter((quote) => quote.id.toLowerCase().includes(query) || quote.customer.toLowerCase().includes(query));
     }
-    
+
     // Filtrar por estado
     if (statusFilter.value) {
-        result = result.filter(quote => quote.status === statusFilter.value);
+        result = result.filter((quote) => quote.status === statusFilter.value);
     }
-    
+
     return result;
 });
 
@@ -223,13 +220,13 @@ const formatCurrency = (value) => {
                         </button>
                     </div>
                 </div>
-                
+
                 <div class="flex flex-column md:flex-row justify-content-between mt-4">
                     <div class="p-input-icon-left mb-3 md:mb-0 w-full md:w-4">
                         <i class="pi pi-search"></i>
                         <input type="text" v-model="searchQuery" class="p-inputtext p-component w-full" placeholder="Buscar..." />
                     </div>
-                    
+
                     <div class="flex align-items-center">
                         <label for="status-filter" class="mr-2">Estado:</label>
                         <select id="status-filter" v-model="statusFilter" class="p-inputtext p-component">
@@ -239,16 +236,16 @@ const formatCurrency = (value) => {
                         </select>
                     </div>
                 </div>
-                
+
                 <div v-if="loading" class="flex justify-content-center mt-4">
                     <i class="pi pi-spin pi-spinner text-2xl"></i>
                 </div>
-                
+
                 <div v-else-if="filteredQuotes.length === 0" class="text-center p-5">
                     <i class="pi pi-file-edit text-4xl text-500 mb-3"></i>
                     <p>No hay cotizaciones que coincidan con los filtros</p>
                 </div>
-                
+
                 <div v-else class="overflow-x-auto mt-4">
                     <table class="w-full">
                         <thead>
@@ -284,9 +281,9 @@ const formatCurrency = (value) => {
                                         <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text mr-2" @click.stop="sendQuoteByEmail(quote, $event)">
                                             <i class="pi pi-envelope"></i>
                                         </button>
-                                        <button 
-                                            class="p-button p-component p-button-icon-only p-button-rounded p-button-text" 
-                                            :class="{'p-button-success': quote.status === 'approved'}"
+                                        <button
+                                            class="p-button p-component p-button-icon-only p-button-rounded p-button-text"
+                                            :class="{ 'p-button-success': quote.status === 'approved' }"
                                             @click.stop="convertToOrder(quote, $event)"
                                             :disabled="quote.status !== 'approved'"
                                         >

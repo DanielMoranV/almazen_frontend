@@ -5,7 +5,7 @@ const api_url = import.meta.env.VITE_API_URL;
 
 const instance = axios.create({
     baseURL: api_url,
-    timeout: 20000
+    timeout: 90000000
 });
 
 instance.interceptors.request.use(
@@ -86,7 +86,7 @@ instance.interceptors.response.use(
                 case 404:
                     errResponse.message = 'Recurso no encontrado.';
                     break;
-                case 422:
+                case 422: {
                     // Si errors es un objeto tipo { campo: [mensajes] }
                     let validationMsgs = [];
                     console.log('Backend Data', backendData);
@@ -104,6 +104,7 @@ instance.interceptors.response.use(
                         errResponse.message = 'Error de validación. Por favor, revise los campos.';
                     }
                     break;
+                }
                 case 500:
                     errResponse.message = 'Error interno del servidor. Intente más tarde.';
                     break;

@@ -115,8 +115,7 @@ const showError = (summary, detail) => {
         <ConfirmDialog />
 
         <!-- Toolbar Principal Mejorado -->
-        <CustomersToolbar :total-customers="totalCustomers" :is-loading="isLoading" @refresh="handleRefresh"
-            @create="openCreateDialog" />
+        <CustomersToolbar :total-customers="totalCustomers" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
 
         <!-- Área Principal de Contenido con Animaciones -->
         <div class="content-wrapper">
@@ -134,10 +133,8 @@ const showError = (summary, detail) => {
                             {{ customersStore?.getCurrentSearchTerm ? 'Intenta con otros términos de búsqueda o limpia los filtros.' : 'Crea tu primer cliente para empezar a gestionar tu cartera.' }}
                         </p>
                         <div class="empty-actions">
-                            <Button v-if="!customersStore.getCurrentSearchTerm" icon="pi pi-plus"
-                                label="Agregar Cliente" class="primary-action-btn" @click="openCreateDialog" />
-                            <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="secondary-action-btn"
-                                @click="customersStore.clearSearch && customersStore.clearSearch()" />
+                            <Button v-if="!customersStore.getCurrentSearchTerm" icon="pi pi-plus" label="Agregar Cliente" class="primary-action-btn" @click="openCreateDialog" />
+                            <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="secondary-action-btn" @click="customersStore.clearSearch && customersStore.clearSearch()" />
                         </div>
                     </div>
                 </div>
@@ -146,8 +143,7 @@ const showError = (summary, detail) => {
             <!-- Tabla de Clientes con Animaciones -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasCustomers" class="table-container">
-                    <CustomersTable :customers="customersStore.customersList" :loading="isLoading"
-                        @edit="openEditDialog" @delete="openDeleteDialog" />
+                    <CustomersTable :customers="customersStore.customersList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
                 </div>
             </transition>
 
@@ -155,8 +151,7 @@ const showError = (summary, detail) => {
             <transition name="fade" appear>
                 <div v-if="isLoading" class="loading-state">
                     <div class="loading-content">
-                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent"
-                            animationDuration="1s" />
+                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
                         <p class="loading-text">Cargando clientes...</p>
                     </div>
                 </div>
@@ -164,11 +159,9 @@ const showError = (summary, detail) => {
         </div>
 
         <!-- Diálogos -->
-        <CustomerFormDialog v-model:visible="showCustomerDialog" :customer="selectedCustomer" :loading="isLoading"
-            @submit="handleCustomerSubmit" />
+        <CustomerFormDialog v-model:visible="showCustomerDialog" :customer="selectedCustomer" :loading="isLoading" @submit="handleCustomerSubmit" />
 
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedCustomer?.name || ''"
-            @confirm="handleCustomerDelete" />
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedCustomer?.name || ''" @confirm="handleCustomerDelete" />
     </div>
 </template>
 
@@ -186,7 +179,9 @@ const showError = (summary, detail) => {
 /* Contenedor de tabla con efecto de elevación */
 .table-container {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Estado vacío mejorado con diseño centrado */
@@ -273,7 +268,6 @@ const showError = (summary, detail) => {
 
 /* Animaciones de CSS */
 @keyframes bounce {
-
     0%,
     20%,
     50%,
@@ -318,7 +312,9 @@ const showError = (summary, detail) => {
 /* Mejoras adicionales para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .table-container {
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
 </style>

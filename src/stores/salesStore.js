@@ -5,7 +5,7 @@ import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 const today = new Date();
 const defaultDateFrom = today.toISOString().split('T')[0];
 const tomorrow = new Date(today);
- tomorrow.setDate(today.getDate() + 1);
+tomorrow.setDate(today.getDate() + 1);
 const defaultDateTo = tomorrow.toISOString().split('T')[0];
 import { defineStore } from 'pinia';
 
@@ -39,12 +39,7 @@ export const useSalesStore = defineStore('salesStore', {
         getCurrentSearchTerm: (state) => state.currentSearchTerm,
         totalSales: (state) => state.sales.length,
         hasActiveFilters: (state) => {
-            return state.filters.status ||
-                state.filters.customer_id ||
-                state.filters.document_number ||
-                state.filters.date_from ||
-                state.filters.date_to ||
-                state.filters.user_id;
+            return state.filters.status || state.filters.customer_id || state.filters.document_number || state.filters.date_from || state.filters.date_to || state.filters.user_id;
         }
     },
 
@@ -80,39 +75,27 @@ export const useSalesStore = defineStore('salesStore', {
 
             // Aplicar filtros
             if (this.filters.status) {
-                filteredSales = filteredSales.filter(sale => sale.status === this.filters.status);
+                filteredSales = filteredSales.filter((sale) => sale.status === this.filters.status);
             }
 
             if (this.filters.customer_id) {
-                filteredSales = filteredSales.filter(sale =>
-                    sale.customer_id === this.filters.customer_id ||
-                    sale.customer?.id === this.filters.customer_id
-                );
+                filteredSales = filteredSales.filter((sale) => sale.customer_id === this.filters.customer_id || sale.customer?.id === this.filters.customer_id);
             }
 
             if (this.filters.user_id) {
-                filteredSales = filteredSales.filter(sale =>
-                    sale.user_id === this.filters.user_id ||
-                    sale.user?.id === this.filters.user_id
-                );
+                filteredSales = filteredSales.filter((sale) => sale.user_id === this.filters.user_id || sale.user?.id === this.filters.user_id);
             }
 
             if (this.filters.document_number) {
-                filteredSales = filteredSales.filter(sale =>
-                    sale.document_number?.toLowerCase().includes(this.filters.document_number.toLowerCase())
-                );
+                filteredSales = filteredSales.filter((sale) => sale.document_number?.toLowerCase().includes(this.filters.document_number.toLowerCase()));
             }
 
             if (this.filters.date_from) {
-                filteredSales = filteredSales.filter(sale =>
-                    new Date(sale.sale_date) >= new Date(this.filters.date_from)
-                );
+                filteredSales = filteredSales.filter((sale) => new Date(sale.sale_date) >= new Date(this.filters.date_from));
             }
 
             if (this.filters.date_to) {
-                filteredSales = filteredSales.filter(sale =>
-                    new Date(sale.sale_date) <= new Date(this.filters.date_to)
-                );
+                filteredSales = filteredSales.filter((sale) => new Date(sale.sale_date) <= new Date(this.filters.date_to));
             }
 
             this.sales = filteredSales;
@@ -191,7 +174,7 @@ export const useSalesStore = defineStore('salesStore', {
                     const updatedSale = processed.data?.sale || processed.data;
                     if (updatedSale) {
                         // Actualizar en allSales
-                        const allIndex = this.allSales.findIndex(sale => sale.id === updatedSale.id);
+                        const allIndex = this.allSales.findIndex((sale) => sale.id === updatedSale.id);
                         if (allIndex !== -1) {
                             this.allSales[allIndex] = updatedSale;
                         }
@@ -219,7 +202,7 @@ export const useSalesStore = defineStore('salesStore', {
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
                     // Remover de allSales
-                    this.allSales = this.allSales.filter(sale => sale.id !== saleId);
+                    this.allSales = this.allSales.filter((sale) => sale.id !== saleId);
                     // Reaplicar filtros
                     this.applyLocalFilters();
                 }
@@ -280,16 +263,16 @@ export const useSalesStore = defineStore('salesStore', {
             // Validar suma de pagos
             const paymentSum = paymentMethods.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
             const tolerance = 0.01; // Tolerancia de 1 centavo
-            
+
             if (Math.abs(paymentSum - totalAmount) > tolerance) {
-                return { 
-                    valid: false, 
-                    message: `La suma de los pagos (${paymentSum.toFixed(2)}) debe coincidir con el total (${totalAmount.toFixed(2)})` 
+                return {
+                    valid: false,
+                    message: `La suma de los pagos (${paymentSum.toFixed(2)}) debe coincidir con el total (${totalAmount.toFixed(2)})`
                 };
             }
 
             // Validar cada método de pago
-            const cashMethods = paymentMethods.filter(pm => pm.type === 'CASH' || pm.method_code === 'CASH');
+            const cashMethods = paymentMethods.filter((pm) => pm.type === 'CASH' || pm.method_code === 'CASH');
             if (cashMethods.length > 1) {
                 return { valid: false, message: 'Solo se permite un método de pago en efectivo por venta' };
             }
@@ -297,26 +280,26 @@ export const useSalesStore = defineStore('salesStore', {
             // Validar estructura de cada método
             for (let i = 0; i < paymentMethods.length; i++) {
                 const pm = paymentMethods[i];
-                
+
                 if (!pm.method_id) {
                     return { valid: false, message: `Método de pago ${i + 1}: ID requerido` };
                 }
-                
+
                 if (!pm.amount || pm.amount <= 0) {
                     return { valid: false, message: `Método de pago ${i + 1}: Monto debe ser mayor a cero` };
                 }
-                
+
                 // Validar formato de monto (máximo 2 decimales)
                 const amountStr = parseFloat(pm.amount).toFixed(2);
                 if (!/^\d+(\.\d{1,2})?$/.test(amountStr)) {
                     return { valid: false, message: `Método de pago ${i + 1}: Formato de monto inválido` };
                 }
-                
+
                 // Validar referencia si es requerida
                 if (pm.requires_reference && !pm.reference) {
                     return { valid: false, message: `Método de pago ${i + 1}: Requiere número de referencia` };
                 }
-                
+
                 // Validar formato de referencia
                 if (pm.reference && !/^[a-zA-Z0-9\s\-_#]*$/.test(pm.reference)) {
                     return { valid: false, message: `Método de pago ${i + 1}: Formato de referencia inválido` };
@@ -332,7 +315,7 @@ export const useSalesStore = defineStore('salesStore', {
          * @returns {Array} Métodos formateados para la API
          */
         formatPaymentMethodsForAPI(paymentMethods) {
-            return paymentMethods.map(pm => ({
+            return paymentMethods.map((pm) => ({
                 method_id: pm.method_id || pm.id,
                 amount: parseFloat(pm.amount).toFixed(2),
                 reference: pm.reference || null
@@ -353,7 +336,7 @@ export const useSalesStore = defineStore('salesStore', {
 
             // Remover payment_method antiguo si existe
             delete payload.payment_method;
-            
+
             return payload;
         }
     }

@@ -1,254 +1,3 @@
-<template>
-    <DataTable
-        stripedRows
-        :value="stockItems"
-        :loading="loading"
-        responsiveLayout="scroll"
-        scrollable
-        scrollHeight="500px"
-        removableSort
-        dataKey="id"
-        :filters="localFilters"
-        v-model:filters="localFilters"
-        :globalFilterFields="['name', 'sku', 'barcode']"
-        :paginator="true"
-        :rows="15"
-        :rowsPerPageOptions="[10, 15, 25, 50, 100]"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos en stock"
-        class="stock-table green-theme p-datatable-gridlines"
-        @row-click="handleRowClick"
-    >
-        <template #header>
-            <div class="table-header">
-                <div class="header-backdrop"></div>
-                <div class="header-content">
-                    <div class="search-section">
-                        <div class="search-container">
-                            <IconField>
-                                <InputIcon>
-                                    <i class="pi pi-search text-white" />
-                                </InputIcon>
-                                <InputText 
-                                    v-model="localFilters['global'].value" 
-                                    placeholder="Buscar por nombre, SKU, código de barras..." 
-                                    class="search-input" 
-                                    fluid 
-                                />
-                            </IconField>
-                        </div>
-                    </div>
-                    <div class="actions-section">
-                        <Button 
-                            type="button" 
-                            icon="pi pi-file-excel" 
-                            label="Exportar" 
-                            class="export-btn" 
-                            @click="exportStock()" 
-                            v-tooltip.top="'Exportar inventario a Excel'" 
-                            :disabled="!stockItems.length" 
-                        />
-                    </div>
-                </div>
-            </div>
-        </template>
-
-        <template #empty>
-            <div class="empty-table-state">
-                <div class="empty-icon">
-                    <i class="pi pi-inbox"></i>
-                </div>
-                <h3 class="empty-title">No hay productos disponibles</h3>
-                <p class="empty-description">No se encontraron productos que coincidan con los filtros aplicados.</p>
-                <Button 
-                    icon="pi pi-filter-slash" 
-                    label="Limpiar filtros" 
-                    class="p-button-outlined" 
-                    @click="clearFilters()" 
-                />
-            </div>
-        </template>
-
-        <template #loading>
-            <div class="loading-table-state">
-                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
-                <p class="loading-text">Cargando inventario...</p>
-            </div>
-        </template>
-
-        <!-- SKU Column -->
-        <Column field="sku" header="SKU" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="sku-cell">
-                    <div class="sku-badge">{{ data.sku || '-' }}</div>
-                    <div v-if="data.barcode" class="barcode">{{ data.barcode }}</div>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Producto Column -->
-        <Column field="name" header="Producto" sortable style="min-width: 12rem; max-width: 15rem">
-            <template #body="{ data }">
-                <div class="product-cell">
-                    <span class="product-name">{{ data.name }}</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Almacenes Column -->
-        <Column header="Almacenes" style="min-width: 10rem; max-width: 12rem">
-            <template #body="{ data }">
-                <div class="warehouses-cell">
-                    <div v-if="data.stock_by_warehouse?.length" class="warehouse-list">
-                        <div 
-                            v-for="warehouse in data.stock_by_warehouse" 
-                            :key="warehouse.warehouse_id" 
-                            class="warehouse-item"
-                        >
-                            <span class="warehouse-name">{{ warehouse.warehouse_name }}</span>
-                            <span class="warehouse-stock">{{ warehouse.total_stock || 0 }}</span>
-                        </div>
-                    </div>
-                    <span v-else class="no-data">-</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Stock Total Column -->
-        <Column field="total_stock" header="Stock Total" sortable style="min-width: 6rem; max-width: 8rem">
-            <template #body="{ data }">
-                <div class="text-center">
-                    <span class="stock-amount" :class="getStockAmountClass(data.total_stock)">
-                        {{ data.total_stock || 0 }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Costo Promedio Column -->
-        <Column field="avg_unit_cost" header="Costo Promedio" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="text-right">
-                    <span class="cost-amount">
-                        {{ formatCurrency(data.avg_unit_cost) }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Costo Total Column -->
-        <Column field="total_cost_value" header="Costo Total" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="text-right">
-                    <span class="total-cost-amount">
-                        {{ formatCurrency(data.total_cost_value) }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Precio Promedio Venta Column -->
-        <Column field="avg_sale_price" header="Precio Promedio Venta" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="text-right">
-                    <span class="price-amount">
-                        {{ formatCurrency(data.avg_sale_price) }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Valor Total Venta Column -->
-        <Column field="total_sale_value" header="Valor Total Venta" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="text-right">
-                    <span class="total-sale-amount">
-                        {{ formatCurrency(data.total_sale_value) }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Lotes Column -->
-        <Column header="Lotes" style="min-width: 10rem; max-width: 12rem">
-            <template #body="{ data }">
-                <div class="batches-cell">
-                    <div v-if="data.requires_batches && hasAnyBatches(data)" class="batches-info">
-                        <div class="batch-count">
-                            <i class="pi pi-tags"></i>
-                            <span>{{ getTotalBatches(data) }} lote(s)</span>
-                        </div>
-                        <div class="batch-preview">
-                            <div 
-                                v-for="batch in getFirstBatches(data)" 
-                                :key="batch.stock_id"
-                                class="batch-item"
-                            >
-                                <span class="batch-code">{{ batch.batch_code }}</span>
-                                <span class="batch-stock">{{ batch.stock || 0 }}</span>
-                                <span v-if="batch.expiration_date" class="batch-expiry">
-                                    {{ formatDate(batch.expiration_date) }}
-                                </span>
-                            </div>
-                            <span v-if="getTotalBatches(data) > 2" class="more-batches">
-                                +{{ getTotalBatches(data) - 2 }} más
-                            </span>
-                        </div>
-                    </div>
-                    <span v-else-if="data.requires_batches" class="no-data">Sin lotes</span>
-                    <span v-else class="no-batches">No requiere lotes</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Estado Column -->
-        <Column field="total_stock" header="Estado" sortable style="min-width: 6rem; max-width: 8rem">
-            <template #body="{ data }">
-                <div class="text-center">
-                    <span class="status-badge" :class="getStatusClass(data.total_stock)">
-                        {{ getStatusLabel(data.total_stock) }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Acciones Column -->
-        <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="actions-cell">
-                    <Button 
-                        icon="pi pi-eye" 
-                        class="p-button-rounded p-button-info" 
-                        size="small" 
-                        rounded 
-                        text 
-                        v-tooltip.top="'Ver detalles'"
-                        @click="$emit('view-details', data)"
-                    />
-                    <Button 
-                        icon="pi pi-pencil" 
-                        class="p-button-rounded p-button-success" 
-                        size="small" 
-                        rounded 
-                        text 
-                        v-tooltip.top="'Editar stock'"
-                        @click="$emit('edit-stock', data)"
-                    />
-                    <Button 
-                        icon="pi pi-cog" 
-                        class="p-button-rounded p-button-warning" 
-                        size="small" 
-                        rounded 
-                        text 
-                        v-tooltip.top="'Edición masiva'"
-                        @click="$emit('bulk-edit', data)"
-                    />
-                </div>
-            </template>
-        </Column>
-    </DataTable>
-</template>
-
 <script setup>
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import { exportInventoryToExcel } from '@/utils/excelUtils';
@@ -323,7 +72,7 @@ const exportStock = async () => {
 
     // Datos del detalle (pestaña 2) - desglosado por almacén y lotes
     const detailData = [];
-    
+
     props.stockItems.forEach((product) => {
         if (product.stock_by_warehouse && product.stock_by_warehouse.length > 0) {
             product.stock_by_warehouse.forEach((warehouse) => {
@@ -429,9 +178,7 @@ const getStatusLabel = (totalStock) => {
 // Métodos para manejo de lotes según la nueva estructura de datos
 const hasAnyBatches = (item) => {
     if (!item.stock_by_warehouse) return false;
-    return item.stock_by_warehouse.some(warehouse => 
-        warehouse.batches && warehouse.batches.length > 0
-    );
+    return item.stock_by_warehouse.some((warehouse) => warehouse.batches && warehouse.batches.length > 0);
 };
 
 const getTotalBatches = (item) => {
@@ -443,11 +190,11 @@ const getTotalBatches = (item) => {
 
 const getFirstBatches = (item, limit = 2) => {
     if (!item.stock_by_warehouse) return [];
-    
+
     const allBatches = [];
-    item.stock_by_warehouse.forEach(warehouse => {
+    item.stock_by_warehouse.forEach((warehouse) => {
         if (warehouse.batches) {
-            warehouse.batches.forEach(batch => {
+            warehouse.batches.forEach((batch) => {
                 allBatches.push({
                     ...batch,
                     warehouse_name: warehouse.warehouse_name
@@ -455,7 +202,7 @@ const getFirstBatches = (item, limit = 2) => {
             });
         }
     });
-    
+
     return allBatches.slice(0, limit);
 };
 
@@ -473,6 +220,205 @@ const formatDate = (dateString) => {
     }
 };
 </script>
+
+<template>
+    <DataTable
+        stripedRows
+        :value="stockItems"
+        :loading="loading"
+        responsiveLayout="scroll"
+        scrollable
+        scrollHeight="500px"
+        removableSort
+        dataKey="id"
+        :filters="localFilters"
+        v-model:filters="localFilters"
+        :globalFilterFields="['name', 'sku', 'barcode']"
+        :paginator="true"
+        :rows="15"
+        :rowsPerPageOptions="[10, 15, 25, 50, 100]"
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos en stock"
+        class="stock-table green-theme p-datatable-gridlines"
+        @row-click="handleRowClick"
+    >
+        <template #header>
+            <div class="table-header">
+                <div class="header-backdrop"></div>
+                <div class="header-content">
+                    <div class="search-section">
+                        <div class="search-container">
+                            <IconField>
+                                <InputIcon>
+                                    <i class="pi pi-search text-white" />
+                                </InputIcon>
+                                <InputText v-model="localFilters['global'].value" placeholder="Buscar por nombre, SKU, código de barras..." class="search-input" fluid />
+                            </IconField>
+                        </div>
+                    </div>
+                    <div class="actions-section">
+                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportStock()" v-tooltip.top="'Exportar inventario a Excel'" :disabled="!stockItems.length" />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template #empty>
+            <div class="empty-table-state">
+                <div class="empty-icon">
+                    <i class="pi pi-inbox"></i>
+                </div>
+                <h3 class="empty-title">No hay productos disponibles</h3>
+                <p class="empty-description">No se encontraron productos que coincidan con los filtros aplicados.</p>
+                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined" @click="clearFilters()" />
+            </div>
+        </template>
+
+        <template #loading>
+            <div class="loading-table-state">
+                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
+                <p class="loading-text">Cargando inventario...</p>
+            </div>
+        </template>
+
+        <!-- SKU Column -->
+        <Column field="sku" header="SKU" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="sku-cell">
+                    <div class="sku-badge">{{ data.sku || '-' }}</div>
+                    <div v-if="data.barcode" class="barcode">{{ data.barcode }}</div>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Producto Column -->
+        <Column field="name" header="Producto" sortable style="min-width: 12rem; max-width: 15rem">
+            <template #body="{ data }">
+                <div class="product-cell">
+                    <span class="product-name">{{ data.name }}</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Almacenes Column -->
+        <Column header="Almacenes" style="min-width: 10rem; max-width: 12rem">
+            <template #body="{ data }">
+                <div class="warehouses-cell">
+                    <div v-if="data.stock_by_warehouse?.length" class="warehouse-list">
+                        <div v-for="warehouse in data.stock_by_warehouse" :key="warehouse.warehouse_id" class="warehouse-item">
+                            <span class="warehouse-name">{{ warehouse.warehouse_name }}</span>
+                            <span class="warehouse-stock">{{ warehouse.total_stock || 0 }}</span>
+                        </div>
+                    </div>
+                    <span v-else class="no-data">-</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Stock Total Column -->
+        <Column field="total_stock" header="Stock Total" sortable style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="text-center">
+                    <span class="stock-amount" :class="getStockAmountClass(data.total_stock)">
+                        {{ data.total_stock || 0 }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Costo Promedio Column -->
+        <Column field="avg_unit_cost" header="Costo Promedio" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="cost-amount">
+                        {{ formatCurrency(data.avg_unit_cost) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Costo Total Column -->
+        <Column field="total_cost_value" header="Costo Total" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="total-cost-amount">
+                        {{ formatCurrency(data.total_cost_value) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Precio Promedio Venta Column -->
+        <Column field="avg_sale_price" header="Precio Promedio Venta" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="price-amount">
+                        {{ formatCurrency(data.avg_sale_price) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Valor Total Venta Column -->
+        <Column field="total_sale_value" header="Valor Total Venta" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="text-right">
+                    <span class="total-sale-amount">
+                        {{ formatCurrency(data.total_sale_value) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Lotes Column -->
+        <Column header="Lotes" style="min-width: 10rem; max-width: 12rem">
+            <template #body="{ data }">
+                <div class="batches-cell">
+                    <div v-if="data.requires_batches && hasAnyBatches(data)" class="batches-info">
+                        <div class="batch-count">
+                            <i class="pi pi-tags"></i>
+                            <span>{{ getTotalBatches(data) }} lote(s)</span>
+                        </div>
+                        <div class="batch-preview">
+                            <div v-for="batch in getFirstBatches(data)" :key="batch.stock_id" class="batch-item">
+                                <span class="batch-code">{{ batch.batch_code }}</span>
+                                <span class="batch-stock">{{ batch.stock || 0 }}</span>
+                                <span v-if="batch.expiration_date" class="batch-expiry">
+                                    {{ formatDate(batch.expiration_date) }}
+                                </span>
+                            </div>
+                            <span v-if="getTotalBatches(data) > 2" class="more-batches"> +{{ getTotalBatches(data) - 2 }} más </span>
+                        </div>
+                    </div>
+                    <span v-else-if="data.requires_batches" class="no-data">Sin lotes</span>
+                    <span v-else class="no-batches">No requiere lotes</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Estado Column -->
+        <Column field="total_stock" header="Estado" sortable style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="text-center">
+                    <span class="status-badge" :class="getStatusClass(data.total_stock)">
+                        {{ getStatusLabel(data.total_stock) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Acciones Column -->
+        <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="actions-cell">
+                    <Button icon="pi pi-eye" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Ver detalles'" @click="$emit('view-details', data)" />
+                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-success" size="small" rounded text v-tooltip.top="'Editar stock'" @click="$emit('edit-stock', data)" />
+                    <Button icon="pi pi-cog" class="p-button-rounded p-button-warning" size="small" rounded text v-tooltip.top="'Edición masiva'" @click="$emit('bulk-edit', data)" />
+                </div>
+            </template>
+        </Column>
+    </DataTable>
+</template>
 
 <style scoped>
 /* Encabezado de la tabla mejorado */
@@ -969,7 +915,7 @@ const formatDate = (dateString) => {
     .table-row td:nth-child(9) {
         @apply hidden;
     }
-    
+
     thead tr th:nth-child(3),
     thead tr th:nth-child(5),
     thead tr th:nth-child(6),

@@ -27,9 +27,13 @@ const confirm = useConfirm();
 
 const localConfig = ref({ ...props.config });
 
-watch(() => props.config, (newConfig) => {
-    localConfig.value = { ...newConfig };
-}, { deep: true });
+watch(
+    () => props.config,
+    (newConfig) => {
+        localConfig.value = { ...newConfig };
+    },
+    { deep: true }
+);
 
 const workflowOptions = [
     {
@@ -54,14 +58,14 @@ const saveConfig = () => {
     if (!localConfig.value.purchase_workflow) {
         return;
     }
-    
+
     const currentWorkflow = props.config.purchase_workflow;
     const newWorkflow = localConfig.value.purchase_workflow;
-    
+
     if (currentWorkflow !== newWorkflow) {
         const currentLabel = getWorkflowLabel(currentWorkflow);
         const newLabel = getWorkflowLabel(newWorkflow);
-        
+
         confirm.require({
             message: `¿Confirma el cambio del flujo de compras?\n\nDe: ${currentLabel}\nA: ${newLabel}\n\nEste cambio afectará todas las compras futuras.`,
             header: 'Confirmar Cambio de Flujo',
@@ -82,12 +86,12 @@ const saveConfig = () => {
 };
 
 const getWorkflowLabel = (workflow) => {
-    const option = workflowOptions.find(opt => opt.value === workflow);
-    return option ? option.label : (workflow || 'Desconocido');
+    const option = workflowOptions.find((opt) => opt.value === workflow);
+    return option ? option.label : workflow || 'Desconocido';
 };
 
 const getWorkflowDescription = (workflow) => {
-    const option = workflowOptions.find(opt => opt.value === workflow);
+    const option = workflowOptions.find((opt) => opt.value === workflow);
     return option ? option.description : '';
 };
 
@@ -104,23 +108,13 @@ const isWorkflowSelected = (workflow) => {
                 <h3>Configuración de Flujo de Compras</h3>
             </div>
         </template>
-        
+
         <template #content>
             <div class="workflow-options">
-                <div 
-                    v-for="option in workflowOptions" 
-                    :key="option.value"
-                    class="workflow-option"
-                    :class="{ 'selected': isWorkflowSelected(option.value) }"
-                    @click="localConfig.purchase_workflow = option.value"
-                >
+                <div v-for="option in workflowOptions" :key="option.value" class="workflow-option" :class="{ selected: isWorkflowSelected(option.value) }" @click="localConfig.purchase_workflow = option.value">
                     <div class="option-header">
                         <div class="option-selector">
-                            <RadioButton 
-                                v-model="localConfig.purchase_workflow" 
-                                :value="option.value" 
-                                :inputId="option.value"
-                            />
+                            <RadioButton v-model="localConfig.purchase_workflow" :value="option.value" :inputId="option.value" />
                         </div>
                         <div class="option-icon" :class="`text-${option.color}-500`">
                             <i :class="option.icon"></i>
@@ -135,7 +129,7 @@ const isWorkflowSelected = (workflow) => {
                     </div>
                 </div>
             </div>
-            
+
             <div class="workflow-impact" v-if="localConfig.purchase_workflow">
                 <h5>
                     <i class="pi pi-info-circle"></i>
@@ -160,16 +154,10 @@ const isWorkflowSelected = (workflow) => {
                 </ul>
             </div>
         </template>
-        
+
         <template #footer>
             <div class="card-actions">
-                <Button 
-                    label="Guardar Configuración" 
-                    @click="saveConfig"
-                    :loading="saving"
-                    icon="pi pi-save"
-                    class="p-button-primary"
-                />
+                <Button label="Guardar Configuración" @click="saveConfig" :loading="saving" icon="pi pi-save" class="p-button-primary" />
             </div>
         </template>
     </Card>
@@ -178,18 +166,18 @@ const isWorkflowSelected = (workflow) => {
 <style lang="scss" scoped>
 .workflow-config-card {
     height: fit-content;
-    
+
     .card-header {
         display: flex;
         align-items: center;
         gap: 0.75rem;
         padding: 1rem;
-        
+
         i {
             color: var(--primary-color);
             font-size: 1.25rem;
         }
-        
+
         h3 {
             margin: 0;
             color: var(--text-color);
@@ -210,43 +198,43 @@ const isWorkflowSelected = (workflow) => {
     padding: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    
+
     &:hover {
         border-color: var(--primary-color-text);
         background: var(--surface-hover);
     }
-    
+
     &.selected {
         border-color: var(--primary-color);
         background: var(--primary-50);
     }
-    
+
     .option-header {
         display: flex;
         align-items: flex-start;
         gap: 1rem;
         margin-bottom: 0.75rem;
-        
+
         .option-selector {
             flex-shrink: 0;
         }
-        
+
         .option-icon {
             flex-shrink: 0;
             font-size: 1.5rem;
             margin-top: 0.125rem;
         }
-        
+
         .option-info {
             flex: 1;
-            
+
             h4 {
                 margin: 0 0 0.25rem 0;
                 font-size: 1.1rem;
                 font-weight: 600;
                 color: var(--text-color);
             }
-            
+
             .workflow-description {
                 margin: 0;
                 color: var(--text-color-secondary);
@@ -258,10 +246,10 @@ const isWorkflowSelected = (workflow) => {
             }
         }
     }
-    
+
     .option-details {
         margin-left: 3.5rem;
-        
+
         small {
             color: var(--text-color-secondary);
             font-style: italic;
@@ -273,7 +261,7 @@ const isWorkflowSelected = (workflow) => {
     background: var(--surface-ground);
     border-radius: var(--border-radius);
     padding: 1rem;
-    
+
     h5 {
         display: flex;
         align-items: center;
@@ -281,15 +269,15 @@ const isWorkflowSelected = (workflow) => {
         margin: 0 0 1rem 0;
         color: var(--text-color);
         font-size: 1rem;
-        
+
         i {
             color: var(--primary-color);
         }
     }
-    
+
     .workflow-description {
         margin-bottom: 1rem;
-        
+
         .flow-path {
             font-family: 'Courier New', monospace;
             background: var(--surface-card);
@@ -301,12 +289,12 @@ const isWorkflowSelected = (workflow) => {
             border-left: 3px solid var(--primary-color);
         }
     }
-    
+
     ul {
         margin: 0;
         padding: 0;
         list-style: none;
-        
+
         li {
             display: flex;
             align-items: center;
@@ -314,14 +302,14 @@ const isWorkflowSelected = (workflow) => {
             margin-bottom: 0.5rem;
             color: var(--text-color-secondary);
             font-size: 0.875rem;
-            
+
             i {
                 font-size: 0.75rem;
                 width: 1rem;
                 text-align: center;
                 flex-shrink: 0;
             }
-            
+
             &:last-child {
                 margin-bottom: 0;
             }

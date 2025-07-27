@@ -29,29 +29,24 @@ const statusOptions = [
 ];
 
 // Opciones de clientes con "Todos" al inicio
-const customerOptions = computed(() => [
-    { name: 'Todos los clientes', id: null },
-    ...customersStore.customersList
-]);
+const customerOptions = computed(() => [{ name: 'Todos los clientes', id: null }, ...customersStore.customersList]);
 
 // Opciones de usuarios con "Todos" al inicio
-const userOptions = computed(() => [
-    { name: 'Todos los usuarios', id: null },
-    ...usersStore.usersList
-]);
+const userOptions = computed(() => [{ name: 'Todos los usuarios', id: null }, ...usersStore.usersList]);
 
 // Cargar datos iniciales
 onMounted(async () => {
-    await Promise.all([
-        customersStore.fetchCustomers(),
-        usersStore.fetchUsers()
-    ]);
+    await Promise.all([customersStore.fetchCustomers(), usersStore.fetchUsers()]);
 });
 
 // Sync con props
-watch(() => props.filters, (newFilters) => {
-    localFilters.value = { ...newFilters };
-}, { deep: true });
+watch(
+    () => props.filters,
+    (newFilters) => {
+        localFilters.value = { ...newFilters };
+    },
+    { deep: true }
+);
 
 // Aplicar filtros
 const applyFilters = () => {
@@ -74,12 +69,7 @@ const clearFilters = () => {
 
 // Verificar si hay filtros activos
 const hasActiveFilters = computed(() => {
-    return localFilters.value.status ||
-           localFilters.value.customer_id ||
-           localFilters.value.document_number ||
-           localFilters.value.date_from ||
-           localFilters.value.date_to ||
-           localFilters.value.user_id;
+    return localFilters.value.status || localFilters.value.customer_id || localFilters.value.document_number || localFilters.value.date_from || localFilters.value.date_to || localFilters.value.user_id;
 });
 </script>
 
@@ -96,21 +86,8 @@ const hasActiveFilters = computed(() => {
                     <p class="filters-subtitle">Personaliza tu búsqueda de ventas</p>
                 </div>
                 <div class="actions-section">
-                    <Button 
-                        icon="pi pi-search" 
-                        label="Buscar" 
-                        class="search-btn" 
-                        @click="applyFilters"
-                        :loading="loading"
-                    />
-                    <Button 
-                        icon="pi pi-filter-slash" 
-                        label="Limpiar" 
-                        class="clear-btn" 
-                        @click="clearFilters"
-                        :disabled="!hasActiveFilters"
-                        outlined
-                    />
+                    <Button icon="pi pi-search" label="Buscar" class="search-btn" @click="applyFilters" :loading="loading" />
+                    <Button icon="pi pi-filter-slash" label="Limpiar" class="clear-btn" @click="clearFilters" :disabled="!hasActiveFilters" outlined />
                 </div>
             </div>
         </div>
@@ -120,42 +97,17 @@ const hasActiveFilters = computed(() => {
             <div class="filters-row">
                 <div class="filter-group">
                     <label class="filter-label">Estado</label>
-                    <Select 
-                        v-model="localFilters.status" 
-                        :options="statusOptions" 
-                        optionLabel="label" 
-                        optionValue="value" 
-                        placeholder="Seleccionar estado"
-                        class="filter-select"
-                    />
+                    <Select v-model="localFilters.status" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Seleccionar estado" class="filter-select" />
                 </div>
-                
+
                 <div class="filter-group">
                     <label class="filter-label">Cliente</label>
-                    <Select 
-                        v-model="localFilters.customer_id" 
-                        :options="customerOptions" 
-                        optionLabel="name" 
-                        optionValue="id" 
-                        placeholder="Seleccionar cliente"
-                        class="filter-select"
-                        filter
-                        showClear
-                    />
+                    <Select v-model="localFilters.customer_id" :options="customerOptions" optionLabel="name" optionValue="id" placeholder="Seleccionar cliente" class="filter-select" filter showClear />
                 </div>
 
                 <div class="filter-group">
                     <label class="filter-label">Usuario</label>
-                    <Select 
-                        v-model="localFilters.user_id" 
-                        :options="userOptions" 
-                        optionLabel="name" 
-                        optionValue="id" 
-                        placeholder="Seleccionar usuario"
-                        class="filter-select"
-                        filter
-                        showClear
-                    />
+                    <Select v-model="localFilters.user_id" :options="userOptions" optionLabel="name" optionValue="id" placeholder="Seleccionar usuario" class="filter-select" filter showClear />
                 </div>
             </div>
 
@@ -163,35 +115,17 @@ const hasActiveFilters = computed(() => {
             <div class="filters-row">
                 <div class="filter-group">
                     <label class="filter-label">Número de Documento</label>
-                    <InputText 
-                        v-model="localFilters.document_number" 
-                        placeholder="Buscar por número..."
-                        class="filter-input"
-                    />
+                    <InputText v-model="localFilters.document_number" placeholder="Buscar por número..." class="filter-input" />
                 </div>
 
                 <div class="filter-group">
                     <label class="filter-label">Fecha Desde</label>
-                    <Calendar 
-                        v-model="localFilters.date_from" 
-                        dateFormat="yy-mm-dd"
-                        placeholder="Fecha inicio"
-                        class="filter-input"
-                        showIcon
-                        showButtonBar
-                    />
+                    <Calendar v-model="localFilters.date_from" dateFormat="yy-mm-dd" placeholder="Fecha inicio" class="filter-input" showIcon showButtonBar />
                 </div>
 
                 <div class="filter-group">
                     <label class="filter-label">Fecha Hasta</label>
-                    <Calendar 
-                        v-model="localFilters.date_to" 
-                        dateFormat="yy-mm-dd"
-                        placeholder="Fecha fin"
-                        class="filter-input"
-                        showIcon
-                        showButtonBar
-                    />
+                    <Calendar v-model="localFilters.date_to" dateFormat="yy-mm-dd" placeholder="Fecha fin" class="filter-input" showIcon showButtonBar />
                 </div>
             </div>
 
@@ -200,15 +134,7 @@ const hasActiveFilters = computed(() => {
                 <div class="indicator-content">
                     <i class="pi pi-check-circle"></i>
                     <span>Filtros activos aplicados</span>
-                    <Button 
-                        icon="pi pi-times" 
-                        class="remove-filters-btn" 
-                        rounded 
-                        text 
-                        size="small"
-                        @click="clearFilters"
-                        v-tooltip="'Remover todos los filtros'"
-                    />
+                    <Button icon="pi pi-times" class="remove-filters-btn" rounded text size="small" @click="clearFilters" v-tooltip="'Remover todos los filtros'" />
                 </div>
             </div>
         </div>
@@ -219,7 +145,9 @@ const hasActiveFilters = computed(() => {
 /* Contenedor principal */
 .sales-filters {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Encabezado de filtros */
@@ -231,10 +159,10 @@ const hasActiveFilters = computed(() => {
 
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
-    background-image: 
-        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 40px 40px, 25px 25px;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        40px 40px,
+        25px 25px;
     animation: pattern-drift 25s linear infinite;
 }
 
@@ -336,10 +264,14 @@ const hasActiveFilters = computed(() => {
 /* Animación del patrón */
 @keyframes pattern-drift {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 

@@ -58,7 +58,7 @@ const form = ref({
     is_active: true,
     categories: [],
     requires_batches: false,
-    auto_generate_batches: false,
+    auto_generate_batches: false
 });
 
 const resetForm = () => {
@@ -76,7 +76,7 @@ const resetForm = () => {
         is_active: true,
         categories: [],
         requires_batches: false,
-        auto_generate_batches: false,
+        auto_generate_batches: false
     };
 };
 
@@ -90,7 +90,7 @@ watch(
         if (product) {
             const productWithCategories = {
                 ...product,
-                categories: product.categories || (product.category_id ? [product.category_id] : []),
+                categories: product.categories || (product.category_id ? [product.category_id] : [])
             };
             form.value = productWithCategories;
         } else {

@@ -107,6 +107,62 @@ const showError = (summary, detail) => {
 };
 </script>
 
+<template>
+    <div class="warehouses-page">
+        <!-- Toast y Confirmaciones -->
+        <Toast />
+        <ConfirmDialog />
+
+        <!-- Toolbar Principal Mejorado -->
+        <WarehouseToolbar :total-warehouses="totalWarehouses" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
+
+        <!-- Área Principal de Contenido con Animaciones -->
+        <div class="content-wrapper">
+            <!-- Estado Vacío Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="!isLoading && !hasWarehouses" class="empty-state">
+                    <div class="empty-content">
+                        <div class="empty-icon">
+                            <i class="pi pi-building"></i>
+                        </div>
+                        <h3 class="empty-title">
+                            {{ warehousesStore.getCurrentSearchTerm ? 'No se encontraron almacenes' : 'Aún no tienes almacenes' }}
+                        </h3>
+                        <p class="empty-description">
+                            {{ warehousesStore.getCurrentSearchTerm ? 'Intenta con otros términos de búsqueda o limpia los filtros.' : 'Crea tu primer almacén para empezar a gestionar tu inventario.' }}
+                        </p>
+                        <div class="empty-actions">
+                            <Button v-if="!warehousesStore.getCurrentSearchTerm" icon="pi pi-plus" label="Agregar Almacén" class="primary-action-btn" @click="openCreateDialog" />
+                            <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="secondary-action-btn" @click="warehousesStore.clearSearch && warehousesStore.clearSearch()" />
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- Tabla de Almacenes con Animaciones -->
+            <transition name="slide-up" appear>
+                <div v-if="!isLoading && hasWarehouses" class="table-container">
+                    <WarehousesTable :warehouses="warehousesStore.warehousesList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
+                </div>
+            </transition>
+
+            <!-- Estado de Carga Mejorado -->
+            <transition name="fade" appear>
+                <div v-if="isLoading" class="loading-state">
+                    <div class="loading-content">
+                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
+                        <p class="loading-text">Cargando almacenes...</p>
+                    </div>
+                </div>
+            </transition>
+        </div>
+
+        <!-- Diálogos -->
+        <WarehouseFormDialog v-model:visible="showWarehouseDialog" :warehouse="selectedWarehouse" :loading="isLoading" @submit="handleWarehouseSubmit" />
+
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedWarehouse?.name || ''" @confirm="handleWarehouseDelete" />
+    </div>
+</template>
 <style scoped>
 /* Contenedor principal de la página de almacenes */
 .warehouses-page {
@@ -258,59 +314,3 @@ const showError = (summary, detail) => {
     }
 }
 </style>
-<template>
-    <div class="warehouses-page">
-        <!-- Toast y Confirmaciones -->
-        <Toast />
-        <ConfirmDialog />
-
-        <!-- Toolbar Principal Mejorado -->
-        <WarehouseToolbar :total-warehouses="totalWarehouses" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
-
-        <!-- Área Principal de Contenido con Animaciones -->
-        <div class="content-wrapper">
-            <!-- Estado Vacío Mejorado -->
-            <transition name="fade" appear>
-                <div v-if="!isLoading && !hasWarehouses" class="empty-state">
-                    <div class="empty-content">
-                        <div class="empty-icon">
-                            <i class="pi pi-building"></i>
-                        </div>
-                        <h3 class="empty-title">
-                            {{ warehousesStore.getCurrentSearchTerm ? 'No se encontraron almacenes' : 'Aún no tienes almacenes' }}
-                        </h3>
-                        <p class="empty-description">
-                            {{ warehousesStore.getCurrentSearchTerm ? 'Intenta con otros términos de búsqueda o limpia los filtros.' : 'Crea tu primer almacén para empezar a gestionar tu inventario.' }}
-                        </p>
-                        <div class="empty-actions">
-                            <Button v-if="!warehousesStore.getCurrentSearchTerm" icon="pi pi-plus" label="Agregar Almacén" class="primary-action-btn" @click="openCreateDialog" />
-                            <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="secondary-action-btn" @click="warehousesStore.clearSearch && warehousesStore.clearSearch()" />
-                        </div>
-                    </div>
-                </div>
-            </transition>
-
-            <!-- Tabla de Almacenes con Animaciones -->
-            <transition name="slide-up" appear>
-                <div v-if="!isLoading && hasWarehouses" class="table-container">
-                    <WarehousesTable :warehouses="warehousesStore.warehousesList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
-                </div>
-            </transition>
-
-            <!-- Estado de Carga Mejorado -->
-            <transition name="fade" appear>
-                <div v-if="isLoading" class="loading-state">
-                    <div class="loading-content">
-                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
-                        <p class="loading-text">Cargando almacenes...</p>
-                    </div>
-                </div>
-            </transition>
-        </div>
-
-        <!-- Diálogos -->
-        <WarehouseFormDialog v-model:visible="showWarehouseDialog" :warehouse="selectedWarehouse" :loading="isLoading" @submit="handleWarehouseSubmit" />
-
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedWarehouse?.name || ''" @confirm="handleWarehouseDelete" />
-    </div>
-</template>

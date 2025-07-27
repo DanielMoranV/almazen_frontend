@@ -82,22 +82,12 @@ const submitForm = () => {
 };
 
 const isFormValid = () => {
-    return companyForm.value.company_name && 
-           companyForm.value.email && 
-           companyForm.value.address && 
-           companyForm.value.phone;
+    return companyForm.value.company_name && companyForm.value.email && companyForm.value.address && companyForm.value.phone;
 };
 </script>
 
 <template>
-    <Dialog 
-        v-model:visible="dialogVisible" 
-        :style="{ width: '500px' }" 
-        :header="company ? 'Editar Empresa' : 'Nueva Empresa'" 
-        modal 
-        class="p-fluid company-dialog"
-        @hide="hideDialog"
-    >
+    <Dialog v-model:visible="dialogVisible" :style="{ width: '500px' }" :header="company ? 'Editar Empresa' : 'Nueva Empresa'" modal class="p-fluid company-dialog" @hide="hideDialog">
         <template #header>
             <div class="dialog-header">
                 <div class="header-icon">
@@ -121,15 +111,7 @@ const isFormValid = () => {
                         <i class="pi pi-building mr-2"></i>
                         Nombre de la Empresa
                     </label>
-                    <InputText 
-                        id="company_name" 
-                        v-model="companyForm.company_name" 
-                        autofocus 
-                        required 
-                        fluid 
-                        class="form-input"
-                        placeholder="Ingresa el nombre de la empresa"
-                    />
+                    <InputText id="company_name" v-model="companyForm.company_name" autofocus required fluid class="form-input" placeholder="Ingresa el nombre de la empresa" />
                 </div>
 
                 <div class="field">
@@ -137,14 +119,7 @@ const isFormValid = () => {
                         <i class="pi pi-map-marker mr-2"></i>
                         Dirección
                     </label>
-                    <InputText 
-                        id="address" 
-                        v-model="companyForm.address" 
-                        required 
-                        fluid 
-                        class="form-input"
-                        placeholder="Dirección completa"
-                    />
+                    <InputText id="address" v-model="companyForm.address" required fluid class="form-input" placeholder="Dirección completa" />
                 </div>
 
                 <div class="form-row">
@@ -153,14 +128,7 @@ const isFormValid = () => {
                             <i class="pi pi-phone mr-2"></i>
                             Teléfono
                         </label>
-                        <InputText 
-                            id="phone" 
-                            v-model="companyForm.phone" 
-                            required 
-                            fluid 
-                            class="form-input"
-                            placeholder="+1 234 567 8900"
-                        />
+                        <InputText id="phone" v-model="companyForm.phone" required fluid class="form-input" placeholder="+1 234 567 8900" />
                     </div>
 
                     <div class="field">
@@ -168,15 +136,7 @@ const isFormValid = () => {
                             <i class="pi pi-envelope mr-2"></i>
                             Email
                         </label>
-                        <InputText 
-                            id="email" 
-                            v-model="companyForm.email" 
-                            type="email"
-                            required 
-                            fluid 
-                            class="form-input"
-                            placeholder="empresa@correo.com"
-                        />
+                        <InputText id="email" v-model="companyForm.email" type="email" required fluid class="form-input" placeholder="empresa@correo.com" />
                     </div>
                 </div>
 
@@ -185,13 +145,7 @@ const isFormValid = () => {
                         <i class="pi pi-globe mr-2"></i>
                         Sitio Web
                     </label>
-                    <InputText 
-                        id="website" 
-                        v-model="companyForm.website" 
-                        fluid 
-                        class="form-input"
-                        placeholder="https://www.empresa.com"
-                    />
+                    <InputText id="website" v-model="companyForm.website" fluid class="form-input" placeholder="https://www.empresa.com" />
                 </div>
 
                 <div class="field">
@@ -199,13 +153,7 @@ const isFormValid = () => {
                         <i class="pi pi-image mr-2"></i>
                         URL del Logo
                     </label>
-                    <InputText 
-                        id="logo" 
-                        v-model="companyForm.logo" 
-                        fluid 
-                        class="form-input"
-                        placeholder="https://ejemplo.com/logo.png"
-                    />
+                    <InputText id="logo" v-model="companyForm.logo" fluid class="form-input" placeholder="https://ejemplo.com/logo.png" />
                 </div>
 
                 <div class="field">
@@ -213,14 +161,7 @@ const isFormValid = () => {
                         <i class="pi pi-file-edit mr-2"></i>
                         Descripción
                     </label>
-                    <Textarea 
-                        id="description" 
-                        v-model="companyForm.description" 
-                        rows="3"
-                        fluid 
-                        class="form-textarea"
-                        placeholder="Descripción de la empresa..."
-                    />
+                    <Textarea id="description" v-model="companyForm.description" rows="3" fluid class="form-textarea" placeholder="Descripción de la empresa..." />
                 </div>
 
                 <div class="field">
@@ -230,11 +171,7 @@ const isFormValid = () => {
                             Estado
                         </label>
                         <div class="toggle-container">
-                            <ToggleSwitch 
-                                id="is_active" 
-                                v-model="companyForm.is_active"
-                                class="status-switch"
-                            />
+                            <ToggleSwitch id="is_active" v-model="companyForm.is_active" class="status-switch" />
                             <span class="toggle-text" :class="companyForm.is_active ? 'text-green-600' : 'text-red-600'">
                                 {{ companyForm.is_active ? 'Activa' : 'Inactiva' }}
                             </span>
@@ -246,20 +183,8 @@ const isFormValid = () => {
 
         <template #footer>
             <div class="dialog-footer">
-                <Button 
-                    label="Cancelar" 
-                    icon="pi pi-times" 
-                    class="cancel-btn"
-                    @click="hideDialog" 
-                />
-                <Button
-                    :label="company ? 'Actualizar' : 'Crear'"
-                    :icon="company ? 'pi pi-check' : 'pi pi-plus'"
-                    class="submit-btn"
-                    :disabled="!isFormValid()"
-                    :loading="loading"
-                    @click="submitForm"
-                />
+                <Button label="Cancelar" icon="pi pi-times" class="cancel-btn" @click="hideDialog" />
+                <Button :label="company ? 'Actualizar' : 'Crear'" :icon="company ? 'pi pi-check' : 'pi pi-plus'" class="submit-btn" :disabled="!isFormValid()" :loading="loading" @click="submitForm" />
             </div>
         </template>
     </Dialog>
@@ -374,19 +299,19 @@ const isFormValid = () => {
     .form-row {
         @apply grid-cols-1;
     }
-    
+
     .dialog-header {
         @apply flex-col items-start gap-3 p-4;
     }
-    
+
     .header-icon {
         @apply w-10 h-10;
     }
-    
+
     .form-container {
         @apply p-4;
     }
-    
+
     .dialog-footer {
         @apply p-4;
     }

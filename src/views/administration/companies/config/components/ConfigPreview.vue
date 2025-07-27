@@ -55,7 +55,7 @@ const workflowSteps = computed(() => {
             }
         ];
     }
-    
+
     // Flujo estándar
     return [
         {
@@ -98,9 +98,7 @@ const workflowTitle = computed(() => {
 });
 
 const workflowDescription = computed(() => {
-    return props.workflow === 'simplified' 
-        ? 'Proceso automático sin intervención manual'
-        : 'Proceso con aprobación manual requerida';
+    return props.workflow === 'simplified' ? 'Proceso automático sin intervención manual' : 'Proceso con aprobación manual requerida';
 });
 const blockingIssues = computed(() => {
     return props.blockingIssues || props.preview?.impact_analysis?.blocking_issues || 0;
@@ -143,30 +141,23 @@ const targetWorkflow = computed(() => {
                 <h3>Vista Previa del Flujo</h3>
             </div>
         </template>
-        
+
         <template #content>
             <div class="preview-header">
                 <h4>{{ workflowTitle }}</h4>
                 <p>{{ workflowDescription }}</p>
             </div>
-            
+
             <div class="workflow-visualization">
                 <div class="workflow-steps">
-                    <div 
-                        v-for="(step, index) in workflowSteps" 
-                        :key="step.id"
-                        class="workflow-step"
-                    >
+                    <div v-for="(step, index) in workflowSteps" :key="step.id" class="workflow-step">
                         <div class="step-connector" v-if="index > 0">
                             <div class="connector-line"></div>
                             <i class="pi pi-arrow-right connector-arrow"></i>
                         </div>
-                        
+
                         <div class="step-content">
-                            <div 
-                                class="step-icon"
-                                :class="`bg-${step.color}-100 text-${step.color}-600`"
-                            >
+                            <div class="step-icon" :class="`bg-${step.color}-100 text-${step.color}-600`">
                                 <i :class="step.icon"></i>
                             </div>
                             <div class="step-info">
@@ -177,7 +168,7 @@ const targetWorkflow = computed(() => {
                     </div>
                 </div>
             </div>
-            
+
             <!-- Estadísticas Actuales -->
             <div v-if="currentData && Object.keys(currentData).length > 0" class="current-stats">
                 <h5>
@@ -248,7 +239,7 @@ const targetWorkflow = computed(() => {
                         </li>
                     </ul>
                 </div>
-                
+
                 <div class="recommendation-section" v-if="requirements.length > 0">
                     <h5>
                         <i class="pi pi-exclamation-triangle text-orange-500"></i>
@@ -340,18 +331,18 @@ const targetWorkflow = computed(() => {
 <style lang="scss" scoped>
 .config-preview-card {
     height: fit-content;
-    
+
     .card-header {
         display: flex;
         align-items: center;
         gap: 0.75rem;
         padding: 1rem;
-        
+
         i {
             color: var(--primary-color);
             font-size: 1.25rem;
         }
-        
+
         h3 {
             margin: 0;
             color: var(--text-color);
@@ -362,14 +353,14 @@ const targetWorkflow = computed(() => {
 .preview-header {
     text-align: center;
     margin-bottom: 2rem;
-    
+
     h4 {
         margin: 0 0 0.5rem 0;
         font-size: 1.25rem;
         font-weight: 600;
         color: var(--primary-color);
     }
-    
+
     p {
         margin: 0;
         color: var(--text-color-secondary);
@@ -389,31 +380,31 @@ const targetWorkflow = computed(() => {
 .workflow-step {
     display: flex;
     align-items: center;
-    
+
     .step-connector {
         display: flex;
         align-items: center;
         margin-right: 1rem;
-        
+
         .connector-line {
             width: 2px;
             height: 30px;
             background: var(--surface-border);
             margin-right: 0.5rem;
         }
-        
+
         .connector-arrow {
             color: var(--primary-color);
             font-size: 0.875rem;
         }
     }
-    
+
     .step-content {
         display: flex;
         align-items: center;
         gap: 1rem;
         flex: 1;
-        
+
         .step-icon {
             width: 3rem;
             height: 3rem;
@@ -424,7 +415,7 @@ const targetWorkflow = computed(() => {
             font-size: 1.25rem;
             flex-shrink: 0;
         }
-        
+
         .step-info {
             h5 {
                 margin: 0 0 0.25rem 0;
@@ -432,7 +423,7 @@ const targetWorkflow = computed(() => {
                 font-weight: 600;
                 color: var(--text-color);
             }
-            
+
             p {
                 margin: 0;
                 color: var(--text-color-secondary);
@@ -446,14 +437,14 @@ const targetWorkflow = computed(() => {
     background: var(--surface-ground);
     border-radius: var(--border-radius);
     padding: 1rem;
-    
+
     h5 {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         margin: 0 0 1rem 0;
         color: var(--text-color);
-        
+
         i {
             color: var(--primary-color);
         }
@@ -465,22 +456,22 @@ const targetWorkflow = computed(() => {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
-        
+
         @media (max-width: 768px) {
             grid-template-columns: 1fr;
         }
-        
+
         .feature-item {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            
+
             i {
                 font-size: 1rem;
                 width: 1.25rem;
                 text-align: center;
             }
-            
+
             span {
                 color: var(--text-color-secondary);
                 font-size: 0.875rem;
@@ -490,68 +481,98 @@ const targetWorkflow = computed(() => {
 }
 
 // Color utilities
-.bg-blue-100 { background-color: #dbeafe; }
-.text-blue-600 { color: #2563eb; }
-.bg-orange-100 { background-color: #fed7aa; }
-.text-orange-600 { color: #ea580c; }
-.bg-purple-100 { background-color: #e9d5ff; }
-.text-purple-600 { color: #9333ea; }
-.bg-green-100 { background-color: #dcfce7; }
-.text-green-600 { color: #16a34a; }
+.bg-blue-100 {
+    background-color: #dbeafe;
+}
+.text-blue-600 {
+    color: #2563eb;
+}
+.bg-orange-100 {
+    background-color: #fed7aa;
+}
+.text-orange-600 {
+    color: #ea580c;
+}
+.bg-purple-100 {
+    background-color: #e9d5ff;
+}
+.text-purple-600 {
+    color: #9333ea;
+}
+.bg-green-100 {
+    background-color: #dcfce7;
+}
+.text-green-600 {
+    color: #16a34a;
+}
 
-.text-blue-500 { color: #3b82f6; }
-.text-purple-500 { color: #8b5cf6; }
-.text-red-500 { color: #ef4444; }
-.text-gray-500 { color: #6b7280; }
-.text-yellow-500 { color: #eab308; }
-.text-green-500 { color: #10b981; }
-.text-orange-500 { color: #f97316; }
+.text-blue-500 {
+    color: #3b82f6;
+}
+.text-purple-500 {
+    color: #8b5cf6;
+}
+.text-red-500 {
+    color: #ef4444;
+}
+.text-gray-500 {
+    color: #6b7280;
+}
+.text-yellow-500 {
+    color: #eab308;
+}
+.text-green-500 {
+    color: #10b981;
+}
+.text-orange-500 {
+    color: #f97316;
+}
 
 .current-stats {
     background: var(--surface-ground);
     border-radius: var(--border-radius);
     padding: 1rem;
     margin-bottom: 1.5rem;
-    
+
     h5 {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         margin: 0 0 1rem 0;
         color: var(--text-color);
-        
+
         i {
             color: var(--primary-color);
         }
     }
-    
+
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         gap: 1rem;
-        
+
         .stat-item {
             text-align: center;
             padding: 1rem;
             background: var(--surface-card);
             border-radius: var(--border-radius);
             border: 2px solid var(--surface-border);
-            
+
             &.pending {
                 border-color: #f59e0b;
                 background: #fef3c7;
             }
-            
+
             &.approved {
                 border-color: #8b5cf6;
                 background: #f3e8ff;
             }
-            
+
             &.received {
                 border-color: #10b981;
                 background: #d1fae5;
             }
-            
+
             .stat-label {
                 display: block;
                 font-size: 0.75rem;
@@ -560,7 +581,7 @@ const targetWorkflow = computed(() => {
                 text-transform: uppercase;
                 font-weight: 600;
             }
-            
+
             .stat-value {
                 display: block;
                 font-size: 1.5rem;
@@ -576,14 +597,14 @@ const targetWorkflow = computed(() => {
     border-radius: var(--border-radius);
     padding: 1rem;
     margin-bottom: 1.5rem;
-    
+
     .recommendation-section {
         margin-bottom: 1.5rem;
-        
+
         &:last-child {
             margin-bottom: 0;
         }
-        
+
         h5 {
             display: flex;
             align-items: center;
@@ -592,12 +613,12 @@ const targetWorkflow = computed(() => {
             color: var(--text-color);
             font-size: 0.95rem;
         }
-        
+
         ul {
             margin: 0;
             padding: 0;
             list-style: none;
-            
+
             li {
                 display: flex;
                 align-items: flex-start;
@@ -605,13 +626,13 @@ const targetWorkflow = computed(() => {
                 margin-bottom: 0.5rem;
                 color: var(--text-color-secondary);
                 font-size: 0.875rem;
-                
+
                 i {
                     font-size: 0.75rem;
                     margin-top: 0.125rem;
                     flex-shrink: 0;
                 }
-                
+
                 &:last-child {
                     margin-bottom: 0;
                 }
@@ -625,24 +646,24 @@ const targetWorkflow = computed(() => {
     border-radius: var(--border-radius);
     padding: 1rem;
     margin-bottom: 1.5rem;
-    
+
     h5 {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         margin: 0 0 1rem 0;
         color: var(--text-color);
-        
+
         i {
             color: var(--primary-color);
         }
     }
-    
+
     .impact-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: 0.75rem;
-        
+
         .impact-item {
             display: flex;
             justify-content: space-between;
@@ -650,13 +671,13 @@ const targetWorkflow = computed(() => {
             padding: 0.75rem;
             background: var(--surface-card);
             border-radius: var(--border-radius);
-            
+
             .impact-label {
                 font-weight: 600;
                 color: var(--text-color);
                 font-size: 0.875rem;
             }
-            
+
             .impact-value {
                 color: var(--text-color-secondary);
                 font-size: 0.875rem;
@@ -699,7 +720,7 @@ const targetWorkflow = computed(() => {
 
         .impact-content {
             flex: 1;
-            
+
             strong {
                 display: block;
                 margin-bottom: 0.5rem;
@@ -709,24 +730,23 @@ const targetWorkflow = computed(() => {
             ul {
                 margin: 0;
                 padding-left: 1.25rem;
-                
+
                 li {
                     color: var(--text-color-secondary);
                     font-size: 0.875rem;
                     margin-bottom: 0.25rem;
-                    
+
                     &:last-child {
                         margin-bottom: 0;
                     }
                 }
             }
         }
-        
+
         span {
             color: var(--text-color-secondary);
             font-size: 0.875rem;
         }
     }
 }
-
 </style>

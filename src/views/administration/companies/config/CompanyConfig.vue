@@ -43,9 +43,7 @@ const currentData = computed(() => companiesStore.workflowCurrentData);
 
 // Computed para validación de formularios
 const isGeneralConfigValid = computed(() => {
-    return companyConfig.value.voucher_series_ticket.trim() !== '' &&
-        companyConfig.value.voucher_series_boleta.trim() !== '' &&
-        companyConfig.value.voucher_series_factura.trim() !== '';
+    return companyConfig.value.voucher_series_ticket.trim() !== '' && companyConfig.value.voucher_series_boleta.trim() !== '' && companyConfig.value.voucher_series_factura.trim() !== '';
 });
 
 onMounted(async () => {
@@ -161,7 +159,6 @@ const updateWorkflowConfig = async (newConfig) => {
                 life: 4000
             });
         } // fin persistWorkflow
-
     } catch (error) {
         console.error('Error updating workflow config:', error);
         toast.add({
@@ -285,9 +282,7 @@ const setActiveTab = (tab) => {
                 <div v-show="activeTab === 'workflow'" class="workflow-section">
                     <div class="workflow-grid">
                         <WorkflowConfigCard :config="companyConfig" :saving="saving" @update="updateWorkflowConfig" />
-                        <ConfigPreview :workflow="companyConfig.purchase_workflow" :preview="workflowPreview"
-                            :can-change="canChangeWorkflow" :blocking-issues="blockingIssues"
-                            :current-data="currentData" />
+                        <ConfigPreview :workflow="companyConfig.purchase_workflow" :preview="workflowPreview" :can-change="canChangeWorkflow" :blocking-issues="blockingIssues" :current-data="currentData" />
                     </div>
                 </div>
 
@@ -343,15 +338,11 @@ const setActiveTab = (tab) => {
                                             <div class="series-inputs">
                                                 <div class="input-group">
                                                     <label>Serie</label>
-                                                    <InputText v-model="companyConfig.voucher_series_ticket"
-                                                        maxlength="10" placeholder="T001"
-                                                        :class="{ 'p-invalid': !companyConfig.voucher_series_ticket.trim() }"
-                                                        fluid />
+                                                    <InputText v-model="companyConfig.voucher_series_ticket" maxlength="10" placeholder="T001" :class="{ 'p-invalid': !companyConfig.voucher_series_ticket.trim() }" fluid />
                                                 </div>
                                                 <div class="input-group">
                                                     <label>Correlativo Actual</label>
-                                                    <InputNumber v-model="companyConfig.current_correlative_ticket"
-                                                        :min="0" :useGrouping="false" fluid />
+                                                    <InputNumber v-model="companyConfig.current_correlative_ticket" :min="0" :useGrouping="false" fluid />
                                                 </div>
                                             </div>
                                         </div>
@@ -362,15 +353,11 @@ const setActiveTab = (tab) => {
                                             <div class="series-inputs">
                                                 <div class="input-group">
                                                     <label>Serie</label>
-                                                    <InputText v-model="companyConfig.voucher_series_boleta"
-                                                        maxlength="10" placeholder="B001"
-                                                        :class="{ 'p-invalid': !companyConfig.voucher_series_boleta.trim() }"
-                                                        fluid />
+                                                    <InputText v-model="companyConfig.voucher_series_boleta" maxlength="10" placeholder="B001" :class="{ 'p-invalid': !companyConfig.voucher_series_boleta.trim() }" fluid />
                                                 </div>
                                                 <div class="input-group">
                                                     <label>Correlativo Actual</label>
-                                                    <InputNumber v-model="companyConfig.current_correlative_boleta"
-                                                        :min="0" :useGrouping="false" fluid />
+                                                    <InputNumber v-model="companyConfig.current_correlative_boleta" :min="0" :useGrouping="false" fluid />
                                                 </div>
                                             </div>
                                         </div>
@@ -381,15 +368,11 @@ const setActiveTab = (tab) => {
                                             <div class="series-inputs">
                                                 <div class="input-group">
                                                     <label>Serie</label>
-                                                    <InputText v-model="companyConfig.voucher_series_factura"
-                                                        maxlength="10" placeholder="F001"
-                                                        :class="{ 'p-invalid': !companyConfig.voucher_series_factura.trim() }"
-                                                        fluid />
+                                                    <InputText v-model="companyConfig.voucher_series_factura" maxlength="10" placeholder="F001" :class="{ 'p-invalid': !companyConfig.voucher_series_factura.trim() }" fluid />
                                                 </div>
                                                 <div class="input-group">
                                                     <label>Correlativo Actual</label>
-                                                    <InputNumber v-model="companyConfig.current_correlative_factura"
-                                                        :min="0" :useGrouping="false" fluid />
+                                                    <InputNumber v-model="companyConfig.current_correlative_factura" :min="0" :useGrouping="false" fluid />
                                                 </div>
                                             </div>
                                         </div>
@@ -404,8 +387,7 @@ const setActiveTab = (tab) => {
                                     <i class="pi pi-exclamation-triangle text-orange-500"></i>
                                     <span>Complete todas las series para guardar</span>
                                 </div>
-                                <Button label="Guardar Configuración" icon="pi pi-save" @click="saveGeneralConfig"
-                                    :loading="savingGeneral" :disabled="!isGeneralConfigValid" class="save-button" />
+                                <Button label="Guardar Configuración" icon="pi pi-save" @click="saveGeneralConfig" :loading="savingGeneral" :disabled="!isGeneralConfigValid" class="save-button" />
                             </div>
                         </template>
                     </Card>
@@ -443,8 +425,7 @@ const setActiveTab = (tab) => {
                                         </div>
                                         <div class="feature-content">
                                             <h5>Políticas de Descuentos</h5>
-                                            <p>Establezca reglas automáticas para descuentos por volumen y promociones
-                                            </p>
+                                            <p>Establezca reglas automáticas para descuentos por volumen y promociones</p>
                                         </div>
                                     </div>
                                 </div>
@@ -474,9 +455,7 @@ const setActiveTab = (tab) => {
 
                             <div class="future-note">
                                 <i class="pi pi-info-circle"></i>
-                                <p>Estas configuraciones estarán disponibles en las próximas actualizaciones del
-                                    sistema.
-                                    Se notificará cuando estén listas para usar.</p>
+                                <p>Estas configuraciones estarán disponibles en las próximas actualizaciones del sistema. Se notificará cuando estén listas para usar.</p>
                             </div>
                         </template>
                     </Card>

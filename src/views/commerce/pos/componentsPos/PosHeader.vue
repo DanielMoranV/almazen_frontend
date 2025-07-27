@@ -41,26 +41,21 @@ const formatDateTime = (dateTime) => {
                 <div class="flex items-center space-x-4">
                     <!-- Customer Selection -->
                     <div class="flex items-center space-x-3">
-                        <Button @click="$emit('show-customer-dialog')"
-                            :severity="selectedCustomer ? 'success' : 'secondary'" :outlined="!selectedCustomer"
-                            class="h-14 px-4" size="large">
+                        <Button @click="$emit('show-customer-dialog')" :severity="selectedCustomer ? 'success' : 'secondary'" :outlined="!selectedCustomer" class="h-14 px-4" size="large">
                             <i class="pi pi-user mr-2 text-lg"></i>
                             <span class="font-semibold">
                                 {{ selectedCustomer ? selectedCustomer.name.substring(0, 15) + (selectedCustomer.name.length > 15 ? '...' : '') : 'Cliente' }}
                             </span>
                         </Button>
 
-                        <Button v-if="selectedCustomer" @click="$emit('clear-customer')" icon="pi pi-times" severity="danger"
-                            text rounded size="small" class="w-8 h-8" v-tooltip="'Quitar cliente'" />
+                        <Button v-if="selectedCustomer" @click="$emit('clear-customer')" icon="pi pi-times" severity="danger" text rounded size="small" class="w-8 h-8" v-tooltip="'Quitar cliente'" />
                     </div>
 
                     <!-- Cart Summary -->
-                    <Button @click="$emit('show-cart-summary')" class="relative h-14 px-6" severity="info" outlined
-                        size="large">
+                    <Button @click="$emit('show-cart-summary')" class="relative h-14 px-6" severity="info" outlined size="large">
                         <i class="pi pi-shopping-cart mr-3 text-xl"></i>
                         <span class="font-semibold">Carrito</span>
-                        <Badge v-if="cartItemsCount > 0" :value="cartItemsCount" severity="danger"
-                            class="absolute top-1 right-1" />
+                        <Badge v-if="cartItemsCount > 0" :value="cartItemsCount" severity="danger" class="absolute top-1 right-1" />
                     </Button>
                 </div>
             </div>

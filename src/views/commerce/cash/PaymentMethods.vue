@@ -49,10 +49,7 @@ const filterOptions = {
         { label: 'Solo Activos', value: true },
         { label: 'Solo Inactivos', value: false }
     ],
-    types: [
-        { label: 'Todos los Tipos', value: '' },
-        ...methodTypes
-    ],
+    types: [{ label: 'Todos los Tipos', value: '' }, ...methodTypes],
     cashRegister: [
         { label: 'Todos', value: null },
         { label: 'Requiere Caja', value: true },
@@ -121,18 +118,14 @@ const fillForm = (method) => {
 
 const handleMethodSubmit = async () => {
     const payload = { ...methodForm.value };
-    
+
     try {
-        const action = isCreating.value 
-            ? paymentMethodsStore.createPaymentMethod 
-            : (data) => paymentMethodsStore.updatePaymentMethod(data, selectedMethod.value.id);
-        
+        const action = isCreating.value ? paymentMethodsStore.createPaymentMethod : (data) => paymentMethodsStore.updatePaymentMethod(data, selectedMethod.value.id);
+
         await action(payload);
 
         if (paymentMethodsStore.success) {
-            const message = isCreating.value 
-                ? 'Método de pago creado exitosamente' 
-                : 'Método de pago actualizado exitosamente';
+            const message = isCreating.value ? 'Método de pago creado exitosamente' : 'Método de pago actualizado exitosamente';
             showSuccess(message, paymentMethodsStore.message);
             showMethodDialog.value = false;
             await loadMethods();
@@ -204,7 +197,7 @@ const showError = (summary, detail) => {
 
 const handleApiErrors = () => {
     if (paymentMethodsStore.validationErrors.length > 0) {
-        paymentMethodsStore.validationErrors.forEach(error => {
+        paymentMethodsStore.validationErrors.forEach((error) => {
             showError('Error de validación', error);
         });
     } else {
@@ -214,29 +207,31 @@ const handleApiErrors = () => {
 
 const getMethodTypeIcon = (type) => {
     const iconMap = {
-        'CASH': 'pi-money-bill',
-        'CARD': 'pi-credit-card',
-        'TRANSFER': 'pi-send',
-        'CREDIT': 'pi-clock'
+        CASH: 'pi-money-bill',
+        CARD: 'pi-credit-card',
+        TRANSFER: 'pi-send',
+        CREDIT: 'pi-clock'
     };
     return iconMap[type] || 'pi-circle';
 };
 
 const getMethodTypeColor = (type) => {
     const colorMap = {
-        'CASH': 'success',
-        'CARD': 'info',
-        'TRANSFER': 'warning',
-        'CREDIT': 'secondary'
+        CASH: 'success',
+        CARD: 'info',
+        TRANSFER: 'warning',
+        CREDIT: 'secondary'
     };
     return colorMap[type] || 'secondary';
 };
 
 const formatCurrency = (amount) => {
-    return amount ? new Intl.NumberFormat('es-PE', {
-        style: 'currency',
-        currency: 'PEN'
-    }).format(amount) : '-';
+    return amount
+        ? new Intl.NumberFormat('es-PE', {
+              style: 'currency',
+              currency: 'PEN'
+          }).format(amount)
+        : '-';
 };
 
 const generateCodeFromName = () => {
@@ -252,7 +247,7 @@ const generateCodeFromName = () => {
 
 <template>
     <Toast />
-    
+
     <div class="grid">
         <div class="col-12">
             <Card class="shadow-lg border-0">
@@ -266,9 +261,7 @@ const generateCodeFromName = () => {
                                     <p class="text-purple-100">Gestión de formas de cobro y pago</p>
                                 </div>
                             </div>
-                            <Button @click="openCreateDialog" 
-                                    label="Nuevo Método" icon="pi pi-plus" 
-                                    severity="contrast" size="large" />
+                            <Button @click="openCreateDialog" label="Nuevo Método" icon="pi pi-plus" severity="contrast" size="large" />
                         </div>
                     </div>
                 </template>
@@ -283,38 +276,22 @@ const generateCodeFromName = () => {
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Estado</label>
-                                <Select v-model="filters.active_only" 
-                                        :options="filterOptions.activeOnly" 
-                                        option-label="label" option-value="value"
-                                        @change="handleFilterUpdate"
-                                        class="w-full" />
+                                <Select v-model="filters.active_only" :options="filterOptions.activeOnly" option-label="label" option-value="value" @change="handleFilterUpdate" class="w-full" />
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Tipo</label>
-                                <Select v-model="filters.type" 
-                                        :options="filterOptions.types" 
-                                        option-label="label" option-value="value"
-                                        @change="handleFilterUpdate"
-                                        class="w-full" />
+                                <Select v-model="filters.type" :options="filterOptions.types" option-label="label" option-value="value" @change="handleFilterUpdate" class="w-full" />
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Caja Registradora</label>
-                                <Select v-model="filters.requires_cash_register" 
-                                        :options="filterOptions.cashRegister" 
-                                        option-label="label" option-value="value"
-                                        @change="handleFilterUpdate"
-                                        class="w-full" />
+                                <Select v-model="filters.requires_cash_register" :options="filterOptions.cashRegister" option-label="label" option-value="value" @change="handleFilterUpdate" class="w-full" />
                             </div>
-                            
+
                             <div class="flex items-end space-x-2">
-                                <Button @click="clearFilters" 
-                                        label="Limpiar" icon="pi pi-filter-slash" 
-                                        severity="secondary" outlined />
-                                <Button @click="handleRefresh" 
-                                        label="Actualizar" icon="pi pi-refresh" 
-                                        severity="info" />
+                                <Button @click="clearFilters" label="Limpiar" icon="pi pi-filter-slash" severity="secondary" outlined />
+                                <Button @click="handleRefresh" label="Actualizar" icon="pi pi-refresh" severity="info" />
                             </div>
                         </div>
                     </Panel>
@@ -330,22 +307,14 @@ const generateCodeFromName = () => {
                         </div>
                         <h3 class="text-xl font-bold text-gray-600 mb-2">No hay métodos de pago</h3>
                         <p class="text-gray-500 mb-4">Crea el primer método de pago para comenzar</p>
-                        <Button @click="openCreateDialog" 
-                                label="Crear Método de Pago" icon="pi pi-plus" 
-                                severity="success" />
+                        <Button @click="openCreateDialog" label="Crear Método de Pago" icon="pi pi-plus" severity="success" />
                     </div>
 
-                    <DataTable v-else :value="methods" 
-                               :paginator="true" :rows="15" 
-                               :loading="isLoading"
-                               stripedRows responsiveLayout="scroll"
-                               class="shadow-sm">
-                        
+                    <DataTable v-else :value="methods" :paginator="true" :rows="15" :loading="isLoading" stripedRows responsiveLayout="scroll" class="shadow-sm">
                         <Column field="name" header="Método" sortable>
                             <template #body="{ data }">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center"
-                                         :class="`bg-${getMethodTypeColor(data.type)}-100`">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="`bg-${getMethodTypeColor(data.type)}-100`">
                                         <i :class="[getMethodTypeIcon(data.type), `text-${getMethodTypeColor(data.type)}-600`]"></i>
                                     </div>
                                     <div>
@@ -364,15 +333,13 @@ const generateCodeFromName = () => {
 
                         <Column field="requires_cash_register" header="Requiere Caja" sortable>
                             <template #body="{ data }">
-                                <Tag :value="data.requires_cash_register ? 'Sí' : 'No'" 
-                                     :severity="data.requires_cash_register ? 'warning' : 'secondary'" />
+                                <Tag :value="data.requires_cash_register ? 'Sí' : 'No'" :severity="data.requires_cash_register ? 'warning' : 'secondary'" />
                             </template>
                         </Column>
 
                         <Column field="requires_reference" header="Requiere Ref." sortable>
                             <template #body="{ data }">
-                                <Tag :value="data.requires_reference ? 'Sí' : 'No'" 
-                                     :severity="data.requires_reference ? 'info' : 'secondary'" />
+                                <Tag :value="data.requires_reference ? 'Sí' : 'No'" :severity="data.requires_reference ? 'info' : 'secondary'" />
                             </template>
                         </Column>
 
@@ -390,22 +357,15 @@ const generateCodeFromName = () => {
 
                         <Column field="is_active" header="Estado" sortable>
                             <template #body="{ data }">
-                                <Tag :value="data.is_active ? 'Activo' : 'Inactivo'" 
-                                     :severity="data.is_active ? 'success' : 'danger'" />
+                                <Tag :value="data.is_active ? 'Activo' : 'Inactivo'" :severity="data.is_active ? 'success' : 'danger'" />
                             </template>
                         </Column>
 
                         <Column header="Acciones">
                             <template #body="{ data }">
                                 <div class="flex space-x-2">
-                                    <Button @click="openEditDialog(data)" 
-                                            icon="pi pi-pencil" size="small" 
-                                            severity="info" outlined rounded
-                                            v-tooltip="'Editar'" />
-                                    <Button @click="openDeleteDialog(data)" 
-                                            icon="pi pi-trash" size="small" 
-                                            severity="danger" outlined rounded
-                                            v-tooltip="'Eliminar'" />
+                                    <Button @click="openEditDialog(data)" icon="pi pi-pencil" size="small" severity="info" outlined rounded v-tooltip="'Editar'" />
+                                    <Button @click="openDeleteDialog(data)" icon="pi pi-trash" size="small" severity="danger" outlined rounded v-tooltip="'Eliminar'" />
                                 </div>
                             </template>
                         </Column>
@@ -416,85 +376,59 @@ const generateCodeFromName = () => {
     </div>
 
     <!-- Diálogo de Método de Pago -->
-    <Dialog v-model:visible="showMethodDialog" 
-            :header="isCreating ? 'Nuevo Método de Pago' : 'Editar Método de Pago'"
-            :modal="true" :style="{ width: '600px' }"
-            :pt="{
-                header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
-                content: 'p-6'
-            }">
-        
+    <Dialog
+        v-model:visible="showMethodDialog"
+        :header="isCreating ? 'Nuevo Método de Pago' : 'Editar Método de Pago'"
+        :modal="true"
+        :style="{ width: '600px' }"
+        :pt="{
+            header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
+            content: 'p-6'
+        }"
+    >
         <div class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col-span-2">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Nombre del Método *
-                    </label>
-                    <InputText v-model="methodForm.name" 
-                               @input="generateCodeFromName"
-                               placeholder="Ej: Efectivo, Visa, Yape"
-                               class="w-full" />
+                    <label class="block text-sm font-bold text-gray-700 mb-2"> Nombre del Método * </label>
+                    <InputText v-model="methodForm.name" @input="generateCodeFromName" placeholder="Ej: Efectivo, Visa, Yape" class="w-full" />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Código *
-                    </label>
-                    <InputText v-model="methodForm.code" 
-                               placeholder="Ej: CASH, VISA, YAPE"
-                               class="w-full" />
+                    <label class="block text-sm font-bold text-gray-700 mb-2"> Código * </label>
+                    <InputText v-model="methodForm.code" placeholder="Ej: CASH, VISA, YAPE" class="w-full" />
                     <small class="text-gray-500">Solo letras mayúsculas, números y guiones bajos</small>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Tipo *
-                    </label>
-                    <Select v-model="methodForm.type" 
-                            :options="methodTypes" 
-                            option-label="label" option-value="value"
-                            class="w-full" />
+                    <label class="block text-sm font-bold text-gray-700 mb-2"> Tipo * </label>
+                    <Select v-model="methodForm.type" :options="methodTypes" option-label="label" option-value="value" class="w-full" />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Monto Mínimo
-                    </label>
-                    <InputNumber v-model="methodForm.min_amount" 
-                                 :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2"
-                                 class="w-full" />
+                    <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Mínimo </label>
+                    <InputNumber v-model="methodForm.min_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="w-full" />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Monto Máximo
-                    </label>
-                    <InputNumber v-model="methodForm.max_amount" 
-                                 :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2"
-                                 class="w-full" />
+                    <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Máximo </label>
+                    <InputNumber v-model="methodForm.max_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="w-full" />
                 </div>
 
                 <div class="col-span-2">
                     <div class="space-y-3">
                         <div class="flex items-center">
                             <Checkbox v-model="methodForm.requires_cash_register" binary />
-                            <label class="ml-3 text-sm font-medium text-gray-700">
-                                Requiere caja registradora activa
-                            </label>
+                            <label class="ml-3 text-sm font-medium text-gray-700"> Requiere caja registradora activa </label>
                         </div>
 
                         <div class="flex items-center">
                             <Checkbox v-model="methodForm.requires_reference" binary />
-                            <label class="ml-3 text-sm font-medium text-gray-700">
-                                Requiere número de referencia
-                            </label>
+                            <label class="ml-3 text-sm font-medium text-gray-700"> Requiere número de referencia </label>
                         </div>
 
                         <div class="flex items-center">
                             <Checkbox v-model="methodForm.is_active" binary />
-                            <label class="ml-3 text-sm font-medium text-gray-700">
-                                Método activo
-                            </label>
+                            <label class="ml-3 text-sm font-medium text-gray-700"> Método activo </label>
                         </div>
                     </div>
                 </div>
@@ -503,25 +437,14 @@ const generateCodeFromName = () => {
 
         <template #footer>
             <div class="flex justify-end space-x-3">
-                <Button @click="showMethodDialog = false" 
-                        label="Cancelar" icon="pi pi-times" 
-                        severity="secondary" outlined />
-                <Button @click="handleMethodSubmit" 
-                        :label="isCreating ? 'Crear' : 'Actualizar'" 
-                        icon="pi pi-check" severity="success" 
-                        :loading="isLoading" />
+                <Button @click="showMethodDialog = false" label="Cancelar" icon="pi pi-times" severity="secondary" outlined />
+                <Button @click="handleMethodSubmit" :label="isCreating ? 'Crear' : 'Actualizar'" icon="pi pi-check" severity="success" :loading="isLoading" />
             </div>
         </template>
     </Dialog>
 
     <!-- Diálogo de Confirmación de Eliminación -->
-    <DeleteConfirmationDialog
-        v-model:visible="showDeleteDialog"
-        :item-name="selectedMethod?.name"
-        item-type="método de pago"
-        @confirm="handleMethodDelete"
-        :loading="isLoading"
-    />
+    <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedMethod?.name" item-type="método de pago" @confirm="handleMethodDelete" :loading="isLoading" />
 </template>
 
 <style scoped>
@@ -543,11 +466,11 @@ const generateCodeFromName = () => {
     .grid-cols-1 {
         grid-template-columns: repeat(1, minmax(0, 1fr));
     }
-    
+
     .grid-cols-4 {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-    
+
     .grid-cols-2 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }

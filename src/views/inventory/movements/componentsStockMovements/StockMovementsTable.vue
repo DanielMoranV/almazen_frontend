@@ -1,167 +1,3 @@
-<template>
-    <DataTable stripedRows :value="movements" :loading="loading" responsiveLayout="scroll" scrollable
-        scrollHeight="500px" removableSort dataKey="id" :filters="localFilters" v-model:filters="localFilters"
-        :globalFilterFields="['product_name', 'product_sku', 'product_barcode', 'reason', 'reference_document', 'warehouse_name']"
-        :paginator="true" :rows="25" :rowsPerPageOptions="[10, 25, 50, 100]"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
-        class="movements-table green-theme p-datatable-gridlines" @row-click="handleRowClick">
-        <template #header>
-            <div class="table-header">
-                <div class="header-backdrop"></div>
-                <div class="header-content">
-                    <div class="search-section">
-                        <div class="search-container">
-                            <IconField>
-                                <InputIcon>
-                                    <i class="pi pi-search text-white" />
-                                </InputIcon>
-                                <InputText v-model="localFilters['global'].value"
-                                    placeholder="Buscar por producto, SKU, razón, documento..." class="search-input"
-                                    fluid />
-                            </IconField>
-                        </div>
-                    </div>
-                    <div class="actions-section">
-                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn"
-                            @click="exportMovements()" v-tooltip.top="'Exportar movimientos a Excel'"
-                            :disabled="!movements.length" />
-                    </div>
-                </div>
-            </div>
-        </template>
-
-        <template #empty>
-            <div class="empty-table-state">
-                <div class="empty-icon">
-                    <i class="pi pi-history"></i>
-                </div>
-                <h3 class="empty-title">No hay movimientos disponibles</h3>
-                <p class="empty-description">No se encontraron movimientos que coincidan con los filtros aplicados.</p>
-                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined"
-                    @click="clearFilters()" />
-            </div>
-        </template>
-
-        <template #loading>
-            <div class="loading-table-state">
-                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
-                <p class="loading-text">Cargando movimientos...</p>
-            </div>
-        </template>
-
-        <!-- ID Column -->
-        <Column field="id" header="ID" sortable style="min-width: 4rem; max-width: 6rem">
-            <template #body="{ data }">
-                <div class="id-cell">
-                    <span class="id-value">#{{ data.id }}</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Fecha Column -->
-        <Column field="created_at" header="Fecha" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="date-cell">
-                    <div class="date-value">{{ formatDate(data.created_at) }}</div>
-                    <div class="time-value">{{ formatTime(data.created_at) }}</div>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Tipo Column -->
-        <Column field="movement_type" header="Tipo" sortable style="min-width: 6rem; max-width: 8rem">
-            <template #body="{ data }">
-                <div class="text-center">
-                    <span class="type-badge" :class="getTypeClass(data.movement_type)">
-                        <i :class="getTypeIcon(data.movement_type)"></i>
-                        {{ getTypeLabel(data.movement_type) }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Producto Column -->
-        <Column field="product_name" header="Producto" sortable style="min-width: 12rem; max-width: 15rem">
-            <template #body="{ data }">
-                <div class="product-cell">
-                    <div class="product-name">{{ data.product_name }}</div>
-                    <div v-if="data.product_sku" class="product-sku">SKU: {{ data.product_sku }}</div>
-                    <div v-if="data.product_barcode" class="product-barcode">{{ data.product_barcode }}</div>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Almacén Column -->
-        <Column field="warehouse_name" header="Almacén" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="warehouse-cell">
-                    <span class="warehouse-name">{{ data.warehouse_name || '-' }}</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Cantidad Column -->
-        <Column field="quantity" header="Cantidad" sortable style="min-width: 6rem; max-width: 8rem">
-            <template #body="{ data }">
-                <div class="text-center">
-                    <span class="quantity-amount" :class="getQuantityClass(data.type, data.quantity)">
-                        {{ formatQuantity(data.type, data.quantity) }}
-                    </span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Lote Column -->
-        <Column field="batch_code" header="Lote" style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="batch-cell">
-                    <span v-if="data.batch_code" class="batch-code">{{ data.batch_code }}</span>
-                    <span v-else class="no-batch">Sin lote</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Razón Column -->
-        <Column field="reason" header="Razón" style="min-width: 10rem; max-width: 12rem">
-            <template #body="{ data }">
-                <div class="reason-cell">
-                    <span class="reason-text">{{ data.reason || '-' }}</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Documento Column -->
-        <Column field="reference_document" header="Documento" style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="document-cell">
-                    <span v-if="data.reference_document" class="document-text">{{ data.reference_document }}</span>
-                    <span v-else class="no-document">-</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Usuario Column -->
-        <Column field="user_name" header="Usuario" style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="user-cell">
-                    <span class="user-name">{{ data.user_name || '-' }}</span>
-                </div>
-            </template>
-        </Column>
-
-        <!-- Acciones Column -->
-        <Column :exportable="false" header="Acciones" style="min-width: 6rem; max-width: 8rem">
-            <template #body="{ data }">
-                <div class="actions-cell">
-                    <Button icon="pi pi-eye" class="p-button-rounded p-button-info" size="small" rounded text
-                        v-tooltip.top="'Ver detalles'" @click="$emit('view-details', data)" />
-                </div>
-            </template>
-        </Column>
-    </DataTable>
-</template>
-
 <script setup>
 import { exportToExcel } from '@/utils/excelUtils';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
@@ -280,30 +116,30 @@ const formatTime = (dateString) => {
 
 const getTypeClass = (type) => {
     const classes = {
-        'ENTRADA': 'type-entry',
-        'SALIDA': 'type-exit',
-        'AJUSTE': 'type-adjustment',
-        'TRANSFERENCIA': 'type-transfer'
+        ENTRADA: 'type-entry',
+        SALIDA: 'type-exit',
+        AJUSTE: 'type-adjustment',
+        TRANSFERENCIA: 'type-transfer'
     };
     return classes[type] || 'type-default';
 };
 
 const getTypeIcon = (type) => {
     const icons = {
-        'ENTRADA': 'pi pi-arrow-down',
-        'SALIDA': 'pi pi-arrow-up',
-        'AJUSTE': 'pi pi-cog',
-        'TRANSFERENCIA': 'pi pi-arrow-right-arrow-left'
+        ENTRADA: 'pi pi-arrow-down',
+        SALIDA: 'pi pi-arrow-up',
+        AJUSTE: 'pi pi-cog',
+        TRANSFERENCIA: 'pi pi-arrow-right-arrow-left'
     };
     return icons[type] || 'pi pi-circle';
 };
 
 const getTypeLabel = (type) => {
     const labels = {
-        'ENTRADA': 'Entrada',
-        'SALIDA': 'Salida',
-        'AJUSTE': 'Ajuste',
-        'TRANSFERENCIA': 'Transferencia'
+        ENTRADA: 'Entrada',
+        SALIDA: 'Salida',
+        AJUSTE: 'Ajuste',
+        TRANSFERENCIA: 'Transferencia'
     };
     return labels[type] || type;
 };
@@ -321,6 +157,177 @@ const formatQuantity = (type, quantity) => {
 };
 </script>
 
+<template>
+    <DataTable
+        stripedRows
+        :value="movements"
+        :loading="loading"
+        responsiveLayout="scroll"
+        scrollable
+        scrollHeight="500px"
+        removableSort
+        dataKey="id"
+        :filters="localFilters"
+        v-model:filters="localFilters"
+        :globalFilterFields="['product_name', 'product_sku', 'product_barcode', 'reason', 'reference_document', 'warehouse_name']"
+        :paginator="true"
+        :rows="25"
+        :rowsPerPageOptions="[10, 25, 50, 100]"
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} movimientos"
+        class="movements-table green-theme p-datatable-gridlines"
+        @row-click="handleRowClick"
+    >
+        <template #header>
+            <div class="table-header">
+                <div class="header-backdrop"></div>
+                <div class="header-content">
+                    <div class="search-section">
+                        <div class="search-container">
+                            <IconField>
+                                <InputIcon>
+                                    <i class="pi pi-search text-white" />
+                                </InputIcon>
+                                <InputText v-model="localFilters['global'].value" placeholder="Buscar por producto, SKU, razón, documento..." class="search-input" fluid />
+                            </IconField>
+                        </div>
+                    </div>
+                    <div class="actions-section">
+                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportMovements()" v-tooltip.top="'Exportar movimientos a Excel'" :disabled="!movements.length" />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template #empty>
+            <div class="empty-table-state">
+                <div class="empty-icon">
+                    <i class="pi pi-history"></i>
+                </div>
+                <h3 class="empty-title">No hay movimientos disponibles</h3>
+                <p class="empty-description">No se encontraron movimientos que coincidan con los filtros aplicados.</p>
+                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined" @click="clearFilters()" />
+            </div>
+        </template>
+
+        <template #loading>
+            <div class="loading-table-state">
+                <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
+                <p class="loading-text">Cargando movimientos...</p>
+            </div>
+        </template>
+
+        <!-- ID Column -->
+        <Column field="id" header="ID" sortable style="min-width: 4rem; max-width: 6rem">
+            <template #body="{ data }">
+                <div class="id-cell">
+                    <span class="id-value">#{{ data.id }}</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Fecha Column -->
+        <Column field="created_at" header="Fecha" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="date-cell">
+                    <div class="date-value">{{ formatDate(data.created_at) }}</div>
+                    <div class="time-value">{{ formatTime(data.created_at) }}</div>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Tipo Column -->
+        <Column field="movement_type" header="Tipo" sortable style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="text-center">
+                    <span class="type-badge" :class="getTypeClass(data.movement_type)">
+                        <i :class="getTypeIcon(data.movement_type)"></i>
+                        {{ getTypeLabel(data.movement_type) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Producto Column -->
+        <Column field="product_name" header="Producto" sortable style="min-width: 12rem; max-width: 15rem">
+            <template #body="{ data }">
+                <div class="product-cell">
+                    <div class="product-name">{{ data.product_name }}</div>
+                    <div v-if="data.product_sku" class="product-sku">SKU: {{ data.product_sku }}</div>
+                    <div v-if="data.product_barcode" class="product-barcode">{{ data.product_barcode }}</div>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Almacén Column -->
+        <Column field="warehouse_name" header="Almacén" sortable style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="warehouse-cell">
+                    <span class="warehouse-name">{{ data.warehouse_name || '-' }}</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Cantidad Column -->
+        <Column field="quantity" header="Cantidad" sortable style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="text-center">
+                    <span class="quantity-amount" :class="getQuantityClass(data.type, data.quantity)">
+                        {{ formatQuantity(data.type, data.quantity) }}
+                    </span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Lote Column -->
+        <Column field="batch_code" header="Lote" style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="batch-cell">
+                    <span v-if="data.batch_code" class="batch-code">{{ data.batch_code }}</span>
+                    <span v-else class="no-batch">Sin lote</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Razón Column -->
+        <Column field="reason" header="Razón" style="min-width: 10rem; max-width: 12rem">
+            <template #body="{ data }">
+                <div class="reason-cell">
+                    <span class="reason-text">{{ data.reason || '-' }}</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Documento Column -->
+        <Column field="reference_document" header="Documento" style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="document-cell">
+                    <span v-if="data.reference_document" class="document-text">{{ data.reference_document }}</span>
+                    <span v-else class="no-document">-</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Usuario Column -->
+        <Column field="user_name" header="Usuario" style="min-width: 8rem; max-width: 10rem">
+            <template #body="{ data }">
+                <div class="user-cell">
+                    <span class="user-name">{{ data.user_name || '-' }}</span>
+                </div>
+            </template>
+        </Column>
+
+        <!-- Acciones Column -->
+        <Column :exportable="false" header="Acciones" style="min-width: 6rem; max-width: 8rem">
+            <template #body="{ data }">
+                <div class="actions-cell">
+                    <Button icon="pi pi-eye" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Ver detalles'" @click="$emit('view-details', data)" />
+                </div>
+            </template>
+        </Column>
+    </DataTable>
+</template>
+
 <style scoped>
 /* Encabezado de la tabla */
 .table-header {
@@ -332,7 +339,9 @@ const formatQuantity = (type, quantity) => {
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
     background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 40px 40px, 25px 25px;
+    background-size:
+        40px 40px,
+        25px 25px;
     animation: pattern-drift 25s linear infinite;
 }
 
@@ -397,7 +406,9 @@ const formatQuantity = (type, quantity) => {
 /* Tema de la tabla */
 :deep(.movements-table) {
     @apply rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 :deep(.movements-table .p-datatable-header) {
@@ -528,11 +539,15 @@ const formatQuantity = (type, quantity) => {
 /* Animación del patrón */
 @keyframes pattern-drift {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
 
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 

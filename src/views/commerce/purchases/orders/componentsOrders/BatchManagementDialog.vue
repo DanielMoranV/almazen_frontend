@@ -48,7 +48,7 @@ watch(
 );
 
 const initializeBatchForm = async () => {
-    batchForm.value.batches = props.batchData.manualProducts.map(product => ({
+    batchForm.value.batches = props.batchData.manualProducts.map((product) => ({
         productId: product.product.id,
         productName: product.product.name,
         productSku: product.product.sku,
@@ -66,7 +66,7 @@ const initializeBatchForm = async () => {
             }
         ]
     }));
-    
+
     // Cargar lotes disponibles para cada producto
     await loadAvailableBatches();
 };
@@ -74,19 +74,17 @@ const initializeBatchForm = async () => {
 // Cargar lotes disponibles para todos los productos
 const loadAvailableBatches = async () => {
     loadingBatches.value = true;
-    
+
     try {
-        const productIds = props.batchData.manualProducts.map(p => p.product.id);
-        
+        const productIds = props.batchData.manualProducts.map((p) => p.product.id);
+
         const batchPromises = productIds.map(async (productId) => {
             try {
                 const response = await batchesStore.getAvailableBatchesForProduct(productId);
-                
+
                 if (response.success) {
-                    const formattedBatches = response.data.batches.map(batch => 
-                        batchesStore.formatBatchForDropdown(batch)
-                    );
-                    
+                    const formattedBatches = response.data.batches.map((batch) => batchesStore.formatBatchForDropdown(batch));
+
                     return {
                         productId,
                         batches: formattedBatches
@@ -100,13 +98,12 @@ const loadAvailableBatches = async () => {
         });
 
         const results = await Promise.all(batchPromises);
-        
+
         // Organizar los lotes por producto
         availableBatches.value = results.reduce((acc, result) => {
             acc[result.productId] = result.batches;
             return acc;
         }, {});
-        
     } catch (error) {
         console.error('Error loading available batches:', error);
         toast.add({
@@ -126,7 +123,7 @@ const generateBatchNumber = (product) => {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     const sku = product.sku ? product.sku.slice(0, 3).toUpperCase() : 'PRD';
-    
+
     return `${sku}${year}${month}${day}001`;
 };
 
@@ -135,7 +132,7 @@ const addBatchToProduct = (productIndex) => {
     const newBatchNumber = generateBatchNumber({
         sku: product.productSku
     });
-    
+
     product.batches.push({
         id: Date.now(), // ID único temporal
         batchType: 'new',
@@ -168,7 +165,7 @@ const isProductQuantityValid = (productIndex) => {
 // Manejar cambio de tipo de lote
 const handleBatchTypeChange = (productIndex, batchIndex) => {
     const batch = batchForm.value.batches[productIndex].batches[batchIndex];
-    
+
     if (batch.batchType === 'existing') {
         // Limpiar campos para usar lote existente
         batch.batchNumber = '';
@@ -186,14 +183,14 @@ const handleBatchTypeChange = (productIndex, batchIndex) => {
 const handleExistingBatchSelect = (productIndex, batchIndex, event) => {
     const batch = batchForm.value.batches[productIndex].batches[batchIndex];
     const productId = batchForm.value.batches[productIndex].productId;
-    
+
     // Extraer el valor real del evento de PrimeVue
     const selectedBatchId = event?.value || event;
-    
+
     if (selectedBatchId) {
         // Buscar el lote completo por ID
-        const selectedBatch = getAvailableBatchesForProduct(productId).find(b => b.id === selectedBatchId);
-        
+        const selectedBatch = getAvailableBatchesForProduct(productId).find((b) => b.id === selectedBatchId);
+
         if (selectedBatch) {
             batch.existingBatchId = selectedBatch.id;
             batch.batchNumber = selectedBatch.code;
@@ -213,26 +210,24 @@ const getAvailableBatchesForProduct = (productId) => {
 
 const isFormValid = computed(() => {
     if (!batchForm.value.batches.length) return false;
-    
+
     return batchForm.value.batches.every((product, index) => {
         // Verificar que todas las cantidades coincidan
         if (!isProductQuantityValid(index)) return false;
-        
+
         // Verificar que todos los lotes tengan datos válidos
-        return product.batches.every(batch => {
+        return product.batches.every((batch) => {
             if (batch.batchType === 'existing') {
                 return batch.existingBatchId && batch.quantity > 0;
             } else {
-                return batch.batchNumber && 
-                       batch.quantity > 0 && 
-                       batch.expirationDate;
+                return batch.batchNumber && batch.quantity > 0 && batch.expirationDate;
             }
         });
     });
 });
 
 const autoProducts = computed(() => {
-    return (props.batchData.autoProducts || []).map(product => ({
+    return (props.batchData.autoProducts || []).map((product) => ({
         ...product,
         quantity: Number(product.quantity)
     }));
@@ -240,7 +235,7 @@ const autoProducts = computed(() => {
 
 const handleSubmit = () => {
     submitted.value = true;
-    
+
     if (!isFormValid.value) {
         toast.add({
             severity: 'error',
@@ -250,16 +245,16 @@ const handleSubmit = () => {
         });
         return;
     }
-    
+
     const submitData = {
         manualBatches: batchForm.value.batches,
-        autoGenerateProducts: autoProducts.value.map(product => ({
+        autoGenerateProducts: autoProducts.value.map((product) => ({
             productId: product.product.id,
             purchaseDetailId: product.id, // ID del detalle de la orden de compra
             quantity: product.quantity
         }))
     };
-    
+
     emit('submit', submitData);
 };
 
@@ -280,15 +275,7 @@ const formatDate = (date) => {
 </script>
 
 <template>
-    <Dialog 
-        :visible="visible" 
-        @update:visible="(val) => emit('update:visible', val)" 
-        :style="{ width: '90vw', maxWidth: '1000px' }" 
-        header="Gestión de Lotes para Recepción"
-        :modal="true" 
-        class="batch-dialog"
-        @hide="resetForm"
-    >
+    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '90vw', maxWidth: '1000px' }" header="Gestión de Lotes para Recepción" :modal="true" class="batch-dialog" @hide="resetForm">
         <div class="dialog-content">
             <!-- Información de la orden -->
             <div class="order-info">
@@ -311,17 +298,11 @@ const formatDate = (date) => {
                         <i class="pi pi-cog text-purple-500"></i>
                         Productos con Auto-generación de Lotes
                     </h4>
-                    <p class="section-description">
-                        Estos productos generarán lotes automáticamente
-                    </p>
+                    <p class="section-description">Estos productos generarán lotes automáticamente</p>
                 </div>
-                
+
                 <div class="auto-products-grid">
-                    <div 
-                        v-for="product in autoProducts" 
-                        :key="product.product.id"
-                        class="auto-product-card"
-                    >
+                    <div v-for="product in autoProducts" :key="product.product.id" class="auto-product-card">
                         <div class="product-info">
                             <div class="product-name">{{ product.product.name }}</div>
                             <div class="product-sku">SKU: {{ product.product.sku }}</div>
@@ -345,17 +326,11 @@ const formatDate = (date) => {
                         <i class="pi pi-list text-blue-500"></i>
                         Productos que Requieren Gestión Manual de Lotes
                     </h4>
-                    <p class="section-description">
-                        Configure los lotes para los siguientes productos
-                    </p>
+                    <p class="section-description">Configure los lotes para los siguientes productos</p>
                 </div>
 
                 <div class="manual-products-container">
-                    <div 
-                        v-for="(productBatch, productIndex) in batchForm.batches" 
-                        :key="productBatch.productId"
-                        class="product-batch-section"
-                    >
+                    <div v-for="(productBatch, productIndex) in batchForm.batches" :key="productBatch.productId" class="product-batch-section">
                         <!-- Header del producto -->
                         <div class="product-header">
                             <div class="product-info">
@@ -374,18 +349,14 @@ const formatDate = (date) => {
 
                         <!-- Lotes del producto -->
                         <div class="batches-container">
-                            <div 
-                                v-for="(batch, batchIndex) in productBatch.batches" 
-                                :key="batch.id || batchIndex"
-                                class="batch-form-row"
-                            >
+                            <div v-for="(batch, batchIndex) in productBatch.batches" :key="batch.id || batchIndex" class="batch-form-row">
                                 <div class="batch-fields">
                                     <!-- Toggle: Nuevo lote vs Lote existente -->
                                     <div class="field batch-type-field">
                                         <label>Tipo de Lote</label>
                                         <div class="batch-type-toggle">
-                                            <SelectButton 
-                                                v-model="batch.batchType" 
+                                            <SelectButton
+                                                v-model="batch.batchType"
                                                 :options="[
                                                     { label: 'Nuevo Lote', value: 'new' },
                                                     { label: 'Lote Existente', value: 'existing' }
@@ -401,7 +372,7 @@ const formatDate = (date) => {
                                     <!-- Lote existente -->
                                     <div v-if="batch.batchType === 'existing'" class="field">
                                         <label>Seleccionar Lote Existente</label>
-                                        <Select 
+                                        <Select
                                             :model-value="batch.existingBatchId"
                                             :options="getAvailableBatchesForProduct(productBatch.productId)"
                                             optionLabel="label"
@@ -418,14 +389,11 @@ const formatDate = (date) => {
                                                 <div class="batch-option">
                                                     <div class="batch-option-header">
                                                         <span class="batch-code">{{ slotProps.option.code }}</span>
-                                                        <span class="batch-stock" v-if="slotProps.option.totalStock > 0">
-                                                            Stock: {{ slotProps.option.totalStock }}
-                                                        </span>
+                                                        <span class="batch-stock" v-if="slotProps.option.totalStock > 0"> Stock: {{ slotProps.option.totalStock }} </span>
                                                     </div>
                                                     <div class="batch-option-details">
                                                         <span class="batch-expiration">{{ slotProps.option.expirationDate ? formatDate(slotProps.option.expirationDate) : 'Sin vencimiento' }}</span>
-                                                        <span v-if="slotProps.option.daysToExpire !== null" class="batch-days" 
-                                                              :class="{ 'text-red-500': slotProps.option.daysToExpire < 30, 'text-yellow-500': slotProps.option.daysToExpire < 90 }">
+                                                        <span v-if="slotProps.option.daysToExpire !== null" class="batch-days" :class="{ 'text-red-500': slotProps.option.daysToExpire < 30, 'text-yellow-500': slotProps.option.daysToExpire < 90 }">
                                                             {{ Math.floor(slotProps.option.daysToExpire) }} días
                                                         </span>
                                                     </div>
@@ -438,9 +406,7 @@ const formatDate = (date) => {
                                                 </div>
                                             </template>
                                         </Select>
-                                        <small v-if="submitted && batch.batchType === 'existing' && !batch.existingBatchId" class="p-error">
-                                            Debe seleccionar un lote existente
-                                        </small>
+                                        <small v-if="submitted && batch.batchType === 'existing' && !batch.existingBatchId" class="p-error"> Debe seleccionar un lote existente </small>
                                     </div>
 
                                     <!-- Campos para nuevo lote -->
@@ -448,21 +414,15 @@ const formatDate = (date) => {
                                         <!-- Número de lote -->
                                         <div class="field">
                                             <label>Número de Lote</label>
-                                            <InputText 
-                                                v-model="batch.batchNumber" 
-                                                placeholder="Ej: ABC240101001"
-                                                :class="{ 'p-invalid': submitted && batch.batchType === 'new' && !batch.batchNumber }"
-                                            />
-                                            <small v-if="submitted && batch.batchType === 'new' && !batch.batchNumber" class="p-error">
-                                                Número de lote requerido
-                                            </small>
+                                            <InputText v-model="batch.batchNumber" placeholder="Ej: ABC240101001" :class="{ 'p-invalid': submitted && batch.batchType === 'new' && !batch.batchNumber }" />
+                                            <small v-if="submitted && batch.batchType === 'new' && !batch.batchNumber" class="p-error"> Número de lote requerido </small>
                                         </div>
 
                                         <!-- Fecha de vencimiento -->
                                         <div class="field">
                                             <label>Fecha de Vencimiento</label>
-                                            <DatePicker 
-                                                v-model="batch.expirationDate" 
+                                            <DatePicker
+                                                v-model="batch.expirationDate"
                                                 placeholder="Seleccionar fecha"
                                                 dateFormat="dd/mm/yy"
                                                 showIcon
@@ -470,9 +430,7 @@ const formatDate = (date) => {
                                                 :class="{ 'p-invalid': submitted && batch.batchType === 'new' && !batch.expirationDate }"
                                                 :minDate="new Date()"
                                             />
-                                            <small v-if="submitted && batch.batchType === 'new' && !batch.expirationDate" class="p-error">
-                                                Fecha de vencimiento requerida
-                                            </small>
+                                            <small v-if="submitted && batch.batchType === 'new' && !batch.expirationDate" class="p-error"> Fecha de vencimiento requerida </small>
                                         </div>
                                     </template>
 
@@ -480,73 +438,38 @@ const formatDate = (date) => {
                                     <template v-if="batch.batchType === 'existing' && batch.existingBatchId">
                                         <div class="field">
                                             <label>Número de Lote</label>
-                                            <InputText 
-                                                :model-value="batch.batchNumber" 
-                                                readonly
-                                                class="readonly-field"
-                                            />
+                                            <InputText :model-value="batch.batchNumber" readonly class="readonly-field" />
                                         </div>
 
                                         <div class="field" v-if="batch.expirationDate">
                                             <label>Fecha de Vencimiento</label>
-                                            <InputText 
-                                                :model-value="formatDate(batch.expirationDate)" 
-                                                readonly
-                                                class="readonly-field"
-                                            />
+                                            <InputText :model-value="formatDate(batch.expirationDate)" readonly class="readonly-field" />
                                         </div>
                                     </template>
 
                                     <!-- Cantidad (siempre visible) -->
                                     <div class="field">
                                         <label>Cantidad</label>
-                                        <InputNumber 
-                                            v-model="batch.quantity" 
-                                            :min="1"
-                                            :max="Number(productBatch.requiredQuantity)"
-                                            placeholder="0"
-                                            :class="{ 'p-invalid': submitted && (!batch.quantity || batch.quantity <= 0) }"
-                                        />
-                                        <small v-if="submitted && (!batch.quantity || batch.quantity <= 0)" class="p-error">
-                                            Cantidad debe ser mayor a 0
-                                        </small>
+                                        <InputNumber v-model="batch.quantity" :min="1" :max="Number(productBatch.requiredQuantity)" placeholder="0" :class="{ 'p-invalid': submitted && (!batch.quantity || batch.quantity <= 0) }" />
+                                        <small v-if="submitted && (!batch.quantity || batch.quantity <= 0)" class="p-error"> Cantidad debe ser mayor a 0 </small>
                                     </div>
 
                                     <!-- Notas (siempre visible) -->
                                     <div class="field">
                                         <label>Notas (Opcional)</label>
-                                        <InputText 
-                                            v-model="batch.notes" 
-                                            placeholder="Observaciones del lote"
-                                        />
+                                        <InputText v-model="batch.notes" placeholder="Observaciones del lote" />
                                     </div>
                                 </div>
 
                                 <!-- Acciones del lote -->
                                 <div class="batch-actions">
-                                    <Button 
-                                        icon="pi pi-trash" 
-                                        severity="danger" 
-                                        text 
-                                        rounded 
-                                        size="small"
-                                        @click="removeBatchFromProduct(productIndex, batchIndex)"
-                                        :disabled="productBatch.batches.length === 1"
-                                        v-tooltip.top="'Eliminar lote'"
-                                    />
+                                    <Button icon="pi pi-trash" severity="danger" text rounded size="small" @click="removeBatchFromProduct(productIndex, batchIndex)" :disabled="productBatch.batches.length === 1" v-tooltip.top="'Eliminar lote'" />
                                 </div>
                             </div>
 
                             <!-- Botón para agregar lote -->
                             <div class="add-batch-section">
-                                <Button 
-                                    icon="pi pi-plus" 
-                                    label="Agregar Lote" 
-                                    outlined 
-                                    size="small"
-                                    @click="addBatchToProduct(productIndex)"
-                                    class="add-batch-btn"
-                                />
+                                <Button icon="pi pi-plus" label="Agregar Lote" outlined size="small" @click="addBatchToProduct(productIndex)" class="add-batch-btn" />
                             </div>
                         </div>
                     </div>
@@ -559,9 +482,7 @@ const formatDate = (date) => {
                     <i class="pi pi-check-circle"></i>
                 </div>
                 <h3 class="empty-title">No se requiere gestión manual</h3>
-                <p class="empty-description">
-                    Todos los productos en esta orden generan lotes automáticamente
-                </p>
+                <p class="empty-description">Todos los productos en esta orden generan lotes automáticamente</p>
             </div>
         </div>
 
@@ -577,19 +498,8 @@ const formatDate = (date) => {
                     </div>
                 </div>
                 <div class="footer-actions">
-                    <Button 
-                        label="Cancelar" 
-                        icon="pi pi-times" 
-                        outlined 
-                        @click="handleCancel" 
-                    />
-                    <Button 
-                        label="Recibir Orden" 
-                        icon="pi pi-check" 
-                        @click="handleSubmit" 
-                        :loading="loading"
-                        :disabled="batchForm.batches.length > 0 && !isFormValid"
-                    />
+                    <Button label="Cancelar" icon="pi pi-times" outlined @click="handleCancel" />
+                    <Button label="Recibir Orden" icon="pi pi-check" @click="handleSubmit" :loading="loading" :disabled="batchForm.batches.length > 0 && !isFormValid" />
                 </div>
             </div>
         </template>
@@ -932,28 +842,28 @@ const formatDate = (date) => {
     .batch-fields {
         @apply grid-cols-1;
     }
-    
+
     .batch-type-field,
     .field:not(.batch-type-field) {
         @apply col-span-1;
     }
-    
+
     .auto-products-grid {
         @apply grid-cols-1;
     }
-    
+
     .product-header {
         @apply flex-col gap-3 items-start;
     }
-    
+
     .quantity-info {
         @apply text-left;
     }
-    
+
     .dialog-footer {
         @apply flex-col gap-4;
     }
-    
+
     .footer-actions {
         @apply w-full;
     }

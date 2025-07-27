@@ -49,10 +49,7 @@ const filterOptions = {
         { label: 'Solo Activos', value: true },
         { label: 'Solo Inactivos', value: false }
     ],
-    types: [
-        { label: 'Todos los Tipos', value: '' },
-        ...methodTypes
-    ],
+    types: [{ label: 'Todos los Tipos', value: '' }, ...methodTypes],
     cashRegister: [
         { label: 'Todos', value: null },
         { label: 'Requiere Caja', value: true },
@@ -122,9 +119,7 @@ const fillForm = (method) => {
 const handleMethodSubmit = async () => {
     const payload = { ...methodForm.value };
     try {
-        const action = isCreating.value
-            ? paymentMethodsStore.createPaymentMethod
-            : (data) => paymentMethodsStore.updatePaymentMethod(data, selectedMethod.value.id);
+        const action = isCreating.value ? paymentMethodsStore.createPaymentMethod : (data) => paymentMethodsStore.updatePaymentMethod(data, selectedMethod.value.id);
         await action(payload);
         if (paymentMethodsStore.success) {
             const message = isCreating.value ? 'Método de pago creado exitosamente' : 'Método de pago actualizado exitosamente';
@@ -207,9 +202,7 @@ const getMethodTypeColor = (type) => {
 };
 
 const formatCurrency = (amount) => {
-    return amount
-        ? new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount)
-        : '-';
+    return amount ? new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount) : '-';
 };
 
 const generateCodeFromName = () => {
@@ -325,7 +318,13 @@ const generateCodeFromName = () => {
     </div>
 
     <!-- Diálogo de Método de Pago -->
-    <Dialog v-model:visible="showMethodDialog" :header="isCreating ? 'Nuevo Método de Pago' : 'Editar Método de Pago'" :modal="true" :style="{ width: '600px' }" :pt="{ header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white', content: 'p-6' }">
+    <Dialog
+        v-model:visible="showMethodDialog"
+        :header="isCreating ? 'Nuevo Método de Pago' : 'Editar Método de Pago'"
+        :modal="true"
+        :style="{ width: '600px' }"
+        :pt="{ header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white', content: 'p-6' }"
+    >
         <div class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col-span-2">
@@ -375,11 +374,21 @@ const generateCodeFromName = () => {
     grid-template-columns: 1fr;
     gap: 1rem;
 }
-.col-12 { grid-column: span 12; }
-.col-span-2 { grid-column: span 2; }
+.col-12 {
+    grid-column: span 12;
+}
+.col-span-2 {
+    grid-column: span 2;
+}
 @media (min-width: 768px) {
-    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-    .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-1 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+    .grid-cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 </style>

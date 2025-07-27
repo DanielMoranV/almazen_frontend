@@ -237,12 +237,7 @@ const handleImageError = (event) => {
         <Column field="image_url" header="Imagen" style="min-width: 4rem; max-width: 5rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
-                    <img 
-                        :src="data.image_url || '/placeholder-product.png'" 
-                        :alt="data.name || 'Producto'" 
-                        class="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-600" 
-                        @error="handleImageError"
-                    />
+                    <img :src="data.image_url || '/placeholder-product.png'" :alt="data.name || 'Producto'" class="w-12 h-12 object-cover rounded border border-gray-200 dark:border-gray-600" @error="handleImageError" />
                 </div>
             </template>
         </Column>

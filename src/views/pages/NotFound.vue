@@ -5,11 +5,7 @@
             <h1>404</h1>
             <h2>Página No Encontrada</h2>
             <p>La página que busca no existe o ha sido movida.</p>
-            <Button 
-                label="Ir al Dashboard" 
-                @click="$router.push('/dashboard')"
-                icon="pi pi-home"
-            />
+            <Button label="Ir al Dashboard" @click="$router.push('/dashboard')" icon="pi pi-home" />
         </div>
     </div>
 </template>

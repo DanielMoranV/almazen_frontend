@@ -4,11 +4,7 @@
             <i class="pi pi-exclamation-circle empty-icon"></i>
             <h2>Funcionalidad en Desarrollo</h2>
             <p>Esta funcionalidad estará disponible en futuras actualizaciones.</p>
-            <Button 
-                label="Volver al Dashboard" 
-                @click="$router.push('/dashboard')"
-                icon="pi pi-home"
-            />
+            <Button label="Volver al Dashboard" @click="$router.push('/dashboard')" icon="pi pi-home" />
         </div>
     </div>
 </template>

@@ -44,7 +44,6 @@ const isInitializing = ref(true);
 
 // Quick search for barcode scanner
 
-
 // Session and warehouse management
 const activeSession = ref(null);
 const selectedWarehouse = ref(null);
@@ -92,11 +91,9 @@ const newCustomer = ref({
 
 // Computed para productos con manejo de stock por almacén
 const products = computed(() => {
-    return searchResults.value.map(product => {
+    return searchResults.value.map((product) => {
         // Buscar stock para el almacén seleccionado o tomar el primero
-        let stockInfo = product.available_stock?.find(stock =>
-            !selectedWarehouse.value || stock.warehouse_id === selectedWarehouse.value
-        ) || product.available_stock?.[0];
+        let stockInfo = product.available_stock?.find((stock) => !selectedWarehouse.value || stock.warehouse_id === selectedWarehouse.value) || product.available_stock?.[0];
 
         if (!stockInfo) {
             return {
@@ -183,7 +180,9 @@ const showToast = (type, options = {}) => {
     if (preventDuplicates.includes(type)) {
         toastShown.value[type] = true;
         const resetTime = type === 'sessionWarning' ? 10000 : 5000;
-        setTimeout(() => { toastShown.value[type] = false; }, resetTime);
+        setTimeout(() => {
+            toastShown.value[type] = false;
+        }, resetTime);
     }
 };
 
@@ -235,12 +234,12 @@ selectedWarehouse.value = cache.getItem(CACHE_KEYS.FAVORITE_WAREHOUSE);
 voucherType.value = cache.getItem(CACHE_KEYS.VOUCHER_TYPE) || availableVoucherTypes.value[0]?.value;
 
 // Persist preferences to cache
-watch(selectedWarehouse, val => {
+watch(selectedWarehouse, (val) => {
     if (val !== null) {
         cache.setItem(CACHE_KEYS.FAVORITE_WAREHOUSE, val);
     }
 });
-watch(voucherType, val => cache.setItem(CACHE_KEYS.VOUCHER_TYPE, val));
+watch(voucherType, (val) => cache.setItem(CACHE_KEYS.VOUCHER_TYPE, val));
 
 // Función para buscar productos usando el endpoint search-sale
 const searchProducts = async (query = '') => {
@@ -318,19 +317,15 @@ onMounted(async () => {
 
     try {
         // Cargar datos iniciales en paralelo
-        await Promise.all([
-            warehousesList.value.length === 0 ? warehousesStore.fetchWarehouses() : Promise.resolve(),
-            paymentMethodsStore.fetchPaymentMethods({ active_only: true }),
-            getCurrentSession()
-        ]);
+        await Promise.all([warehousesList.value.length === 0 ? warehousesStore.fetchWarehouses() : Promise.resolve(), paymentMethodsStore.fetchPaymentMethods({ active_only: true }), getCurrentSession()]);
 
         // Configurar métodos de pago disponibles
-        availablePaymentMethods.value = paymentMethodsList.value.filter(pm => pm.is_active);
+        availablePaymentMethods.value = paymentMethodsList.value.filter((pm) => pm.is_active);
 
         showSuccessMessage('Sistema Iniciado', 'Punto de venta listo para usar');
 
         // Validar sesión de caja si hay métodos que requieren caja
-        const cashRequiredMethods = availablePaymentMethods.value.filter(pm => pm.requires_cash_register);
+        const cashRequiredMethods = availablePaymentMethods.value.filter((pm) => pm.requires_cash_register);
         if (cashRequiredMethods.length > 0 && requiresCashSession.value && !hasActiveSession.value) {
             showSessionWarning('Algunos métodos de pago requieren una sesión de caja activa');
         }
@@ -362,17 +357,11 @@ const checkActiveSession = () => {
 };
 
 const filteredProducts = computed(() => {
-    return products.value.filter(product => {
+    return products.value.filter((product) => {
         const matchSearch = searchQuery.value
-            ? (
-                product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                product.sku.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                product.barcode.toLowerCase().includes(searchQuery.value.toLowerCase())
-            )
+            ? product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || product.sku.toLowerCase().includes(searchQuery.value.toLowerCase()) || product.barcode.toLowerCase().includes(searchQuery.value.toLowerCase())
             : true;
-        const matchWarehouse = selectedWarehouse.value
-            ? product.warehouse_id === selectedWarehouse.value
-            : true;
+        const matchWarehouse = selectedWarehouse.value ? product.warehouse_id === selectedWarehouse.value : true;
         return matchSearch && matchWarehouse;
     });
 });
@@ -408,12 +397,10 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
     }
 
     const cartItemKey = batchId ? `${product.id}-${batchId}` : `${product.id}-${stockId}`;
-    const existingItem = cart.value.find(item => item.cartKey === cartItemKey);
+    const existingItem = cart.value.find((item) => item.cartKey === cartItemKey);
 
     if (existingItem) {
-        const availableStock = batchId
-            ? product.stock_info.batches.find(b => b.batch_id === batchId)?.available_quantity || 0
-            : product.stock;
+        const availableStock = batchId ? product.stock_info.batches.find((b) => b.batch_id === batchId)?.available_quantity || 0 : product.stock;
 
         if (existingItem.quantity < availableStock) {
             existingItem.quantity++;
@@ -426,7 +413,7 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
             });
         }
     } else {
-        const batchInfo = batchId ? product.stock_info.batches.find(b => b.batch_id === batchId) : null;
+        const batchInfo = batchId ? product.stock_info.batches.find((b) => b.batch_id === batchId) : null;
         const itemName = batchInfo ? `${product.name} (${batchInfo.batch_code})` : product.name;
 
         cart.value.push({
@@ -466,10 +453,10 @@ const removeFromCart = (index) => {
 };
 
 const updateQuantity = (item, newQuantity) => {
-    const product = products.value.find(p => p.id === item.id);
+    const product = products.value.find((p) => p.id === item.id);
 
     if (newQuantity <= 0) {
-        const index = cart.value.findIndex(i => i.cartKey === item.cartKey);
+        const index = cart.value.findIndex((i) => i.cartKey === item.cartKey);
         if (index !== -1) {
             cart.value.splice(index, 1);
         }
@@ -477,7 +464,7 @@ const updateQuantity = (item, newQuantity) => {
         // Determinar stock disponible según si tiene lotes o no
         let availableStock = product.stock;
         if (item.batch_id && product.stock_info?.batches) {
-            const batch = product.stock_info.batches.find(b => b.batch_id === item.batch_id);
+            const batch = product.stock_info.batches.find((b) => b.batch_id === item.batch_id);
             availableStock = batch ? parseFloat(batch.available_quantity) : 0;
         }
 
@@ -497,7 +484,7 @@ const updateQuantity = (item, newQuantity) => {
 };
 
 const updateCartTotals = () => {
-    cart.value.forEach(item => {
+    cart.value.forEach((item) => {
         item.subtotal = item.price * item.quantity;
     });
 };
@@ -590,7 +577,7 @@ const processPayment = async () => {
         discount_amount: 0,
         notes: null,
         status: paymentStatus.value,
-        details: cart.value.map(item => {
+        details: cart.value.map((item) => {
             const itemTax = calculateTax(item.subtotal);
             return {
                 product_id: item.id,
@@ -603,7 +590,7 @@ const processPayment = async () => {
                 discount_amount: 0
             };
         }),
-        payment_methods: selectedPaymentMethods.value.map(pm => ({
+        payment_methods: selectedPaymentMethods.value.map((pm) => ({
             method_id: pm.method_id,
             amount: parseFloat(pm.amount),
             reference: pm.reference || null
@@ -663,7 +650,6 @@ const processPayment = async () => {
         if (voucherLink) {
             printVoucher(voucherLink);
         }
-
     } catch (error) {
         let errorMessage = 'Error al procesar la venta';
 
@@ -803,7 +789,7 @@ const updatePaymentMethod = (index, field, value) => {
     const paymentMethod = selectedPaymentMethods.value[index];
 
     if (field === 'method_id') {
-        const method = availablePaymentMethods.value.find(pm => pm.id === value);
+        const method = availablePaymentMethods.value.find((pm) => pm.id === value);
         if (method) {
             paymentMethod.method_id = method.id;
             paymentMethod.method_name = method.name;
@@ -855,7 +841,7 @@ const validateSelectedPaymentMethods = () => {
         }
 
         // Validar límites del método de pago
-        const method = availablePaymentMethods.value.find(m => m.id === pm.method_id);
+        const method = availablePaymentMethods.value.find((m) => m.id === pm.method_id);
         if (method) {
             const validation = paymentMethodsStore.validateMethod(pm.method_id, pm.amount, !!pm.reference);
             if (!validation.valid) {
@@ -876,8 +862,8 @@ const validateSelectedPaymentMethods = () => {
     }
 
     // Validar solo un método en efectivo
-    const cashMethods = selectedPaymentMethods.value.filter(pm => {
-        const method = availablePaymentMethods.value.find(m => m.id === pm.method_id);
+    const cashMethods = selectedPaymentMethods.value.filter((pm) => {
+        const method = availablePaymentMethods.value.find((m) => m.id === pm.method_id);
         return method && method.type === 'CASH';
     });
 
@@ -886,56 +872,58 @@ const validateSelectedPaymentMethods = () => {
     }
 
     // Validar sesión de caja para métodos que la requieren
-    const cashRegisterMethods = selectedPaymentMethods.value.filter(pm => {
-        const method = availablePaymentMethods.value.find(m => m.id === pm.method_id);
+    const cashRegisterMethods = selectedPaymentMethods.value.filter((pm) => {
+        const method = availablePaymentMethods.value.find((m) => m.id === pm.method_id);
         return method && method.requires_cash_register;
     });
 
     if (cashRegisterMethods.length > 0 && requiresCashSession.value && !hasActiveSession.value) {
         return { valid: false, message: 'Debe tener un turno de caja activo para procesar pagos en efectivo' };
-    };
+    }
 
     return { valid: true, message: 'Métodos de pago válidos' };
 };
 
 const openMultiplePaymentDialog = () => {
     // Buscar método de pago por defecto (Efectivo)
-    const cashMethod = availablePaymentMethods.value.find(pm => pm.type === 'CASH') || availablePaymentMethods.value[0] || {};
+    const cashMethod = availablePaymentMethods.value.find((pm) => pm.type === 'CASH') || availablePaymentMethods.value[0] || {};
 
-    selectedPaymentMethods.value = [{
-        method_id: cashMethod.id || null,
-        method_name: cashMethod.name || '',
-        amount: cartTotal.value,
-        reference: '',
-        requires_reference: cashMethod.requires_reference || false
-    }];
+    selectedPaymentMethods.value = [
+        {
+            method_id: cashMethod.id || null,
+            method_name: cashMethod.name || '',
+            amount: cartTotal.value,
+            reference: '',
+            requires_reference: cashMethod.requires_reference || false
+        }
+    ];
 
     showMultiplePaymentDialog.value = true;
 };
 
 const getPaymentMethodIcon = (methodId) => {
-    const method = availablePaymentMethods.value.find(pm => pm.id === methodId);
+    const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
     if (!method) return 'pi-circle';
 
     const iconMap = {
-        'CASH': 'pi-money-bill',
-        'CARD': 'pi-credit-card',
-        'TRANSFER': 'pi-send',
-        'CREDIT': 'pi-clock'
+        CASH: 'pi-money-bill',
+        CARD: 'pi-credit-card',
+        TRANSFER: 'pi-send',
+        CREDIT: 'pi-clock'
     };
 
     return iconMap[method.type] || 'pi-circle';
 };
 
 const getPaymentMethodColor = (methodId) => {
-    const method = availablePaymentMethods.value.find(pm => pm.id === methodId);
+    const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
     if (!method) return 'secondary';
 
     const colorMap = {
-        'CASH': 'success',
-        'CARD': 'info',
-        'TRANSFER': 'warning',
-        'CREDIT': 'secondary'
+        CASH: 'success',
+        CARD: 'info',
+        TRANSFER: 'warning',
+        CREDIT: 'secondary'
     };
 
     return colorMap[method.type] || 'secondary';
@@ -946,51 +934,80 @@ const getPaymentMethodColor = (methodId) => {
     <Toast />
     <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <!-- Header -->
-        <PosHeader :currentSessionInfo="currentSessionInfo" :selectedCustomer="selectedCustomer"
-            :cartItemsCount="cartItemsCount" @show-customer-dialog="showCustomerDialog = true"
-            @clear-customer="clearCustomer" @show-cart-summary="showCartSummary = true" />
+        <PosHeader
+            :currentSessionInfo="currentSessionInfo"
+            :selectedCustomer="selectedCustomer"
+            :cartItemsCount="cartItemsCount"
+            @show-customer-dialog="showCustomerDialog = true"
+            @clear-customer="clearCustomer"
+            @show-cart-summary="showCartSummary = true"
+        />
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <!-- Products Section -->
                 <div class="lg:col-span-3 space-y-6">
                     <!-- Search and Filters Panel -->
-                    <ProductSearch v-model:searchQuery="searchQuery" v-model:selectedWarehouse="selectedWarehouse"
-                        :isSearching="isSearching" :warehousesList="warehousesList"
-                        :isLoadingWarehouses="isLoadingWarehouses" :filteredProducts="filteredProducts"
-                        @search-products="searchProducts" />
+                    <ProductSearch
+                        v-model:searchQuery="searchQuery"
+                        v-model:selectedWarehouse="selectedWarehouse"
+                        :isSearching="isSearching"
+                        :warehousesList="warehousesList"
+                        :isLoadingWarehouses="isLoadingWarehouses"
+                        :filteredProducts="filteredProducts"
+                        @search-products="searchProducts"
+                    />
 
                     <!-- Products Grid -->
-                    <ProductGrid :isSearching="isSearching" :filteredProducts="filteredProducts"
-                        :searchQuery="searchQuery" :searchResults="searchResults" @add-to-cart="addToCart" />
+                    <ProductGrid :isSearching="isSearching" :filteredProducts="filteredProducts" :searchQuery="searchQuery" :searchResults="searchResults" @add-to-cart="addToCart" />
                 </div>
 
                 <!-- Cart Sidebar (Desktop) -->
-                <ShoppingCart :cart="cart" :cartItemsCount="cartItemsCount" :cartTotal="cartTotal"
-                    :canOperateWithoutSession="canOperateWithoutSession" :loading="loading"
-                    v-model:showCartSummary="showCartSummary" @remove-from-cart="removeFromCart"
-                    @update-quantity="updateQuantity" @clear-cart="clearCart"
-                    @open-multiple-payment-dialog="openMultiplePaymentDialog" />
+                <ShoppingCart
+                    :cart="cart"
+                    :cartItemsCount="cartItemsCount"
+                    :cartTotal="cartTotal"
+                    :canOperateWithoutSession="canOperateWithoutSession"
+                    :loading="loading"
+                    v-model:showCartSummary="showCartSummary"
+                    @remove-from-cart="removeFromCart"
+                    @update-quantity="updateQuantity"
+                    @clear-cart="clearCart"
+                    @open-multiple-payment-dialog="openMultiplePaymentDialog"
+                />
             </div>
         </div>
 
         <!-- Multiple Payment Methods Dialog -->
-        <PaymentDialog v-model:showMultiplePaymentDialog="showMultiplePaymentDialog" :cartTotal="cartTotal"
-            v-model:selectedPaymentMethods="selectedPaymentMethods" :availablePaymentMethods="availablePaymentMethods"
-            v-model:voucherType="voucherType" :availableVoucherTypes="availableVoucherTypes"
-            v-model:paymentStatus="paymentStatus" :loading="loading" @process-payment="processPayment"
-            :printVoucher="printVoucher" />
+        <PaymentDialog
+            v-model:showMultiplePaymentDialog="showMultiplePaymentDialog"
+            :cartTotal="cartTotal"
+            v-model:selectedPaymentMethods="selectedPaymentMethods"
+            :availablePaymentMethods="availablePaymentMethods"
+            v-model:voucherType="voucherType"
+            :availableVoucherTypes="availableVoucherTypes"
+            v-model:paymentStatus="paymentStatus"
+            :loading="loading"
+            @process-payment="processPayment"
+            :printVoucher="printVoucher"
+        />
 
         <!-- Batch Select Dialog -->
-        <BatchSelectDialog v-model:showBatchDialog="showBatchDialog" :selectedProductForBatch="selectedProductForBatch"
-            @select-batch="selectBatch" />
+        <BatchSelectDialog v-model:showBatchDialog="showBatchDialog" :selectedProductForBatch="selectedProductForBatch" @select-batch="selectBatch" />
 
         <!-- Customer Selection Dialog -->
-        <CustomerDialogs v-model:showCustomerDialog="showCustomerDialog"
-            v-model:showCreateCustomerDialog="showCreateCustomerDialog" v-model:customerSearch="customerSearch"
-            :customerResults="customerResults" :isSearchingCustomers="isSearchingCustomers"
-            v-model:newCustomer="newCustomer" :loading="loading" @search-customers="searchCustomersDebounced"
-            @select-customer="selectCustomer" @create-quick-customer="createQuickCustomer" />
+        <CustomerDialogs
+            v-model:showCustomerDialog="showCustomerDialog"
+            v-model:showCreateCustomerDialog="showCreateCustomerDialog"
+            v-model:customerSearch="customerSearch"
+            :customerResults="customerResults"
+            :isSearchingCustomers="isSearchingCustomers"
+            v-model:newCustomer="newCustomer"
+            :loading="loading"
+            @search-customers="searchCustomersDebounced"
+            @select-customer="selectCustomer"
+            @create-quick-customer="createQuickCustomer"
+        />
 
         <!-- Toast for notifications -->
         <Toast />
@@ -1011,7 +1028,6 @@ const getPaymentMethodColor = (methodId) => {
 
 /* Gradients and animations */
 @keyframes gradient-shift {
-
     0%,
     100% {
         background-position: 0% 50%;
@@ -1029,7 +1045,9 @@ const getPaymentMethodColor = (methodId) => {
 
 /* Enhanced hover effects */
 .hover-lift {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    transition:
+        transform 0.2s ease-in-out,
+        box-shadow 0.2s ease-in-out;
 }
 
 .hover-lift:hover {

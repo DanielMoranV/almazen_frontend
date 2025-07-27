@@ -1,99 +1,3 @@
-<template>
-    <div class="stock-toolbar">
-        <!-- Header compacto con título, estadísticas y filtros en una sola sección -->
-        <div class="toolbar-header">
-            <div class="header-backdrop"></div>
-            <div class="header-content">
-                <!-- Sección izquierda: Título y estadísticas -->
-                <div class="title-section">
-                    <div class="title-wrapper">
-                        <div class="icon-container">
-                            <i class="pi pi-chart-bar"></i>
-                        </div>
-                        <div class="title-text">
-                            <h1 class="page-title">Stock por Producto</h1>
-                            <p v-if="totalProducts > 0" class="subtitle">{{ totalProducts }} {{ totalProducts === 1 ? 'producto' : 'productos' }} • {{ totalQuantity }} unidades</p>
-                            <p v-else class="subtitle">No hay productos disponibles</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sección central: Filtros compactos -->
-                <div class="filters-section-compact">
-                    <div class="compact-filters">
-                        <!-- Filtro por almacén -->
-                        <Select 
-                            id="warehouse-filter"
-                            v-model="localWarehouseFilter" 
-                            :options="warehouseOptions" 
-                            optionLabel="label" 
-                            optionValue="value"
-                            placeholder="Almacén"
-                            class="filter-select-compact"
-                            @change="onFilterChange"
-                        />
-
-                        <!-- Filtro por estado de stock -->
-                        <Select 
-                            id="status-filter"
-                            v-model="localStockStatusFilter" 
-                            :options="stockStatusOptions" 
-                            optionLabel="label" 
-                            optionValue="value"
-                            placeholder="Estado"
-                            class="filter-select-compact"
-                            @change="onFilterChange"
-                        />
-
-                        <!-- Botón para limpiar filtros -->
-                        <Button 
-                            icon="pi pi-filter-slash" 
-                            outlined 
-                            @click="clearFilters"
-                            v-tooltip.bottom="'Limpiar filtros'"
-                            class="clear-filters-btn-compact"
-                            :disabled="!hasActiveFilters"
-                        />
-                    </div>
-                </div>
-
-                <!-- Sección derecha: Acciones -->
-                <div class="actions-section">
-                    <Button 
-                        icon="pi pi-refresh" 
-                        class="refresh-btn-compact" 
-                        :loading="isLoading" 
-                        @click="$emit('refresh')" 
-                        v-tooltip.bottom="'Actualizar stock'"
-                        :disabled="isLoading"
-                    />
-                </div>
-            </div>
-
-            <!-- Tags de filtros activos (solo si hay filtros) -->
-            <div v-if="hasActiveFilters" class="active-filters-compact">
-                <div class="filter-tags-compact">
-                    <span v-if="localWarehouseFilter" class="filter-tag-compact">
-                        <i class="pi pi-warehouse"></i>
-                        {{ getWarehouseLabel(localWarehouseFilter) }}
-                        <button @click="clearWarehouseFilter" class="tag-remove-compact">
-                            <i class="pi pi-times"></i>
-                        </button>
-                    </span>
-                    
-                    <span v-if="localStockStatusFilter" class="filter-tag-compact">
-                        <i class="pi pi-chart-bar"></i>
-                        {{ getStatusLabel(localStockStatusFilter) }}
-                        <button @click="clearStatusFilter" class="tag-remove-compact">
-                            <i class="pi pi-times"></i>
-                        </button>
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { InputText, Select, Button } from 'primevue';
@@ -122,9 +26,7 @@ const props = defineProps({
     },
     warehouseOptions: {
         type: Array,
-        default: () => [
-            { label: 'Todos los almacenes', value: null }
-        ]
+        default: () => [{ label: 'Todos los almacenes', value: null }]
     }
 });
 
@@ -148,13 +50,19 @@ const hasActiveFilters = computed(() => {
 });
 
 // Watchers para sincronizar con props
-watch(() => props.warehouseFilter, (newVal) => {
-    localWarehouseFilter.value = newVal;
-});
+watch(
+    () => props.warehouseFilter,
+    (newVal) => {
+        localWarehouseFilter.value = newVal;
+    }
+);
 
-watch(() => props.stockStatusFilter, (newVal) => {
-    localStockStatusFilter.value = newVal;
-});
+watch(
+    () => props.stockStatusFilter,
+    (newVal) => {
+        localStockStatusFilter.value = newVal;
+    }
+);
 
 // Métodos
 const onFilterChange = () => {
@@ -179,21 +87,87 @@ const clearFilters = () => {
 };
 
 const getWarehouseLabel = (value) => {
-    const option = props.warehouseOptions.find(opt => opt.value === value);
+    const option = props.warehouseOptions.find((opt) => opt.value === value);
     return option ? option.label : 'Desconocido';
 };
 
 const getStatusLabel = (value) => {
-    const option = stockStatusOptions.find(opt => opt.value === value);
+    const option = stockStatusOptions.find((opt) => opt.value === value);
     return option ? option.label : 'Desconocido';
 };
 </script>
+
+<template>
+    <div class="stock-toolbar">
+        <!-- Header compacto con título, estadísticas y filtros en una sola sección -->
+        <div class="toolbar-header">
+            <div class="header-backdrop"></div>
+            <div class="header-content">
+                <!-- Sección izquierda: Título y estadísticas -->
+                <div class="title-section">
+                    <div class="title-wrapper">
+                        <div class="icon-container">
+                            <i class="pi pi-chart-bar"></i>
+                        </div>
+                        <div class="title-text">
+                            <h1 class="page-title">Stock por Producto</h1>
+                            <p v-if="totalProducts > 0" class="subtitle">{{ totalProducts }} {{ totalProducts === 1 ? 'producto' : 'productos' }} • {{ totalQuantity }} unidades</p>
+                            <p v-else class="subtitle">No hay productos disponibles</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección central: Filtros compactos -->
+                <div class="filters-section-compact">
+                    <div class="compact-filters">
+                        <!-- Filtro por almacén -->
+                        <Select id="warehouse-filter" v-model="localWarehouseFilter" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Almacén" class="filter-select-compact" @change="onFilterChange" />
+
+                        <!-- Filtro por estado de stock -->
+                        <Select id="status-filter" v-model="localStockStatusFilter" :options="stockStatusOptions" optionLabel="label" optionValue="value" placeholder="Estado" class="filter-select-compact" @change="onFilterChange" />
+
+                        <!-- Botón para limpiar filtros -->
+                        <Button icon="pi pi-filter-slash" outlined @click="clearFilters" v-tooltip.bottom="'Limpiar filtros'" class="clear-filters-btn-compact" :disabled="!hasActiveFilters" />
+                    </div>
+                </div>
+
+                <!-- Sección derecha: Acciones -->
+                <div class="actions-section">
+                    <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar stock'" :disabled="isLoading" />
+                </div>
+            </div>
+
+            <!-- Tags de filtros activos (solo si hay filtros) -->
+            <div v-if="hasActiveFilters" class="active-filters-compact">
+                <div class="filter-tags-compact">
+                    <span v-if="localWarehouseFilter" class="filter-tag-compact">
+                        <i class="pi pi-warehouse"></i>
+                        {{ getWarehouseLabel(localWarehouseFilter) }}
+                        <button @click="clearWarehouseFilter" class="tag-remove-compact">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </span>
+
+                    <span v-if="localStockStatusFilter" class="filter-tag-compact">
+                        <i class="pi pi-chart-bar"></i>
+                        {{ getStatusLabel(localStockStatusFilter) }}
+                        <button @click="clearStatusFilter" class="tag-remove-compact">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
 <style scoped>
 /* Contenedor principal del toolbar con efecto de elevación */
 .stock-toolbar {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Encabezado del toolbar compacto */
@@ -207,10 +181,10 @@ const getStatusLabel = (value) => {
 /* Fondo decorativo con patrón */
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
-    background-image: 
-        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 50px 50px, 30px 30px;
+    background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        50px 50px,
+        30px 30px;
     animation: pattern-move 20s linear infinite;
 }
 
@@ -292,7 +266,8 @@ const getStatusLabel = (value) => {
 }
 
 /* Botones de exportar e imprimir con estilo outline */
-.export-btn, .print-btn {
+.export-btn,
+.print-btn {
     @apply bg-white/20 border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
@@ -300,10 +275,14 @@ const getStatusLabel = (value) => {
 /* Animación del patrón de fondo */
 @keyframes pattern-move {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 
@@ -484,9 +463,9 @@ const getStatusLabel = (value) => {
 /* Mejoras para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .stock-toolbar {
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
-
-
 </style>

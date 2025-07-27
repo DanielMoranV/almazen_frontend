@@ -161,7 +161,6 @@ export const processDataDatabaseShipmentsAll = (rows) => {
             admission_number: row[1],
             invoice_number: row[2],
             isNewShipment: row[3]?.toLowerCase() === 'no' ? true : row[3]?.toLowerCase() === 'si' ? false : null,
-            isNewShipment: false,
             trama_date: row[4] ? row[4] : null,
             courier_date: row[5] ? row[5] : null,
             email_verified_date: row[6] ? row[6] : null,
@@ -337,7 +336,7 @@ export const exportInventoryToExcel = async (summaryData, detailData, fileName =
     }
 
     // Aplicar estilo a los encabezados de ambas pestañas
-    [summarySheet, detailSheet].forEach(sheet => {
+    [summarySheet, detailSheet].forEach((sheet) => {
         sheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
             cell.font = { bold: true, color: { argb: 'FFFFFF' } };
             cell.fill = {

@@ -47,18 +47,18 @@ export const useDashboardStore = defineStore('dashboardStore', {
         getExpiringProducts: (state) => state.expiringProducts,
         getExpiringProductsSummary: (state) => state.expiringProductsSummary,
         isLoadingDashboard: (state) => state.isLoading,
-        
+
         // Computed getters for quick insights
         getTotalSalesGrowth: (state) => {
             const dailyAverage = state.metrics.sales_this_month / 30;
             return dailyAverage > 0 ? ((state.metrics.sales_today / dailyAverage) * 100).toFixed(1) : 0;
         },
-        
+
         getInventoryHealthScore: (state) => {
             const total = state.metrics.total_products;
             if (total === 0) return 100;
             const problematic = state.metrics.low_stock_count + state.metrics.out_of_stock_count;
-            return ((total - problematic) / total * 100).toFixed(1);
+            return (((total - problematic) / total) * 100).toFixed(1);
         }
     },
 
@@ -127,11 +127,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
             this.isLoading = true;
             try {
                 // Ejecutar todas las llamadas en paralelo para mejor performance
-                await Promise.allSettled([
-                    this.fetchDashboardMetrics(),
-                    this.fetchLowStockProducts(),
-                    this.fetchExpiringProducts()
-                ]);
+                await Promise.allSettled([this.fetchDashboardMetrics(), this.fetchLowStockProducts(), this.fetchExpiringProducts()]);
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
             } finally {

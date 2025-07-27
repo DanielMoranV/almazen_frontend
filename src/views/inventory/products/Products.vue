@@ -178,7 +178,9 @@ const showError = (summary, detail) => {
 /* Contenedor de tabla con efecto de elevación */
 .table-container {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Estado vacío mejorado con diseño centrado */
@@ -244,11 +246,13 @@ const showError = (summary, detail) => {
 }
 
 /* Animaciones de transición */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
     transition: opacity 0.5s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
     opacity: 0;
 }
 
@@ -263,7 +267,11 @@ const showError = (summary, detail) => {
 
 /* Animaciones de CSS */
 @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
         transform: translateY(0);
     }
     40% {
@@ -279,19 +287,19 @@ const showError = (summary, detail) => {
     .empty-content {
         @apply px-4 py-8;
     }
-    
+
     .empty-title {
         @apply text-2xl;
     }
-    
+
     .empty-description {
         @apply text-base;
     }
-    
+
     .empty-actions {
         @apply flex-col gap-3;
     }
-    
+
     .primary-action-btn,
     .secondary-action-btn {
         @apply w-full;
@@ -301,7 +309,9 @@ const showError = (summary, detail) => {
 /* Mejoras adicionales para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .table-container {
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
 </style>

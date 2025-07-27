@@ -1,165 +1,3 @@
-<template>
-    <Dialog v-model:visible="visible" :modal="true" :closable="true" header="Imprimir Orden de Compra" :style="{ width: '900px' }" @hide="onClose" :draggable="false">
-        <div ref="printSection" class="print-section">
-            <!-- Header de la empresa -->
-            <div class="company-header">
-                <h1 class="company-name">{{ user.company_name }}</h1>
-                <div class="company-details">
-                    <p v-if="user.company_address">{{ user.company_address }}</p>
-                    <p v-if="user.company_phone">Tel: {{ user.company_phone }}</p>
-                    <p v-if="user.company_email">Email: {{ user.company_email }}</p>
-                </div>
-            </div>
-
-            <!-- Título del documento -->
-            <div class="document-title">
-                <h2>ORDEN DE COMPRA</h2>
-                <div class="order-number">#{{ order.id }}</div>
-            </div>
-
-            <!-- Información principal en dos columnas -->
-            <div class="main-info">
-                <div class="info-column">
-                    <div class="info-group">
-                        <h3>Información del Proveedor</h3>
-                        <p><strong>Nombre:</strong> {{ order.provider?.name || 'N/A' }}</p>
-                        <p v-if="order.provider?.address"><strong>Dirección:</strong> {{ order.provider.address }}</p>
-                        <p v-if="order.provider?.phone"><strong>Teléfono:</strong> {{ order.provider.phone }}</p>
-                        <p v-if="order.provider?.email"><strong>Email:</strong> {{ order.provider.email }}</p>
-                    </div>
-                </div>
-
-                <div class="info-column">
-                    <div class="info-group">
-                        <h3>Información de la Orden</h3>
-                        <p><strong>Almacén:</strong> {{ order.warehouse?.name || 'N/A' }}</p>
-                        <p><strong>Fecha de Creación:</strong> {{ formatDate(order.created_at) }}</p>
-                        <p><strong>Fecha de Compra:</strong> {{ formatDate(order.purchase_date) }}</p>
-                        <p><strong>Documento:</strong> {{ order.document_number || 'N/A' }}</p>
-                        <p>
-                            <strong>Estado:</strong> <span :class="getStatusClass(order.status)">{{ getStatusLabel(order.status) }}</span>
-                        </p>
-                        <p><strong>Solicitado por:</strong> {{ order.user?.name || 'N/A' }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabla de productos -->
-            <div class="products-section">
-                <h3>Detalle de Productos</h3>
-                <table class="products-table">
-                    <thead>
-                        <tr>
-                            <th class="col-item">#</th>
-<th class="col-product">Producto</th>
-<th class="col-quantity">Cantidad</th>
-<th class="col-unit">Unidad</th>
-<th class="col-price">P. Unitario</th>
-<th class="col-price-no-igv">P. sin IGV</th>
-<th class="col-discount">Desc. Unitario</th>
-<th class="col-subtotal">Subtotal</th>
-<th class="col-subtotal-no-igv">Op. Gravadas</th>
-<th class="col-igv-total">IGV 18%</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(item, index) in order.details" :key="item.id">
-                            <td class="text-center">{{ index + 1 }}</td>
-                            <td>
-                                <div class="product-info">
-                                    <strong>{{ item.product?.name || 'Producto sin nombre' }}</strong>
-                                    <small v-if="item.product?.code" class="product-code">Código: {{ item.product.code }}</small>
-                                </div>
-                            </td>
-                            <td class="text-center">{{ formatNumber(item.quantity) }}</td>
-<td class="text-center">{{ item.product?.unit || 'UND' }}</td>
-<td class="text-right">{{ formatCurrency(item.unit_price) }}</td>
-<td class="text-right">{{ formatCurrency(getUnitPriceNoIGV(item)) }}</td>
-<td class="text-right">{{ formatCurrency(item.discount_amount) }}</td>
-<td class="text-right">{{ formatCurrency(getDetailSubtotal(item)) }}</td>
-<td class="text-right">{{ formatCurrency(getDetailSubtotalNoIGV(item)) }}</td>
-<td class="text-right">{{ formatCurrency(getDetailIGV(item)) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="discount-note" style="font-size: 0.95em; color: #888; margin-bottom: 1.5rem">
-    El subtotal ya incluye los descuentos unitarios aplicados por producto.<br>
-    Total descuentos: {{ formatCurrency(totalUnitDiscounts()) }}
-</div>
-
-            <!-- Resumen de totales -->
-            <div class="totals-section">
-                <div class="totals-container">
-                    <div class="total-line">
-    <span>Op. Gravadas:</span>
-    <span>{{ formatCurrency(calculateSubtotalNoIGV()) }}</span>
-</div>
-<div class="total-line">
-    <span>IGV 18%:</span>
-    <span>{{ formatCurrency(calculateTotalIGV()) }}</span>
-</div>
-<div class="total-line total-final">
-    <span><strong>TOTAL:</strong></span>
-    <span><strong>{{ formatCurrency(props.order.total_amount) }}</strong></span>
-</div>
-<div class="discount-note" style="font-size:0.95em; color:#888; margin-top:0.5rem;">
-    El IGV y el total han sido calculados automáticamente a partir de los precios con IGV incluido.
-</div>
-                </div>
-            </div>
-
-            <!-- Notas adicionales -->
-            <div class="notes-section" v-if="order.notes">
-                <h3>Observaciones</h3>
-                <p>{{ order.notes }}</p>
-            </div>
-
-            <!-- Footer -->
-            <div class="print-footer">
-                <div class="footer-info">
-                    <p><strong>Impreso por:</strong> {{ user.name }}</p>
-                    <p><strong>Fecha de impresión:</strong> {{ formatDate(new Date()) }}</p>
-                </div>
-                <div class="signatures">
-                    <div class="signature-box">
-                        <div class="signature-line"></div>
-                        <div class="signature-info">
-                            <p class="signature-role"><strong>Solicitado por:</strong></p>
-                            <p class="signature-name">{{ getRequestedBy() }}</p>
-                            <p class="signature-date">{{ getRequestedDate() }}</p>
-                        </div>
-                    </div>
-                    <div class="signature-box" v-if="order.status !== 'PENDIENTE' && hasApprovalData()">
-                        <div class="signature-line"></div>
-                        <div class="signature-info">
-                            <p class="signature-role"><strong>Aprobado por:</strong></p>
-                            <p class="signature-name">{{ getApprovedBy() }}</p>
-                            <p class="signature-date">{{ getApprovedDate() }}</p>
-                        </div>
-                    </div>
-                    <div class="signature-box" v-if="order.status === 'RECIBIDO'">
-                        <div class="signature-line"></div>
-                        <div class="signature-info">
-                            <p class="signature-role"><strong>Recibido por:</strong></p>
-                            <p class="signature-name">{{ getReceivedBy() }}</p>
-                            <p class="signature-date">{{ getReceivedDate() }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <template #footer>
-            <div class="dialog-footer">
-                <Button label="Vista Previa" icon="pi pi-eye" @click="handlePreview" class="p-button-outlined" />
-                <Button label="Imprimir" icon="pi pi-print" @click="handlePrint" class="p-button-success" />
-                <Button label="Cerrar" icon="pi pi-times" @click="onClose" class="p-button-text" />
-            </div>
-        </template>
-    </Dialog>
-</template>
-
 <script setup>
 import { ref, defineProps, defineEmits, computed } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
@@ -424,6 +262,168 @@ function formatDateOnly(value) {
     }).format(new Date(value));
 }
 </script>
+
+<template>
+    <Dialog v-model:visible="visible" :modal="true" :closable="true" header="Imprimir Orden de Compra" :style="{ width: '900px' }" @hide="onClose" :draggable="false">
+        <div ref="printSection" class="print-section">
+            <!-- Header de la empresa -->
+            <div class="company-header">
+                <h1 class="company-name">{{ user.company_name }}</h1>
+                <div class="company-details">
+                    <p v-if="user.company_address">{{ user.company_address }}</p>
+                    <p v-if="user.company_phone">Tel: {{ user.company_phone }}</p>
+                    <p v-if="user.company_email">Email: {{ user.company_email }}</p>
+                </div>
+            </div>
+
+            <!-- Título del documento -->
+            <div class="document-title">
+                <h2>ORDEN DE COMPRA</h2>
+                <div class="order-number">#{{ order.id }}</div>
+            </div>
+
+            <!-- Información principal en dos columnas -->
+            <div class="main-info">
+                <div class="info-column">
+                    <div class="info-group">
+                        <h3>Información del Proveedor</h3>
+                        <p><strong>Nombre:</strong> {{ order.provider?.name || 'N/A' }}</p>
+                        <p v-if="order.provider?.address"><strong>Dirección:</strong> {{ order.provider.address }}</p>
+                        <p v-if="order.provider?.phone"><strong>Teléfono:</strong> {{ order.provider.phone }}</p>
+                        <p v-if="order.provider?.email"><strong>Email:</strong> {{ order.provider.email }}</p>
+                    </div>
+                </div>
+
+                <div class="info-column">
+                    <div class="info-group">
+                        <h3>Información de la Orden</h3>
+                        <p><strong>Almacén:</strong> {{ order.warehouse?.name || 'N/A' }}</p>
+                        <p><strong>Fecha de Creación:</strong> {{ formatDate(order.created_at) }}</p>
+                        <p><strong>Fecha de Compra:</strong> {{ formatDate(order.purchase_date) }}</p>
+                        <p><strong>Documento:</strong> {{ order.document_number || 'N/A' }}</p>
+                        <p>
+                            <strong>Estado:</strong> <span :class="getStatusClass(order.status)">{{ getStatusLabel(order.status) }}</span>
+                        </p>
+                        <p><strong>Solicitado por:</strong> {{ order.user?.name || 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="products-section">
+                <h3>Detalle de Productos</h3>
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th class="col-item">#</th>
+                            <th class="col-product">Producto</th>
+                            <th class="col-quantity">Cantidad</th>
+                            <th class="col-unit">Unidad</th>
+                            <th class="col-price">P. Unitario</th>
+                            <th class="col-price-no-igv">P. sin IGV</th>
+                            <th class="col-discount">Desc. Unitario</th>
+                            <th class="col-subtotal">Subtotal</th>
+                            <th class="col-subtotal-no-igv">Op. Gravadas</th>
+                            <th class="col-igv-total">IGV 18%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in order.details" :key="item.id">
+                            <td class="text-center">{{ index + 1 }}</td>
+                            <td>
+                                <div class="product-info">
+                                    <strong>{{ item.product?.name || 'Producto sin nombre' }}</strong>
+                                    <small v-if="item.product?.code" class="product-code">Código: {{ item.product.code }}</small>
+                                </div>
+                            </td>
+                            <td class="text-center">{{ formatNumber(item.quantity) }}</td>
+                            <td class="text-center">{{ item.product?.unit || 'UND' }}</td>
+                            <td class="text-right">{{ formatCurrency(item.unit_price) }}</td>
+                            <td class="text-right">{{ formatCurrency(getUnitPriceNoIGV(item)) }}</td>
+                            <td class="text-right">{{ formatCurrency(item.discount_amount) }}</td>
+                            <td class="text-right">{{ formatCurrency(getDetailSubtotal(item)) }}</td>
+                            <td class="text-right">{{ formatCurrency(getDetailSubtotalNoIGV(item)) }}</td>
+                            <td class="text-right">{{ formatCurrency(getDetailIGV(item)) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="discount-note" style="font-size: 0.95em; color: #888; margin-bottom: 1.5rem">
+                El subtotal ya incluye los descuentos unitarios aplicados por producto.<br />
+                Total descuentos: {{ formatCurrency(totalUnitDiscounts()) }}
+            </div>
+
+            <!-- Resumen de totales -->
+            <div class="totals-section">
+                <div class="totals-container">
+                    <div class="total-line">
+                        <span>Op. Gravadas:</span>
+                        <span>{{ formatCurrency(calculateSubtotalNoIGV()) }}</span>
+                    </div>
+                    <div class="total-line">
+                        <span>IGV 18%:</span>
+                        <span>{{ formatCurrency(calculateTotalIGV()) }}</span>
+                    </div>
+                    <div class="total-line total-final">
+                        <span><strong>TOTAL:</strong></span>
+                        <span
+                            ><strong>{{ formatCurrency(props.order.total_amount) }}</strong></span
+                        >
+                    </div>
+                    <div class="discount-note" style="font-size: 0.95em; color: #888; margin-top: 0.5rem">El IGV y el total han sido calculados automáticamente a partir de los precios con IGV incluido.</div>
+                </div>
+            </div>
+
+            <!-- Notas adicionales -->
+            <div class="notes-section" v-if="order.notes">
+                <h3>Observaciones</h3>
+                <p>{{ order.notes }}</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="print-footer">
+                <div class="footer-info">
+                    <p><strong>Impreso por:</strong> {{ user.name }}</p>
+                    <p><strong>Fecha de impresión:</strong> {{ formatDate(new Date()) }}</p>
+                </div>
+                <div class="signatures">
+                    <div class="signature-box">
+                        <div class="signature-line"></div>
+                        <div class="signature-info">
+                            <p class="signature-role"><strong>Solicitado por:</strong></p>
+                            <p class="signature-name">{{ getRequestedBy() }}</p>
+                            <p class="signature-date">{{ getRequestedDate() }}</p>
+                        </div>
+                    </div>
+                    <div class="signature-box" v-if="order.status !== 'PENDIENTE' && hasApprovalData()">
+                        <div class="signature-line"></div>
+                        <div class="signature-info">
+                            <p class="signature-role"><strong>Aprobado por:</strong></p>
+                            <p class="signature-name">{{ getApprovedBy() }}</p>
+                            <p class="signature-date">{{ getApprovedDate() }}</p>
+                        </div>
+                    </div>
+                    <div class="signature-box" v-if="order.status === 'RECIBIDO'">
+                        <div class="signature-line"></div>
+                        <div class="signature-info">
+                            <p class="signature-role"><strong>Recibido por:</strong></p>
+                            <p class="signature-name">{{ getReceivedBy() }}</p>
+                            <p class="signature-date">{{ getReceivedDate() }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="dialog-footer">
+                <Button label="Vista Previa" icon="pi pi-eye" @click="handlePreview" class="p-button-outlined" />
+                <Button label="Imprimir" icon="pi pi-print" @click="handlePrint" class="p-button-success" />
+                <Button label="Cerrar" icon="pi pi-times" @click="onClose" class="p-button-text" />
+            </div>
+        </template>
+    </Dialog>
+</template>
 
 <style scoped>
 .print-section {

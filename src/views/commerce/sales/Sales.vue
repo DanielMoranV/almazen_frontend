@@ -130,17 +130,10 @@ const showError = (summary, detail) => {
         <ConfirmDialog />
 
         <!-- Toolbar Principal -->
-        <SalesToolbar :total-sales="totalSales" :is-loading="isLoading" @refresh="handleRefresh"
-            @create="openCreateDialog" />
+        <SalesToolbar :total-sales="totalSales" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
 
         <!-- Filtros de Búsqueda -->
-        <SalesFilters 
-            :filters="salesStore.filters" 
-            :loading="isLoading"
-            @update:filters="handleFilterUpdate"
-            @clear="handleClearFilters"
-            @search="() => salesStore.applyLocalFilters()"
-        />
+        <SalesFilters :filters="salesStore.filters" :loading="isLoading" @update:filters="handleFilterUpdate" @clear="handleClearFilters" @search="() => salesStore.applyLocalFilters()" />
 
         <!-- Área Principal de Contenido -->
         <div class="content-wrapper">
@@ -155,14 +148,16 @@ const showError = (summary, detail) => {
                             {{ salesStore.getCurrentSearchTerm ? 'No se encontraron ventas' : 'Aún no tienes ventas' }}
                         </h3>
                         <p class="empty-description">
-                            {{ salesStore.getCurrentSearchTerm ? `Intenta con otros términos de búsqueda o limpia los
-                            filtros.` : `Crea tu primera venta para empezar a gestionar las transacciones.` }}
+                            {{
+                                salesStore.getCurrentSearchTerm
+                                    ? `Intenta con otros términos de búsqueda o limpia los
+                            filtros.`
+                                    : `Crea tu primera venta para empezar a gestionar las transacciones.`
+                            }}
                         </p>
                         <div class="empty-actions">
-                            <Button v-if="!salesStore.getCurrentSearchTerm" icon="pi pi-plus" label="Nueva Venta"
-                                class="primary-action-btn" @click="openCreateDialog" />
-                            <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="secondary-action-btn"
-                                @click="salesStore.clearSearch && salesStore.clearSearch()" />
+                            <Button v-if="!salesStore.getCurrentSearchTerm" icon="pi pi-plus" label="Nueva Venta" class="primary-action-btn" @click="openCreateDialog" />
+                            <Button v-else icon="pi pi-times" label="Limpiar Búsqueda" class="secondary-action-btn" @click="salesStore.clearSearch && salesStore.clearSearch()" />
                         </div>
                     </div>
                 </div>
@@ -171,12 +166,7 @@ const showError = (summary, detail) => {
             <!-- Tabla de Ventas -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasSales" class="table-container">
-                    <SalesTable 
-                        :sales="salesStore.salesList" 
-                        :loading="isLoading" 
-                        @edit="openEditDialog"
-                        @delete="openDeleteDialog" 
-                    />
+                    <SalesTable :sales="salesStore.salesList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
                 </div>
             </transition>
 
@@ -184,8 +174,7 @@ const showError = (summary, detail) => {
             <transition name="fade" appear>
                 <div v-if="isLoading" class="loading-state">
                     <div class="loading-content">
-                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent"
-                            animationDuration="1s" />
+                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
                         <p class="loading-text">Cargando ventas...</p>
                     </div>
                 </div>
@@ -193,11 +182,9 @@ const showError = (summary, detail) => {
         </div>
 
         <!-- Diálogos -->
-        <SaleFormDialog v-model:visible="showSaleDialog" :sale="selectedSale" :loading="isLoading"
-            @submit="handleSaleSubmit" />
+        <SaleFormDialog v-model:visible="showSaleDialog" :sale="selectedSale" :loading="isLoading" @submit="handleSaleSubmit" />
 
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog"
-            :item-name="selectedSale?.document_number || `Venta #${selectedSale?.id}`" @confirm="handleSaleDelete" />
+        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedSale?.document_number || `Venta #${selectedSale?.id}`" @confirm="handleSaleDelete" />
     </div>
 </template>
 
@@ -215,7 +202,9 @@ const showError = (summary, detail) => {
 /* Contenedor de tabla con efecto de elevación */
 .table-container {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Estado vacío mejorado con diseño centrado */
@@ -302,7 +291,6 @@ const showError = (summary, detail) => {
 
 /* Animaciones de CSS */
 @keyframes bounce {
-
     0%,
     20%,
     50%,
@@ -347,7 +335,9 @@ const showError = (summary, detail) => {
 /* Mejoras adicionales para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .table-container {
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
 </style>

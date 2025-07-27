@@ -1,140 +1,3 @@
-<template>
-    <div class="stock-statistics">
-        <div class="stats-grid">
-            <!-- Total Productos -->
-            <div class="stat-card primary">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="pi pi-box"></i>
-                    </div>
-                    <div class="stat-trend positive" v-if="!loading">
-                        <i class="pi pi-arrow-up"></i>
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <div 
-                        class="stat-value" 
-                        v-tooltip.top="loading ? '' : `Total exacto: ${totalProducts.toLocaleString()} productos`"
-                    >
-                        {{ loading ? '...' : formatCompactNumber(totalProducts) }}
-                    </div>
-                    <div class="stat-label">Total Productos</div>
-                </div>
-            </div>
-
-            <!-- Cantidad Total -->
-            <div class="stat-card success">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="pi pi-chart-bar"></i>
-                    </div>
-                    <div class="stat-trend positive" v-if="!loading">
-                        <i class="pi pi-arrow-up"></i>
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <div 
-                        class="stat-value" 
-                        v-tooltip.top="loading ? '' : `Stock exacto: ${totalQuantity.toLocaleString()} unidades`"
-                    >
-                        {{ loading ? '...' : formatCompactNumber(totalQuantity) }}
-                    </div>
-                    <div class="stat-label">Stock Total</div>
-                    <div class="stat-sublabel">unidades</div>
-                </div>
-            </div>
-
-            <!-- Stock Bajo -->
-            <div class="stat-card warning">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="pi pi-exclamation-triangle"></i>
-                    </div>
-                    <div class="stat-trend warning" v-if="!loading && lowStockProducts > 0">
-                        <i class="pi pi-exclamation-circle"></i>
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <div 
-                        class="stat-value" 
-                        v-tooltip.top="loading ? '' : `${lowStockProducts.toLocaleString()} productos con stock bajo`"
-                    >
-                        {{ loading ? '...' : formatCompactNumber(lowStockProducts) }}
-                    </div>
-                    <div class="stat-label">Stock Bajo</div>
-                    <div class="stat-sublabel">productos</div>
-                </div>
-            </div>
-
-            <!-- Agotados -->
-            <div class="stat-card danger">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="pi pi-times-circle"></i>
-                    </div>
-                    <div class="stat-trend danger" v-if="!loading && outOfStockProducts > 0">
-                        <i class="pi pi-ban"></i>
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <div 
-                        class="stat-value" 
-                        v-tooltip.top="loading ? '' : `${outOfStockProducts.toLocaleString()} productos agotados`"
-                    >
-                        {{ loading ? '...' : formatCompactNumber(outOfStockProducts) }}
-                    </div>
-                    <div class="stat-label">Agotados</div>
-                    <div class="stat-sublabel">productos</div>
-                </div>
-            </div>
-
-            <!-- Valor Total Costo -->
-            <div class="stat-card info">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="pi pi-dollar"></i>
-                    </div>
-                    <div class="stat-trend neutral" v-if="!loading">
-                        <i class="pi pi-minus"></i>
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <div 
-                        class="stat-value" 
-                        v-tooltip.top="loading ? '' : `Valor exacto: ${formatCurrency(totalCostValue, true)}`"
-                    >
-                        {{ loading ? '...' : formatCompactCurrency(totalCostValue) }}
-                    </div>
-                    <div class="stat-label">Valor Costo</div>
-                    <div class="stat-sublabel">total inventario</div>
-                </div>
-            </div>
-
-            <!-- Valor Total Venta -->
-            <div class="stat-card secondary">
-                <div class="stat-header">
-                    <div class="stat-icon">
-                        <i class="pi pi-money-bill"></i>
-                    </div>
-                    <div class="stat-trend positive" v-if="!loading">
-                        <i class="pi pi-plus"></i>
-                    </div>
-                </div>
-                <div class="stat-content">
-                    <div 
-                        class="stat-value" 
-                        v-tooltip.top="loading ? '' : `Valor exacto: ${formatCurrency(totalSaleValue, true)}`"
-                    >
-                        {{ loading ? '...' : formatCompactCurrency(totalSaleValue) }}
-                    </div>
-                    <div class="stat-label">Valor Venta</div>
-                    <div class="stat-sublabel">total inventario</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { computed } from 'vue';
 
@@ -184,7 +47,7 @@ const formatCurrency = (value, detailed = false) => {
 // Función para formatear números grandes de forma compacta
 const formatCompactNumber = (value) => {
     if (!value || value === 0) return '0';
-    
+
     if (value >= 1000000) {
         return (value / 1000000).toFixed(1) + 'M';
     } else if (value >= 1000) {
@@ -196,7 +59,7 @@ const formatCompactNumber = (value) => {
 // Función para formatear monedas de forma compacta
 const formatCompactCurrency = (value) => {
     if (!value || value === 0) return 'S/ 0';
-    
+
     if (value >= 1000000) {
         return `S/ ${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
@@ -205,6 +68,125 @@ const formatCompactCurrency = (value) => {
     return `S/ ${value.toLocaleString('es-PE', { maximumFractionDigits: 0 })}`;
 };
 </script>
+
+<template>
+    <div class="stock-statistics">
+        <div class="stats-grid">
+            <!-- Total Productos -->
+            <div class="stat-card primary">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="pi pi-box"></i>
+                    </div>
+                    <div class="stat-trend positive" v-if="!loading">
+                        <i class="pi pi-arrow-up"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" v-tooltip.top="loading ? '' : `Total exacto: ${totalProducts.toLocaleString()} productos`">
+                        {{ loading ? '...' : formatCompactNumber(totalProducts) }}
+                    </div>
+                    <div class="stat-label">Total Productos</div>
+                </div>
+            </div>
+
+            <!-- Cantidad Total -->
+            <div class="stat-card success">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="pi pi-chart-bar"></i>
+                    </div>
+                    <div class="stat-trend positive" v-if="!loading">
+                        <i class="pi pi-arrow-up"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" v-tooltip.top="loading ? '' : `Stock exacto: ${totalQuantity.toLocaleString()} unidades`">
+                        {{ loading ? '...' : formatCompactNumber(totalQuantity) }}
+                    </div>
+                    <div class="stat-label">Stock Total</div>
+                    <div class="stat-sublabel">unidades</div>
+                </div>
+            </div>
+
+            <!-- Stock Bajo -->
+            <div class="stat-card warning">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="pi pi-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-trend warning" v-if="!loading && lowStockProducts > 0">
+                        <i class="pi pi-exclamation-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" v-tooltip.top="loading ? '' : `${lowStockProducts.toLocaleString()} productos con stock bajo`">
+                        {{ loading ? '...' : formatCompactNumber(lowStockProducts) }}
+                    </div>
+                    <div class="stat-label">Stock Bajo</div>
+                    <div class="stat-sublabel">productos</div>
+                </div>
+            </div>
+
+            <!-- Agotados -->
+            <div class="stat-card danger">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="pi pi-times-circle"></i>
+                    </div>
+                    <div class="stat-trend danger" v-if="!loading && outOfStockProducts > 0">
+                        <i class="pi pi-ban"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" v-tooltip.top="loading ? '' : `${outOfStockProducts.toLocaleString()} productos agotados`">
+                        {{ loading ? '...' : formatCompactNumber(outOfStockProducts) }}
+                    </div>
+                    <div class="stat-label">Agotados</div>
+                    <div class="stat-sublabel">productos</div>
+                </div>
+            </div>
+
+            <!-- Valor Total Costo -->
+            <div class="stat-card info">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="pi pi-dollar"></i>
+                    </div>
+                    <div class="stat-trend neutral" v-if="!loading">
+                        <i class="pi pi-minus"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" v-tooltip.top="loading ? '' : `Valor exacto: ${formatCurrency(totalCostValue, true)}`">
+                        {{ loading ? '...' : formatCompactCurrency(totalCostValue) }}
+                    </div>
+                    <div class="stat-label">Valor Costo</div>
+                    <div class="stat-sublabel">total inventario</div>
+                </div>
+            </div>
+
+            <!-- Valor Total Venta -->
+            <div class="stat-card secondary">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="pi pi-money-bill"></i>
+                    </div>
+                    <div class="stat-trend positive" v-if="!loading">
+                        <i class="pi pi-plus"></i>
+                    </div>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" v-tooltip.top="loading ? '' : `Valor exacto: ${formatCurrency(totalSaleValue, true)}`">
+                        {{ loading ? '...' : formatCompactCurrency(totalSaleValue) }}
+                    </div>
+                    <div class="stat-label">Valor Venta</div>
+                    <div class="stat-sublabel">total inventario</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
 <style scoped>
 .stock-statistics {
@@ -356,16 +338,16 @@ const formatCompactCurrency = (value) => {
         grid-template-columns: repeat(3, 1fr);
         gap: 0.875rem;
     }
-    
+
     .stat-card {
         padding: 0.875rem;
         min-height: 110px;
     }
-    
+
     .stat-icon {
         @apply w-8 h-8 text-sm;
     }
-    
+
     .stat-value {
         font-size: 1.375rem;
     }
@@ -376,7 +358,7 @@ const formatCompactCurrency = (value) => {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 1rem;
     }
-    
+
     .stat-card {
         padding: 1rem;
         min-height: 120px;
@@ -404,7 +386,7 @@ const formatCompactCurrency = (value) => {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 0.75rem;
     }
-    
+
     .stat-card {
         padding: 0.875rem;
         min-height: 110px;
@@ -432,7 +414,7 @@ const formatCompactCurrency = (value) => {
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
     }
-    
+
     .stat-card {
         padding: 0.75rem;
         min-height: 100px;
@@ -459,7 +441,7 @@ const formatCompactCurrency = (value) => {
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stat-card {
         min-height: 90px;
     }
@@ -481,12 +463,24 @@ const formatCompactCurrency = (value) => {
     animation: fadeInUp 0.6s ease-out;
 }
 
-.stat-card:nth-child(1) { animation-delay: 0.1s; }
-.stat-card:nth-child(2) { animation-delay: 0.2s; }
-.stat-card:nth-child(3) { animation-delay: 0.3s; }
-.stat-card:nth-child(4) { animation-delay: 0.4s; }
-.stat-card:nth-child(5) { animation-delay: 0.5s; }
-.stat-card:nth-child(6) { animation-delay: 0.6s; }
+.stat-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+.stat-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+.stat-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+.stat-card:nth-child(4) {
+    animation-delay: 0.4s;
+}
+.stat-card:nth-child(5) {
+    animation-delay: 0.5s;
+}
+.stat-card:nth-child(6) {
+    animation-delay: 0.6s;
+}
 
 /* Efectos hover mejorados */
 .stat-card:hover {

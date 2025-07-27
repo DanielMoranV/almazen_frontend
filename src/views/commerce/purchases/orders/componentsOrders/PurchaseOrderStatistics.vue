@@ -682,7 +682,7 @@ const props = defineProps({
     .stats-container {
         gap: 1rem;
     }
-    
+
     .all-stats {
         grid-template-columns: repeat(2, 1fr);
     }

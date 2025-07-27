@@ -106,7 +106,7 @@ const handleDelete = async () => {
 
 const showErrors = () => {
     if (cashRegistersStore.validationErrors.length) {
-        cashRegistersStore.validationErrors.forEach(err => toast.add({ severity: 'error', summary: 'Validación', detail: err, life: 4000 }));
+        cashRegistersStore.validationErrors.forEach((err) => toast.add({ severity: 'error', summary: 'Validación', detail: err, life: 4000 }));
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: cashRegistersStore.message || 'Ocurrió un error', life: 4000 });
     }
@@ -165,7 +165,13 @@ const showErrors = () => {
     </div>
 
     <!-- Form Dialog -->
-    <Dialog v-model:visible="showFormDialog" :header="isCreating ? 'Nueva Caja Registradora' : 'Editar Caja Registradora'" :modal="true" :style="{ width: '600px' }" :pt="{ header: 'bg-gradient-to-r from-amber-600 to-yellow-500 text-white', content: 'p-6' }">
+    <Dialog
+        v-model:visible="showFormDialog"
+        :header="isCreating ? 'Nueva Caja Registradora' : 'Editar Caja Registradora'"
+        :modal="true"
+        :style="{ width: '600px' }"
+        :pt="{ header: 'bg-gradient-to-r from-amber-600 to-yellow-500 text-white', content: 'p-6' }"
+    >
         <div class="space-y-4">
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-2">Nombre *</label>
@@ -201,7 +207,7 @@ const showErrors = () => {
         </div>
         <template #footer>
             <div class="flex justify-end space-x-3">
-                <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="showFormDialog=false" />
+                <Button label="Cancelar" icon="pi pi-times" severity="secondary" outlined @click="showFormDialog = false" />
                 <Button :label="isCreating ? 'Crear' : 'Actualizar'" icon="pi pi-check" severity="success" @click="handleSubmit" :loading="isLoading" />
             </div>
         </template>
@@ -212,6 +218,12 @@ const showErrors = () => {
 </template>
 
 <style scoped>
-.grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-.col-12 { grid-column: span 12; }
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+.col-12 {
+    grid-column: span 12;
+}
 </style>

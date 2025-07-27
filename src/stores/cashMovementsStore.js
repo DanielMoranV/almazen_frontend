@@ -1,7 +1,4 @@
-import {
-    fetchCashMovements,
-    getCashMovement
-} from '@/api';
+import { fetchCashMovements, getCashMovement } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
 
@@ -48,17 +45,14 @@ export const useCashMovementsStore = defineStore('cashMovementsStore', {
         movementsSummary: (state) => state.summary,
 
         // Movimientos por tipo
-        salesMovements: (state) => state.movements.filter(m => m.type === 'SALE'),
-        expenseMovements: (state) => state.movements.filter(m => m.type === 'EXPENSE'),
-        withdrawalMovements: (state) => state.movements.filter(m => m.type === 'WITHDRAWAL'),
-        depositMovements: (state) => state.movements.filter(m => m.type === 'DEPOSIT'),
-        adjustmentMovements: (state) => state.movements.filter(m => m.type === 'ADJUSTMENT'),
+        salesMovements: (state) => state.movements.filter((m) => m.type === 'SALE'),
+        expenseMovements: (state) => state.movements.filter((m) => m.type === 'EXPENSE'),
+        withdrawalMovements: (state) => state.movements.filter((m) => m.type === 'WITHDRAWAL'),
+        depositMovements: (state) => state.movements.filter((m) => m.type === 'DEPOSIT'),
+        adjustmentMovements: (state) => state.movements.filter((m) => m.type === 'ADJUSTMENT'),
 
         hasActiveFilters: (state) => {
-            return state.filters.cash_session_id ||
-                state.filters.type ||
-                state.filters.date_from ||
-                state.filters.date_to;
+            return state.filters.cash_session_id || state.filters.type || state.filters.date_from || state.filters.date_to;
         }
     },
 
@@ -76,9 +70,7 @@ export const useCashMovementsStore = defineStore('cashMovementsStore', {
                     per_page: params.per_page || this.pagination.perPage
                 };
                 // Remove empty or null filters to avoid 422 backend validation errors
-                finalParams = Object.fromEntries(
-                    Object.entries(finalParams).filter(([, value]) => value !== null && value !== '' && value !== undefined)
-                );
+                finalParams = Object.fromEntries(Object.entries(finalParams).filter(([, value]) => value !== null && value !== '' && value !== undefined));
 
                 const res = await fetchCashMovements(finalParams);
                 console.log('res', res);
@@ -208,11 +200,11 @@ export const useCashMovementsStore = defineStore('cashMovementsStore', {
          */
         formatMovementType(type) {
             const types = {
-                'SALE': 'Venta',
-                'EXPENSE': 'Gasto',
-                'WITHDRAWAL': 'Retiro',
-                'DEPOSIT': 'Depósito',
-                'ADJUSTMENT': 'Ajuste'
+                SALE: 'Venta',
+                EXPENSE: 'Gasto',
+                WITHDRAWAL: 'Retiro',
+                DEPOSIT: 'Depósito',
+                ADJUSTMENT: 'Ajuste'
             };
             return types[type] || type;
         },
@@ -222,11 +214,11 @@ export const useCashMovementsStore = defineStore('cashMovementsStore', {
          */
         getMovementTypeColor(type) {
             const colors = {
-                'SALE': 'success',
-                'EXPENSE': 'danger',
-                'WITHDRAWAL': 'warning',
-                'DEPOSIT': 'info',
-                'ADJUSTMENT': 'secondary'
+                SALE: 'success',
+                EXPENSE: 'danger',
+                WITHDRAWAL: 'warning',
+                DEPOSIT: 'info',
+                ADJUSTMENT: 'secondary'
             };
             return colors[type] || 'secondary';
         },
@@ -236,11 +228,11 @@ export const useCashMovementsStore = defineStore('cashMovementsStore', {
          */
         getMovementTypeIcon(type) {
             const icons = {
-                'SALE': 'pi-shopping-cart',
-                'EXPENSE': 'pi-minus-circle',
-                'WITHDRAWAL': 'pi-arrow-up',
-                'DEPOSIT': 'pi-arrow-down',
-                'ADJUSTMENT': 'pi-refresh'
+                SALE: 'pi-shopping-cart',
+                EXPENSE: 'pi-minus-circle',
+                WITHDRAWAL: 'pi-arrow-up',
+                DEPOSIT: 'pi-arrow-down',
+                ADJUSTMENT: 'pi-refresh'
             };
             return icons[type] || 'pi-circle';
         },
@@ -249,24 +241,21 @@ export const useCashMovementsStore = defineStore('cashMovementsStore', {
          * Calcula total de ingresos (ventas + depósitos)
          */
         getTotalIncome() {
-            return (parseFloat(this.summary.sales_amount) || 0) +
-                (parseFloat(this.summary.deposits_amount) || 0);
+            return (parseFloat(this.summary.sales_amount) || 0) + (parseFloat(this.summary.deposits_amount) || 0);
         },
 
         /**
          * Calcula total de egresos (gastos + retiros)
          */
         getTotalOutcome() {
-            return (parseFloat(this.summary.expenses_amount) || 0) +
-                (parseFloat(this.summary.withdrawals_amount) || 0);
+            return (parseFloat(this.summary.expenses_amount) || 0) + (parseFloat(this.summary.withdrawals_amount) || 0);
         },
 
         /**
          * Calcula el balance neto
          */
         getNetBalance() {
-            return this.getTotalIncome() - this.getTotalOutcome() +
-                (parseFloat(this.summary.adjustments_amount) || 0);
+            return this.getTotalIncome() - this.getTotalOutcome() + (parseFloat(this.summary.adjustments_amount) || 0);
         }
     }
 });

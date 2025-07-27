@@ -1,3 +1,153 @@
+<script setup>
+import { Button, DatePicker, Select } from 'primevue';
+import { computed, ref, watch } from 'vue';
+
+const props = defineProps({
+    totalMovements: {
+        type: Number,
+        default: 0
+    },
+    totalEntries: {
+        type: Number,
+        default: 0
+    },
+    totalExits: {
+        type: Number,
+        default: 0
+    },
+    isLoading: {
+        type: Boolean,
+        default: false
+    },
+    typeFilter: {
+        type: String,
+        default: null
+    },
+    warehouseFilter: {
+        type: [String, Number],
+        default: null
+    },
+    dateFromFilter: {
+        type: Date,
+        default: null
+    },
+    dateToFilter: {
+        type: Date,
+        default: null
+    },
+    warehouseOptions: {
+        type: Array,
+        default: () => [{ label: 'Todos los almacenes', value: null }]
+    }
+});
+
+const emit = defineEmits(['refresh', 'update:typeFilter', 'update:warehouseFilter', 'update:dateFromFilter', 'update:dateToFilter', 'clear-filters']);
+
+// Estado local para los filtros
+const localTypeFilter = ref(props.typeFilter);
+const localWarehouseFilter = ref(props.warehouseFilter);
+const localDateFromFilter = ref(props.dateFromFilter);
+const localDateToFilter = ref(props.dateToFilter);
+
+// Opciones para el filtro de tipo de movimiento
+const typeOptions = [
+    { label: 'Todos los tipos', value: null },
+    { label: 'Entradas', value: 'ENTRADA' },
+    { label: 'Salidas', value: 'SALIDA' },
+    { label: 'Ajustes', value: 'AJUSTE' },
+    { label: 'Transferencias', value: 'TRANSFERENCIA' }
+];
+
+// Computed para verificar si hay filtros activos
+const hasActiveFilters = computed(() => {
+    return localTypeFilter.value || localWarehouseFilter.value || localDateFromFilter.value || localDateToFilter.value;
+});
+
+// Watchers para sincronizar con props
+watch(
+    () => props.typeFilter,
+    (newVal) => {
+        localTypeFilter.value = newVal;
+    }
+);
+
+watch(
+    () => props.warehouseFilter,
+    (newVal) => {
+        localWarehouseFilter.value = newVal;
+    }
+);
+
+watch(
+    () => props.dateFromFilter,
+    (newVal) => {
+        localDateFromFilter.value = newVal;
+    }
+);
+
+watch(
+    () => props.dateToFilter,
+    (newVal) => {
+        localDateToFilter.value = newVal;
+    }
+);
+
+// Métodos
+const onFilterChange = () => {
+    emit('update:typeFilter', localTypeFilter.value);
+    emit('update:warehouseFilter', localWarehouseFilter.value);
+    emit('update:dateFromFilter', localDateFromFilter.value);
+    emit('update:dateToFilter', localDateToFilter.value);
+};
+
+const clearTypeFilter = () => {
+    localTypeFilter.value = null;
+    emit('update:typeFilter', null);
+};
+
+const clearWarehouseFilter = () => {
+    localWarehouseFilter.value = null;
+    emit('update:warehouseFilter', null);
+};
+
+const clearDateFromFilter = () => {
+    localDateFromFilter.value = null;
+    emit('update:dateFromFilter', null);
+};
+
+const clearDateToFilter = () => {
+    localDateToFilter.value = null;
+    emit('update:dateToFilter', null);
+};
+
+const clearFilters = () => {
+    localTypeFilter.value = null;
+    localWarehouseFilter.value = null;
+    localDateFromFilter.value = null;
+    localDateToFilter.value = null;
+    emit('clear-filters');
+};
+
+const getTypeLabel = (value) => {
+    const option = typeOptions.find((opt) => opt.value === value);
+    return option ? option.label : 'Desconocido';
+};
+
+const getWarehouseLabel = (value) => {
+    const option = props.warehouseOptions.find((opt) => opt.value === value);
+    return option ? option.label : 'Desconocido';
+};
+
+const formatDate = (date) => {
+    if (!date) return '';
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+    });
+};
+</script>
+
 <template>
     <div class="stock-movements-toolbar">
         <!-- Header compacto con título, estadísticas y filtros -->
@@ -12,9 +162,7 @@
                         </div>
                         <div class="title-text">
                             <h1 class="page-title">Movimientos de Stock</h1>
-                            <p v-if="totalMovements > 0" class="subtitle">{{ totalMovements }} {{ totalMovements === 1 ?
-                                'movimiento' : 'movimientos' }} • {{ totalEntries }} entradas • {{ totalExits }} salidas
-                            </p>
+                            <p v-if="totalMovements > 0" class="subtitle">{{ totalMovements }} {{ totalMovements === 1 ? 'movimiento' : 'movimientos' }} • {{ totalEntries }} entradas • {{ totalExits }} salidas</p>
                             <p v-else class="subtitle">No hay movimientos registrados</p>
                         </div>
                     </div>
@@ -24,34 +172,25 @@
                 <div class="filters-section-compact">
                     <div class="compact-filters">
                         <!-- Filtro por tipo -->
-                        <Select id="type-filter" v-model="localTypeFilter" :options="typeOptions" optionLabel="label"
-                            optionValue="value" placeholder="Tipo" class="filter-select-compact"
-                            @change="onFilterChange" />
+                        <Select id="type-filter" v-model="localTypeFilter" :options="typeOptions" optionLabel="label" optionValue="value" placeholder="Tipo" class="filter-select-compact" @change="onFilterChange" />
 
                         <!-- Filtro por almacén -->
-                        <Select id="warehouse-filter" v-model="localWarehouseFilter" :options="warehouseOptions"
-                            optionLabel="label" optionValue="value" placeholder="Almacén" class="filter-select-compact"
-                            @change="onFilterChange" />
+                        <Select id="warehouse-filter" v-model="localWarehouseFilter" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Almacén" class="filter-select-compact" @change="onFilterChange" />
 
                         <!-- Filtro fecha desde -->
-                        <DatePicker v-model="localDateFromFilter" placeholder="Desde" class="filter-date-compact"
-                            dateFormat="dd/mm/yy" @date-select="onFilterChange" showIcon />
+                        <DatePicker v-model="localDateFromFilter" placeholder="Desde" class="filter-date-compact" dateFormat="dd/mm/yy" @date-select="onFilterChange" showIcon />
 
                         <!-- Filtro fecha hasta -->
-                        <DatePicker v-model="localDateToFilter" placeholder="Hasta" class="filter-date-compact"
-                            dateFormat="dd/mm/yy" @date-select="onFilterChange" showIcon />
+                        <DatePicker v-model="localDateToFilter" placeholder="Hasta" class="filter-date-compact" dateFormat="dd/mm/yy" @date-select="onFilterChange" showIcon />
 
                         <!-- Botón para limpiar filtros -->
-                        <Button icon="pi pi-filter-slash" outlined @click="clearFilters"
-                            v-tooltip.bottom="'Limpiar filtros'" class="clear-filters-btn-compact"
-                            :disabled="!hasActiveFilters" />
+                        <Button icon="pi pi-filter-slash" outlined @click="clearFilters" v-tooltip.bottom="'Limpiar filtros'" class="clear-filters-btn-compact" :disabled="!hasActiveFilters" />
                     </div>
                 </div>
 
                 <!-- Sección derecha: Acciones -->
                 <div class="actions-section">
-                    <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading"
-                        @click="$emit('refresh')" v-tooltip.bottom="'Actualizar movimientos'" :disabled="isLoading" />
+                    <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar movimientos'" :disabled="isLoading" />
                 </div>
             </div>
 
@@ -95,151 +234,13 @@
     </div>
 </template>
 
-<script setup>
-import { Button, DatePicker, Select } from 'primevue';
-import { computed, ref, watch } from 'vue';
-
-const props = defineProps({
-    totalMovements: {
-        type: Number,
-        default: 0
-    },
-    totalEntries: {
-        type: Number,
-        default: 0
-    },
-    totalExits: {
-        type: Number,
-        default: 0
-    },
-    isLoading: {
-        type: Boolean,
-        default: false
-    },
-    typeFilter: {
-        type: String,
-        default: null
-    },
-    warehouseFilter: {
-        type: [String, Number],
-        default: null
-    },
-    dateFromFilter: {
-        type: Date,
-        default: null
-    },
-    dateToFilter: {
-        type: Date,
-        default: null
-    },
-    warehouseOptions: {
-        type: Array,
-        default: () => [
-            { label: 'Todos los almacenes', value: null }
-        ]
-    }
-});
-
-const emit = defineEmits(['refresh', 'update:typeFilter', 'update:warehouseFilter', 'update:dateFromFilter', 'update:dateToFilter', 'clear-filters']);
-
-// Estado local para los filtros
-const localTypeFilter = ref(props.typeFilter);
-const localWarehouseFilter = ref(props.warehouseFilter);
-const localDateFromFilter = ref(props.dateFromFilter);
-const localDateToFilter = ref(props.dateToFilter);
-
-// Opciones para el filtro de tipo de movimiento
-const typeOptions = [
-    { label: 'Todos los tipos', value: null },
-    { label: 'Entradas', value: 'ENTRADA' },
-    { label: 'Salidas', value: 'SALIDA' },
-    { label: 'Ajustes', value: 'AJUSTE' },
-    { label: 'Transferencias', value: 'TRANSFERENCIA' }
-];
-
-// Computed para verificar si hay filtros activos
-const hasActiveFilters = computed(() => {
-    return localTypeFilter.value || localWarehouseFilter.value || localDateFromFilter.value || localDateToFilter.value;
-});
-
-// Watchers para sincronizar con props
-watch(() => props.typeFilter, (newVal) => {
-    localTypeFilter.value = newVal;
-});
-
-watch(() => props.warehouseFilter, (newVal) => {
-    localWarehouseFilter.value = newVal;
-});
-
-watch(() => props.dateFromFilter, (newVal) => {
-    localDateFromFilter.value = newVal;
-});
-
-watch(() => props.dateToFilter, (newVal) => {
-    localDateToFilter.value = newVal;
-});
-
-// Métodos
-const onFilterChange = () => {
-    emit('update:typeFilter', localTypeFilter.value);
-    emit('update:warehouseFilter', localWarehouseFilter.value);
-    emit('update:dateFromFilter', localDateFromFilter.value);
-    emit('update:dateToFilter', localDateToFilter.value);
-};
-
-const clearTypeFilter = () => {
-    localTypeFilter.value = null;
-    emit('update:typeFilter', null);
-};
-
-const clearWarehouseFilter = () => {
-    localWarehouseFilter.value = null;
-    emit('update:warehouseFilter', null);
-};
-
-const clearDateFromFilter = () => {
-    localDateFromFilter.value = null;
-    emit('update:dateFromFilter', null);
-};
-
-const clearDateToFilter = () => {
-    localDateToFilter.value = null;
-    emit('update:dateToFilter', null);
-};
-
-const clearFilters = () => {
-    localTypeFilter.value = null;
-    localWarehouseFilter.value = null;
-    localDateFromFilter.value = null;
-    localDateToFilter.value = null;
-    emit('clear-filters');
-};
-
-const getTypeLabel = (value) => {
-    const option = typeOptions.find(opt => opt.value === value);
-    return option ? option.label : 'Desconocido';
-};
-
-const getWarehouseLabel = (value) => {
-    const option = props.warehouseOptions.find(opt => opt.value === value);
-    return option ? option.label : 'Desconocido';
-};
-
-const formatDate = (date) => {
-    if (!date) return '';
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit'
-    });
-};
-</script>
-
 <style scoped>
 /* Contenedor principal del toolbar */
 .stock-movements-toolbar {
     @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Encabezado del toolbar compacto */
@@ -253,10 +254,10 @@ const formatDate = (date) => {
 /* Fondo decorativo con patrón */
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
-    background-image:
-        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
-        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 50px 50px, 30px 30px;
+    background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        50px 50px,
+        30px 30px;
     animation: pattern-move 20s linear infinite;
 }
 
@@ -397,11 +398,15 @@ const formatDate = (date) => {
 /* Animación del patrón de fondo */
 @keyframes pattern-move {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
 
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 
@@ -496,7 +501,9 @@ const formatDate = (date) => {
 /* Mejoras para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .stock-movements-toolbar {
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 4px 6px -2px rgba(0, 0, 0, 0.2);
     }
 }
 </style>

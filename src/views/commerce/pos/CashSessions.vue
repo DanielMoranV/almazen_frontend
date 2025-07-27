@@ -49,11 +49,7 @@ onMounted(async () => {
 const loadInitialData = async () => {
     loading.value = true;
     try {
-        await Promise.all([
-            cashSessionsStore.fetchSessionHistory(),
-            cashSessionsStore.getCurrentSession(),
-            cashRegistersStore.fetchCashRegisters()
-        ]);
+        await Promise.all([cashSessionsStore.fetchSessionHistory(), cashSessionsStore.getCurrentSession(), cashRegistersStore.fetchCashRegisters()]);
         // Advertir si no hay sesión activa
         if (requiresCashSession.value && !hasActiveSession.value) {
             toast.add({
@@ -111,8 +107,8 @@ const openNewSessionDialog = () => {
 
 const createNewSession = async () => {
     // Parsear numéricos
-sessionForm.value.opening_amount = parseFloat(sessionForm.value.opening_amount || 0);
-const validation = cashSessionsStore.validateOpenSession(sessionForm.value);
+    sessionForm.value.opening_amount = parseFloat(sessionForm.value.opening_amount || 0);
+    const validation = cashSessionsStore.validateOpenSession(sessionForm.value);
     if (!validation.valid) {
         toast.add({
             severity: 'error',
@@ -161,7 +157,7 @@ const openCloseSessionDialog = () => {
 
     // Pre-fill with expected amount
     closeForm.value = {
-        actual_amount: (currentSessionInfo.value?.expected_amount ?? currentSessionInfo.value?.expectedAmount),
+        actual_amount: currentSessionInfo.value?.expected_amount ?? currentSessionInfo.value?.expectedAmount,
         notes: ''
     };
 
@@ -172,8 +168,8 @@ const closeCurrentSession = async () => {
     if (!currentSession.value) return;
 
     // Parsear numéricos
-closeForm.value.actual_amount = parseFloat(closeForm.value.actual_amount || 0);
-const validation = cashSessionsStore.validateCloseSession(closeForm.value);
+    closeForm.value.actual_amount = parseFloat(closeForm.value.actual_amount || 0);
+    const validation = cashSessionsStore.validateCloseSession(closeForm.value);
     if (!validation.valid) {
         toast.add({
             severity: 'error',
@@ -232,7 +228,7 @@ const showSessionReport = async (session) => {
 const handleStoreErrors = () => {
     const store = cashSessionsStore;
     if (store.validationErrors.length > 0) {
-        store.validationErrors.forEach(error => {
+        store.validationErrors.forEach((error) => {
             toast.add({
                 severity: 'error',
                 summary: 'Error de Validación',
@@ -260,18 +256,20 @@ const getSessionStatusClass = (status) => {
 
 const getSessionStatusLabel = (status) => {
     const labels = {
-        'OPEN': 'Activa',
-        'CLOSED': 'Cerrada',
-        'SUSPENDED': 'Suspendida'
+        OPEN: 'Activa',
+        CLOSED: 'Cerrada',
+        SUSPENDED: 'Suspendida'
     };
     return labels[status] || status;
 };
 
 const formatCurrency = (value) => {
-    return value ? new Intl.NumberFormat('es-PE', {
-        style: 'currency',
-        currency: 'PEN'
-    }).format(value) : '-';
+    return value
+        ? new Intl.NumberFormat('es-PE', {
+              style: 'currency',
+              currency: 'PEN'
+          }).format(value)
+        : '-';
 };
 
 const formatDateTime = (dateTime) => {
@@ -295,8 +293,7 @@ const printReport = () => {
     if (!printRef.value) return;
     const html = printRef.value.$el.innerHTML || printRef.value.$el.outerHTML;
     const win = window.open('', '', 'width=900,height=650');
-    win.document.write(`<!doctype html><html><head><title>Reporte de Sesión</title>` +
-        `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"></head><body class='p-6'>` + html + `</body></html>`);
+    win.document.write(`<!doctype html><html><head><title>Reporte de Sesión</title>` + `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"></head><body class='p-6'>` + html + `</body></html>`);
     win.document.close();
     win.focus();
     win.print();
@@ -314,17 +311,14 @@ const printReport = () => {
                     <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-t-lg">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
-                                
                                 <div>
                                     <h1 class="text-2xl font-bold">Sesiones de Caja</h1>
                                     <p class="text-green-100">Control de turnos y movimientos de efectivo</p>
                                 </div>
                             </div>
                             <div class="flex space-x-3">
-                                <Button v-if="hasActiveSession" @click="openCloseSessionDialog" label="Cerrar Sesión"
-                                    icon="pi pi-sign-out" severity="contrast" size="large" />
-                                <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus" :disabled="availableForNewSession.length === 0"
-                                    severity="contrast" size="large" />
+                                <Button v-if="hasActiveSession" @click="openCloseSessionDialog" label="Cerrar Sesión" icon="pi pi-sign-out" severity="contrast" size="large" />
+                                <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus" :disabled="availableForNewSession.length === 0" severity="contrast" size="large" />
                             </div>
                         </div>
                     </div>
@@ -354,8 +348,7 @@ const printReport = () => {
                                         <i class="pi pi-wallet text-green-600 text-xl"></i>
                                         <div>
                                             <div class="text-sm text-green-600 font-medium">Monto Inicial</div>
-                                            <div class="font-bold text-gray-800">{{
-                                                formatCurrency(currentSessionInfo.openingAmount) }}</div>
+                                            <div class="font-bold text-gray-800">{{ formatCurrency(currentSessionInfo.openingAmount) }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -365,8 +358,7 @@ const printReport = () => {
                                         <i class="pi pi-shopping-cart text-purple-600 text-xl"></i>
                                         <div>
                                             <div class="text-sm text-purple-600 font-medium">Ventas</div>
-                                            <div class="font-bold text-gray-800">{{ currentSessionInfo.salesCount }} ({{
-                                                formatCurrency(currentSessionInfo.totalSales) }})</div>
+                                            <div class="font-bold text-gray-800">{{ currentSessionInfo.salesCount }} ({{ formatCurrency(currentSessionInfo.totalSales) }})</div>
                                         </div>
                                     </div>
                                 </div>
@@ -376,8 +368,7 @@ const printReport = () => {
                                         <i class="pi pi-calculator text-orange-600 text-xl"></i>
                                         <div>
                                             <div class="text-sm text-orange-600 font-medium">Esperado</div>
-                                            <div class="font-bold text-gray-800">{{
-                                                formatCurrency((currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount)) }}</div>
+                                            <div class="font-bold text-gray-800">{{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -396,13 +387,10 @@ const printReport = () => {
                         </div>
                         <h3 class="text-xl font-bold text-gray-600 mb-2">No hay sesiones registradas</h3>
                         <p class="text-gray-500 mb-4">Abra la primera sesión de caja para comenzar</p>
-                        <Button @click="openNewSessionDialog" label="Abrir Primera Sesión" icon="pi pi-plus"
-                            severity="success" />
+                        <Button @click="openNewSessionDialog" label="Abrir Primera Sesión" icon="pi pi-plus" severity="success" />
                     </div>
 
-                    <DataTable v-else :value="sessions" :paginator="true" :rows="15" :loading="isLoadingHistory"
-                        stripedRows responsiveLayout="scroll" class="shadow-sm">
-
+                    <DataTable v-else :value="sessions" :paginator="true" :rows="15" :loading="isLoadingHistory" stripedRows responsiveLayout="scroll" class="shadow-sm">
                         <Column field="id" header="ID" sortable>
                             <template #body="{ data }">
                                 <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">#{{ data.id }}</span>
@@ -455,8 +443,7 @@ const printReport = () => {
 
                         <Column field="difference_amount" header="Diferencia" sortable>
                             <template #body="{ data }">
-                                <span v-if="data.difference_amount !== null" class="font-mono font-bold"
-                                    :class="getDifferenceClass(parseFloat(data.difference_amount))">
+                                <span v-if="data.difference_amount !== null" class="font-mono font-bold" :class="getDifferenceClass(parseFloat(data.difference_amount))">
                                     {{ formatCurrency(data.difference_amount) }}
                                 </span>
                                 <span v-else class="text-gray-400">-</span>
@@ -465,20 +452,15 @@ const printReport = () => {
 
                         <Column field="status" header="Estado" sortable>
                             <template #body="{ data }">
-                                <Tag :value="getSessionStatusLabel(data.status)"
-                                    :severity="data.status === 'OPEN' ? 'success' : data.status === 'CLOSED' ? 'info' : 'warning'" />
+                                <Tag :value="getSessionStatusLabel(data.status)" :severity="data.status === 'OPEN' ? 'success' : data.status === 'CLOSED' ? 'info' : 'warning'" />
                             </template>
                         </Column>
 
                         <Column header="Acciones">
                             <template #body="{ data }">
                                 <div class="flex space-x-2">
-                                    <Button v-if="data.status === 'CLOSED'" @click="showSessionReport(data)"
-                                        icon="pi pi-chart-bar" size="small" severity="info" outlined rounded
-                                        v-tooltip="'Ver Reporte'" />
-                                    <Button v-if="data.status === 'OPEN' && data.id === currentSession?.id"
-                                        @click="openCloseSessionDialog" icon="pi pi-sign-out" size="small"
-                                        severity="danger" outlined rounded v-tooltip="'Cerrar Sesión'" />
+                                    <Button v-if="data.status === 'CLOSED'" @click="showSessionReport(data)" icon="pi pi-chart-bar" size="small" severity="info" outlined rounded v-tooltip="'Ver Reporte'" />
+                                    <Button v-if="data.status === 'OPEN' && data.id === currentSession?.id" @click="openCloseSessionDialog" icon="pi pi-sign-out" size="small" severity="danger" outlined rounded v-tooltip="'Cerrar Sesión'" />
                                 </div>
                             </template>
                         </Column>
@@ -489,63 +471,74 @@ const printReport = () => {
     </div>
 
     <!-- New Session Dialog -->
-    <Dialog v-model:visible="displayNewSessionDialog" header="Nueva Sesión de Caja" :modal="true"
-        :style="{ width: '500px' }" :pt="{
+    <Dialog
+        v-model:visible="displayNewSessionDialog"
+        header="Nueva Sesión de Caja"
+        :modal="true"
+        :style="{ width: '500px' }"
+        :pt="{
             header: 'bg-gradient-to-r from-green-600 to-emerald-600 text-white',
             content: 'p-6'
-        }">
-
+        }"
+    >
         <div class="space-y-6">
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">
-                    Caja Registradora *
-                </label>
-                <Select v-model="sessionForm.cash_register_id" :options="availableForNewSession" option-label="name"
-                    option-value="id" placeholder="Seleccionar caja registradora..." class="w-full" :pt="{
+                <label class="block text-sm font-bold text-gray-700 mb-2"> Caja Registradora * </label>
+                <Select
+                    v-model="sessionForm.cash_register_id"
+                    :options="availableForNewSession"
+                    option-label="name"
+                    option-value="id"
+                    placeholder="Seleccionar caja registradora..."
+                    class="w-full"
+                    :pt="{
                         root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl',
                         input: 'py-3 px-4 text-base'
-                    }" />
+                    }"
+                />
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">
-                    Monto Inicial *
-                </label>
+                <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Inicial * </label>
                 <div class="p-inputgroup">
                     <span class="p-inputgroup-addon">S/</span>
-                    <InputNumber v-model="sessionForm.opening_amount" :min="0" mode="decimal" :minFractionDigits="2"
-                        :maxFractionDigits="2" class="flex-1" />
+                    <InputNumber v-model="sessionForm.opening_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="flex-1" />
                 </div>
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">
-                    Notas (Opcional)
-                </label>
-                <Textarea v-model="sessionForm.notes" rows="3" placeholder="Observaciones del turno..." class="w-full"
+                <label class="block text-sm font-bold text-gray-700 mb-2"> Notas (Opcional) </label>
+                <Textarea
+                    v-model="sessionForm.notes"
+                    rows="3"
+                    placeholder="Observaciones del turno..."
+                    class="w-full"
                     :pt="{
                         root: 'border-2 border-gray-200 hover:border-green-300 focus:border-green-500 rounded-xl'
-                    }" />
+                    }"
+                />
             </div>
         </div>
 
         <template #footer>
             <div class="flex justify-end space-x-3">
-                <Button @click="displayNewSessionDialog = false" label="Cancelar" icon="pi pi-times"
-                    severity="secondary" outlined />
-                <Button @click="createNewSession" label="Abrir Sesión" icon="pi pi-check" severity="success"
-                    :loading="loading" />
+                <Button @click="displayNewSessionDialog = false" label="Cancelar" icon="pi pi-times" severity="secondary" outlined />
+                <Button @click="createNewSession" label="Abrir Sesión" icon="pi pi-check" severity="success" :loading="loading" />
             </div>
         </template>
     </Dialog>
 
     <!-- Close Session Dialog -->
-    <Dialog v-model:visible="displayCloseSessionDialog" header="Cerrar Sesión de Caja" :modal="true"
-        :style="{ width: '600px' }" :pt="{
+    <Dialog
+        v-model:visible="displayCloseSessionDialog"
+        header="Cerrar Sesión de Caja"
+        :modal="true"
+        :style="{ width: '600px' }"
+        :pt="{
             header: 'bg-gradient-to-r from-red-600 to-pink-600 text-white',
             content: 'p-6'
-        }">
-
+        }"
+    >
         <div class="space-y-6" v-if="currentSessionInfo">
             <!-- Session Summary -->
             <div class="bg-gray-50 p-4 rounded-xl border">
@@ -561,8 +554,7 @@ const printReport = () => {
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Monto Inicial</div>
-                        <div class="font-semibold text-green-600">{{ formatCurrency(currentSessionInfo.openingAmount) }}
-                        </div>
+                        <div class="font-semibold text-green-600">{{ formatCurrency(currentSessionInfo.openingAmount) }}</div>
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Ventas Realizadas</div>
@@ -570,14 +562,11 @@ const printReport = () => {
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Total en Ventas</div>
-                        <div class="font-semibold text-purple-600">{{ formatCurrency(currentSessionInfo.totalSales) }}
-                        </div>
+                        <div class="font-semibold text-purple-600">{{ formatCurrency(currentSessionInfo.totalSales) }}</div>
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Monto Esperado</div>
-                        <div class="font-semibold text-orange-600">{{ formatCurrency((currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount))
-                            }}
-                        </div>
+                        <div class="font-semibold text-orange-600">{{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}</div>
                     </div>
                 </div>
             </div>
@@ -585,71 +574,59 @@ const printReport = () => {
             <!-- Close Form -->
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Monto Real en Caja *
-                    </label>
+                    <label class="block text-sm font-bold text-gray-700 mb-2"> Monto Real en Caja * </label>
                     <div class="p-inputgroup">
                         <span class="p-inputgroup-addon">S/</span>
-                        <InputNumber v-model="closeForm.actual_amount" :min="0" mode="decimal" :minFractionDigits="2"
-                            :maxFractionDigits="2" class="flex-1" />
+                        <InputNumber v-model="closeForm.actual_amount" :min="0" mode="decimal" :minFractionDigits="2" :maxFractionDigits="2" class="flex-1" />
                     </div>
                     <small class="text-gray-500">Cuente el dinero físico en la caja registradora</small>
                 </div>
 
                 <!-- Difference Calculation -->
-                <div v-if="closeForm.actual_amount" class="p-4 rounded-lg border-2" :class="cashSessionsStore.calculateDifference(closeForm.actual_amount) === 0
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-yellow-50 border-yellow-200'">
+                <div v-if="closeForm.actual_amount" class="p-4 rounded-lg border-2" :class="cashSessionsStore.calculateDifference(closeForm.actual_amount) === 0 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'">
                     <div class="flex justify-between items-center">
                         <span class="font-medium">Diferencia:</span>
-                        <span class="font-bold text-lg"
-                            :class="getDifferenceClass(cashSessionsStore.calculateDifference(closeForm.actual_amount))">
+                        <span class="font-bold text-lg" :class="getDifferenceClass(cashSessionsStore.calculateDifference(closeForm.actual_amount))">
                             {{ formatCurrency(cashSessionsStore.calculateDifference(closeForm.actual_amount)) }}
                         </span>
                     </div>
-                    <div v-if="cashSessionsStore.hasSignificantDiscrepancy(closeForm.actual_amount)"
-                        class="text-sm text-yellow-700 mt-2">
+                    <div v-if="cashSessionsStore.hasSignificantDiscrepancy(closeForm.actual_amount)" class="text-sm text-yellow-700 mt-2">
                         <i class="pi pi-exclamation-triangle mr-1"></i>
                         Diferencia significativa detectada
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Notas de Cierre
-                    </label>
-                    <Textarea v-model="closeForm.notes" rows="3"
-                        placeholder="Observaciones, explicación de diferencias..." class="w-full" />
+                    <label class="block text-sm font-bold text-gray-700 mb-2"> Notas de Cierre </label>
+                    <Textarea v-model="closeForm.notes" rows="3" placeholder="Observaciones, explicación de diferencias..." class="w-full" />
                 </div>
             </div>
         </div>
 
         <template #footer>
             <div class="flex justify-end space-x-3">
-                <Button @click="displayCloseSessionDialog = false" label="Cancelar" icon="pi pi-times"
-                    severity="secondary" outlined />
-                <Button @click="closeCurrentSession" label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger"
-                    :loading="loading" />
+                <Button @click="displayCloseSessionDialog = false" label="Cancelar" icon="pi pi-times" severity="secondary" outlined />
+                <Button @click="closeCurrentSession" label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger" :loading="loading" />
             </div>
         </template>
     </Dialog>
 
     <!-- Session Report Dialog -->
-    <Dialog v-model:visible="displayReportDialog" header="Reporte de Sesión" :modal="true"
-        :style="{ width: '90vw', maxWidth: '800px' }" :pt="{
+    <Dialog
+        v-model:visible="displayReportDialog"
+        header="Reporte de Sesión"
+        :modal="true"
+        :style="{ width: '90vw', maxWidth: '800px' }"
+        :pt="{
             header: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white',
             content: 'p-6'
-        }">
-
+        }"
+    >
         <div v-if="sessionReport" class="space-y-6 printable">
             <!-- Session Header -->
             <div class="text-center pb-4 border-b">
-                <h2 class="text-2xl font-bold text-gray-800">
-                    Reporte de Sesión #{{ sessionReport.session?.id }}
-                </h2>
-                <p class="text-gray-600">
-                    {{ sessionReport.session?.user?.name }} - {{ sessionReport.session?.cash_register?.name }}
-                </p>
+                <h2 class="text-2xl font-bold text-gray-800">Reporte de Sesión #{{ sessionReport.session?.id }}</h2>
+                <p class="text-gray-600">{{ sessionReport.session?.user?.name }} - {{ sessionReport.session?.cash_register?.name }}</p>
             </div>
 
             <!-- Summary Cards -->
@@ -674,9 +651,7 @@ const printReport = () => {
 
                 <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
                     <div class="text-center">
-                        <div class="text-2xl font-bold text-purple-600">
-                            {{ Math.round((sessionReport.summary?.duration_minutes || 0) / 60) }}h
-                        </div>
+                        <div class="text-2xl font-bold text-purple-600">{{ Math.round((sessionReport.summary?.duration_minutes || 0) / 60) }}h</div>
                         <div class="text-sm text-purple-700">Duración</div>
                     </div>
                 </div>
@@ -701,9 +676,7 @@ const printReport = () => {
                                 <td class="px-2 py-1">{{ sale.document_number || sale.voucher_number || '-' }}</td>
                                 <td class="px-2 py-1 text-right">{{ formatCurrency(sale.total_amount) }}</td>
                                 <td class="px-2 py-1">
-                                    <span v-for="p in sale.payments" :key="p.payment_method_name" class="mr-2">
-                                        {{ p.payment_method_name }} ({{ formatCurrency(p.amount) }})
-                                    </span>
+                                    <span v-for="p in sale.payments" :key="p.payment_method_name" class="mr-2"> {{ p.payment_method_name }} ({{ formatCurrency(p.amount) }}) </span>
                                 </td>
                             </tr>
                         </tbody>
@@ -715,12 +688,10 @@ const printReport = () => {
             <div v-if="sessionReport.payment_methods_breakdown?.length">
                 <h3 class="font-bold text-gray-800 mb-3">Desglose por Método de Pago</h3>
                 <div class="space-y-2">
-                    <div v-for="method in sessionReport.payment_methods_breakdown" :key="method.method_id"
-                        class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div v-for="method in sessionReport.payment_methods_breakdown" :key="method.method_id" class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                         <div>
                             <span class="font-medium">{{ method.method_name }}</span>
-                            <span class="text-sm text-gray-500 ml-2">({{ method.transaction_count }}
-                                transacciones)</span>
+                            <span class="text-sm text-gray-500 ml-2">({{ method.transaction_count }} transacciones)</span>
                         </div>
                         <span class="font-bold text-green-600">{{ formatCurrency(method.total_amount) }}</span>
                     </div>
@@ -736,8 +707,8 @@ const printReport = () => {
         </template>
     </Dialog>
 
-<!-- Componente oculto para impresión -->
-<SessionReportPrint v-if="sessionReport" :report="sessionReport" ref="printRef" style="display:none" />
+    <!-- Componente oculto para impresión -->
+    <SessionReportPrint v-if="sessionReport" :report="sessionReport" ref="printRef" style="display: none" />
 </template>
 
 <style scoped>
@@ -748,7 +719,8 @@ const printReport = () => {
     body * {
         visibility: hidden;
     }
-    .printable, .printable * {
+    .printable,
+    .printable * {
         visibility: visible;
     }
     .p-dialog {

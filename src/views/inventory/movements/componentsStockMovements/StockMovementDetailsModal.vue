@@ -1,131 +1,3 @@
-<template>
-    <Dialog v-model:visible="localVisible" modal :header="modalTitle" :style="{ width: '45rem' }"
-        :breakpoints="{ '1199px': '70vw', '575px': '95vw' }" class="movement-details-modal">
-        <div v-if="movementData" class="movement-details">
-            <!-- Header compacto con información clave -->
-            <div class="movement-header">
-                <div class="header-left">
-                    <span class="movement-id">#{{ movementData.id }}</span>
-                    <span class="type-badge" :class="getTypeClass(movementData.movement_type || movementData.type)">
-                        <i :class="getTypeIcon(movementData.movement_type || movementData.type)"></i>
-                        {{ getTypeLabel(movementData.movement_type || movementData.type) }}
-                    </span>
-                </div>
-                <div class="header-right">
-                    <span class="quantity-badge"
-                        :class="getQuantityClass(movementData.movement_type || movementData.type)">
-                        {{ formatQuantity(movementData.movement_type || movementData.type, movementData.quantity) }}
-                    </span>
-                    <span class="movement-date">{{ formatDateTime(movementData.created_at) }}</span>
-                </div>
-            </div>
-
-            <!-- Información principal en cards compactas -->
-            <div class="info-cards">
-                <!-- Producto -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <i class="pi pi-box"></i>
-                        <span>Producto</span>
-                    </div>
-                    <div class="card-content">
-                        <div class="product-name">{{ movementData.product_name }}</div>
-                        <div class="product-details">
-                            <span v-if="movementData.product_sku" class="detail-chip">
-                                <i class="pi pi-tag"></i>
-                                {{ movementData.product_sku }}
-                            </span>
-                            <span v-if="movementData.product_barcode" class="detail-chip">
-                                <i class="pi pi-qrcode"></i>
-                                {{ movementData.product_barcode }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Almacén y Lote -->
-                <div class="info-card">
-                    <div class="card-header">
-                        <i class="pi pi-warehouse"></i>
-                        <span>Ubicación</span>
-                    </div>
-                    <div class="card-content">
-                        <div class="warehouse-info">
-                            <i class="pi pi-building"></i>
-                            {{ movementData.warehouse_name || 'No especificado' }}
-                        </div>
-                        <div v-if="movementData.batch_code" class="batch-info">
-                            <span class="detail-chip batch-chip">
-                                <i class="pi pi-tag"></i>
-                                Lote: {{ movementData.batch_code }}
-                            </span>
-                            <span v-if="movementData.batch_expiration" class="expiration-date">
-                                Vence: {{ formatDate(movementData.batch_expiration) }}
-                            </span>
-                        </div>
-                        <div v-else class="no-batch">Sin lote asignado</div>
-                    </div>
-                </div>
-
-                <!-- Detalles adicionales -->
-                <div class="info-card full-width">
-                    <div class="card-header">
-                        <i class="pi pi-info-circle"></i>
-                        <span>Detalles</span>
-                    </div>
-                    <div class="card-content">
-                        <div class="details-row">
-                            <div class="detail-group">
-                                <label>Usuario:</label>
-                                <span>{{ movementData.user_name || 'No especificado' }}</span>
-                            </div>
-                            <div class="detail-group">
-                                <label>Documento:</label>
-                                <span>{{ movementData.document || movementData.reference_document || 'No especificado'
-                                    }}</span>
-                            </div>
-                        </div>
-                        <div v-if="movementData.reason" class="reason-section">
-                            <label>Razón:</label>
-                            <span class="reason-text">{{ movementData.reason }}</span>
-                        </div>
-                        <div v-if="movementData.notes" class="notes-section">
-                            <label>Notas:</label>
-                            <div class="notes-content">{{ movementData.notes }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Costos (si están disponibles) -->
-                <div v-if="movementData.unit_cost || movementData.total_cost" class="info-card cost-card">
-                    <div class="card-header">
-                        <i class="pi pi-dollar"></i>
-                        <span>Costos</span>
-                    </div>
-                    <div class="card-content">
-                        <div class="cost-details">
-                            <div v-if="movementData.unit_cost" class="cost-item">
-                                <label>Unitario:</label>
-                                <span>{{ formatCurrency(movementData.unit_cost) }}</span>
-                            </div>
-                            <div v-if="movementData.total_cost" class="cost-item total">
-                                <label>Total:</label>
-                                <span class="total-amount">{{ formatCurrency(movementData.total_cost) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <template #footer>
-            <div class="modal-footer">
-                <Button label="Cerrar" icon="pi pi-times" @click="closeModal" class="p-button-secondary" autofocus />
-            </div>
-        </template>
-    </Dialog>
-</template>
-
 <script setup>
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
@@ -153,9 +25,12 @@ const modalTitle = computed(() => {
 });
 
 // Watchers
-watch(() => props.visible, (newVal) => {
-    localVisible.value = newVal;
-});
+watch(
+    () => props.visible,
+    (newVal) => {
+        localVisible.value = newVal;
+    }
+);
 
 watch(localVisible, (newVal) => {
     emit('update:visible', newVal);
@@ -206,42 +81,42 @@ const formatCurrency = (value) => {
 
 const getTypeClass = (type) => {
     const classes = {
-        'entry': 'type-entry',
-        'exit': 'type-exit',
-        'adjustment': 'type-adjustment',
-        'transfer': 'type-transfer',
-        'ENTRADA': 'type-entry',
-        'SALIDA': 'type-exit',
-        'AJUSTE': 'type-adjustment',
-        'TRANSFERENCIA': 'type-transfer'
+        entry: 'type-entry',
+        exit: 'type-exit',
+        adjustment: 'type-adjustment',
+        transfer: 'type-transfer',
+        ENTRADA: 'type-entry',
+        SALIDA: 'type-exit',
+        AJUSTE: 'type-adjustment',
+        TRANSFERENCIA: 'type-transfer'
     };
     return classes[type] || 'type-default';
 };
 
 const getTypeIcon = (type) => {
     const icons = {
-        'entry': 'pi pi-arrow-down',
-        'exit': 'pi pi-arrow-up',
-        'adjustment': 'pi pi-cog',
-        'transfer': 'pi pi-arrow-right-arrow-left',
-        'ENTRADA': 'pi pi-arrow-down',
-        'SALIDA': 'pi pi-arrow-up',
-        'AJUSTE': 'pi pi-cog',
-        'TRANSFERENCIA': 'pi pi-arrow-right-arrow-left'
+        entry: 'pi pi-arrow-down',
+        exit: 'pi pi-arrow-up',
+        adjustment: 'pi pi-cog',
+        transfer: 'pi pi-arrow-right-arrow-left',
+        ENTRADA: 'pi pi-arrow-down',
+        SALIDA: 'pi pi-arrow-up',
+        AJUSTE: 'pi pi-cog',
+        TRANSFERENCIA: 'pi pi-arrow-right-arrow-left'
     };
     return icons[type] || 'pi pi-circle';
 };
 
 const getTypeLabel = (type) => {
     const labels = {
-        'entry': 'Entrada',
-        'exit': 'Salida',
-        'adjustment': 'Ajuste',
-        'transfer': 'Transferencia',
-        'ENTRADA': 'Entrada',
-        'SALIDA': 'Salida',
-        'AJUSTE': 'Ajuste',
-        'TRANSFERENCIA': 'Transferencia'
+        entry: 'Entrada',
+        exit: 'Salida',
+        adjustment: 'Ajuste',
+        transfer: 'Transferencia',
+        ENTRADA: 'Entrada',
+        SALIDA: 'Salida',
+        AJUSTE: 'Ajuste',
+        TRANSFERENCIA: 'Transferencia'
     };
     return labels[type] || type;
 };
@@ -259,6 +134,129 @@ const formatQuantity = (type, quantity) => {
     return `${sign}${Math.abs(quantity)}`;
 };
 </script>
+
+<template>
+    <Dialog v-model:visible="localVisible" modal :header="modalTitle" :style="{ width: '45rem' }" :breakpoints="{ '1199px': '70vw', '575px': '95vw' }" class="movement-details-modal">
+        <div v-if="movementData" class="movement-details">
+            <!-- Header compacto con información clave -->
+            <div class="movement-header">
+                <div class="header-left">
+                    <span class="movement-id">#{{ movementData.id }}</span>
+                    <span class="type-badge" :class="getTypeClass(movementData.movement_type || movementData.type)">
+                        <i :class="getTypeIcon(movementData.movement_type || movementData.type)"></i>
+                        {{ getTypeLabel(movementData.movement_type || movementData.type) }}
+                    </span>
+                </div>
+                <div class="header-right">
+                    <span class="quantity-badge" :class="getQuantityClass(movementData.movement_type || movementData.type)">
+                        {{ formatQuantity(movementData.movement_type || movementData.type, movementData.quantity) }}
+                    </span>
+                    <span class="movement-date">{{ formatDateTime(movementData.created_at) }}</span>
+                </div>
+            </div>
+
+            <!-- Información principal en cards compactas -->
+            <div class="info-cards">
+                <!-- Producto -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <i class="pi pi-box"></i>
+                        <span>Producto</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="product-name">{{ movementData.product_name }}</div>
+                        <div class="product-details">
+                            <span v-if="movementData.product_sku" class="detail-chip">
+                                <i class="pi pi-tag"></i>
+                                {{ movementData.product_sku }}
+                            </span>
+                            <span v-if="movementData.product_barcode" class="detail-chip">
+                                <i class="pi pi-qrcode"></i>
+                                {{ movementData.product_barcode }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Almacén y Lote -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <i class="pi pi-warehouse"></i>
+                        <span>Ubicación</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="warehouse-info">
+                            <i class="pi pi-building"></i>
+                            {{ movementData.warehouse_name || 'No especificado' }}
+                        </div>
+                        <div v-if="movementData.batch_code" class="batch-info">
+                            <span class="detail-chip batch-chip">
+                                <i class="pi pi-tag"></i>
+                                Lote: {{ movementData.batch_code }}
+                            </span>
+                            <span v-if="movementData.batch_expiration" class="expiration-date"> Vence: {{ formatDate(movementData.batch_expiration) }} </span>
+                        </div>
+                        <div v-else class="no-batch">Sin lote asignado</div>
+                    </div>
+                </div>
+
+                <!-- Detalles adicionales -->
+                <div class="info-card full-width">
+                    <div class="card-header">
+                        <i class="pi pi-info-circle"></i>
+                        <span>Detalles</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="details-row">
+                            <div class="detail-group">
+                                <label>Usuario:</label>
+                                <span>{{ movementData.user_name || 'No especificado' }}</span>
+                            </div>
+                            <div class="detail-group">
+                                <label>Documento:</label>
+                                <span>{{ movementData.document || movementData.reference_document || 'No especificado' }}</span>
+                            </div>
+                        </div>
+                        <div v-if="movementData.reason" class="reason-section">
+                            <label>Razón:</label>
+                            <span class="reason-text">{{ movementData.reason }}</span>
+                        </div>
+                        <div v-if="movementData.notes" class="notes-section">
+                            <label>Notas:</label>
+                            <div class="notes-content">{{ movementData.notes }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Costos (si están disponibles) -->
+                <div v-if="movementData.unit_cost || movementData.total_cost" class="info-card cost-card">
+                    <div class="card-header">
+                        <i class="pi pi-dollar"></i>
+                        <span>Costos</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="cost-details">
+                            <div v-if="movementData.unit_cost" class="cost-item">
+                                <label>Unitario:</label>
+                                <span>{{ formatCurrency(movementData.unit_cost) }}</span>
+                            </div>
+                            <div v-if="movementData.total_cost" class="cost-item total">
+                                <label>Total:</label>
+                                <span class="total-amount">{{ formatCurrency(movementData.total_cost) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="modal-footer">
+                <Button label="Cerrar" icon="pi pi-times" @click="closeModal" class="p-button-secondary" autofocus />
+            </div>
+        </template>
+    </Dialog>
+</template>
 
 <style scoped>
 /* Modal principal */

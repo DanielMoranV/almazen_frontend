@@ -72,23 +72,18 @@ const clearFilters = async () => {
                         <div class="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-4 md:space-y-0">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Tipo</label>
-                                <Select v-model="filters.type" :options="typeOptions" option-label="label"
-                                    option-value="value" @change="applyFilters" fluid
-                                    placeholder="Seleccione un tipo" />
+                                <Select v-model="filters.type" :options="typeOptions" option-label="label" option-value="value" @change="applyFilters" fluid placeholder="Seleccione un tipo" />
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Desde</label>
-                                <Calendar v-model="filters.date_from" dateFormat="yy-mm-dd" @date-select="applyFilters"
-                                    class="w-full" placeholder="Seleccione una fecha desde" />
+                                <Calendar v-model="filters.date_from" dateFormat="yy-mm-dd" @date-select="applyFilters" class="w-full" placeholder="Seleccione una fecha desde" />
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Hasta</label>
-                                <Calendar v-model="filters.date_to" dateFormat="yy-mm-dd" @date-select="applyFilters"
-                                    class="w-full" placeholder="Seleccione una fecha hasta" />
+                                <Calendar v-model="filters.date_to" dateFormat="yy-mm-dd" @date-select="applyFilters" class="w-full" placeholder="Seleccione una fecha hasta" />
                             </div>
                             <div class="flex gap-2">
-                                <Button icon="pi pi-filter-slash" severity="secondary" outlined title="Limpiar"
-                                    @click="clearFilters" />
+                                <Button icon="pi pi-filter-slash" severity="secondary" outlined title="Limpiar" @click="clearFilters" />
                                 <Button icon="pi pi-refresh" severity="info" title="Actualizar" @click="applyFilters" />
                             </div>
                         </div>
@@ -98,23 +93,18 @@ const clearFilters = async () => {
                     <div v-if="isLoading" class="flex justify-center py-8">
                         <ProgressSpinner />
                     </div>
-                    <DataTable v-else :value="movements" :paginator="true" :rows="15" stripedRows
-                        responsiveLayout="scroll">
+                    <DataTable v-else :value="movements" :paginator="true" :rows="15" stripedRows responsiveLayout="scroll">
                         <Column field="created_at" header="Fecha" sortable>
-                            <template #body="{ data }">{{ new Date(data.created_at).toLocaleString('es-PE')
-                                }}</template>
+                            <template #body="{ data }">{{ new Date(data.created_at).toLocaleString('es-PE') }}</template>
                         </Column>
                         <Column field="type" header="Tipo" sortable>
                             <template #body="{ data }">
-                                <Tag :value="data.type"
-                                    :severity="data.type === 'SALE' ? 'success' : data.type === 'EXPENSE' ? 'danger' : data.type === 'WITHDRAWAL' ? 'warning' : data.type === 'DEPOSIT' ? 'info' : 'secondary'" />
+                                <Tag :value="data.type" :severity="data.type === 'SALE' ? 'success' : data.type === 'EXPENSE' ? 'danger' : data.type === 'WITHDRAWAL' ? 'warning' : data.type === 'DEPOSIT' ? 'info' : 'secondary'" />
                             </template>
                         </Column>
                         <Column field="description" header="Descripción" />
                         <Column field="amount" header="Monto" sortable>
-                            <template #body="{ data }">{{ new
-                                Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(data.amount)
-                                }}</template>
+                            <template #body="{ data }">{{ new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(data.amount) }}</template>
                         </Column>
                     </DataTable>
                 </template>

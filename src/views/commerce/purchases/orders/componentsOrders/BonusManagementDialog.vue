@@ -47,10 +47,10 @@ const bonusTypes = ref([
 // Validar restricciones de tiempo
 const canAddBonuses = computed(() => {
     console.log('Full order object:', props.order);
-    
+
     // Buscar la fecha de recepción en diferentes posibles ubicaciones
     let receivedDate = null;
-    
+
     // Opción 1: Campo directo received_date
     if (props.order?.received_date) {
         receivedDate = props.order.received_date;
@@ -63,27 +63,27 @@ const canAddBonuses = computed(() => {
     }
     // Opción 3: En status_timeline
     else if (props.order?.status_timeline) {
-        const receivedEntry = props.order.status_timeline.find(entry => entry.status === 'RECIBIDO');
+        const receivedEntry = props.order.status_timeline.find((entry) => entry.status === 'RECIBIDO');
         if (receivedEntry?.created_at) {
             receivedDate = receivedEntry.created_at;
             console.log('Found in status_timeline:', receivedDate);
         }
     }
-    
+
     if (!receivedDate) {
         console.log('No received date found, checking available fields:', Object.keys(props.order || {}));
         return false;
     }
-    
+
     // Extraer solo la parte de la fecha (YYYY-MM-DD) ignorando la zona horaria
     const receivedDateStr = receivedDate.split('T')[0];
     const todayStr = new Date().toISOString().split('T')[0];
-    
+
     console.log('Received date (original):', receivedDate);
     console.log('Received date (date only):', receivedDateStr);
     console.log('Today (date only):', todayStr);
     console.log('Are equal?', receivedDateStr === todayStr);
-    
+
     // Comparar solo las fechas como strings (YYYY-MM-DD)
     return receivedDateStr === todayStr;
 });
@@ -91,23 +91,23 @@ const canAddBonuses = computed(() => {
 const timeRestrictionMessage = computed(() => {
     // Buscar la fecha de recepción
     let receivedDate = null;
-    
+
     if (props.order?.received_date) {
         receivedDate = props.order.received_date;
     } else if (props.order?.status_tracking?.received_at) {
         receivedDate = props.order.status_tracking.received_at;
     } else if (props.order?.status_timeline) {
-        const receivedEntry = props.order.status_timeline.find(entry => entry.status === 'RECIBIDO');
+        const receivedEntry = props.order.status_timeline.find((entry) => entry.status === 'RECIBIDO');
         if (receivedEntry?.created_at) {
             receivedDate = receivedEntry.created_at;
         }
     }
-    
+
     if (!receivedDate) return 'Las bonificaciones solo pueden agregarse el mismo día de recepción';
-    
+
     const receivedDateStr = receivedDate.split('T')[0];
     const formattedDate = new Date(receivedDateStr + 'T12:00:00').toLocaleDateString('es-PE');
-    
+
     return `Las bonificaciones solo pueden agregarse el mismo día de recepción (${formattedDate})`;
 });
 
@@ -147,12 +147,12 @@ const createEmptyBonus = () => ({
 // Cargar productos disponibles
 const loadAvailableProducts = async () => {
     loadingProducts.value = true;
-    
+
     try {
         await productStore.fetchProducts();
-        
+
         if (productStore.success) {
-            availableProducts.value = productStore.productsList.map(product => ({
+            availableProducts.value = productStore.productsList.map((product) => ({
                 ...product,
                 label: `${product.name} (${product.sku})`
             }));
@@ -177,17 +177,15 @@ const loadAvailableProducts = async () => {
 // Cargar lotes para un producto
 const loadBatchesForProduct = async (productId) => {
     if (!productId) return;
-    
+
     loadingBatches.value = true;
-    
+
     try {
         const response = await batchesStore.getAvailableBatchesForProduct(productId);
-        
+
         if (response.success && response.data.batches) {
-            const formattedBatches = response.data.batches.map(batch => 
-                batchesStore.formatBatchForDropdown(batch)
-            );
-            
+            const formattedBatches = response.data.batches.map((batch) => batchesStore.formatBatchForDropdown(batch));
+
             availableBatches.value[productId] = formattedBatches;
         } else {
             availableBatches.value[productId] = [];
@@ -204,19 +202,19 @@ const loadBatchesForProduct = async (productId) => {
 const handleProductSelect = async (bonusIndex, selectedProduct) => {
     console.log('handleProductSelect called:', { bonusIndex, selectedProduct });
     const bonus = bonusForm.value.bonuses[bonusIndex];
-    
+
     if (selectedProduct) {
         bonus.product_id = selectedProduct.id;
         bonus.selectedProduct = selectedProduct;
         bonus.requires_batch = selectedProduct.requires_batches;
-        
+
         console.log('Product selected:', selectedProduct.name, 'ID:', selectedProduct.id);
-        
+
         // Si requiere lotes, cargarlos
         if (selectedProduct.requires_batches && !selectedProduct.auto_generate_batches) {
             await loadBatchesForProduct(selectedProduct.id);
         }
-        
+
         // Limpiar lote seleccionado si ya no es relevante
         if (!selectedProduct.requires_batches) {
             bonus.batch_id = null;
@@ -235,9 +233,9 @@ const handleProductSelect = async (bonusIndex, selectedProduct) => {
 const handleBatchSelect = (bonusIndex, selectedBatchId) => {
     const bonus = bonusForm.value.bonuses[bonusIndex];
     const productId = bonus.product_id;
-    
+
     if (selectedBatchId && availableBatches.value[productId]) {
-        const selectedBatch = availableBatches.value[productId].find(b => b.id === selectedBatchId);
+        const selectedBatch = availableBatches.value[productId].find((b) => b.id === selectedBatchId);
         if (selectedBatch) {
             bonus.batch_id = selectedBatch.id;
             bonus.selectedBatch = selectedBatch;
@@ -255,7 +253,8 @@ const getAvailableBatchesForProduct = (productId) => {
 
 // Agregar nueva bonificación
 const addBonus = () => {
-    if (bonusForm.value.bonuses.length < 20) { // Máximo 20 bonificaciones
+    if (bonusForm.value.bonuses.length < 20) {
+        // Máximo 20 bonificaciones
         bonusForm.value.bonuses.push(createEmptyBonus());
     }
 };
@@ -270,30 +269,28 @@ const removeBonus = (index) => {
 // Validación del formulario
 const isFormValid = computed(() => {
     if (!bonusForm.value.bonuses.length) return false;
-    
-    return bonusForm.value.bonuses.every(bonus => {
+
+    return bonusForm.value.bonuses.every((bonus) => {
         const hasProduct = bonus.product_id && bonus.selectedProduct;
         const hasQuantity = bonus.quantity > 0;
         const hasReason = bonus.bonus_reason && bonus.bonus_reason.trim().length > 0;
         const batchValid = !bonus.requires_batch || bonus.batch_id || bonus.selectedProduct?.auto_generate_batches;
-        
+
         return hasProduct && hasQuantity && hasReason && batchValid;
     });
 });
 
 // Validar productos duplicados
 const hasDuplicateProducts = computed(() => {
-    const productIds = bonusForm.value.bonuses
-        .filter(bonus => bonus.product_id)
-        .map(bonus => bonus.product_id);
-    
+    const productIds = bonusForm.value.bonuses.filter((bonus) => bonus.product_id).map((bonus) => bonus.product_id);
+
     return new Set(productIds).size !== productIds.length;
 });
 
 // Enviar formulario
 const handleSubmit = () => {
     submitted.value = true;
-    
+
     // Validar restricción de tiempo primero
     if (!canAddBonuses.value) {
         toast.add({
@@ -304,7 +301,7 @@ const handleSubmit = () => {
         });
         return;
     }
-    
+
     if (!isFormValid.value) {
         toast.add({
             severity: 'error',
@@ -314,7 +311,7 @@ const handleSubmit = () => {
         });
         return;
     }
-    
+
     if (hasDuplicateProducts.value) {
         toast.add({
             severity: 'error',
@@ -324,20 +321,19 @@ const handleSubmit = () => {
         });
         return;
     }
-    
+
     // Preparar datos para envío
     const bonusData = {
-        bonuses: bonusForm.value.bonuses.map(bonus => ({
+        bonuses: bonusForm.value.bonuses.map((bonus) => ({
             product_id: bonus.product_id,
             batch_id: bonus.batch_id,
             quantity: Number(bonus.quantity),
             bonus_type: bonus.bonus_type,
             bonus_reason: bonus.bonus_reason.trim(),
-            expiration_date: bonus.expiration_date ? 
-                new Date(bonus.expiration_date).toISOString().split('T')[0] : null
+            expiration_date: bonus.expiration_date ? new Date(bonus.expiration_date).toISOString().split('T')[0] : null
         }))
     };
-    
+
     emit('submit', bonusData);
 };
 
@@ -359,15 +355,7 @@ const formatDate = (date) => {
 </script>
 
 <template>
-    <Dialog 
-        :visible="visible" 
-        @update:visible="(val) => emit('update:visible', val)" 
-        :style="{ width: '90vw', maxWidth: '1200px' }" 
-        header="Gestión de Bonificaciones"
-        :modal="true" 
-        class="bonus-dialog"
-        @hide="resetForm"
-    >
+    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '90vw', maxWidth: '1200px' }" header="Gestión de Bonificaciones" :modal="true" class="bonus-dialog" @hide="resetForm">
         <div class="dialog-content">
             <!-- Información de la orden -->
             <div class="order-info">
@@ -399,7 +387,7 @@ const formatDate = (date) => {
                     <span>Las bonificaciones solo pueden agregarse el mismo día de recepción</span>
                 </div>
             </div>
-            
+
             <!-- Alerta de restricción de tiempo -->
             <div v-if="!canAddBonuses" class="time-restriction-alert">
                 <i class="pi pi-exclamation-triangle"></i>
@@ -413,10 +401,10 @@ const formatDate = (date) => {
                         <i class="pi pi-plus text-blue-500"></i>
                         Agregar Bonificaciones
                     </h4>
-                    <Button 
-                        icon="pi pi-plus" 
-                        label="Agregar Bonificación" 
-                        outlined 
+                    <Button
+                        icon="pi pi-plus"
+                        label="Agregar Bonificación"
+                        outlined
                         size="small"
                         @click="addBonus"
                         :disabled="!canAddBonuses || bonusForm.bonuses.length >= 20"
@@ -425,30 +413,17 @@ const formatDate = (date) => {
                 </div>
 
                 <div class="bonuses-container">
-                    <div 
-                        v-for="(bonus, index) in bonusForm.bonuses" 
-                        :key="bonus.id"
-                        class="bonus-form-row"
-                    >
+                    <div v-for="(bonus, index) in bonusForm.bonuses" :key="bonus.id" class="bonus-form-row">
                         <div class="bonus-header">
                             <span class="bonus-number">Bonificación #{{ index + 1 }}</span>
-                            <Button 
-                                icon="pi pi-trash" 
-                                severity="danger" 
-                                text 
-                                rounded 
-                                size="small"
-                                @click="removeBonus(index)"
-                                :disabled="!canAddBonuses || bonusForm.bonuses.length === 1"
-                                v-tooltip.top="'Eliminar bonificación'"
-                            />
+                            <Button icon="pi pi-trash" severity="danger" text rounded size="small" @click="removeBonus(index)" :disabled="!canAddBonuses || bonusForm.bonuses.length === 1" v-tooltip.top="'Eliminar bonificación'" />
                         </div>
 
                         <div class="bonus-fields">
                             <!-- Producto -->
                             <div class="field">
                                 <label>Producto <span class="required">*</span></label>
-                                <Select 
+                                <Select
                                     v-model="bonus.selectedProduct"
                                     :options="availableProducts"
                                     optionLabel="label"
@@ -460,15 +435,13 @@ const formatDate = (date) => {
                                     :loading="loadingProducts"
                                     :disabled="!canAddBonuses"
                                 />
-                                <small v-if="submitted && !bonus.product_id" class="p-error">
-                                    Producto requerido
-                                </small>
+                                <small v-if="submitted && !bonus.product_id" class="p-error"> Producto requerido </small>
                             </div>
 
                             <!-- Lote (si el producto lo requiere) -->
                             <div v-if="bonus.requires_batch && !bonus.selectedProduct?.auto_generate_batches" class="field">
                                 <label>Lote <span class="required">*</span></label>
-                                <Select 
+                                <Select
                                     v-model="bonus.batch_id"
                                     :options="getAvailableBatchesForProduct(bonus.product_id)"
                                     optionLabel="label"
@@ -487,9 +460,7 @@ const formatDate = (date) => {
                                         </div>
                                     </template>
                                 </Select>
-                                <small v-if="submitted && bonus.requires_batch && !bonus.batch_id" class="p-error">
-                                    Lote requerido para este producto
-                                </small>
+                                <small v-if="submitted && bonus.requires_batch && !bonus.batch_id" class="p-error"> Lote requerido para este producto </small>
                             </div>
 
                             <!-- Nota para auto-generación -->
@@ -503,8 +474,8 @@ const formatDate = (date) => {
                             <!-- Cantidad -->
                             <div class="field">
                                 <label>Cantidad <span class="required">*</span></label>
-                                <InputNumber 
-                                    v-model="bonus.quantity" 
+                                <InputNumber
+                                    v-model="bonus.quantity"
                                     :min="0.0001"
                                     :max="999999.9999"
                                     :minFractionDigits="0"
@@ -513,50 +484,26 @@ const formatDate = (date) => {
                                     :class="{ 'p-invalid': submitted && (!bonus.quantity || bonus.quantity <= 0) }"
                                     :disabled="!canAddBonuses"
                                 />
-                                <small v-if="submitted && (!bonus.quantity || bonus.quantity <= 0)" class="p-error">
-                                    Cantidad debe ser mayor a 0
-                                </small>
+                                <small v-if="submitted && (!bonus.quantity || bonus.quantity <= 0)" class="p-error"> Cantidad debe ser mayor a 0 </small>
                             </div>
 
                             <!-- Tipo de bonificación -->
                             <div class="field">
                                 <label>Tipo de Bonificación <span class="required">*</span></label>
-                                <Select 
-                                    v-model="bonus.bonus_type"
-                                    :options="bonusTypes"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                    placeholder="Seleccionar tipo"
-                                    :disabled="!canAddBonuses"
-                                />
+                                <Select v-model="bonus.bonus_type" :options="bonusTypes" optionLabel="label" optionValue="value" placeholder="Seleccionar tipo" :disabled="!canAddBonuses" />
                             </div>
 
                             <!-- Razón -->
                             <div class="field field-full">
                                 <label>Razón de la Bonificación <span class="required">*</span></label>
-                                <InputText 
-                                    v-model="bonus.bonus_reason" 
-                                    placeholder="Ej: Promoción por compra mayor a $1000"
-                                    :class="{ 'p-invalid': submitted && (!bonus.bonus_reason || !bonus.bonus_reason.trim()) }"
-                                    :disabled="!canAddBonuses"
-                                />
-                                <small v-if="submitted && (!bonus.bonus_reason || !bonus.bonus_reason.trim())" class="p-error">
-                                    Razón requerida
-                                </small>
+                                <InputText v-model="bonus.bonus_reason" placeholder="Ej: Promoción por compra mayor a $1000" :class="{ 'p-invalid': submitted && (!bonus.bonus_reason || !bonus.bonus_reason.trim()) }" :disabled="!canAddBonuses" />
+                                <small v-if="submitted && (!bonus.bonus_reason || !bonus.bonus_reason.trim())" class="p-error"> Razón requerida </small>
                             </div>
 
                             <!-- Fecha de vencimiento (opcional) -->
                             <div class="field">
                                 <label>Fecha de Vencimiento (Opcional)</label>
-                                <DatePicker 
-                                    v-model="bonus.expiration_date" 
-                                    placeholder="Seleccionar fecha"
-                                    dateFormat="dd/mm/yy"
-                                    showIcon
-                                    iconDisplay="input"
-                                    :minDate="new Date()"
-                                    :disabled="!canAddBonuses"
-                                />
+                                <DatePicker v-model="bonus.expiration_date" placeholder="Seleccionar fecha" dateFormat="dd/mm/yy" showIcon iconDisplay="input" :minDate="new Date()" :disabled="!canAddBonuses" />
                             </div>
                         </div>
                     </div>
@@ -582,18 +529,8 @@ const formatDate = (date) => {
                     </div>
                 </div>
                 <div class="footer-actions">
-                    <Button 
-                        label="Cancelar" 
-                        icon="pi pi-times" 
-                        outlined 
-                        @click="handleCancel" 
-                    />
-                    <Button 
-                        label="Agregar Bonificaciones" 
-                        icon="pi pi-gift" 
-                        @click="handleSubmit" 
-                        :disabled="!canAddBonuses || !isFormValid || hasDuplicateProducts"
-                    />
+                    <Button label="Cancelar" icon="pi pi-times" outlined @click="handleCancel" />
+                    <Button label="Agregar Bonificaciones" icon="pi pi-gift" @click="handleSubmit" :disabled="!canAddBonuses || !isFormValid || hasDuplicateProducts" />
                 </div>
             </div>
         </template>
@@ -761,19 +698,19 @@ const formatDate = (date) => {
     .bonus-fields {
         @apply grid-cols-1;
     }
-    
+
     .section-header {
         @apply flex-col gap-2;
     }
-    
+
     .order-details {
         @apply flex-col gap-1;
     }
-    
+
     .dialog-footer {
         @apply flex-col gap-4;
     }
-    
+
     .footer-actions {
         @apply w-full;
     }

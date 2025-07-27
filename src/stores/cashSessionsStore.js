@@ -1,10 +1,4 @@
-import {
-    closeCashSession,
-    getCashSessionHistory,
-    getCashSessionReport,
-    getCurrentCashSession,
-    openCashSession
-} from '@/api';
+import { closeCashSession, getCashSessionHistory, getCashSessionReport, getCurrentCashSession, openCashSession } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
 
@@ -63,10 +57,7 @@ export const useCashSessionsStore = defineStore('cashSessionsStore', {
         },
 
         hasActiveFilters: (state) => {
-            return state.filters.status ||
-                state.filters.date_from ||
-                state.filters.date_to ||
-                state.filters.cash_register_id;
+            return state.filters.status || state.filters.date_from || state.filters.date_to || state.filters.cash_register_id;
         }
     },
 
@@ -173,7 +164,7 @@ export const useCashSessionsStore = defineStore('cashSessionsStore', {
                     per_page: params.per_page || this.pagination.perPage
                 };
                 // Eliminar claves vacías para evitar errores 422
-                Object.keys(finalParams).forEach(key => {
+                Object.keys(finalParams).forEach((key) => {
                     const val = finalParams[key];
                     if (val === '' || val === null || typeof val === 'undefined') {
                         delete finalParams[key];

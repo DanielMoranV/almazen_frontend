@@ -86,17 +86,28 @@ const formatDate = (date) => {
     // Formatear manualmente al estilo dd/mm/yyyy
     return `${day}/${month}/${year}`;
 };
-
 </script>
 
 <template>
-    <DataTable stripedRows :value="sales" :loading="loading" responsiveLayout="scroll" scrollable scrollHeight="500px"
-        removableSort dataKey="id" :filters="localFilters" v-model:filters="localFilters"
-        :globalFilterFields="['document_number', 'customer_name', 'document_type', 'status']" :paginator="true"
-        :rows="20" :rowsPerPageOptions="[10, 15, 20, 25, 50, 100]"
+    <DataTable
+        stripedRows
+        :value="sales"
+        :loading="loading"
+        responsiveLayout="scroll"
+        scrollable
+        scrollHeight="500px"
+        removableSort
+        dataKey="id"
+        :filters="localFilters"
+        v-model:filters="localFilters"
+        :globalFilterFields="['document_number', 'customer_name', 'document_type', 'status']"
+        :paginator="true"
+        :rows="20"
+        :rowsPerPageOptions="[10, 15, 20, 25, 50, 100]"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} ventas"
-        class="sales-table green-theme p-datatable-gridlines">
+        class="sales-table green-theme p-datatable-gridlines"
+    >
         <template #header>
             <div class="table-header">
                 <div class="header-backdrop"></div>
@@ -107,15 +118,12 @@ const formatDate = (date) => {
                                 <InputIcon>
                                     <i class="pi pi-search text-white" />
                                 </InputIcon>
-                                <InputText v-model="localFilters.global.value"
-                                    placeholder="Buscar por documento, cliente, tipo..." class="search-input" fluid />
+                                <InputText v-model="localFilters.global.value" placeholder="Buscar por documento, cliente, tipo..." class="search-input" fluid />
                             </IconField>
                         </div>
                     </div>
                     <div class="actions-section">
-                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn"
-                            @click="exportSales()" v-tooltip.top="'Exportar ventas a Excel'"
-                            :disabled="!sales.length" />
+                        <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportSales()" v-tooltip.top="'Exportar ventas a Excel'" :disabled="!sales.length" />
                     </div>
                 </div>
             </div>
@@ -129,8 +137,7 @@ const formatDate = (date) => {
                 </div>
                 <h3 class="empty-title">No se encontraron ventas</h3>
                 <p class="empty-description">Intenta ajustar los filtros o términos de búsqueda</p>
-                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined"
-                    @click="localFilters = initFilters()" />
+                <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined" @click="localFilters = initFilters()" />
             </div>
         </template>
 
@@ -200,17 +207,22 @@ const formatDate = (date) => {
         <Column field="status" header="Estado" sortable style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
                 <div class="flex justify-center">
-                    <div :class="{
-                        'status-badge': true,
-                        'pending': data.status === 'PENDIENTE' || data.status_info?.is_pending,
-                        'paid': data.status === 'PAGADO' || data.status_info?.is_paid,
-                        'cancelled': data.status === 'ANULADO' || data.status_info?.is_cancelled
-                    }" :title="data.status_display || data.status">
-                        <i :class="{
-                            'pi pi-clock': data.status === 'PENDIENTE' || data.status_info?.is_pending,
-                            'pi pi-check': data.status === 'PAGADO' || data.status_info?.is_paid,
-                            'pi pi-times': data.status === 'ANULADO' || data.status_info?.is_cancelled
-                        }"></i>
+                    <div
+                        :class="{
+                            'status-badge': true,
+                            pending: data.status === 'PENDIENTE' || data.status_info?.is_pending,
+                            paid: data.status === 'PAGADO' || data.status_info?.is_paid,
+                            cancelled: data.status === 'ANULADO' || data.status_info?.is_cancelled
+                        }"
+                        :title="data.status_display || data.status"
+                    >
+                        <i
+                            :class="{
+                                'pi pi-clock': data.status === 'PENDIENTE' || data.status_info?.is_pending,
+                                'pi pi-check': data.status === 'PAGADO' || data.status_info?.is_paid,
+                                'pi pi-times': data.status === 'ANULADO' || data.status_info?.is_cancelled
+                            }"
+                        ></i>
                         <span>{{ data.status_display || data.status || 'PENDIENTE' }}</span>
                     </div>
                 </div>
@@ -221,10 +233,8 @@ const formatDate = (date) => {
         <Column header="Imprimir" :exportable="false" style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
                 <div class="flex gap-1 justify-center" v-if="data.status === 'PAGADO' && data.voucher_urls">
-                    <Button icon="pi pi-print" class="p-button-sm p-button-success" v-tooltip.top="'Ticket'"
-                        @click="openVoucher(data.voucher_urls.ticket)" />
-                    <Button icon="pi pi-file" class="p-button-sm p-button-info" v-tooltip.top="'A4'"
-                        @click="openVoucher(data.voucher_urls.a4)" />
+                    <Button icon="pi pi-print" class="p-button-sm p-button-success" v-tooltip.top="'Ticket'" @click="openVoucher(data.voucher_urls.ticket)" />
+                    <Button icon="pi pi-file" class="p-button-sm p-button-info" v-tooltip.top="'A4'" @click="openVoucher(data.voucher_urls.a4)" />
                 </div>
                 <span v-else class="text-gray-400">-</span>
             </template>
@@ -256,14 +266,26 @@ const formatDate = (date) => {
         <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
-                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text
+                    <Button
+                        icon="pi pi-pencil"
+                        class="p-button-rounded p-button-info"
+                        size="small"
+                        rounded
+                        text
                         :disabled="!canEditSale(slotProps.data)"
                         v-tooltip.top="canEditSale(slotProps.data) ? 'Editar' : 'Solo se pueden editar ventas pendientes'"
-                        @click="$emit('edit', slotProps.data)" />
-                    <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text
+                        @click="$emit('edit', slotProps.data)"
+                    />
+                    <Button
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-danger"
+                        size="small"
+                        rounded
+                        text
                         :disabled="!canDeleteSale(slotProps.data)"
                         v-tooltip.top="canDeleteSale(slotProps.data) ? 'Eliminar' : 'No se puede eliminar esta venta'"
-                        @click="$emit('delete', slotProps.data)" />
+                        @click="$emit('delete', slotProps.data)"
+                    />
                 </div>
             </template>
         </Column>
@@ -282,7 +304,9 @@ const formatDate = (date) => {
 .header-backdrop {
     @apply absolute inset-0 opacity-10;
     background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-    background-size: 40px 40px, 25px 25px;
+    background-size:
+        40px 40px,
+        25px 25px;
     animation: pattern-drift 25s linear infinite;
 }
 
@@ -371,7 +395,9 @@ const formatDate = (date) => {
 /* Tema principal de la tabla mejorado */
 :deep(.green-theme) {
     @apply rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 :deep(.green-theme .p-datatable-header) {
@@ -509,11 +535,15 @@ const formatDate = (date) => {
 /* Animación del patrón */
 @keyframes pattern-drift {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
 
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 

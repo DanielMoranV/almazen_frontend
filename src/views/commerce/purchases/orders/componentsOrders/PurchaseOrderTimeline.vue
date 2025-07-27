@@ -50,35 +50,37 @@ const timelineSteps = computed(() => {
         });
     }
 
-    return baseSteps.map(step => {
-        const timelineData = props.statusTimeline?.find(t => t.status === step.status);
-        const trackingData = getTrackingForStatus(step.status);
-        
-        // Verificar si el usuario y timestamp tienen datos válidos
-        const hasValidUser = trackingData?.user && trackingData.user.name && trackingData.user.name !== 'N/A';
-        const hasValidTimestamp = trackingData?.timestamp && trackingData.timestamp !== 'N/A';
-        
-        return {
-            ...step,
-            completed: timelineData?.completed || false,
-            user: hasValidUser ? trackingData.user : null,
-            timestamp: hasValidTimestamp ? trackingData.timestamp : null,
-            isActive: props.currentStatus === step.status,
-            isFuture: !timelineData?.completed && props.currentStatus !== step.status,
-            hasValidData: hasValidUser && hasValidTimestamp
-        };
-    }).filter(step => {
-        // Filtrar el estado APROBADO si no tiene datos válidos
-        if (step.status === 'APROBADO' && !step.hasValidData) {
-            return false;
-        }
-        return true;
-    });
+    return baseSteps
+        .map((step) => {
+            const timelineData = props.statusTimeline?.find((t) => t.status === step.status);
+            const trackingData = getTrackingForStatus(step.status);
+
+            // Verificar si el usuario y timestamp tienen datos válidos
+            const hasValidUser = trackingData?.user && trackingData.user.name && trackingData.user.name !== 'N/A';
+            const hasValidTimestamp = trackingData?.timestamp && trackingData.timestamp !== 'N/A';
+
+            return {
+                ...step,
+                completed: timelineData?.completed || false,
+                user: hasValidUser ? trackingData.user : null,
+                timestamp: hasValidTimestamp ? trackingData.timestamp : null,
+                isActive: props.currentStatus === step.status,
+                isFuture: !timelineData?.completed && props.currentStatus !== step.status,
+                hasValidData: hasValidUser && hasValidTimestamp
+            };
+        })
+        .filter((step) => {
+            // Filtrar el estado APROBADO si no tiene datos válidos
+            if (step.status === 'APROBADO' && !step.hasValidData) {
+                return false;
+            }
+            return true;
+        });
 });
 
 const getTrackingForStatus = (status) => {
     const tracking = props.statusTracking;
-    
+
     switch (status) {
         case 'PENDIENTE':
             return {
@@ -108,9 +110,9 @@ const getTrackingForStatus = (status) => {
 const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-        return formatDistanceToNow(new Date(dateString), { 
-            addSuffix: true, 
-            locale: es 
+        return formatDistanceToNow(new Date(dateString), {
+            addSuffix: true,
+            locale: es
         });
     } catch (error) {
         return new Date(dateString).toLocaleDateString('es-PE');
@@ -139,24 +141,24 @@ const formatFullDate = (dateString) => {
         </div>
 
         <div class="timeline-steps">
-            <div 
-                v-for="(step, index) in timelineSteps" 
+            <div
+                v-for="(step, index) in timelineSteps"
                 :key="step.status"
                 class="timeline-step"
                 :class="{
-                    'completed': step.completed,
-                    'active': step.isActive,
-                    'future': step.isFuture,
-                    'cancelled': step.status === 'ANULADO'
+                    completed: step.completed,
+                    active: step.isActive,
+                    future: step.isFuture,
+                    cancelled: step.status === 'ANULADO'
                 }"
             >
                 <!-- Línea conectora -->
-                <div 
-                    v-if="index < timelineSteps.length - 1" 
+                <div
+                    v-if="index < timelineSteps.length - 1"
                     class="timeline-connector"
                     :class="{
-                        'completed': step.completed,
-                        'cancelled': currentStatus === 'ANULADO' && step.status !== 'ANULADO'
+                        completed: step.completed,
+                        cancelled: currentStatus === 'ANULADO' && step.status !== 'ANULADO'
                     }"
                 ></div>
 
@@ -169,12 +171,7 @@ const formatFullDate = (dateString) => {
                 <div class="timeline-content">
                     <div class="timeline-label">
                         <h4>{{ step.label }}</h4>
-                        <span 
-                            v-if="step.isActive" 
-                            class="current-badge"
-                        >
-                            Actual
-                        </span>
+                        <span v-if="step.isActive" class="current-badge"> Actual </span>
                     </div>
 
                     <!-- Información del usuario y fecha -->
@@ -211,7 +208,7 @@ const formatFullDate = (dateString) => {
                         <span class="summary-value">{{ statusTracking.requested_by.name }}</span>
                     </div>
                 </div>
-                
+
                 <div v-if="statusTracking.approved_by && statusTracking.approved_by.name && statusTracking.approved_by.name !== 'N/A'" class="summary-item">
                     <i class="pi pi-check-circle text-green-500"></i>
                     <div>
@@ -219,7 +216,7 @@ const formatFullDate = (dateString) => {
                         <span class="summary-value">{{ statusTracking.approved_by.name }}</span>
                     </div>
                 </div>
-                
+
                 <div v-if="statusTracking.received_by" class="summary-item">
                     <i class="pi pi-box text-purple-500"></i>
                     <div>
@@ -227,7 +224,7 @@ const formatFullDate = (dateString) => {
                         <span class="summary-value">{{ statusTracking.received_by.name }}</span>
                     </div>
                 </div>
-                
+
                 <div v-if="statusTracking.cancelled_by" class="summary-item">
                     <i class="pi pi-times-circle text-red-500"></i>
                     <div>
@@ -398,19 +395,19 @@ const formatFullDate = (dateString) => {
     .timeline-container {
         @apply p-4;
     }
-    
+
     .timeline-step {
         @apply gap-3;
     }
-    
+
     .timeline-icon {
         @apply w-10 h-10;
     }
-    
+
     .timeline-label {
         @apply flex-col items-start gap-1;
     }
-    
+
     .summary-grid {
         @apply grid-cols-1;
     }

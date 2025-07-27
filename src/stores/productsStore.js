@@ -12,7 +12,7 @@ export const useProductsStore = defineStore('productsStore', {
         success: false,
         isLoading: false,
         validationErrors: [],
-        
+
         // Estados específicos para búsqueda de productos para ventas
         saleProducts: [],
         saleSearchTerm: '',
@@ -27,7 +27,7 @@ export const useProductsStore = defineStore('productsStore', {
         isLoadingProducts: (state) => state.isLoading,
         getCurrentSearchTerm: (state) => state.searchTerm,
         totalProducts: (state) => state.products.length,
-        
+
         // Getters para búsqueda de productos para ventas
         saleProductsList: (state) => state.saleProducts,
         isLoadingSaleProducts: (state) => state.isLoadingSaleSearch,
@@ -35,23 +35,18 @@ export const useProductsStore = defineStore('productsStore', {
         getSaleSearchMessage: (state) => state.saleSearchMessage,
         getSelectedWarehouse: (state) => state.selectedWarehouse,
         totalSaleProducts: (state) => state.saleProducts.length,
-        
+
         // Getter para productos con stock disponible agrupados por almacén
         productsWithStock: (state) => {
-            return state.saleProducts.map(product => ({
+            return state.saleProducts.map((product) => ({
                 ...product,
-                totalAvailableStock: product.available_stock?.reduce((total, warehouse) => 
-                    total + warehouse.total_stock, 0) || 0
+                totalAvailableStock: product.available_stock?.reduce((total, warehouse) => total + warehouse.total_stock, 0) || 0
             }));
         },
-        
+
         // Getter para obtener productos por almacén específico
         productsByWarehouse: (state) => (warehouseId) => {
-            return state.saleProducts.filter(product => 
-                product.available_stock?.some(warehouse => 
-                    warehouse.warehouse_id === warehouseId && warehouse.total_stock > 0
-                )
-            );
+            return state.saleProducts.filter((product) => product.available_stock?.some((warehouse) => warehouse.warehouse_id === warehouseId && warehouse.total_stock > 0));
         }
     },
     actions: {
@@ -59,15 +54,15 @@ export const useProductsStore = defineStore('productsStore', {
             this.isLoading = true;
             try {
                 const params = {};
-                
+
                 // Solo agregar parámetros si hay búsqueda
                 if (this.searchTerm) {
                     params.search = this.searchTerm;
                 }
-                
+
                 const res = await fetchProducts(params);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     this.products = Array.isArray(processed.data) ? processed.data : [];
                 }
@@ -84,7 +79,7 @@ export const useProductsStore = defineStore('productsStore', {
             if (this.searchTimeout) {
                 clearTimeout(this.searchTimeout);
             }
-            
+
             this.searchTimeout = setTimeout(async () => {
                 this.searchTerm = searchTerm;
                 await this.fetchProducts();
@@ -139,7 +134,7 @@ export const useProductsStore = defineStore('productsStore', {
         },
 
         // ====== ACCIONES PARA BÚSQUEDA DE PRODUCTOS PARA VENTAS ======
-        
+
         /**
          * Busca productos disponibles para venta con stock
          * @param {string} searchTerm - Término de búsqueda (código de barras, SKU o nombre)
@@ -154,23 +149,23 @@ export const useProductsStore = defineStore('productsStore', {
 
             this.isLoadingSaleSearch = true;
             this.saleSearchMessage = '';
-            
+
             try {
                 const params = { search: searchTerm.trim() };
-                
+
                 // Agregar filtro por almacén si se especifica
                 if (warehouseId) {
                     params.warehouse_id = warehouseId;
                 }
-                
+
                 const res = await searchProductsForSale(params);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     this.saleProducts = Array.isArray(processed.data) ? processed.data : [];
                     this.saleSearchTerm = searchTerm;
                     this.selectedWarehouse = warehouseId;
-                    
+
                     // Establecer mensaje según resultados
                     if (this.saleProducts.length === 0) {
                         this.saleSearchMessage = 'No se encontraron productos con stock disponible';
@@ -201,7 +196,7 @@ export const useProductsStore = defineStore('productsStore', {
             if (this.saleSearchTimeout) {
                 clearTimeout(this.saleSearchTimeout);
             }
-            
+
             // Establecer nuevo timeout
             this.saleSearchTimeout = setTimeout(async () => {
                 await this.searchProductsForSale(searchTerm, warehouseId);
@@ -216,7 +211,7 @@ export const useProductsStore = defineStore('productsStore', {
             this.saleSearchTerm = '';
             this.saleSearchMessage = '';
             this.selectedWarehouse = null;
-            
+
             if (this.saleSearchTimeout) {
                 clearTimeout(this.saleSearchTimeout);
                 this.saleSearchTimeout = null;
@@ -229,7 +224,7 @@ export const useProductsStore = defineStore('productsStore', {
          */
         setSelectedWarehouse(warehouseId) {
             this.selectedWarehouse = warehouseId;
-            
+
             // Si hay un término de búsqueda activo, volver a buscar con el nuevo almacén
             if (this.saleSearchTerm) {
                 this.searchProductsForSale(this.saleSearchTerm, warehouseId);
@@ -243,15 +238,13 @@ export const useProductsStore = defineStore('productsStore', {
          * @returns {Object|null} - Datos del producto o null si no se encuentra
          */
         getSaleProductById(productId, warehouseId = null) {
-            const product = this.saleProducts.find(p => p.id === productId);
+            const product = this.saleProducts.find((p) => p.id === productId);
             if (!product) return null;
 
             // Si se especifica un almacén, filtrar solo ese almacén
             if (warehouseId) {
-                const warehouseStock = product.available_stock?.find(
-                    warehouse => warehouse.warehouse_id === warehouseId
-                );
-                
+                const warehouseStock = product.available_stock?.find((warehouse) => warehouse.warehouse_id === warehouseId);
+
                 if (warehouseStock) {
                     return {
                         ...product,
@@ -271,12 +264,10 @@ export const useProductsStore = defineStore('productsStore', {
          * @returns {Object|null} - Información del stock o null si no se encuentra
          */
         getProductWarehouseStock(productId, warehouseId) {
-            const product = this.saleProducts.find(p => p.id === productId);
+            const product = this.saleProducts.find((p) => p.id === productId);
             if (!product) return null;
 
-            return product.available_stock?.find(
-                warehouse => warehouse.warehouse_id === warehouseId
-            ) || null;
+            return product.available_stock?.find((warehouse) => warehouse.warehouse_id === warehouseId) || null;
         },
 
         /**
@@ -286,16 +277,10 @@ export const useProductsStore = defineStore('productsStore', {
          * @returns {boolean} - true si tiene lotes próximos a vencer
          */
         hasExpiringBatches(productId, daysThreshold = 30) {
-            const product = this.saleProducts.find(p => p.id === productId);
+            const product = this.saleProducts.find((p) => p.id === productId);
             if (!product || !product.requires_batches) return false;
 
-            return product.available_stock?.some(warehouse => 
-                warehouse.batches?.some(batch => 
-                    batch.days_to_expire !== null && 
-                    batch.days_to_expire <= daysThreshold && 
-                    !batch.is_expired
-                )
-            ) || false;
+            return product.available_stock?.some((warehouse) => warehouse.batches?.some((batch) => batch.days_to_expire !== null && batch.days_to_expire <= daysThreshold && !batch.is_expired)) || false;
         }
     }
 });

@@ -94,7 +94,7 @@ const viewInvoiceDetails = (invoice) => {
 const downloadInvoice = (invoice, event) => {
     event.stopPropagation();
     loading.value = true;
-    
+
     // Simulación de descarga
     setTimeout(() => {
         toast.add({
@@ -110,7 +110,7 @@ const downloadInvoice = (invoice, event) => {
 const sendInvoiceByEmail = (invoice, event) => {
     event.stopPropagation();
     loading.value = true;
-    
+
     // Simulación de envío por correo
     setTimeout(() => {
         toast.add({
@@ -169,13 +169,13 @@ const onStatusChange = (value) => {
                 <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center">
                     <h5 class="m-0">Facturas</h5>
                 </div>
-                
+
                 <div class="flex flex-column md:flex-row justify-content-between mt-4">
                     <div class="p-input-icon-left mb-3 md:mb-0 w-full md:w-4">
                         <i class="pi pi-search"></i>
                         <input type="text" v-model="filters.global.value" class="p-inputtext p-component w-full" placeholder="Buscar..." />
                     </div>
-                    
+
                     <div class="flex align-items-center">
                         <label for="status-filter" class="mr-2">Estado:</label>
                         <select id="status-filter" v-model="filters.status.value" class="p-inputtext p-component" @change="onStatusChange($event.target.value)">
@@ -185,16 +185,16 @@ const onStatusChange = (value) => {
                         </select>
                     </div>
                 </div>
-                
+
                 <div v-if="loading" class="flex justify-content-center mt-4">
                     <i class="pi pi-spin pi-spinner text-2xl"></i>
                 </div>
-                
+
                 <div v-else-if="invoices.length === 0" class="text-center p-5">
                     <i class="pi pi-file-pdf text-4xl text-500 mb-3"></i>
                     <p>No hay facturas registradas</p>
                 </div>
-                
+
                 <div v-else class="overflow-x-auto mt-4">
                     <table class="w-full">
                         <thead>

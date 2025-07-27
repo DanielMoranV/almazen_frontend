@@ -51,10 +51,12 @@ export const useProductStocksStore = defineStore('productStocksStore', {
         lowStockProducts: (state) => {
             return state.productStocks.filter((product) => {
                 // Verificar si algún almacén tiene stock bajo
-                return product.stock_by_warehouse?.some(warehouse => {
-                    const minStock = warehouse.min_stock || 10;
-                    return warehouse.total_stock > 0 && warehouse.total_stock <= minStock;
-                }) || false;
+                return (
+                    product.stock_by_warehouse?.some((warehouse) => {
+                        const minStock = warehouse.min_stock || 10;
+                        return warehouse.total_stock > 0 && warehouse.total_stock <= minStock;
+                    }) || false
+                );
             }).length;
         },
         outOfStockProducts: (state) => {
@@ -66,50 +68,38 @@ export const useProductStocksStore = defineStore('productStocksStore', {
             // Filtrar por término de búsqueda
             if (state.searchTerm) {
                 const query = state.searchTerm.toLowerCase();
-                result = result.filter((product) =>
-                    product.name?.toLowerCase().includes(query) ||
-                    product.sku?.toLowerCase().includes(query) ||
-                    product.barcode?.toLowerCase().includes(query)
-                );
+                result = result.filter((product) => product.name?.toLowerCase().includes(query) || product.sku?.toLowerCase().includes(query) || product.barcode?.toLowerCase().includes(query));
             }
 
             // Filtrar por almacén
             if (state.filters.warehouse) {
-                result = result.filter((product) =>
-                    product.stock_by_warehouse?.some(warehouse =>
-                        warehouse.warehouse_id === state.filters.warehouse
-                    )
-                ).map((product) => {
-                    // Crear una copia del producto con solo el almacén seleccionado
-                    const filteredWarehouse = product.stock_by_warehouse?.find(warehouse =>
-                        warehouse.warehouse_id === state.filters.warehouse
-                    );
+                result = result
+                    .filter((product) => product.stock_by_warehouse?.some((warehouse) => warehouse.warehouse_id === state.filters.warehouse))
+                    .map((product) => {
+                        // Crear una copia del producto con solo el almacén seleccionado
+                        const filteredWarehouse = product.stock_by_warehouse?.find((warehouse) => warehouse.warehouse_id === state.filters.warehouse);
 
-                    if (filteredWarehouse) {
-                        // Usar los valores específicos del almacén si están disponibles
-                        // o calcularlos basados en la proporción del stock
-                        const warehouseStock = filteredWarehouse.total_stock || 0;
-                        const totalProductStock = product.total_stock || 1; // Evitar división por cero
+                        if (filteredWarehouse) {
+                            // Usar los valores específicos del almacén si están disponibles
+                            // o calcularlos basados en la proporción del stock
+                            const warehouseStock = filteredWarehouse.total_stock || 0;
+                            const totalProductStock = product.total_stock || 1; // Evitar división por cero
 
-                        // Si el almacén tiene sus propios valores de costo y venta, usarlos
-                        const costValue = filteredWarehouse.total_cost_value !== undefined ?
-                            filteredWarehouse.total_cost_value :
-                            (product.total_cost_value || 0) * (warehouseStock / totalProductStock);
+                            // Si el almacén tiene sus propios valores de costo y venta, usarlos
+                            const costValue = filteredWarehouse.total_cost_value !== undefined ? filteredWarehouse.total_cost_value : (product.total_cost_value || 0) * (warehouseStock / totalProductStock);
 
-                        const saleValue = filteredWarehouse.total_sale_value !== undefined ?
-                            filteredWarehouse.total_sale_value :
-                            (product.total_sale_value || 0) * (warehouseStock / totalProductStock);
+                            const saleValue = filteredWarehouse.total_sale_value !== undefined ? filteredWarehouse.total_sale_value : (product.total_sale_value || 0) * (warehouseStock / totalProductStock);
 
-                        return {
-                            ...product,
-                            stock_by_warehouse: [filteredWarehouse],
-                            total_stock: warehouseStock,
-                            total_cost_value: costValue,
-                            total_sale_value: saleValue
-                        };
-                    }
-                    return product;
-                });
+                            return {
+                                ...product,
+                                stock_by_warehouse: [filteredWarehouse],
+                                total_stock: warehouseStock,
+                                total_cost_value: costValue,
+                                total_sale_value: saleValue
+                            };
+                        }
+                        return product;
+                    });
             }
 
             // Filtrar por estado de stock
@@ -117,25 +107,19 @@ export const useProductStocksStore = defineStore('productStocksStore', {
                 switch (state.filters.status) {
                     case 'in_stock':
                         result = result.filter((product) => {
-                            const totalStock = state.filters.warehouse ?
-                                (product.stock_by_warehouse?.[0]?.total_stock || 0) :
-                                (product.total_stock || 0);
+                            const totalStock = state.filters.warehouse ? product.stock_by_warehouse?.[0]?.total_stock || 0 : product.total_stock || 0;
                             return totalStock > 10;
                         });
                         break;
                     case 'low_stock':
                         result = result.filter((product) => {
-                            const totalStock = state.filters.warehouse ?
-                                (product.stock_by_warehouse?.[0]?.total_stock || 0) :
-                                (product.total_stock || 0);
+                            const totalStock = state.filters.warehouse ? product.stock_by_warehouse?.[0]?.total_stock || 0 : product.total_stock || 0;
                             return totalStock > 0 && totalStock <= 10;
                         });
                         break;
                     case 'out_of_stock':
                         result = result.filter((product) => {
-                            const totalStock = state.filters.warehouse ?
-                                (product.stock_by_warehouse?.[0]?.total_stock || 0) :
-                                (product.total_stock || 0);
+                            const totalStock = state.filters.warehouse ? product.stock_by_warehouse?.[0]?.total_stock || 0 : product.total_stock || 0;
                             return totalStock === 0;
                         });
                         break;
@@ -271,7 +255,7 @@ export const useProductStocksStore = defineStore('productStocksStore', {
 
                 if (processed.success) {
                     // Update stock in stocks array if it exists
-                    const index = this.stocks.findIndex(stock => stock.id === stockId);
+                    const index = this.stocks.findIndex((stock) => stock.id === stockId);
                     if (index !== -1) {
                         this.stocks[index] = { ...this.stocks[index], ...processed.data };
                     }
@@ -299,7 +283,7 @@ export const useProductStocksStore = defineStore('productStocksStore', {
 
                 if (processed.success) {
                     // Remove from stocks array
-                    this.stocks = this.stocks.filter(stock => stock.id !== stockId);
+                    this.stocks = this.stocks.filter((stock) => stock.id !== stockId);
 
                     // Clear selectedStock if it's the deleted one
                     if (this.selectedStock && this.selectedStock.id === stockId) {

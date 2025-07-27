@@ -48,9 +48,9 @@ const warehouseOptions = computed(() => {
     stocksStore.stocksList.forEach((product) => {
         product.stock_by_warehouse?.forEach((warehouse) => {
             if (!warehouses.has(warehouse.warehouse_id)) {
-                warehouses.set(warehouse.warehouse_id, { 
-                    label: warehouse.warehouse_name, 
-                    value: warehouse.warehouse_id 
+                warehouses.set(warehouse.warehouse_id, {
+                    label: warehouse.warehouse_name,
+                    value: warehouse.warehouse_id
                 });
             }
         });
@@ -141,10 +141,10 @@ const editStock = async (item) => {
     try {
         // Get the first available stock_id from the product structure
         let stockId = null;
-        
+
         if (item.stock_by_warehouse && item.stock_by_warehouse.length > 0) {
             const firstWarehouse = item.stock_by_warehouse[0];
-            
+
             // Check if there's a direct stock_id (for products without batches)
             if (firstWarehouse.stock_id) {
                 stockId = firstWarehouse.stock_id;
@@ -154,7 +154,7 @@ const editStock = async (item) => {
                 stockId = firstWarehouse.batches[0].stock_id;
             }
         }
-        
+
         if (!stockId) {
             toast.add({
                 severity: 'warn',
@@ -169,7 +169,6 @@ const editStock = async (item) => {
         const stockData = await stocksStore.getStockById(stockId);
         selectedStockForEdit.value = stockData;
         showStockEditDialog.value = true;
-        
     } catch (error) {
         toast.add({
             severity: 'error',
@@ -212,57 +211,39 @@ const clearFilters = () => {
         <Toast />
 
         <!-- Toolbar Principal con Filtros Integrados -->
-        <StockToolbar 
-            :total-products="totalItems" 
-            :total-quantity="totalQuantity" 
-            :is-loading="loading" 
-            v-model:warehouse-filter="warehouseFilter" 
-            v-model:stock-status-filter="stockStatusFilter" 
-            :warehouse-options="warehouseOptions" 
-            @refresh="handleRefresh" 
-            @clear-filters="clearFilters" 
+        <StockToolbar
+            :total-products="totalItems"
+            :total-quantity="totalQuantity"
+            :is-loading="loading"
+            v-model:warehouse-filter="warehouseFilter"
+            v-model:stock-status-filter="stockStatusFilter"
+            :warehouse-options="warehouseOptions"
+            @refresh="handleRefresh"
+            @clear-filters="clearFilters"
         />
 
         <!-- Estadísticas -->
-        <StockStatistics 
-            :total-products="totalItems" 
-            :total-quantity="totalQuantity" 
-            :low-stock-products="lowStockItems" 
-            :out-of-stock-products="outOfStockItems" 
+        <StockStatistics
+            :total-products="totalItems"
+            :total-quantity="totalQuantity"
+            :low-stock-products="lowStockItems"
+            :out-of-stock-products="outOfStockItems"
             :total-cost-value="totalCostValue"
             :total-sale-value="totalSaleValue"
-            :loading="loading" 
+            :loading="loading"
         />
 
         <!-- Tabla de Stock -->
         <transition name="slide-up" appear>
-            <StockTable 
-                :stock-items="stockItems" 
-                :loading="loading" 
-                @view-details="viewProductDetails" 
-                @edit-stock="editStock"
-                @bulk-edit="bulkEdit"
-                @clear-filters="clearFilters" 
-            />
+            <StockTable :stock-items="stockItems" :loading="loading" @view-details="viewProductDetails" @edit-stock="editStock" @bulk-edit="bulkEdit" @clear-filters="clearFilters" />
         </transition>
 
         <!-- Dialogs -->
-        <StockEditDialog 
-            v-model:visible="showStockEditDialog"
-            :stock-data="selectedStockForEdit"
-            @stock-updated="handleStockUpdated"
-        />
+        <StockEditDialog v-model:visible="showStockEditDialog" :stock-data="selectedStockForEdit" @stock-updated="handleStockUpdated" />
 
-        <BulkEditDialog 
-            v-model:visible="showBulkEditDialog"
-            :product-data="selectedProductForBulk"
-            @bulk-updated="handleBulkUpdated"
-        />
+        <BulkEditDialog v-model:visible="showBulkEditDialog" :product-data="selectedProductForBulk" @bulk-updated="handleBulkUpdated" />
 
-        <StockDetailsModal 
-            v-model:visible="showDetailsModal"
-            :product-data="selectedProductForDetails"
-        />
+        <StockDetailsModal v-model:visible="showDetailsModal" :product-data="selectedProductForDetails" />
     </div>
 </template>
 

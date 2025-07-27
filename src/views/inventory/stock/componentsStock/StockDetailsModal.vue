@@ -1,296 +1,3 @@
-<template>
-    <Dialog 
-        v-model:visible="visible" 
-        modal 
-        :header="`Detalles de Stock - ${productData?.name || 'Producto'}`"
-        :style="{ width: '90vw', maxWidth: '1200px' }"
-        :closable="true"
-        :draggable="false"
-        class="stock-details-modal"
-    >
-        <div v-if="loading" class="loading-container">
-            <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
-            <p class="loading-text">Cargando detalles del stock...</p>
-        </div>
-
-        <div v-else-if="productData" class="modal-content">
-            <!-- Product Header -->
-            <div class="product-header">
-                <div class="product-info">
-                    <h3 class="product-name">{{ productData.name }}</h3>
-                    <div class="product-meta">
-                        <span v-if="productData.sku" class="sku">SKU: {{ productData.sku }}</span>
-                        <span v-if="productData.barcode" class="barcode">Código: {{ productData.barcode }}</span>
-                    </div>
-                </div>
-                <div class="product-summary">
-                    <div class="summary-item">
-                        <span class="label">Stock Total</span>
-                        <span class="value stock-total" :class="getStockClass(productData.total_stock)">
-                            {{ productData.total_stock || 0 }}
-                        </span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Costo Promedio</span>
-                        <span class="value cost-value">
-                            {{ formatCurrency(productData.avg_unit_cost) }}
-                        </span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Precio Promedio</span>
-                        <span class="value">
-                            {{ formatCurrency(productData.avg_sale_price) }}
-                        </span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Margen Promedio</span>
-                        <span class="value margin-value">
-                            {{ calculateProfitMargin(productData.avg_sale_price, productData.avg_unit_cost) }}
-                        </span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="label">Valor Total</span>
-                        <span class="value total-value">
-                            {{ formatCurrency(productData.total_sale_value) }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Warehouses Details -->
-            <div class="warehouses-section">
-                <h4 class="section-title">
-                    <i class="pi pi-building"></i>
-                    Detalle por Almacén
-                </h4>
-                
-                <div v-if="productData.stock_by_warehouse?.length" class="warehouses-grid">
-                    <div 
-                        v-for="warehouse in productData.stock_by_warehouse" 
-                        :key="warehouse.warehouse_id"
-                        class="warehouse-card"
-                    >
-                        <div class="warehouse-header">
-                            <h5 class="warehouse-name">{{ warehouse.warehouse_name }}</h5>
-                            <div class="warehouse-stock">
-                                <span class="stock-amount" :class="getStockClass(warehouse.total_stock)">
-                                    {{ warehouse.total_stock || 0 }}
-                                </span>
-                                <span class="stock-label">unidades</span>
-                            </div>
-                        </div>
-
-                        <!-- Stock Limits -->
-                        <div class="stock-limits">
-                            <div class="limit-item">
-                                <span class="limit-label">Mín:</span>
-                                <span class="limit-value">{{ warehouse.min_stock || 0 }}</span>
-                            </div>
-                            <div class="limit-item">
-                                <span class="limit-label">Máx:</span>
-                                <span class="limit-value">{{ warehouse.max_stock || 0 }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Batches Section -->
-                        <div v-if="productData.requires_batches && hasAnyBatches(warehouse)" class="batches-section">
-                            <h6 class="batches-title">
-                                <i class="pi pi-tags"></i>
-                                Lotes ({{ warehouse.batches.length }})
-                            </h6>
-                            
-                            <div class="batches-table">
-                                <div class="batch-header">
-                                    <span>Lote</span>
-                                    <span>Stock</span>
-                                    <span>Costo</span>
-                                    <span>Precio Venta</span>
-                                    <span>Margen</span>
-                                    <span>Vencimiento</span>
-                                </div>
-                                
-                                <div 
-                                    v-for="batch in warehouse.batches" 
-                                    :key="batch.stock_id"
-                                    class="batch-row"
-                                    :class="{ 'expired': isExpired(batch.expiration_date), 'expiring-soon': isExpiringSoon(batch.expiration_date) }"
-                                >
-                                    <span class="batch-code">{{ batch.batch_code || '-' }}</span>
-                                    <span class="batch-stock" :class="getStockClass(batch.stock)">
-                                        {{ batch.stock || 0 }}
-                                    </span>
-                                    <span class="batch-cost">
-                                        {{ formatCurrency(batch.unit_cost) }}
-                                    </span>
-                                    <span class="batch-price">
-                                        {{ formatCurrency(batch.sale_price) }}
-                                    </span>
-                                    <span class="batch-margin" :class="getProfitMarginClass(batch.sale_price, batch.unit_cost)">
-                                        {{ calculateProfitMargin(batch.sale_price, batch.unit_cost) }}
-                                    </span>
-                                    <span class="batch-expiry" :class="getExpiryClass(batch.expiration_date)">
-                                        {{ formatDate(batch.expiration_date) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Warning for products that require batches but have no batches created -->
-                        <div v-else-if="requiresBatchesButNoBatches(productData, warehouse)" class="batch-warning">
-                            <div class="warning-header">
-                                <i class="pi pi-exclamation-triangle"></i>
-                                <span class="warning-title">Producto requiere lotes</span>
-                            </div>
-                            <p class="warning-message">
-                                Este producto está configurado para manejar lotes, pero aún no se han creado lotes para este almacén. 
-                                Se muestran los datos generales del stock.
-                            </p>
-                            
-                            <!-- Show direct stock data as fallback -->
-                            <div class="stock-details">
-                                <div class="detail-item">
-                                    <span class="detail-label">Costo Unitario:</span>
-                                    <span class="detail-value">
-                                        {{ formatCurrency(warehouse.unit_cost) }}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Precio de Venta:</span>
-                                    <span class="detail-value">
-                                        {{ formatCurrency(warehouse.sale_price) }}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Margen de Ganancia:</span>
-                                    <span class="detail-value margin-value" :class="getProfitMarginClass(warehouse.sale_price, warehouse.unit_cost)">
-                                        {{ calculateProfitMargin(warehouse.sale_price, warehouse.unit_cost) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- No Batches - Direct Stock (for products that don't require batches) -->
-                        <div v-else-if="!productData.requires_batches" class="direct-stock">
-                            <div class="stock-details">
-                                <div class="detail-item">
-                                    <span class="detail-label">Costo Unitario:</span>
-                                    <span class="detail-value">
-                                        {{ formatCurrency(warehouse.unit_cost) }}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Precio de Venta:</span>
-                                    <span class="detail-value">
-                                        {{ formatCurrency(warehouse.sale_price) }}
-                                    </span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Margen de Ganancia:</span>
-                                    <span class="detail-value margin-value" :class="getProfitMarginClass(warehouse.sale_price, warehouse.unit_cost)">
-                                        {{ calculateProfitMargin(warehouse.sale_price, warehouse.unit_cost) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Empty Batches State (fallback) -->
-                        <div v-else class="empty-batches">
-                            <i class="pi pi-info-circle"></i>
-                            <span>Sin información de stock disponible</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-else class="no-warehouses">
-                    <i class="pi pi-exclamation-triangle"></i>
-                    <span>No hay información de almacenes disponible</span>
-                </div>
-            </div>
-
-            <!-- Summary Statistics -->
-            <div class="statistics-section">
-                <h4 class="section-title">
-                    <i class="pi pi-chart-bar"></i>
-                    Resumen Estadístico
-                </h4>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon cost">
-                            <i class="pi pi-dollar"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-label">Costo Promedio</span>
-                            <span class="stat-value">
-                                {{ formatCurrency(productData.avg_unit_cost) }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon sale">
-                            <i class="pi pi-tag"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-label">Precio Promedio Venta</span>
-                            <span class="stat-value">
-                                {{ formatCurrency(productData.avg_sale_price) }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon total-cost">
-                            <i class="pi pi-wallet"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-label">Valor Total Costo</span>
-                            <span class="stat-value">
-                                {{ formatCurrency(productData.total_cost_value) }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon total-sale">
-                            <i class="pi pi-money-bill"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-label">Valor Total Venta</span>
-                            <span class="stat-value">
-                                {{ formatCurrency(productData.total_sale_value) }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon margin">
-                            <i class="pi pi-percentage"></i>
-                        </div>
-                        <div class="stat-content">
-                            <span class="stat-label">Margen Promedio</span>
-                            <span class="stat-value" :class="getProfitMarginClass(productData.avg_sale_price, productData.avg_unit_cost)">
-                                {{ calculateProfitMargin(productData.avg_sale_price, productData.avg_unit_cost) }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <template #footer>
-            <div class="modal-footer">
-                <Button 
-                    label="Cerrar" 
-                    icon="pi pi-times" 
-                    class="close-btn"
-                    @click="closeModal"
-                />
-            </div>
-        </template>
-    </Dialog>
-</template>
-
 <script setup>
 import { Button, Dialog, ProgressSpinner } from 'primevue';
 import { computed } from 'vue';
@@ -377,7 +84,7 @@ const calculateProfitMargin = (salePrice, unitCost) => {
     const sale = parseFloat(salePrice);
     const cost = parseFloat(unitCost);
     if (isNaN(sale) || isNaN(cost) || cost === 0) return '-';
-    
+
     const margin = ((sale - cost) / cost) * 100;
     return `${margin.toFixed(1)}%`;
 };
@@ -396,7 +103,7 @@ const getProfitMarginClass = (salePrice, unitCost) => {
     const sale = parseFloat(salePrice);
     const cost = parseFloat(unitCost);
     if (isNaN(sale) || isNaN(cost) || cost === 0) return '';
-    
+
     const margin = ((sale - cost) / cost) * 100;
     if (margin < 10) return 'margin-low';
     if (margin < 30) return 'margin-medium';
@@ -414,6 +121,274 @@ const hasAnyBatches = (warehouse) => {
     return warehouse.batches && warehouse.batches.length > 0;
 };
 </script>
+
+<template>
+    <Dialog v-model:visible="visible" modal :header="`Detalles de Stock - ${productData?.name || 'Producto'}`" :style="{ width: '90vw', maxWidth: '1200px' }" :closable="true" :draggable="false" class="stock-details-modal">
+        <div v-if="loading" class="loading-container">
+            <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
+            <p class="loading-text">Cargando detalles del stock...</p>
+        </div>
+
+        <div v-else-if="productData" class="modal-content">
+            <!-- Product Header -->
+            <div class="product-header">
+                <div class="product-info">
+                    <h3 class="product-name">{{ productData.name }}</h3>
+                    <div class="product-meta">
+                        <span v-if="productData.sku" class="sku">SKU: {{ productData.sku }}</span>
+                        <span v-if="productData.barcode" class="barcode">Código: {{ productData.barcode }}</span>
+                    </div>
+                </div>
+                <div class="product-summary">
+                    <div class="summary-item">
+                        <span class="label">Stock Total</span>
+                        <span class="value stock-total" :class="getStockClass(productData.total_stock)">
+                            {{ productData.total_stock || 0 }}
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Costo Promedio</span>
+                        <span class="value cost-value">
+                            {{ formatCurrency(productData.avg_unit_cost) }}
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Precio Promedio</span>
+                        <span class="value">
+                            {{ formatCurrency(productData.avg_sale_price) }}
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Margen Promedio</span>
+                        <span class="value margin-value">
+                            {{ calculateProfitMargin(productData.avg_sale_price, productData.avg_unit_cost) }}
+                        </span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Valor Total</span>
+                        <span class="value total-value">
+                            {{ formatCurrency(productData.total_sale_value) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warehouses Details -->
+            <div class="warehouses-section">
+                <h4 class="section-title">
+                    <i class="pi pi-building"></i>
+                    Detalle por Almacén
+                </h4>
+
+                <div v-if="productData.stock_by_warehouse?.length" class="warehouses-grid">
+                    <div v-for="warehouse in productData.stock_by_warehouse" :key="warehouse.warehouse_id" class="warehouse-card">
+                        <div class="warehouse-header">
+                            <h5 class="warehouse-name">{{ warehouse.warehouse_name }}</h5>
+                            <div class="warehouse-stock">
+                                <span class="stock-amount" :class="getStockClass(warehouse.total_stock)">
+                                    {{ warehouse.total_stock || 0 }}
+                                </span>
+                                <span class="stock-label">unidades</span>
+                            </div>
+                        </div>
+
+                        <!-- Stock Limits -->
+                        <div class="stock-limits">
+                            <div class="limit-item">
+                                <span class="limit-label">Mín:</span>
+                                <span class="limit-value">{{ warehouse.min_stock || 0 }}</span>
+                            </div>
+                            <div class="limit-item">
+                                <span class="limit-label">Máx:</span>
+                                <span class="limit-value">{{ warehouse.max_stock || 0 }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Batches Section -->
+                        <div v-if="productData.requires_batches && hasAnyBatches(warehouse)" class="batches-section">
+                            <h6 class="batches-title">
+                                <i class="pi pi-tags"></i>
+                                Lotes ({{ warehouse.batches.length }})
+                            </h6>
+
+                            <div class="batches-table">
+                                <div class="batch-header">
+                                    <span>Lote</span>
+                                    <span>Stock</span>
+                                    <span>Costo</span>
+                                    <span>Precio Venta</span>
+                                    <span>Margen</span>
+                                    <span>Vencimiento</span>
+                                </div>
+
+                                <div v-for="batch in warehouse.batches" :key="batch.stock_id" class="batch-row" :class="{ expired: isExpired(batch.expiration_date), 'expiring-soon': isExpiringSoon(batch.expiration_date) }">
+                                    <span class="batch-code">{{ batch.batch_code || '-' }}</span>
+                                    <span class="batch-stock" :class="getStockClass(batch.stock)">
+                                        {{ batch.stock || 0 }}
+                                    </span>
+                                    <span class="batch-cost">
+                                        {{ formatCurrency(batch.unit_cost) }}
+                                    </span>
+                                    <span class="batch-price">
+                                        {{ formatCurrency(batch.sale_price) }}
+                                    </span>
+                                    <span class="batch-margin" :class="getProfitMarginClass(batch.sale_price, batch.unit_cost)">
+                                        {{ calculateProfitMargin(batch.sale_price, batch.unit_cost) }}
+                                    </span>
+                                    <span class="batch-expiry" :class="getExpiryClass(batch.expiration_date)">
+                                        {{ formatDate(batch.expiration_date) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning for products that require batches but have no batches created -->
+                        <div v-else-if="requiresBatchesButNoBatches(productData, warehouse)" class="batch-warning">
+                            <div class="warning-header">
+                                <i class="pi pi-exclamation-triangle"></i>
+                                <span class="warning-title">Producto requiere lotes</span>
+                            </div>
+                            <p class="warning-message">Este producto está configurado para manejar lotes, pero aún no se han creado lotes para este almacén. Se muestran los datos generales del stock.</p>
+
+                            <!-- Show direct stock data as fallback -->
+                            <div class="stock-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Costo Unitario:</span>
+                                    <span class="detail-value">
+                                        {{ formatCurrency(warehouse.unit_cost) }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Precio de Venta:</span>
+                                    <span class="detail-value">
+                                        {{ formatCurrency(warehouse.sale_price) }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Margen de Ganancia:</span>
+                                    <span class="detail-value margin-value" :class="getProfitMarginClass(warehouse.sale_price, warehouse.unit_cost)">
+                                        {{ calculateProfitMargin(warehouse.sale_price, warehouse.unit_cost) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No Batches - Direct Stock (for products that don't require batches) -->
+                        <div v-else-if="!productData.requires_batches" class="direct-stock">
+                            <div class="stock-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Costo Unitario:</span>
+                                    <span class="detail-value">
+                                        {{ formatCurrency(warehouse.unit_cost) }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Precio de Venta:</span>
+                                    <span class="detail-value">
+                                        {{ formatCurrency(warehouse.sale_price) }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Margen de Ganancia:</span>
+                                    <span class="detail-value margin-value" :class="getProfitMarginClass(warehouse.sale_price, warehouse.unit_cost)">
+                                        {{ calculateProfitMargin(warehouse.sale_price, warehouse.unit_cost) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty Batches State (fallback) -->
+                        <div v-else class="empty-batches">
+                            <i class="pi pi-info-circle"></i>
+                            <span>Sin información de stock disponible</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="no-warehouses">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span>No hay información de almacenes disponible</span>
+                </div>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="statistics-section">
+                <h4 class="section-title">
+                    <i class="pi pi-chart-bar"></i>
+                    Resumen Estadístico
+                </h4>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon cost">
+                            <i class="pi pi-dollar"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Costo Promedio</span>
+                            <span class="stat-value">
+                                {{ formatCurrency(productData.avg_unit_cost) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon sale">
+                            <i class="pi pi-tag"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Precio Promedio Venta</span>
+                            <span class="stat-value">
+                                {{ formatCurrency(productData.avg_sale_price) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon total-cost">
+                            <i class="pi pi-wallet"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Valor Total Costo</span>
+                            <span class="stat-value">
+                                {{ formatCurrency(productData.total_cost_value) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon total-sale">
+                            <i class="pi pi-money-bill"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Valor Total Venta</span>
+                            <span class="stat-value">
+                                {{ formatCurrency(productData.total_sale_value) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon margin">
+                            <i class="pi pi-percentage"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-label">Margen Promedio</span>
+                            <span class="stat-value" :class="getProfitMarginClass(productData.avg_sale_price, productData.avg_unit_cost)">
+                                {{ calculateProfitMargin(productData.avg_sale_price, productData.avg_unit_cost) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="modal-footer">
+                <Button label="Cerrar" icon="pi pi-times" class="close-btn" @click="closeModal" />
+            </div>
+        </template>
+    </Dialog>
+</template>
 <style scoped>
 .stock-details-modal {
     font-family: 'Inter', sans-serif;
@@ -470,7 +445,8 @@ const hasAnyBatches = (warehouse) => {
     flex-wrap: wrap;
 }
 
-.sku, .barcode {
+.sku,
+.barcode {
     padding: 0.25rem 0.75rem;
     background: #ffffff;
     border: 1px solid #d1d5db;
@@ -854,7 +830,8 @@ const hasAnyBatches = (warehouse) => {
 }
 
 /* Empty States */
-.empty-batches, .no-warehouses {
+.empty-batches,
+.no-warehouses {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -864,7 +841,8 @@ const hasAnyBatches = (warehouse) => {
     font-style: italic;
 }
 
-.empty-batches i, .no-warehouses i {
+.empty-batches i,
+.no-warehouses i {
     color: #9ca3af;
 }
 
@@ -988,7 +966,8 @@ const hasAnyBatches = (warehouse) => {
         grid-template-columns: 1fr;
     }
 
-    .batch-header, .batch-row {
+    .batch-header,
+    .batch-row {
         grid-template-columns: 1fr 50px 70px 70px 60px 80px;
         gap: 0.25rem;
         padding: 0.5rem;
@@ -1009,7 +988,8 @@ const hasAnyBatches = (warehouse) => {
         gap: 1rem;
     }
 
-    .warehouses-section, .statistics-section {
+    .warehouses-section,
+    .statistics-section {
         padding: 1rem;
     }
 
@@ -1017,7 +997,8 @@ const hasAnyBatches = (warehouse) => {
         padding: 1rem;
     }
 
-    .batch-header, .batch-row {
+    .batch-header,
+    .batch-row {
         font-size: 0.75rem;
         padding: 0.5rem 0.25rem;
     }

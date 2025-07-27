@@ -1,105 +1,3 @@
-<template>
-    <div class="stock-filters">
-        <div class="filters-container">
-            <!-- Búsqueda principal -->
-            <div class="search-section">
-                <div class="search-wrapper">
-                    <i class="pi pi-search search-icon"></i>
-                    <InputText 
-                        v-model="localSearchQuery" 
-                        placeholder="Buscar por nombre, SKU o código de barras..." 
-                        class="search-input"
-                        @input="onSearchChange"
-                    />
-                    <Button 
-                        v-if="localSearchQuery" 
-                        icon="pi pi-times" 
-                        class="clear-search-btn" 
-                        text 
-                        @click="clearSearch"
-                        v-tooltip.top="'Limpiar búsqueda'"
-                    />
-                </div>
-            </div>
-
-            <!-- Filtros en línea -->
-            <div class="inline-filters">
-                <!-- Filtro por almacén -->
-                <div class="filter-item">
-                    <label for="warehouse-filter" class="filter-label">Almacén</label>
-                    <Select 
-                        id="warehouse-filter"
-                        v-model="localWarehouseFilter" 
-                        :options="warehouseOptions" 
-                        optionLabel="label" 
-                        optionValue="value"
-                        placeholder="Todos los almacenes"
-                        class="filter-select"
-                        @change="onFilterChange"
-                    />
-                </div>
-
-                <!-- Filtro por estado de stock -->
-                <div class="filter-item">
-                    <label for="status-filter" class="filter-label">Estado</label>
-                    <Select 
-                        id="status-filter"
-                        v-model="localStockStatusFilter" 
-                        :options="stockStatusOptions" 
-                        optionLabel="label" 
-                        optionValue="value"
-                        placeholder="Todos los estados"
-                        class="filter-select"
-                        @change="onFilterChange"
-                    />
-                </div>
-
-                <!-- Botón para limpiar filtros -->
-                <div class="filter-actions">
-                    <Button 
-                        icon="pi pi-filter-slash" 
-                        label="Limpiar" 
-                        outlined 
-                        @click="clearFilters"
-                        v-tooltip.top="'Limpiar todos los filtros'"
-                        class="clear-filters-btn"
-                        :disabled="!hasActiveFilters"
-                    />
-                </div>
-            </div>
-
-            <!-- Indicador de filtros activos -->
-            <div v-if="hasActiveFilters" class="active-filters">
-                <div class="filter-tags">
-                    <span v-if="localSearchQuery" class="filter-tag">
-                        <i class="pi pi-search"></i>
-                        Búsqueda: "{{ localSearchQuery }}"
-                        <button @click="clearSearch" class="tag-remove">
-                            <i class="pi pi-times"></i>
-                        </button>
-                    </span>
-                    
-                    <span v-if="localWarehouseFilter" class="filter-tag">
-                        <i class="pi pi-warehouse"></i>
-                        Almacén: {{ getWarehouseLabel(localWarehouseFilter) }}
-                        <button @click="clearWarehouseFilter" class="tag-remove">
-                            <i class="pi pi-times"></i>
-                        </button>
-                    </span>
-                    
-                    <span v-if="localStockStatusFilter" class="filter-tag">
-                        <i class="pi pi-chart-bar"></i>
-                        Estado: {{ getStatusLabel(localStockStatusFilter) }}
-                        <button @click="clearStatusFilter" class="tag-remove">
-                            <i class="pi pi-times"></i>
-                        </button>
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { InputText, Select, Button } from 'primevue';
@@ -119,9 +17,7 @@ const props = defineProps({
     },
     warehouseOptions: {
         type: Array,
-        default: () => [
-            { label: 'Todos los almacenes', value: null }
-        ]
+        default: () => [{ label: 'Todos los almacenes', value: null }]
     }
 });
 
@@ -146,17 +42,26 @@ const hasActiveFilters = computed(() => {
 });
 
 // Watchers para sincronizar con props
-watch(() => props.searchQuery, (newVal) => {
-    localSearchQuery.value = newVal;
-});
+watch(
+    () => props.searchQuery,
+    (newVal) => {
+        localSearchQuery.value = newVal;
+    }
+);
 
-watch(() => props.warehouseFilter, (newVal) => {
-    localWarehouseFilter.value = newVal;
-});
+watch(
+    () => props.warehouseFilter,
+    (newVal) => {
+        localWarehouseFilter.value = newVal;
+    }
+);
 
-watch(() => props.stockStatusFilter, (newVal) => {
-    localStockStatusFilter.value = newVal;
-});
+watch(
+    () => props.stockStatusFilter,
+    (newVal) => {
+        localStockStatusFilter.value = newVal;
+    }
+);
 
 // Métodos
 const onSearchChange = () => {
@@ -191,15 +96,79 @@ const clearFilters = () => {
 };
 
 const getWarehouseLabel = (value) => {
-    const option = props.warehouseOptions.find(opt => opt.value === value);
+    const option = props.warehouseOptions.find((opt) => opt.value === value);
     return option ? option.label : 'Desconocido';
 };
 
 const getStatusLabel = (value) => {
-    const option = stockStatusOptions.find(opt => opt.value === value);
+    const option = stockStatusOptions.find((opt) => opt.value === value);
     return option ? option.label : 'Desconocido';
 };
 </script>
+
+<template>
+    <div class="stock-filters">
+        <div class="filters-container">
+            <!-- Búsqueda principal -->
+            <div class="search-section">
+                <div class="search-wrapper">
+                    <i class="pi pi-search search-icon"></i>
+                    <InputText v-model="localSearchQuery" placeholder="Buscar por nombre, SKU o código de barras..." class="search-input" @input="onSearchChange" />
+                    <Button v-if="localSearchQuery" icon="pi pi-times" class="clear-search-btn" text @click="clearSearch" v-tooltip.top="'Limpiar búsqueda'" />
+                </div>
+            </div>
+
+            <!-- Filtros en línea -->
+            <div class="inline-filters">
+                <!-- Filtro por almacén -->
+                <div class="filter-item">
+                    <label for="warehouse-filter" class="filter-label">Almacén</label>
+                    <Select id="warehouse-filter" v-model="localWarehouseFilter" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Todos los almacenes" class="filter-select" @change="onFilterChange" />
+                </div>
+
+                <!-- Filtro por estado de stock -->
+                <div class="filter-item">
+                    <label for="status-filter" class="filter-label">Estado</label>
+                    <Select id="status-filter" v-model="localStockStatusFilter" :options="stockStatusOptions" optionLabel="label" optionValue="value" placeholder="Todos los estados" class="filter-select" @change="onFilterChange" />
+                </div>
+
+                <!-- Botón para limpiar filtros -->
+                <div class="filter-actions">
+                    <Button icon="pi pi-filter-slash" label="Limpiar" outlined @click="clearFilters" v-tooltip.top="'Limpiar todos los filtros'" class="clear-filters-btn" :disabled="!hasActiveFilters" />
+                </div>
+            </div>
+
+            <!-- Indicador de filtros activos -->
+            <div v-if="hasActiveFilters" class="active-filters">
+                <div class="filter-tags">
+                    <span v-if="localSearchQuery" class="filter-tag">
+                        <i class="pi pi-search"></i>
+                        Búsqueda: "{{ localSearchQuery }}"
+                        <button @click="clearSearch" class="tag-remove">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </span>
+
+                    <span v-if="localWarehouseFilter" class="filter-tag">
+                        <i class="pi pi-warehouse"></i>
+                        Almacén: {{ getWarehouseLabel(localWarehouseFilter) }}
+                        <button @click="clearWarehouseFilter" class="tag-remove">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </span>
+
+                    <span v-if="localStockStatusFilter" class="filter-tag">
+                        <i class="pi pi-chart-bar"></i>
+                        Estado: {{ getStatusLabel(localStockStatusFilter) }}
+                        <button @click="clearStatusFilter" class="tag-remove">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
 <style scoped>
 .stock-filters {

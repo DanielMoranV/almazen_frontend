@@ -1,30 +1,3 @@
-<template>
-    <div class="stock-movements-page">
-        <!-- Toast notifications -->
-        <Toast />
-
-        <!-- Toolbar Principal -->
-        <StockMovementsToolbar :total-movements="totalMovements" :total-entries="totalEntries" :total-exits="totalExits"
-            :is-loading="loading" v-model:type-filter="typeFilter" v-model:warehouse-filter="warehouseFilter"
-            v-model:date-from-filter="dateFromFilter" v-model:date-to-filter="dateToFilter"
-            :warehouse-options="warehouseOptions" @refresh="handleRefresh" @clear-filters="clearFilters" />
-
-        <!-- Estadísticas -->
-        <StockMovementsStatistics :total-movements="totalMovements" :total-entries="totalEntries"
-            :total-exits="totalExits" :total-adjustments="totalAdjustments" :total-transfers="totalTransfers"
-            :loading="loading" />
-
-        <!-- Tabla de Movimientos -->
-        <transition name="slide-up" appear>
-            <StockMovementsTable :movements="movementItems" :loading="loading" @view-details="viewMovementDetails"
-                @clear-filters="clearFilters" />
-        </transition>
-
-        <!-- Modal de Detalles -->
-        <StockMovementDetailsModal v-model:visible="showDetailsModal" :movement-data="selectedMovementForDetails" />
-    </div>
-</template>
-
 <script setup>
 import { useStockMovementsStore } from '@/stores/stockMovementsStore';
 import { useToast } from 'primevue/usetoast';
@@ -260,6 +233,39 @@ const clearFilters = () => {
     });
 };
 </script>
+
+<template>
+    <div class="stock-movements-page">
+        <!-- Toast notifications -->
+        <Toast />
+
+        <!-- Toolbar Principal -->
+        <StockMovementsToolbar
+            :total-movements="totalMovements"
+            :total-entries="totalEntries"
+            :total-exits="totalExits"
+            :is-loading="loading"
+            v-model:type-filter="typeFilter"
+            v-model:warehouse-filter="warehouseFilter"
+            v-model:date-from-filter="dateFromFilter"
+            v-model:date-to-filter="dateToFilter"
+            :warehouse-options="warehouseOptions"
+            @refresh="handleRefresh"
+            @clear-filters="clearFilters"
+        />
+
+        <!-- Estadísticas -->
+        <StockMovementsStatistics :total-movements="totalMovements" :total-entries="totalEntries" :total-exits="totalExits" :total-adjustments="totalAdjustments" :total-transfers="totalTransfers" :loading="loading" />
+
+        <!-- Tabla de Movimientos -->
+        <transition name="slide-up" appear>
+            <StockMovementsTable :movements="movementItems" :loading="loading" @view-details="viewMovementDetails" @clear-filters="clearFilters" />
+        </transition>
+
+        <!-- Modal de Detalles -->
+        <StockMovementDetailsModal v-model:visible="showDetailsModal" :movement-data="selectedMovementForDetails" />
+    </div>
+</template>
 
 <style scoped>
 /* Contenedor principal de la página de movimientos */

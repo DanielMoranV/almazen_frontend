@@ -76,12 +76,12 @@ const handleCancel = () => {
 </script>
 
 <template>
-    <Dialog 
-        :visible="visible" 
-        @update:visible="(val) => emit('update:visible', val)" 
-        :style="{ width: '550px', maxWidth: '95vw' }" 
-        :header="form.id ? '✏️ Editar Usuario' : '👤➕ Nuevo Usuario'" 
-        :modal="true" 
+    <Dialog
+        :visible="visible"
+        @update:visible="(val) => emit('update:visible', val)"
+        :style="{ width: '550px', maxWidth: '95vw' }"
+        :header="form.id ? '✏️ Editar Usuario' : '👤➕ Nuevo Usuario'"
+        :modal="true"
         class="p-fluid user-dialog"
         :closable="true"
         :dismissableMask="false"
@@ -99,42 +99,19 @@ const handleCancel = () => {
                     <!-- Nombre -->
                     <div class="field col-span-2">
                         <label for="name" class="field-label">Nombre completo *</label>
-                        <InputText 
-                            id="name" 
-                            v-model="form.name" 
-                            placeholder="Ingrese el nombre completo" 
-                            :class="{ 'p-invalid': submitted && !form.name }"
-                            class="form-input"
-                            autofocus
-                        />
+                        <InputText id="name" v-model="form.name" placeholder="Ingrese el nombre completo" :class="{ 'p-invalid': submitted && !form.name }" class="form-input" autofocus />
                         <small class="p-error" v-if="submitted && !form.name">El nombre es requerido.</small>
                     </div>
                     <!-- DNI -->
                     <div class="field">
                         <label for="dni" class="field-label">DNI *</label>
-                        <InputText 
-                            id="dni" 
-                            v-model="form.dni" 
-                            placeholder="12345678" 
-                            :class="{ 'p-invalid': submitted && (form.dni && !isValidDNI) }"
-                            class="form-input"
-                            v-keyfilter.int
-                            maxlength="8"
-                        />
+                        <InputText id="dni" v-model="form.dni" placeholder="12345678" :class="{ 'p-invalid': submitted && form.dni && !isValidDNI }" class="form-input" v-keyfilter.int maxlength="8" />
                         <small class="p-error" v-if="submitted && form.dni && !isValidDNI">DNI debe tener 8 dígitos numéricos.</small>
                     </div>
                     <!-- Teléfono -->
                     <div class="field">
                         <label for="phone" class="field-label">Teléfono *</label>
-                        <InputText 
-                            id="phone" 
-                            v-model="form.phone" 
-                            placeholder="987654321" 
-                            :class="{ 'p-invalid': submitted && (form.phone && !isValidPhone) }"
-                            class="form-input"
-                            v-keyfilter.int
-                            maxlength="9"
-                        />
+                        <InputText id="phone" v-model="form.phone" placeholder="987654321" :class="{ 'p-invalid': submitted && form.phone && !isValidPhone }" class="form-input" v-keyfilter.int maxlength="9" />
                         <small class="p-error" v-if="submitted && form.phone && !isValidPhone">Teléfono debe tener 9 dígitos numéricos.</small>
                     </div>
                 </div>
@@ -152,29 +129,13 @@ const handleCancel = () => {
                     <!-- Email -->
                     <div class="field col-span-2">
                         <label for="email" class="field-label">Email *</label>
-                        <InputText 
-                            id="email" 
-                            v-model="form.email" 
-                            placeholder="usuario@empresa.com" 
-                            :class="{ 'p-invalid': submitted && (form.email && !isValidEmail) }"
-                            class="form-input"
-                            type="email"
-                        />
+                        <InputText id="email" v-model="form.email" placeholder="usuario@empresa.com" :class="{ 'p-invalid': submitted && form.email && !isValidEmail }" class="form-input" type="email" />
                         <small class="p-error" v-if="submitted && form.email && !isValidEmail">Ingrese un email válido.</small>
                     </div>
                     <!-- Cargo -->
                     <div class="field col-span-2">
                         <label for="position" class="field-label">Cargo *</label>
-                        <Select 
-                            id="position" 
-                            v-model="form.position" 
-                            :options="positions" 
-                            optionLabel="label" 
-                            optionValue="value" 
-                            placeholder="Seleccione un cargo" 
-                            :class="{ 'p-invalid': submitted && !form.position }"
-                            class="form-select"
-                        />
+                        <Select id="position" v-model="form.position" :options="positions" optionLabel="label" optionValue="value" placeholder="Seleccione un cargo" :class="{ 'p-invalid': submitted && !form.position }" class="form-select" />
                         <small class="p-error" v-if="submitted && !form.position">El cargo es requerido.</small>
                     </div>
                 </div>
@@ -340,10 +301,14 @@ const handleCancel = () => {
 /* Animación del patrón */
 @keyframes header-pattern {
     0% {
-        background-position: 0% 0%, 0% 0%;
+        background-position:
+            0% 0%,
+            0% 0%;
     }
     100% {
-        background-position: 100% 100%, -100% -100%;
+        background-position:
+            100% 100%,
+            -100% -100%;
     }
 }
 

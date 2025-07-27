@@ -48,7 +48,7 @@ const onSubmit = async () => {
         router.push('/dashboard');
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
-            authStore.validationErrors.forEach(err => {
+            authStore.validationErrors.forEach((err) => {
                 toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
             });
         } else {

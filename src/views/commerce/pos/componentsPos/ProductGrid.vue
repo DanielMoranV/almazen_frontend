@@ -35,7 +35,6 @@ const handleImageLoad = (event) => {
         imageErrors.value[productId] = false;
     }
 };
-
 </script>
 
 <template>
@@ -53,45 +52,48 @@ const handleImageLoad = (event) => {
     </div>
 
     <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-        <Card v-for="product in filteredProducts" :key="product.id" @click="$emit('add-to-cart', product)"
-            :data-product-id="product.id" class="cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl
-                   active:scale-95 touch-manipulation shadow-lg border-0 bg-white/90 backdrop-blur-sm
-                   hover:bg-white/95 group" :class="{
-                    'opacity-60 cursor-not-allowed': product.stock === 0,
-                    'ring-2 ring-red-200': product.stock === 0
-                }">
+        <Card
+            v-for="product in filteredProducts"
+            :key="product.id"
+            @click="$emit('add-to-cart', product)"
+            :data-product-id="product.id"
+            class="cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 touch-manipulation shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:bg-white/95 group"
+            :class="{
+                'opacity-60 cursor-not-allowed': product.stock === 0,
+                'ring-2 ring-red-200': product.stock === 0
+            }"
+        >
             <template #content>
                 <div class="p-2">
                     <!-- Product Image -->
-                    <div
-                        class="relative aspect-square mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden">
-                        <img :src="product.image" :alt="product.name"
+                    <div class="relative aspect-square mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden">
+                        <img
+                            :src="product.image"
+                            :alt="product.name"
                             class="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
-                            @error="handleImageError($event)" @load="handleImageLoad($event)"
-                            v-if="product.image && !imageErrors[product.id]" />
+                            @error="handleImageError($event)"
+                            @load="handleImageLoad($event)"
+                            v-if="product.image && !imageErrors[product.id]"
+                        />
                         <!-- Fallback -->
-                        <div v-if="!product.image || imageErrors[product.id]"
-                            class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+                        <div v-if="!product.image || imageErrors[product.id]" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
                             <div class="text-center">
                                 <i class="pi pi-shopping-bag text-4xl text-blue-400 mb-2"></i>
                                 <div class="text-xs text-blue-600 font-medium px-2 leading-tight">
-                                    {{ product.name.length > 15 ? product.name.substring(0, 15) + '...'
-                                        : product.name }}
+                                    {{ product.name.length > 15 ? product.name.substring(0, 15) + '...' : product.name }}
                                 </div>
                             </div>
                         </div>
 
                         <!-- Stock overlay for out of stock -->
-                        <div v-if="product.stock === 0"
-                            class="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl">
+                        <div v-if="product.stock === 0" class="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl">
                             <Chip label="SIN STOCK" severity="danger" class="font-bold" />
                         </div>
                     </div>
 
                     <!-- Product Info -->
                     <div class="text-center space-y-2">
-                        <h3
-                            class="font-bold text-gray-900 text-sm leading-tight line-clamp-2 min-h-[2.5rem]">
+                        <h3 class="font-bold text-gray-900 text-sm leading-tight line-clamp-2 min-h-[2.5rem]">
                             {{ product.name }}
                         </h3>
                         <div class="text-xl font-black text-blue-600">
@@ -99,9 +101,7 @@ const handleImageLoad = (event) => {
                         </div>
 
                         <!-- Stock Badge -->
-                        <Tag :value="`Stock: ${product.stock}`"
-                            :severity="product.stock > 10 ? 'success' : product.stock > 0 ? 'warning' : 'danger'"
-                            class="text-xs font-bold" />
+                        <Tag :value="`Stock: ${product.stock}`" :severity="product.stock > 10 ? 'success' : product.stock > 0 ? 'warning' : 'danger'" class="text-xs font-bold" />
                     </div>
                 </div>
             </template>

@@ -25,7 +25,6 @@ const router = createRouter({
                     meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística'] }
                 },
 
-
                 // Commerce - Ventas
                 {
                     path: '/commerce/sales',
@@ -224,8 +223,7 @@ const router = createRouter({
                     name: 'backups',
                     component: () => import('@/views/pages/Empty.vue'), // Placeholder until specific view is created
                     meta: { positions: ['Developer'] }
-                },
-
+                }
             ]
         },
         {

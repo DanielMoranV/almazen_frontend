@@ -53,7 +53,6 @@ const model = ref([
                         to: '/commerce/cash/movements',
                         positions: ['Developer', 'Administrador']
                     }
-
                 ],
                 positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
             },

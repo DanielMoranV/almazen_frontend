@@ -1,133 +1,3 @@
-<template>
-    <Dialog 
-        :visible="visible" 
-        @update:visible="$emit('update:visible', $event)" 
-        :style="{ width: '550px', maxWidth: '95vw' }" 
-        :header="localCustomer.id ? '✏️ Editar Cliente' : '👤➕ Nuevo Cliente'" 
-        :modal="true" 
-        class="p-fluid customer-dialog"
-        :closable="true"
-        :dismissableMask="false"
-    >
-        <div class="form-content">
-            <!-- Información personal -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-user"></i>
-                        Información Personal
-                    </h3>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Nombre -->
-                    <div class="field col-span-2">
-                        <label for="name" class="field-label">Nombre completo *</label>
-                        <InputText 
-                            id="name" 
-                            v-model.trim="localCustomer.name" 
-                            placeholder="Ingrese el nombre completo" 
-                            class="form-input"
-                            autofocus
-                        />
-                    </div>
-                    <!-- Email -->
-                    <div class="field">
-                        <label for="email" class="field-label">Email</label>
-                        <InputText 
-                            id="email" 
-                            v-model.trim="localCustomer.email" 
-                            placeholder="cliente@empresa.com" 
-                            class="form-input"
-                            type="email"
-                        />
-                    </div>
-                    <!-- Teléfono -->
-                    <div class="field">
-                        <label for="phone" class="field-label">Teléfono</label>
-                        <InputText 
-                            id="phone" 
-                            v-model.trim="localCustomer.phone" 
-                            placeholder="987654321" 
-                            class="form-input"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <!-- Información de contacto y documentación -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-id-card"></i>
-                        Información de Documentación
-                    </h3>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Dirección -->
-                    <div class="field col-span-2">
-                        <label for="address" class="field-label">Dirección</label>
-                        <Textarea 
-                            id="address" 
-                            v-model.trim="localCustomer.address" 
-                            rows="3" 
-                            placeholder="Ingrese la dirección completa"
-                            class="form-input"
-                        />
-                    </div>
-                    <!-- Documento -->
-                    <div class="field">
-                        <label for="identity_document" class="field-label">Nro. Documento</label>
-                        <InputText 
-                            id="identity_document" 
-                            v-model.trim="localCustomer.identity_document" 
-                            placeholder="12345678" 
-                            class="form-input"
-                        />
-                    </div>
-                    <!-- Tipo Documento -->
-                    <div class="field">
-                        <label for="identity_document_type" class="field-label">Tipo Documento</label>
-                        <Select 
-                            id="identity_document_type" 
-                            v-model="localCustomer.identity_document_type" 
-                            :options="docTypes" 
-                            optionLabel="label" 
-                            optionValue="value" 
-                            placeholder="Seleccione tipo" 
-                            class="form-select"
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <!-- Estado del cliente -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-cog"></i>
-                        Configuración
-                    </h3>
-                </div>
-                <div class="field-checkbox">
-                    <Checkbox id="is_active" v-model="localCustomer.is_active" :binary="true" />
-                    <label for="is_active" class="checkbox-label">
-                        <span class="label-text">Cliente activo</span>
-                        <span class="label-description">Determina si el cliente está habilitado para realizar operaciones</span>
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <template #footer>
-            <div class="flex justify-between w-full">
-                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="close" />
-                <Button :label="submitLabel" icon="pi pi-check" class="p-button-primary" @click="submit" :loading="loading" />
-            </div>
-        </template>
-    </Dialog>
-</template>
-
 <script setup>
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
@@ -159,16 +29,19 @@ const localCustomer = reactive({
 watch(
     () => props.customer,
     (val) => {
-        Object.assign(localCustomer, val ?? {
-            id: null,
-            name: '',
-            email: '',
-            phone: '',
-            address: '',
-            identity_document: '',
-            identity_document_type: 'dni',
-            is_active: true
-        });
+        Object.assign(
+            localCustomer,
+            val ?? {
+                id: null,
+                name: '',
+                email: '',
+                phone: '',
+                address: '',
+                identity_document: '',
+                identity_document_type: 'dni',
+                is_active: true
+            }
+        );
     },
     { immediate: true }
 );
@@ -187,6 +60,100 @@ const close = () => emit('update:visible', false);
 
 const submit = () => emit('submit', { ...localCustomer });
 </script>
+
+<template>
+    <Dialog
+        :visible="visible"
+        @update:visible="$emit('update:visible', $event)"
+        :style="{ width: '550px', maxWidth: '95vw' }"
+        :header="localCustomer.id ? '✏️ Editar Cliente' : '👤➕ Nuevo Cliente'"
+        :modal="true"
+        class="p-fluid customer-dialog"
+        :closable="true"
+        :dismissableMask="false"
+    >
+        <div class="form-content">
+            <!-- Información personal -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-user"></i>
+                        Información Personal
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Nombre -->
+                    <div class="field col-span-2">
+                        <label for="name" class="field-label">Nombre completo *</label>
+                        <InputText id="name" v-model.trim="localCustomer.name" placeholder="Ingrese el nombre completo" class="form-input" autofocus />
+                    </div>
+                    <!-- Email -->
+                    <div class="field">
+                        <label for="email" class="field-label">Email</label>
+                        <InputText id="email" v-model.trim="localCustomer.email" placeholder="cliente@empresa.com" class="form-input" type="email" />
+                    </div>
+                    <!-- Teléfono -->
+                    <div class="field">
+                        <label for="phone" class="field-label">Teléfono</label>
+                        <InputText id="phone" v-model.trim="localCustomer.phone" placeholder="987654321" class="form-input" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de contacto y documentación -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-id-card"></i>
+                        Información de Documentación
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dirección -->
+                    <div class="field col-span-2">
+                        <label for="address" class="field-label">Dirección</label>
+                        <Textarea id="address" v-model.trim="localCustomer.address" rows="3" placeholder="Ingrese la dirección completa" class="form-input" />
+                    </div>
+                    <!-- Documento -->
+                    <div class="field">
+                        <label for="identity_document" class="field-label">Nro. Documento</label>
+                        <InputText id="identity_document" v-model.trim="localCustomer.identity_document" placeholder="12345678" class="form-input" />
+                    </div>
+                    <!-- Tipo Documento -->
+                    <div class="field">
+                        <label for="identity_document_type" class="field-label">Tipo Documento</label>
+                        <Select id="identity_document_type" v-model="localCustomer.identity_document_type" :options="docTypes" optionLabel="label" optionValue="value" placeholder="Seleccione tipo" class="form-select" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado del cliente -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-cog"></i>
+                        Configuración
+                    </h3>
+                </div>
+                <div class="field-checkbox">
+                    <Checkbox id="is_active" v-model="localCustomer.is_active" :binary="true" />
+                    <label for="is_active" class="checkbox-label">
+                        <span class="label-text">Cliente activo</span>
+                        <span class="label-description">Determina si el cliente está habilitado para realizar operaciones</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <template #footer>
+            <div class="flex justify-between w-full">
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="close" />
+                <Button :label="submitLabel" icon="pi pi-check" class="p-button-primary" @click="submit" :loading="loading" />
+            </div>
+        </template>
+    </Dialog>
+</template>
 
 <style scoped>
 /* Encabezado del diálogo mejorado */
