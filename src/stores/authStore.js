@@ -5,11 +5,10 @@ import { defineStore } from 'pinia';
 
 export const useAuthStore = defineStore('authStore', {
     state: () => ({
-        user: cache.getItem('currentUser'),
-        companyConfig: cache.getItem('companyConfig'),
-        token: cache.getItem('token'),
-        refreshToken: cache.getItem('refreshToken'),
-        expiresAt: cache.getItem('expiresAt'),
+        user: cache.getItem('currentUser') || null,
+        companyConfig: cache.getItem('companyConfig') || null,
+        token: cache.getItem('token') || null,
+        expiresAt: cache.getItem('expiresAt') || null,
         message: '',
         success: !!cache.getItem('currentUser') && !!cache.getItem('token'),
         isLoading: false,
@@ -53,7 +52,7 @@ export const useAuthStore = defineStore('authStore', {
                 if (processed.success) {
                     this.setUser(processed.data.user);
                     this.setToken(processed.data.access_token);
-                    this.setRefreshToken(processed.data.refresh_token);
+                    // No se recibe refresh_token según la documentación
                     this.setExpiration(processed.data.expires_in);
                     this.startRefreshInterval();
                     this.setCompanyConfig(processed.data.user.company_config);
@@ -81,6 +80,7 @@ export const useAuthStore = defineStore('authStore', {
         async me() {
             this.resetState();
             try {
+                console.log('me');
                 const res = await me();
                 const processed = handleProcessSuccess(res, this);
 
@@ -101,7 +101,9 @@ export const useAuthStore = defineStore('authStore', {
 
         async refreshToken() {
             try {
-                const { data } = await refresh({ refresh_token: this.refreshToken });
+                // Usar el endpoint de refresh sin enviar el refresh_token en el cuerpo
+                // El token actual ya se envía en el header de Authorization por el interceptor
+                const { data } = await refresh();
                 this.setToken(data.access_token);
                 this.setExpiration(data.expires_in);
                 this.success = true;
@@ -121,7 +123,7 @@ export const useAuthStore = defineStore('authStore', {
                 if (processed.success) {
                     this.setUser(processed.data.user);
                     this.setToken(processed.data.access_token);
-                    this.setRefreshToken(processed.data.refresh_token);
+                    // No se recibe refresh_token según la documentación
                     this.setExpiration(processed.data.expires_in);
                     this.startRefreshInterval();
                     this.setCompanyConfig(processed.data.user.company_config);
@@ -160,8 +162,9 @@ export const useAuthStore = defineStore('authStore', {
 
                 console.log('Token refresh check. Time left: ', timeLeft);
 
-                if (timeLeft < 90_000) {
-                    console.log('Intentando refrescar token como el tiempo restante es menor a 90 segundos.');
+                // Refrescar cuando queden menos de 60 segundos (1 minuto) según la documentación
+                if (timeLeft < 60_000) {
+                    console.log('Intentando refrescar token como el tiempo restante es menor a 60 segundos.');
                     await this.refreshToken();
                 }
             }, 60_000); // Verifica cada 60s
@@ -181,13 +184,6 @@ export const useAuthStore = defineStore('authStore', {
             }
         },
 
-        setRefreshToken(refreshToken) {
-            if (this.refreshToken !== refreshToken) {
-                this.refreshToken = refreshToken;
-                cache.setItem('refreshToken', refreshToken);
-            }
-        },
-
         setExpiration(expiresInSeconds) {
             const expirationTime = Date.now() + expiresInSeconds * 1000;
             if (this.expiresAt !== expirationTime) {
@@ -195,6 +191,7 @@ export const useAuthStore = defineStore('authStore', {
                 cache.setItem('expiresAt', expirationTime);
             }
         },
+
         setCompanyConfig(companyConfig) {
             if (this.companyConfig !== companyConfig) {
                 this.companyConfig = companyConfig;
@@ -205,7 +202,6 @@ export const useAuthStore = defineStore('authStore', {
         clearAuthData() {
             this.user = null;
             this.token = null;
-            this.refreshToken = null;
             this.expiresAt = null;
             this.success = false;
             this.message = '';
@@ -213,7 +209,6 @@ export const useAuthStore = defineStore('authStore', {
 
             cache.removeItem('currentUser');
             cache.removeItem('token');
-            cache.removeItem('refreshToken');
             cache.removeItem('expiresAt');
 
             if (this.refreshTimer) {
@@ -225,7 +220,6 @@ export const useAuthStore = defineStore('authStore', {
         init() {
             this.user = cache.getItem('currentUser');
             this.token = cache.getItem('token');
-            this.refreshToken = cache.getItem('refreshToken');
             this.expiresAt = cache.getItem('expiresAt');
             this.success = !!this.user && !!this.token;
 

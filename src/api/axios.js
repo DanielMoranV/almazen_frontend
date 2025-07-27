@@ -10,9 +10,9 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
     (config) => {
-        const { getToken } = useAuthStore();
-        if (getToken) {
-            config.headers.Authorization = 'Bearer ' + getToken;
+        const authStore = useAuthStore();
+        if (authStore.getToken) {
+            config.headers.Authorization = 'Bearer ' + authStore.getToken;
         }
 
         return config;
@@ -40,11 +40,11 @@ instance.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                const { refreshToken, getToken } = useAuthStore();
-                await refreshToken();
+                const authStore = useAuthStore();
+                await authStore.refreshToken();
 
                 // Retry con nuevo token
-                const newToken = getToken;
+                const newToken = authStore.getToken;
                 if (newToken) {
                     originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
                     return instance(originalRequest);
