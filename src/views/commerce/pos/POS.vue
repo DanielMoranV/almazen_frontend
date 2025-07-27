@@ -257,8 +257,6 @@ const searchProducts = async (query = '') => {
 
         await productsStore.searchProductsForSale(query, selectedWarehouse.value);
         searchResults.value = saleProductsList.value || [];
-        console.log(searchResults.value);
-
         if (searchResults.value.length === 0) {
             showToast('searchEmpty', {
                 severity: 'info',
@@ -587,18 +585,14 @@ const processPayment = async () => {
     };
 
     try {
-        console.log('Payload enviado:', payload);
         const response = await salesStore.createSale(payload);
 
         // Manejar diferentes estructuras de respuesta posibles
         let saleData, voucherLink;
 
         if (response.data) {
-            console.log('Respuesta de la API:', response.data);
             saleData = response.data.sale || response.data;
             voucherLink = response.data.voucher_link;
-            console.log('Datos de la venta:', saleData);
-            console.log('Link de la boleta:', voucherLink);
         } else {
             saleData = response.sale || response;
             voucherLink = response.voucher_link;

@@ -1,8 +1,8 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { useToast } from 'primevue/usetoast';
 import { useBatchesStore } from '@/stores/batchesStore';
 import { useProductsStore } from '@/stores/productsStore';
+import { useToast } from 'primevue/usetoast';
+import { computed, ref, watch } from 'vue';
 
 const toast = useToast();
 const batchesStore = useBatchesStore();
@@ -19,8 +19,6 @@ const props = defineProps({
         default: 'add' // 'add' | 'edit' | 'view'
     }
 });
-
-console.log('BonusManagementDialog props:', props);
 
 const emit = defineEmits(['update:visible', 'submit']);
 
@@ -46,32 +44,26 @@ const bonusTypes = ref([
 
 // Validar restricciones de tiempo
 const canAddBonuses = computed(() => {
-    console.log('Full order object:', props.order);
-
     // Buscar la fecha de recepción en diferentes posibles ubicaciones
     let receivedDate = null;
 
     // Opción 1: Campo directo received_date
     if (props.order?.received_date) {
         receivedDate = props.order.received_date;
-        console.log('Found received_date:', receivedDate);
     }
     // Opción 2: En status_tracking.received_at
     else if (props.order?.status_tracking?.received_at) {
         receivedDate = props.order.status_tracking.received_at;
-        console.log('Found status_tracking.received_at:', receivedDate);
     }
     // Opción 3: En status_timeline
     else if (props.order?.status_timeline) {
         const receivedEntry = props.order.status_timeline.find((entry) => entry.status === 'RECIBIDO');
         if (receivedEntry?.created_at) {
             receivedDate = receivedEntry.created_at;
-            console.log('Found in status_timeline:', receivedDate);
         }
     }
 
     if (!receivedDate) {
-        console.log('No received date found, checking available fields:', Object.keys(props.order || {}));
         return false;
     }
 
@@ -79,12 +71,6 @@ const canAddBonuses = computed(() => {
     const receivedDateStr = receivedDate.split('T')[0];
     const todayStr = new Date().toISOString().split('T')[0];
 
-    console.log('Received date (original):', receivedDate);
-    console.log('Received date (date only):', receivedDateStr);
-    console.log('Today (date only):', todayStr);
-    console.log('Are equal?', receivedDateStr === todayStr);
-
-    // Comparar solo las fechas como strings (YYYY-MM-DD)
     return receivedDateStr === todayStr;
 });
 
@@ -115,7 +101,6 @@ const timeRestrictionMessage = computed(() => {
 watch(
     () => props.visible,
     (newVisible) => {
-        console.log('Dialog visibility changed:', newVisible, 'Mode:', props.mode);
         if (newVisible) {
             initializeBonusForm();
             loadAvailableProducts();
@@ -125,10 +110,8 @@ watch(
 );
 
 const initializeBonusForm = () => {
-    console.log('Initializing bonus form, mode:', props.mode);
     bonusForm.value.bonuses = [createEmptyBonus()];
     submitted.value = false;
-    console.log('Bonus form initialized:', bonusForm.value);
 };
 
 const createEmptyBonus = () => ({
@@ -156,8 +139,6 @@ const loadAvailableProducts = async () => {
                 ...product,
                 label: `${product.name} (${product.sku})`
             }));
-            console.log('Products loaded:', availableProducts.value.length, 'products');
-            console.log('First product:', availableProducts.value[0]);
         } else {
             console.error('Failed to fetch products:', productStore.message);
         }
@@ -200,15 +181,12 @@ const loadBatchesForProduct = async (productId) => {
 
 // Manejar selección de producto
 const handleProductSelect = async (bonusIndex, selectedProduct) => {
-    console.log('handleProductSelect called:', { bonusIndex, selectedProduct });
     const bonus = bonusForm.value.bonuses[bonusIndex];
 
     if (selectedProduct) {
         bonus.product_id = selectedProduct.id;
         bonus.selectedProduct = selectedProduct;
         bonus.requires_batch = selectedProduct.requires_batches;
-
-        console.log('Product selected:', selectedProduct.name, 'ID:', selectedProduct.id);
 
         // Si requiere lotes, cargarlos
         if (selectedProduct.requires_batches && !selectedProduct.auto_generate_batches) {

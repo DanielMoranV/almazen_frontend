@@ -73,7 +73,6 @@ export const useCashMovementsStore = defineStore('cashMovementsStore', {
                 finalParams = Object.fromEntries(Object.entries(finalParams).filter(([, value]) => value !== null && value !== '' && value !== undefined));
 
                 const res = await fetchCashMovements(finalParams);
-                console.log('res', res);
                 const processed = handleProcessSuccess(res, this);
 
                 if (processed.success) {

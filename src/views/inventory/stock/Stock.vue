@@ -70,7 +70,6 @@ watch(
 // Lifecycle
 onMounted(async () => {
     await loadStockItems();
-    console.log(stocksStore.productStocks);
 
     // Show success/error messages
     if (stocksStore.message) {

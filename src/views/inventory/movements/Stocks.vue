@@ -137,12 +137,6 @@ watch(
 
         movementsStore.setDateFromFilter(formattedDateFrom);
         movementsStore.setDateToFilter(formattedDateTo);
-
-        // Debug: Log the formatted dates
-        console.log('Date filters:', {
-            original: { dateFrom, dateTo },
-            formatted: { formattedDateFrom, formattedDateTo }
-        });
     },
     { immediate: true }
 );
@@ -176,19 +170,6 @@ const loadMovements = async () => {
         hasError.value = false;
         errorMessage.value = '';
         await movementsStore.fetchMovements();
-
-        // Debug: Log para verificar los datos y filtros
-        console.log('Movements loaded:', movementsStore.movementsList.length);
-        console.log('Sample movement:', movementsStore.movementsList[0]);
-        console.log('Filtered movements:', movementsStore.filteredMovements.length);
-        console.log('Total entries:', movementsStore.totalEntries);
-        console.log('Total exits:', movementsStore.totalExits);
-        console.log('Current filters in store:', {
-            type: movementsStore.filters.type,
-            warehouse: movementsStore.filters.warehouse,
-            dateFrom: movementsStore.filters.dateFrom,
-            dateTo: movementsStore.filters.dateTo
-        });
     } catch (error) {
         console.error('Error loading movements:', error);
         hasError.value = true;
@@ -226,11 +207,6 @@ const clearFilters = () => {
 
     // Clear store filters (this will trigger the watcher to update with new default dates)
     movementsStore.clearFilters();
-
-    console.log('Filters cleared, dates reset to default range:', {
-        from: formatDateForAPI(newDefaultDates.from),
-        to: formatDateForAPI(newDefaultDates.to)
-    });
 };
 </script>
 

@@ -24,7 +24,6 @@ const hasCustomers = computed(() => customersStore.customersList.length > 0);
 // Inicialización
 onMounted(async () => {
     await loadCustomers();
-    console.log(customersStore.customersList);
 });
 
 // Gestión de carga inicial

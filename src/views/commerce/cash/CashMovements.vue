@@ -22,8 +22,6 @@ onMounted(async () => {
         movementsStore.updateFilters({ cash_session_id: sessionsStore.currentSession.id });
     }
     await movementsStore.fetchMovements();
-    console.log('movementsStore.movementsList', movementsStore.movementsList);
-    console.log('movementsStore.movementsSummary', summary.value);
 });
 
 const typeOptions = [

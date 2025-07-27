@@ -24,7 +24,6 @@ const hasProducts = computed(() => productsStore.productsList.length > 0);
 // Inicialización
 onMounted(async () => {
     await loadProducts();
-    console.log(productsStore.productsList);
 });
 
 // Gestión de carga inicial

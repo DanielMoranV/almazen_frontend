@@ -1,5 +1,6 @@
 import { createSale, deleteSale, fetchSales, getSale, updateSale } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
+import { defineStore } from 'pinia';
 
 // Fechas por defecto para filtros (hoy y mañana)
 const today = new Date();
@@ -7,7 +8,6 @@ const defaultDateFrom = today.toISOString().split('T')[0];
 const tomorrow = new Date(today);
 tomorrow.setDate(today.getDate() + 1);
 const defaultDateTo = tomorrow.toISOString().split('T')[0];
-import { defineStore } from 'pinia';
 
 /**
  * Store para operaciones de ventas (POS y otros módulos)
@@ -53,8 +53,6 @@ export const useSalesStore = defineStore('salesStore', {
                 // Descargar todos los datos sin paginación
                 const res = await fetchSales({ paginate: false });
                 const processed = handleProcessSuccess(res, this);
-
-                console.log('fetchSales processed:', processed);
 
                 if (processed.success) {
                     this.allSales = processed.data || [];

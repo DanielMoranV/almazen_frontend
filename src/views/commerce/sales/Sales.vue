@@ -4,9 +4,9 @@ import { useSalesStore } from '@/stores/salesStore';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import SaleFormDialog from './componentsSales/SaleFormDialog.vue';
+import SalesFilters from './componentsSales/SalesFilters.vue';
 import SalesTable from './componentsSales/SalesTable.vue';
 import SalesToolbar from './componentsSales/SalesToolbar.vue';
-import SalesFilters from './componentsSales/SalesFilters.vue';
 
 const toast = useToast();
 const salesStore = useSalesStore();
@@ -30,7 +30,6 @@ onMounted(async () => {
 // Gestión de carga inicial
 const loadSales = async () => {
     await salesStore.fetchSales();
-    console.log(salesStore.salesList);
     if (salesStore.success) {
         showSuccess('Ventas cargadas', 'Lista actualizada correctamente');
     }

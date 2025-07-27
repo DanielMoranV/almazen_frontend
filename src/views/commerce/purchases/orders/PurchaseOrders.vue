@@ -158,14 +158,10 @@ const handleBatchManagementSubmit = async (batchData) => {
                         notes: batch.notes || null
                     };
 
-                    console.log('Creando nuevo lote:', newBatchData);
-
-                    // Crear el lote usando el batchesStore
                     await batchesStore.createBatch(newBatchData);
 
                     if (batchesStore.success && batchesStore.batch) {
                         batchId = batchesStore.batch.id;
-                        console.log('Lote creado con ID:', batchId);
                     } else {
                         throw new Error(`Error al crear lote: ${batchesStore.message}`);
                     }
@@ -188,8 +184,6 @@ const handleBatchManagementSubmit = async (batchData) => {
         });
 
         const requestData = details.length > 0 ? { details } : null;
-
-        console.log('Datos para recepción de orden:', requestData);
 
         // Proceder con la recepción de la orden
         await purchaseStore.receivePurchaseOrder(selectedOrderForBatch.value.id, requestData);
@@ -219,20 +213,15 @@ const handleManageBonuses = (order) => {
 
 const handleBonusSubmit = async (bonusData) => {
     try {
-        console.log('Agregando bonificaciones:', bonusData);
-
         const response = await addPurchaseBonuses(selectedOrderForBonus.value.id, bonusData);
 
         if (response && response.data) {
-            // Recargar la lista de órdenes para mostrar las bonificaciones
             await loadPurchaseOrders();
 
             showSuccess('Bonificaciones agregadas', `Se agregaron ${bonusData.bonuses.length} bonificaciones a la orden #${selectedOrderForBonus.value.order_number}`);
             showBonusDialog.value = false;
         }
     } catch (error) {
-        console.error('Error al agregar bonificaciones:', error);
-
         if (error.response?.data) {
             const errorData = error.response.data;
 
@@ -252,19 +241,14 @@ const handleBonusSubmit = async (bonusData) => {
 
 const handleBonusUpdate = async ({ bonusId, updateData }) => {
     try {
-        console.log('Actualizando bonificación:', { bonusId, updateData });
-
         const response = await updatePurchaseBonus(selectedOrderForBonus.value.id, bonusId, updateData);
 
         if (response && response.data) {
-            // Recargar la lista de órdenes para mostrar los cambios
             await loadPurchaseOrders();
 
             showSuccess('Bonificación actualizada', `Bonificación actualizada exitosamente en la orden #${selectedOrderForBonus.value.order_number}`);
         }
     } catch (error) {
-        console.error('Error al actualizar bonificación:', error);
-
         if (error.response?.status === 403) {
             handleError('Acceso denegado', 'No se pueden editar bonificaciones fuera del día de recepción');
         } else if (error.response?.data?.message) {

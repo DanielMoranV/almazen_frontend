@@ -2,7 +2,6 @@
 import { useAuthStore } from '@/stores/authStore';
 import { useCompaniesStore } from '@/stores/companiesStore';
 import ToggleSwitch from 'primevue/toggleswitch';
-import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import ConfigPreview from './components/ConfigPreview.vue';
@@ -11,7 +10,7 @@ import WorkflowConfigCard from './components/WorkflowConfigCard.vue';
 const companiesStore = useCompaniesStore();
 const authStore = useAuthStore();
 const toast = useToast();
-const confirm = useConfirm();
+// const confirm = useConfirm();
 
 const loading = ref(false);
 const saving = ref(false);
@@ -37,8 +36,8 @@ const hasValidCompany = computed(() => currentCompany.value && currentCompany.va
 // Nuevos computed para manejar la estructura del preview
 const canChangeWorkflow = computed(() => companiesStore.canChangeWorkflow);
 const blockingIssues = computed(() => companiesStore.workflowBlockingIssues);
-const previewWarnings = computed(() => companiesStore.workflowWarnings);
-const recommendedActions = computed(() => companiesStore.workflowRecommendedActions);
+// const previewWarnings = computed(() => companiesStore.workflowWarnings);
+// const recommendedActions = computed(() => companiesStore.workflowRecommendedActions);
 const currentData = computed(() => companiesStore.workflowCurrentData);
 
 // Computed para validación de formularios
@@ -63,7 +62,6 @@ const loadCompanyConfig = async () => {
     loading.value = true;
     try {
         await companiesStore.fetchCompanyConfig();
-        console.log('companyConfigState', companiesStore.companyConfigState);
 
         if (!companiesStore.success) {
             throw new Error(companiesStore.message || 'Error al obtener la configuración');
@@ -101,29 +99,35 @@ const loadCompanyConfig = async () => {
 };
 
 const updateWorkflowConfig = async (newConfig) => {
-    // Mantener referencia al flujo actual por si necesitamos revertir
+    saving.value = true;
     const previousWorkflow = companyConfig.value.purchase_workflow;
 
-    if (!newConfig || !newConfig.purchase_workflow) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error de Validación',
-            detail: 'Configuración inválida',
-            life: 3000
-        });
-        return;
-    }
+    // Función para persistir el flujo de trabajo
+    const persistWorkflow = async (configToSave) => {
+        await companiesStore.updateCompanyConfigAction(configToSave);
 
-    saving.value = true;
+        if (!companiesStore.success) {
+            throw new Error(companiesStore.message || 'Error al guardar la configuración');
+        }
+
+        toast.add({
+            severity: 'success',
+            summary: 'Configuración Actualizada',
+            detail: companiesStore.message || 'El flujo de compras ha sido configurado exitosamente',
+            life: 4000
+        });
+    };
 
     try {
-        await companiesStore.previewWorkflowChangeAction(newConfig.purchase_workflow);
+        // Si hay un cambio en el flujo de compras, verificar bloqueos
+        if (newConfig.purchase_workflow !== previousWorkflow) {
+            // Previsualizar el cambio de flujo
+            await companiesStore.previewWorkflowChangeAction(newConfig.purchase_workflow);
+        }
 
+        // Verificar si hay bloqueos para el cambio de flujo
         const blocking = companiesStore.workflowBlockingIssues;
         const canChange = companiesStore.canChangeWorkflow;
-
-        console.log('canChange', canChange);
-        console.log('blocking', blocking);
 
         if (!canChange || blocking > 0) {
             const warnings = companiesStore.workflowWarnings;
@@ -144,23 +148,7 @@ const updateWorkflowConfig = async (newConfig) => {
         } else {
             await persistWorkflow(newConfig);
         }
-
-        async function persistWorkflow(configToSave) {
-            await companiesStore.updateCompanyConfigAction(configToSave);
-
-            if (!companiesStore.success) {
-                throw new Error(companiesStore.message || 'Error al guardar la configuración');
-            }
-
-            toast.add({
-                severity: 'success',
-                summary: 'Configuración Actualizada',
-                detail: companiesStore.message || 'El flujo de compras ha sido configurado exitosamente',
-                life: 4000
-            });
-        } // fin persistWorkflow
     } catch (error) {
-        console.error('Error updating workflow config:', error);
         toast.add({
             severity: 'error',
             summary: 'Error al Guardar',

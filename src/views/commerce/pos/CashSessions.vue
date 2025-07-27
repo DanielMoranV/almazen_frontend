@@ -211,7 +211,6 @@ const showSessionReport = async (session) => {
 
     try {
         const result = await cashSessionsStore.getSessionReport(session.id);
-        console.log('showSessionReport result:', result);
         if (result.success) {
             sessionReport.value = cashSessionsStore.sessionReport;
             displayReportDialog.value = true;
@@ -228,7 +227,7 @@ const showSessionReport = async (session) => {
 // Utility functions
 const handleStoreErrors = () => {
     const store = cashSessionsStore;
-    
+
     try {
         if (store.validationErrors && store.validationErrors.length > 0) {
             // Mostrar errores de validación
@@ -268,8 +267,6 @@ const handleStoreErrors = () => {
     }
 };
 
-
-
 const getSessionStatusLabel = (status) => {
     const labels = {
         OPEN: 'Activa',
@@ -291,8 +288,6 @@ const formatCurrency = (value) => {
 const formatDateTime = (dateTime) => {
     return dateTime ? new Date(dateTime).toLocaleString('es-PE') : '-';
 };
-
-
 
 const getDifferenceClass = (difference) => {
     if (difference === 0) return 'text-green-600 dark:text-green-400';
@@ -610,7 +605,9 @@ const printReport = () => {
                     v-if="closeForm.actual_amount !== null && closeForm.actual_amount !== undefined"
                     class="p-4 rounded-lg border-2"
                     :class="
-                        Math.abs(cashSessionsStore.calculateDifference(closeForm.actual_amount)) < 0.01 ? 'bg-green-50 border-green-200 dark:bg-green-900/50 dark:border-green-800' : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/50 dark:border-yellow-800'
+                        Math.abs(cashSessionsStore.calculateDifference(closeForm.actual_amount)) < 0.01
+                            ? 'bg-green-50 border-green-200 dark:bg-green-900/50 dark:border-green-800'
+                            : 'bg-yellow-50 border-yellow-200 dark:bg-yellow-900/50 dark:border-yellow-800'
                     "
                 >
                     <div class="flex justify-between items-center">

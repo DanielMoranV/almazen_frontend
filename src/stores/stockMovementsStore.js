@@ -148,7 +148,6 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
                 });
 
                 const res = await fetchStockMovements(queryParams);
-                console.log(res);
                 const processed = handleProcessSuccess(res, this);
 
                 if (processed.success) {

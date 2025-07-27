@@ -89,7 +89,6 @@ instance.interceptors.response.use(
                 case 422: {
                     // Si errors es un objeto tipo { campo: [mensajes] }
                     let validationMsgs = [];
-                    console.log('Backend Data', backendData);
                     if (backendData?.errors && typeof backendData.errors === 'object' && !Array.isArray(backendData.errors)) {
                         validationMsgs = Object.entries(backendData.errors).flatMap(([field, messages]) => messages.map((msg) => `${field}: ${msg}`));
                         errResponse.validationErrors = validationMsgs;
