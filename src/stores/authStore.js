@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('authStore', {
         user: cache.getItem('currentUser'),
         companyConfig: cache.getItem('companyConfig'),
         token: cache.getItem('token'),
+        refreshToken: cache.getItem('refreshToken'),
         expiresAt: cache.getItem('expiresAt'),
         message: '',
         success: !!cache.getItem('currentUser') && !!cache.getItem('token'),
@@ -52,6 +53,7 @@ export const useAuthStore = defineStore('authStore', {
                 if (processed.success) {
                     this.setUser(processed.data.user);
                     this.setToken(processed.data.access_token);
+                    this.setRefreshToken(processed.data.refresh_token);
                     this.setExpiration(processed.data.expires_in);
                     this.startRefreshInterval();
                     this.setCompanyConfig(processed.data.user.company_config);
@@ -99,7 +101,7 @@ export const useAuthStore = defineStore('authStore', {
 
         async refreshToken() {
             try {
-                const { data } = await refresh();
+                const { data } = await refresh({ refresh_token: this.refreshToken });
                 this.setToken(data.access_token);
                 this.setExpiration(data.expires_in);
                 this.success = true;
@@ -119,6 +121,7 @@ export const useAuthStore = defineStore('authStore', {
                 if (processed.success) {
                     this.setUser(processed.data.user);
                     this.setToken(processed.data.access_token);
+                    this.setRefreshToken(processed.data.refresh_token);
                     this.setExpiration(processed.data.expires_in);
                     this.startRefreshInterval();
                     this.setCompanyConfig(processed.data.user.company_config);
@@ -178,6 +181,13 @@ export const useAuthStore = defineStore('authStore', {
             }
         },
 
+        setRefreshToken(refreshToken) {
+            if (this.refreshToken !== refreshToken) {
+                this.refreshToken = refreshToken;
+                cache.setItem('refreshToken', refreshToken);
+            }
+        },
+
         setExpiration(expiresInSeconds) {
             const expirationTime = Date.now() + expiresInSeconds * 1000;
             if (this.expiresAt !== expirationTime) {
@@ -195,6 +205,7 @@ export const useAuthStore = defineStore('authStore', {
         clearAuthData() {
             this.user = null;
             this.token = null;
+            this.refreshToken = null;
             this.expiresAt = null;
             this.success = false;
             this.message = '';
@@ -202,6 +213,7 @@ export const useAuthStore = defineStore('authStore', {
 
             cache.removeItem('currentUser');
             cache.removeItem('token');
+            cache.removeItem('refreshToken');
             cache.removeItem('expiresAt');
 
             if (this.refreshTimer) {
@@ -213,6 +225,7 @@ export const useAuthStore = defineStore('authStore', {
         init() {
             this.user = cache.getItem('currentUser');
             this.token = cache.getItem('token');
+            this.refreshToken = cache.getItem('refreshToken');
             this.expiresAt = cache.getItem('expiresAt');
             this.success = !!this.user && !!this.token;
 

@@ -40,18 +40,6 @@ const model = ref([
                         icon: 'pi pi-clock',
                         to: '/commerce/pos/sessions',
                         positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
-                    },
-                    {
-                        label: 'Métodos de Pago',
-                        icon: 'pi pi-credit-card',
-                        to: '/commerce/pos/payment-methods',
-                        positions: ['Developer', 'Administrador']
-                    },
-                    {
-                        label: 'Movimientos de Caja',
-                        icon: 'pi pi-wallet',
-                        to: '/commerce/cash/movements',
-                        positions: ['Developer', 'Administrador']
                     }
                 ],
                 positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
@@ -60,6 +48,19 @@ const model = ref([
                 label: 'Cajas',
                 icon: 'pi pi-box',
                 items: [
+                    {
+                        label: 'Movimientos de Caja',
+                        icon: 'pi pi-wallet',
+                        to: '/commerce/cash/movements',
+                        positions: ['Developer', 'Administrador']
+                    },
+
+                    {
+                        label: 'Métodos de Pago',
+                        icon: 'pi pi-credit-card',
+                        to: '/commerce/pos/payment-methods',
+                        positions: ['Developer', 'Administrador']
+                    },
                     {
                         label: 'Cajas Registradoras',
                         icon: 'pi pi-desktop',
@@ -78,19 +79,19 @@ const model = ref([
                         icon: 'pi pi-shopping-cart',
                         to: '/commerce/sales',
                         positions: ['Developer', 'Administrador', 'Ventas']
-                    },
-                    {
-                        label: 'Facturas',
-                        icon: 'pi pi-file-pdf',
-                        to: '/commerce/sales/invoices',
-                        positions: ['Developer', 'Administrador', 'Ventas']
-                    },
-                    {
-                        label: 'Cotizaciones',
-                        icon: 'pi pi-file-edit',
-                        to: '/commerce/sales/quotes',
-                        positions: ['Developer', 'Administrador', 'Ventas']
                     }
+                    // {
+                    //     label: 'Facturas',
+                    //     icon: 'pi pi-file-pdf',
+                    //     to: '/commerce/sales/invoices',
+                    //     positions: ['Developer', 'Administrador', 'Ventas']
+                    // },
+                    // {
+                    //     label: 'Cotizaciones',
+                    //     icon: 'pi pi-file-edit',
+                    //     to: '/commerce/sales/quotes',
+                    //     positions: ['Developer', 'Administrador', 'Ventas']
+                    // }
                 ],
                 positions: ['Developer', 'Administrador', 'Ventas']
             },
@@ -149,32 +150,32 @@ const model = ref([
                 icon: 'pi pi-history',
                 to: '/inventory/movements/stocks',
                 positions: ['Developer', 'Administrador', 'Logística']
-            },
-            {
-                label: 'Ajustes',
-                icon: 'pi pi-wrench',
-                items: [
-                    {
-                        label: 'Ajustes',
-                        icon: 'pi pi-plus-circle',
-                        to: '/adjustments',
-                        positions: ['Developer', 'Administrador', 'Logística']
-                    },
-                    {
-                        label: 'Conteo',
-                        icon: 'pi pi-calculator',
-                        to: '/physical-count',
-                        positions: ['Developer', 'Administrador', 'Logística']
-                    }
-                ],
-                positions: ['Developer', 'Administrador', 'Logística']
-            },
-            {
-                label: 'Transferencias',
-                icon: 'pi pi-arrow-right-arrow-left',
-                to: '/transfers',
-                positions: ['Developer', 'Administrador', 'Logística']
             }
+            // {
+            //     label: 'Ajustes',
+            //     icon: 'pi pi-wrench',
+            //     items: [
+            //         {
+            //             label: 'Ajustes',
+            //             icon: 'pi pi-plus-circle',
+            //             to: '/adjustments',
+            //             positions: ['Developer', 'Administrador', 'Logística']
+            //         },
+            //         {
+            //             label: 'Conteo',
+            //             icon: 'pi pi-calculator',
+            //             to: '/physical-count',
+            //             positions: ['Developer', 'Administrador', 'Logística']
+            //         }
+            //     ],
+            //     positions: ['Developer', 'Administrador', 'Logística']
+            // },
+            // {
+            //     label: 'Transferencias',
+            //     icon: 'pi pi-arrow-right-arrow-left',
+            //     to: '/transfers',
+            //     positions: ['Developer', 'Administrador', 'Logística']
+            // }
         ],
         positions: ['Developer', 'Administrador', 'Logística']
     },

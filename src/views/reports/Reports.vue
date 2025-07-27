@@ -4,6 +4,8 @@ import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Dropdown from 'primevue/dropdown';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
@@ -12,7 +14,6 @@ import { computed, onMounted, ref } from 'vue';
 const toast = useToast();
 const reportsStore = useReportsStore();
 
-const loading = ref(false);
 const searchTerm = ref('');
 const selectedCategory = ref(null);
 const downloadingReports = ref(new Set());
@@ -244,41 +245,43 @@ const getPopularityBadge = (popularity) => {
                         Reportes más utilizados
                     </h2>
                     <div class="flex flex-wrap gap-2">
-                        <Button v-for="report in popularReports" :key="report.id" :label="report.name"
-                            :icon="report.icon" size="small" outlined
-                            class="popular-btn text-gray-600 dark:text-gray-400" @click="downloadReport(report)"
-                            :loading="isDownloading(report.id)" />
+                        <Button
+                            v-for="report in popularReports"
+                            :key="report.id"
+                            :label="report.name"
+                            :icon="report.icon"
+                            size="small"
+                            outlined
+                            class="popular-btn bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                            @click="downloadReport(report)"
+                            :loading="isDownloading(report.id)"
+                        />
                     </div>
                 </div>
             </div>
 
             <!-- Filtros mejorados -->
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6 mb-8 sticky top-4 z-10">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border dark:border-gray-700 p-6 mb-8 sticky top-4 z-10">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="relative sm:col-span-2">
                         <IconField>
                             <InputIcon class="pi pi-search" />
-                            <InputText v-model="searchTerm" placeholder="Buscar reportes..." class="w-full pl-10"
-                                size="large" />
+                            <InputText v-model="searchTerm" placeholder="Buscar reportes..." class="w-full pl-10" size="large" />
                         </IconField>
                     </div>
-                    <Dropdown v-model="selectedCategory" :options="categories" optionLabel="label" optionValue="value"
-                        placeholder="Filtrar por categoría" class="w-full" size="large" />
+                    <Dropdown v-model="selectedCategory" :options="categories" optionLabel="label" optionValue="value" placeholder="Filtrar por categoría" class="w-full" size="large" />
                 </div>
             </div>
 
             <!-- Grid de reportes mejorado -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                 <div v-for="report in filteredReports" :key="report.id" class="group relative">
-                    <Card
-                        class="report-card h-full cursor-pointer overflow-hidden hover:ring-2 hover:ring-blue-300 hover:ring-offset-2">
+                    <Card class="report-card h-full cursor-pointer overflow-hidden hover:ring-2 hover:ring-blue-300 hover:ring-offset-2">
                         <template #header>
                             <div class="relative sm:col-span-2">
                                 <div :class="[report.color, 'h-2 w-full']"></div>
                                 <div class="absolute top-2 right-2">
-                                    <Badge :value="getPopularityBadge(report.popularity).label"
-                                        :severity="getPopularityBadge(report.popularity).severity" size="small" />
+                                    <Badge :value="getPopularityBadge(report.popularity).label" :severity="getPopularityBadge(report.popularity).severity" size="small" />
                                 </div>
                             </div>
                         </template>
@@ -290,8 +293,7 @@ const getPopularityBadge = (popularity) => {
                                         <i :class="[report.icon, 'text-xl']"></i>
                                     </div>
                                     <div>
-                                        <h3
-                                            class="text-lg font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 transition-colors">
+                                        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 transition-colors">
                                             {{ report.name }}
                                         </h3>
                                         <div class="flex items-center text-sm text-gray-500 mt-1">
@@ -308,10 +310,15 @@ const getPopularityBadge = (popularity) => {
                                 {{ report.description }}
                             </p>
 
-                            <Button :label="isDownloading(report.id) ? 'Generando...' : 'Descargar Reporte'"
+                            <Button
+                                :label="isDownloading(report.id) ? 'Generando...' : 'Descargar Reporte'"
                                 :icon="isDownloading(report.id) ? 'pi pi-spin pi-spinner' : 'pi pi-download'"
-                                :loading="isDownloading(report.id)" :disabled="isDownloading(report.id)"
-                                class="w-full download-btn" size="large" @click="downloadReport(report)" />
+                                :loading="isDownloading(report.id)"
+                                :disabled="isDownloading(report.id)"
+                                class="w-full download-btn"
+                                size="large"
+                                @click="downloadReport(report)"
+                            />
                         </template>
                     </Card>
                 </div>
@@ -322,10 +329,16 @@ const getPopularityBadge = (popularity) => {
                 <i class="pi pi-search text-6xl text-gray-300 mb-4"></i>
                 <h3 class="text-xl font-semibold text-gray-600 mb-2">No se encontraron reportes</h3>
                 <p class="text-gray-500">Intenta con otros términos de búsqueda o cambia los filtros</p>
-                <Button label="Limpiar filtros" icon="pi pi-times" text @click="
-                    searchTerm = '';
-                selectedCategory = null;
-                " class="mt-4" />
+                <Button
+                    label="Limpiar filtros"
+                    icon="pi pi-times"
+                    text
+                    @click="
+                        searchTerm = '';
+                        selectedCategory = null;
+                    "
+                    class="mt-4"
+                />
             </div>
         </div>
     </div>

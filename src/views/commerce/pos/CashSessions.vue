@@ -304,8 +304,8 @@ const printReport = () => {
 <template>
     <Toast />
 
-    <div class="grid">
-        <div class="col-12">
+    <div class="min-h-screen bg-gray-50 py-8 px-4">
+        <div class="max-w-7xl mx-auto">
             <Card class="shadow-lg border-0">
                 <template #header>
                     <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-6 rounded-t-lg">
@@ -316,7 +316,7 @@ const printReport = () => {
                                     <p class="text-green-100">Control de turnos y movimientos de efectivo</p>
                                 </div>
                             </div>
-                            <div class="flex space-x-3">
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                                 <Button v-if="hasActiveSession" @click="openCloseSessionDialog" label="Cerrar Sesión" icon="pi pi-sign-out" severity="contrast" size="large" />
                                 <Button @click="openNewSessionDialog" label="Nueva Sesión" icon="pi pi-plus" :disabled="availableForNewSession.length === 0" severity="contrast" size="large" />
                             </div>
@@ -475,7 +475,7 @@ const printReport = () => {
         v-model:visible="displayNewSessionDialog"
         header="Nueva Sesión de Caja"
         :modal="true"
-        :style="{ width: '500px' }"
+        :style="{ width: '90vw', maxWidth: '500px' }"
         :pt="{
             header: 'bg-gradient-to-r from-green-600 to-emerald-600 text-white',
             content: 'p-6'
@@ -533,7 +533,7 @@ const printReport = () => {
         v-model:visible="displayCloseSessionDialog"
         header="Cerrar Sesión de Caja"
         :modal="true"
-        :style="{ width: '600px' }"
+        :style="{ width: '90vw', maxWidth: '600px' }"
         :pt="{
             header: 'bg-gradient-to-r from-red-600 to-pink-600 text-white',
             content: 'p-6'
