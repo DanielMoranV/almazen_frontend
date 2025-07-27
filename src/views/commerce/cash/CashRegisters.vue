@@ -156,8 +156,7 @@ const showErrors = () => {
                                 <Button label="Crear Caja" icon="pi pi-plus" severity="success" @click="openCreateDialog" />
                             </div>
                         </template>
-
-                    <DataTable v-else :value="registers" :paginator="true" :rows="15" stripedRows responsiveLayout="scroll" class="shadow-sm">
+                        
                         <Column field="name" header="Nombre" sortable />
                         <Column field="code" header="Código" sortable />
                         <Column field="location" header="Ubicación" sortable />
