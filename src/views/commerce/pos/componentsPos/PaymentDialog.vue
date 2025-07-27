@@ -58,7 +58,7 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
-const getPaymentMethodIcon = (methodId) => {
+const _getPaymentMethodIcon = (methodId) => {
     const method = props.availablePaymentMethods.find((pm) => pm.id === methodId);
     if (!method) return 'pi-circle';
 
