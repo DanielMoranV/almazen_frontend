@@ -26,11 +26,26 @@ const emit = defineEmits(['view-details', 'clear-filters']);
 // Inicializar filtros
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    product_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    product_sku: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    type: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-    warehouse_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-    reason: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] }
+    product_name: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+    },
+    product_sku: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+    },
+    type: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }]
+    },
+    warehouse_name: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+    },
+    reason: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }]
+    }
 });
 
 const localFilters = ref(initFilters());
@@ -254,7 +269,9 @@ const formatQuantity = (type, quantity) => {
                 <div class="product-cell">
                     <div class="product-name">{{ data.product_name }}</div>
                     <div v-if="data.product_sku" class="product-sku">SKU: {{ data.product_sku }}</div>
-                    <div v-if="data.product_barcode" class="product-barcode">{{ data.product_barcode }}</div>
+                    <div v-if="data.product_barcode" class="product-barcode">
+                        {{ data.product_barcode }}
+                    </div>
                 </div>
             </template>
         </Column>

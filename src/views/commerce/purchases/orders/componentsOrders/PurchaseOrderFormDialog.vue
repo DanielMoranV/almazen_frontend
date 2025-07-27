@@ -143,7 +143,12 @@ watch(
             if (descuento > bruto) {
                 descuento = bruto;
                 detail.discount_amount = bruto;
-                toast.add({ severity: 'error', summary: 'Error', detail: 'El descuento no puede ser mayor al subtotal', life: 3000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'El descuento no puede ser mayor al subtotal',
+                    life: 3000
+                });
             }
             // El total del detalle es bruto - descuento, nunca menor a 0
             detail.total_amount = Math.max(+(bruto - descuento).toFixed(2), 0);
@@ -156,7 +161,12 @@ watch(
         if (totalDescuentos > totalBruto) {
             totalDescuentos = totalBruto;
             form.value.discount_amount = +totalBruto.toFixed(2);
-            toast.add({ severity: 'error', summary: 'Error', detail: 'El descuento general no puede ser mayor al total bruto', life: 3000 });
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'El descuento general no puede ser mayor al total bruto',
+                life: 3000
+            });
         } else {
             form.value.discount_amount = +totalDescuentos.toFixed(2);
         }

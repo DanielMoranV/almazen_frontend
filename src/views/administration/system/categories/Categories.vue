@@ -30,7 +30,12 @@ const loadCategories = async () => {
     } else {
         if (categoriesStore.validationErrors && categoriesStore.validationErrors.length > 0) {
             categoriesStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
             showError(categoriesStore.message);
@@ -49,7 +54,12 @@ const handleCategorySubmit = async (categoryData) => {
     } else {
         if (categoriesStore.validationErrors && categoriesStore.validationErrors.length > 0) {
             categoriesStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
             showError(categoriesStore.message);
@@ -66,7 +76,12 @@ const handleCategoryDelete = async () => {
     } else {
         if (categoriesStore.validationErrors && categoriesStore.validationErrors.length > 0) {
             categoriesStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
             showError(categoriesStore.message);

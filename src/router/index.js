@@ -16,13 +16,17 @@ const router = createRouter({
                     path: '/dashboard',
                     name: 'dashboard',
                     component: () => import('@/views/Dashboard.vue'),
-                    meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero'] }
+                    meta: {
+                        positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
+                    }
                 },
                 {
                     path: '/reports',
                     name: 'reports',
                     component: () => import('@/views/reports/Reports.vue'),
-                    meta: { positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística'] }
+                    meta: {
+                        positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística']
+                    }
                 },
 
                 // Commerce - Ventas

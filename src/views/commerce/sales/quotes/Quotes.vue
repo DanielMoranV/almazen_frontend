@@ -263,11 +263,19 @@ const formatCurrency = (value) => {
                         <tbody>
                             <tr v-for="quote in filteredQuotes" :key="quote.id" class="cursor-pointer hover:surface-200" @click="viewQuoteDetails(quote)">
                                 <td class="p-3 border-bottom-1 surface-border">{{ quote.id }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ quote.customer }}</td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ quote.customer }}
+                                </td>
                                 <td class="p-3 border-bottom-1 surface-border">{{ quote.date }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ quote.validUntil }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ quote.items }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(quote.total) }}</td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ quote.validUntil }}
+                                </td>
+                                <td class="text-right p-3 border-bottom-1 surface-border">
+                                    {{ quote.items }}
+                                </td>
+                                <td class="text-right p-3 border-bottom-1 surface-border">
+                                    {{ formatCurrency(quote.total) }}
+                                </td>
                                 <td class="text-center p-3 border-bottom-1 surface-border">
                                     <span class="px-2 py-1 text-xs border-round" :class="getStatusClass(quote.status)">
                                         {{ getStatusLabel(quote.status) }}
@@ -283,7 +291,9 @@ const formatCurrency = (value) => {
                                         </button>
                                         <button
                                             class="p-button p-component p-button-icon-only p-button-rounded p-button-text"
-                                            :class="{ 'p-button-success': quote.status === 'approved' }"
+                                            :class="{
+                                                'p-button-success': quote.status === 'approved'
+                                            }"
                                             @click.stop="convertToOrder(quote, $event)"
                                             :disabled="quote.status !== 'approved'"
                                         >

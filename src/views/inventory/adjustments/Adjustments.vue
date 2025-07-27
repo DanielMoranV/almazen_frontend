@@ -299,18 +299,32 @@ const updateReasonOptions = () => {
                         </thead>
                         <tbody>
                             <tr v-for="adjustment in filteredAdjustments" :key="adjustment.id" class="cursor-pointer hover:surface-200" @click="viewAdjustmentDetails(adjustment)">
-                                <td class="p-3 border-bottom-1 surface-border">{{ adjustment.id }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ adjustment.warehouse }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ adjustment.date }}</td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ adjustment.id }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ adjustment.warehouse }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ adjustment.date }}
+                                </td>
                                 <td class="text-center p-3 border-bottom-1 surface-border">
                                     <span class="px-2 py-1 text-xs border-round" :class="getTypeClass(adjustment.type)">
                                         {{ getTypeLabel(adjustment.type) }}
                                     </span>
                                 </td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ adjustment.reason }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ adjustment.items }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ adjustment.totalQuantity }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ adjustment.createdBy }}</td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ adjustment.reason }}
+                                </td>
+                                <td class="text-right p-3 border-bottom-1 surface-border">
+                                    {{ adjustment.items }}
+                                </td>
+                                <td class="text-right p-3 border-bottom-1 surface-border">
+                                    {{ adjustment.totalQuantity }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ adjustment.createdBy }}
+                                </td>
                                 <td class="text-center p-3 border-bottom-1 surface-border">
                                     <div class="flex justify-content-center">
                                         <button class="p-button p-component p-button-icon-only p-button-rounded p-button-text" @click.stop="viewAdjustmentDetails(adjustment)">

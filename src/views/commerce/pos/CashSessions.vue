@@ -338,7 +338,9 @@ const printReport = () => {
                                         <i class="pi pi-user text-blue-600 text-xl"></i>
                                         <div>
                                             <div class="text-sm text-blue-600 font-medium">Cajero</div>
-                                            <div class="font-bold text-gray-800">{{ currentSessionInfo.cashier }}</div>
+                                            <div class="font-bold text-gray-800">
+                                                {{ currentSessionInfo.cashier }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -348,7 +350,9 @@ const printReport = () => {
                                         <i class="pi pi-wallet text-green-600 text-xl"></i>
                                         <div>
                                             <div class="text-sm text-green-600 font-medium">Monto Inicial</div>
-                                            <div class="font-bold text-gray-800">{{ formatCurrency(currentSessionInfo.openingAmount) }}</div>
+                                            <div class="font-bold text-gray-800">
+                                                {{ formatCurrency(currentSessionInfo.openingAmount) }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -368,7 +372,9 @@ const printReport = () => {
                                         <i class="pi pi-calculator text-orange-600 text-xl"></i>
                                         <div>
                                             <div class="text-sm text-orange-600 font-medium">Esperado</div>
-                                            <div class="font-bold text-gray-800">{{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}</div>
+                                            <div class="font-bold text-gray-800">
+                                                {{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -554,19 +560,27 @@ const printReport = () => {
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Monto Inicial</div>
-                        <div class="font-semibold text-green-600">{{ formatCurrency(currentSessionInfo.openingAmount) }}</div>
+                        <div class="font-semibold text-green-600">
+                            {{ formatCurrency(currentSessionInfo.openingAmount) }}
+                        </div>
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Ventas Realizadas</div>
-                        <div class="font-semibold text-blue-600">{{ currentSessionInfo.salesCount }}</div>
+                        <div class="font-semibold text-blue-600">
+                            {{ currentSessionInfo.salesCount }}
+                        </div>
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Total en Ventas</div>
-                        <div class="font-semibold text-purple-600">{{ formatCurrency(currentSessionInfo.totalSales) }}</div>
+                        <div class="font-semibold text-purple-600">
+                            {{ formatCurrency(currentSessionInfo.totalSales) }}
+                        </div>
                     </div>
                     <div>
                         <div class="text-sm text-gray-600">Monto Esperado</div>
-                        <div class="font-semibold text-orange-600">{{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}</div>
+                        <div class="font-semibold text-orange-600">
+                            {{ formatCurrency(currentSessionInfo.expected_amount ?? currentSessionInfo.expectedAmount) }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -626,7 +640,10 @@ const printReport = () => {
             <!-- Session Header -->
             <div class="text-center pb-4 border-b">
                 <h2 class="text-2xl font-bold text-gray-800">Reporte de Sesión #{{ sessionReport.session?.id }}</h2>
-                <p class="text-gray-600">{{ sessionReport.session?.user?.name }} - {{ sessionReport.session?.cash_register?.name }}</p>
+                <p class="text-gray-600">
+                    {{ sessionReport.session?.user?.name }} -
+                    {{ sessionReport.session?.cash_register?.name }}
+                </p>
             </div>
 
             <!-- Summary Cards -->
@@ -673,8 +690,12 @@ const printReport = () => {
                         <tbody>
                             <tr v-for="sale in sessionReport.sales" :key="sale.sale_id || sale.id" class="border-b">
                                 <td class="px-2 py-1">{{ sale.sale_id || sale.id }}</td>
-                                <td class="px-2 py-1">{{ sale.document_number || sale.voucher_number || '-' }}</td>
-                                <td class="px-2 py-1 text-right">{{ formatCurrency(sale.total_amount) }}</td>
+                                <td class="px-2 py-1">
+                                    {{ sale.document_number || sale.voucher_number || '-' }}
+                                </td>
+                                <td class="px-2 py-1 text-right">
+                                    {{ formatCurrency(sale.total_amount) }}
+                                </td>
                                 <td class="px-2 py-1">
                                     <span v-for="p in sale.payments" :key="p.payment_method_name" class="mr-2"> {{ p.payment_method_name }} ({{ formatCurrency(p.amount) }}) </span>
                                 </td>

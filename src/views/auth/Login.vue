@@ -21,27 +21,52 @@ const handleLogin = async () => {
     // Validar DNI
     const dniRegex = /^\d{8}$/;
     if (!dniRegex.test(dni.value)) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'El DNI ingresado no es válido.', life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'El DNI ingresado no es válido.',
+            life: 3000
+        });
         return;
     }
     // Validar contraseña
     if (password.value.length < 8) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'La contraseña debe tener al menos 8 caracteres.', life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'La contraseña debe tener al menos 8 caracteres.',
+            life: 3000
+        });
         return;
     }
     await authStore.login({ dni: dni.value, password: password.value });
     if (authStore.isAuthenticated) {
-        toast.add({ severity: 'success', summary: 'Bienvenido', detail: authStore.message, life: 3000 });
+        toast.add({
+            severity: 'success',
+            summary: 'Bienvenido',
+            detail: authStore.message,
+            life: 3000
+        });
         setTimeout(() => {
             router.push('/dashboard');
         }, 1000);
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
             authStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: authStore.message,
+                life: 3000
+            });
         }
     }
 };
@@ -74,7 +99,7 @@ const handleLogin = async () => {
                     <InputText v-model="dni" class="w-full" placeholder="Ingrese su DNI" maxlength="8" />
 
                     <label class="block text-sm font-medium text-gray-700">Contraseña</label>
-                    <Password v-model="password" :toggleMask="true" class="mb-4" fluid :feedback="false" toggleMask placeholder="Ingrese su contraseña" />
+                    <Password v-model="password" :toggleMask="true" class="mb-4" fluid :feedback="false" placeholder="Ingrese su contraseña" />
 
                     <Button label="Iniciar sesión" icon="pi pi-sign-in" class="w-full mt-4 bg-green-600 border-green-600 hover:bg-green-700" :loading="authStore.loading" @click="handleLogin" />
 

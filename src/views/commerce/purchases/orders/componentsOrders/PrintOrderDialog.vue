@@ -302,7 +302,8 @@ function formatDateOnly(value) {
                         <p><strong>Fecha de Compra:</strong> {{ formatDate(order.purchase_date) }}</p>
                         <p><strong>Documento:</strong> {{ order.document_number || 'N/A' }}</p>
                         <p>
-                            <strong>Estado:</strong> <span :class="getStatusClass(order.status)">{{ getStatusLabel(order.status) }}</span>
+                            <strong>Estado:</strong>
+                            <span :class="getStatusClass(order.status)">{{ getStatusLabel(order.status) }}</span>
                         </p>
                         <p><strong>Solicitado por:</strong> {{ order.user?.name || 'N/A' }}</p>
                     </div>
@@ -339,10 +340,16 @@ function formatDateOnly(value) {
                             <td class="text-center">{{ formatNumber(item.quantity) }}</td>
                             <td class="text-center">{{ item.product?.unit || 'UND' }}</td>
                             <td class="text-right">{{ formatCurrency(item.unit_price) }}</td>
-                            <td class="text-right">{{ formatCurrency(getUnitPriceNoIGV(item)) }}</td>
+                            <td class="text-right">
+                                {{ formatCurrency(getUnitPriceNoIGV(item)) }}
+                            </td>
                             <td class="text-right">{{ formatCurrency(item.discount_amount) }}</td>
-                            <td class="text-right">{{ formatCurrency(getDetailSubtotal(item)) }}</td>
-                            <td class="text-right">{{ formatCurrency(getDetailSubtotalNoIGV(item)) }}</td>
+                            <td class="text-right">
+                                {{ formatCurrency(getDetailSubtotal(item)) }}
+                            </td>
+                            <td class="text-right">
+                                {{ formatCurrency(getDetailSubtotalNoIGV(item)) }}
+                            </td>
                             <td class="text-right">{{ formatCurrency(getDetailIGV(item)) }}</td>
                         </tr>
                     </tbody>

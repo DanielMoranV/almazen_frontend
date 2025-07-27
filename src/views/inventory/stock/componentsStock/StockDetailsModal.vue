@@ -221,7 +221,15 @@ const hasAnyBatches = (warehouse) => {
                                     <span>Vencimiento</span>
                                 </div>
 
-                                <div v-for="batch in warehouse.batches" :key="batch.stock_id" class="batch-row" :class="{ expired: isExpired(batch.expiration_date), 'expiring-soon': isExpiringSoon(batch.expiration_date) }">
+                                <div
+                                    v-for="batch in warehouse.batches"
+                                    :key="batch.stock_id"
+                                    class="batch-row"
+                                    :class="{
+                                        expired: isExpired(batch.expiration_date),
+                                        'expiring-soon': isExpiringSoon(batch.expiration_date)
+                                    }"
+                                >
                                     <span class="batch-code">{{ batch.batch_code || '-' }}</span>
                                     <span class="batch-stock" :class="getStockClass(batch.stock)">
                                         {{ batch.stock || 0 }}

@@ -274,7 +274,10 @@ export const useSalesStore = defineStore('salesStore', {
             // Validar cada método de pago
             const cashMethods = paymentMethods.filter((pm) => pm.type === 'CASH' || pm.method_code === 'CASH');
             if (cashMethods.length > 1) {
-                return { valid: false, message: 'Solo se permite un método de pago en efectivo por venta' };
+                return {
+                    valid: false,
+                    message: 'Solo se permite un método de pago en efectivo por venta'
+                };
             }
 
             // Validar estructura de cada método
@@ -286,23 +289,35 @@ export const useSalesStore = defineStore('salesStore', {
                 }
 
                 if (!pm.amount || pm.amount <= 0) {
-                    return { valid: false, message: `Método de pago ${i + 1}: Monto debe ser mayor a cero` };
+                    return {
+                        valid: false,
+                        message: `Método de pago ${i + 1}: Monto debe ser mayor a cero`
+                    };
                 }
 
                 // Validar formato de monto (máximo 2 decimales)
                 const amountStr = parseFloat(pm.amount).toFixed(2);
                 if (!/^\d+(\.\d{1,2})?$/.test(amountStr)) {
-                    return { valid: false, message: `Método de pago ${i + 1}: Formato de monto inválido` };
+                    return {
+                        valid: false,
+                        message: `Método de pago ${i + 1}: Formato de monto inválido`
+                    };
                 }
 
                 // Validar referencia si es requerida
                 if (pm.requires_reference && !pm.reference) {
-                    return { valid: false, message: `Método de pago ${i + 1}: Requiere número de referencia` };
+                    return {
+                        valid: false,
+                        message: `Método de pago ${i + 1}: Requiere número de referencia`
+                    };
                 }
 
                 // Validar formato de referencia
                 if (pm.reference && !/^[a-zA-Z0-9\s\-_#]*$/.test(pm.reference)) {
-                    return { valid: false, message: `Método de pago ${i + 1}: Formato de referencia inválido` };
+                    return {
+                        valid: false,
+                        message: `Método de pago ${i + 1}: Formato de referencia inválido`
+                    };
                 }
             }
 

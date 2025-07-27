@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue';
+import { defineProps, defineEmits } from 'vue';
 
 defineProps({
     cart: Array,
@@ -51,8 +51,12 @@ const formatCurrency = (amount) => {
                     <div v-for="(item, index) in cart" :key="index" class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1 min-w-0">
-                                <h5 class="font-bold text-gray-900 truncate text-sm">{{ item.name }}</h5>
-                                <p class="text-blue-600 font-semibold text-sm">{{ formatCurrency(item.price) }}</p>
+                                <h5 class="font-bold text-gray-900 truncate text-sm">
+                                    {{ item.name }}
+                                </h5>
+                                <p class="text-blue-600 font-semibold text-sm">
+                                    {{ formatCurrency(item.price) }}
+                                </p>
                             </div>
                             <Button @click="$emit('remove-from-cart', index)" icon="pi pi-trash" size="small" severity="danger" text rounded class="ml-2 hover:bg-red-100" />
                         </div>

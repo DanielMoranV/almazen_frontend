@@ -338,7 +338,15 @@ const setActiveTab = (tab) => {
                                             <div class="series-inputs">
                                                 <div class="input-group">
                                                     <label>Serie</label>
-                                                    <InputText v-model="companyConfig.voucher_series_ticket" maxlength="10" placeholder="T001" :class="{ 'p-invalid': !companyConfig.voucher_series_ticket.trim() }" fluid />
+                                                    <InputText
+                                                        v-model="companyConfig.voucher_series_ticket"
+                                                        maxlength="10"
+                                                        placeholder="T001"
+                                                        :class="{
+                                                            'p-invalid': !companyConfig.voucher_series_ticket.trim()
+                                                        }"
+                                                        fluid
+                                                    />
                                                 </div>
                                                 <div class="input-group">
                                                     <label>Correlativo Actual</label>
@@ -353,7 +361,15 @@ const setActiveTab = (tab) => {
                                             <div class="series-inputs">
                                                 <div class="input-group">
                                                     <label>Serie</label>
-                                                    <InputText v-model="companyConfig.voucher_series_boleta" maxlength="10" placeholder="B001" :class="{ 'p-invalid': !companyConfig.voucher_series_boleta.trim() }" fluid />
+                                                    <InputText
+                                                        v-model="companyConfig.voucher_series_boleta"
+                                                        maxlength="10"
+                                                        placeholder="B001"
+                                                        :class="{
+                                                            'p-invalid': !companyConfig.voucher_series_boleta.trim()
+                                                        }"
+                                                        fluid
+                                                    />
                                                 </div>
                                                 <div class="input-group">
                                                     <label>Correlativo Actual</label>
@@ -368,7 +384,15 @@ const setActiveTab = (tab) => {
                                             <div class="series-inputs">
                                                 <div class="input-group">
                                                     <label>Serie</label>
-                                                    <InputText v-model="companyConfig.voucher_series_factura" maxlength="10" placeholder="F001" :class="{ 'p-invalid': !companyConfig.voucher_series_factura.trim() }" fluid />
+                                                    <InputText
+                                                        v-model="companyConfig.voucher_series_factura"
+                                                        maxlength="10"
+                                                        placeholder="F001"
+                                                        :class="{
+                                                            'p-invalid': !companyConfig.voucher_series_factura.trim()
+                                                        }"
+                                                        fluid
+                                                    />
                                                 </div>
                                                 <div class="input-group">
                                                     <label>Correlativo Actual</label>

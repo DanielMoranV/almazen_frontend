@@ -450,7 +450,9 @@ const formatDate = (date) => {
                                     filter
                                     filterPlaceholder="Buscar lote..."
                                     @update:modelValue="(value) => handleBatchSelect(index, value)"
-                                    :class="{ 'p-invalid': submitted && bonus.requires_batch && !bonus.batch_id }"
+                                    :class="{
+                                        'p-invalid': submitted && bonus.requires_batch && !bonus.batch_id
+                                    }"
                                     :loading="loadingBatches"
                                     :disabled="!canAddBonuses"
                                 >
@@ -481,7 +483,9 @@ const formatDate = (date) => {
                                     :minFractionDigits="0"
                                     :maxFractionDigits="4"
                                     placeholder="0"
-                                    :class="{ 'p-invalid': submitted && (!bonus.quantity || bonus.quantity <= 0) }"
+                                    :class="{
+                                        'p-invalid': submitted && (!bonus.quantity || bonus.quantity <= 0)
+                                    }"
                                     :disabled="!canAddBonuses"
                                 />
                                 <small v-if="submitted && (!bonus.quantity || bonus.quantity <= 0)" class="p-error"> Cantidad debe ser mayor a 0 </small>
@@ -496,7 +500,14 @@ const formatDate = (date) => {
                             <!-- Razón -->
                             <div class="field field-full">
                                 <label>Razón de la Bonificación <span class="required">*</span></label>
-                                <InputText v-model="bonus.bonus_reason" placeholder="Ej: Promoción por compra mayor a $1000" :class="{ 'p-invalid': submitted && (!bonus.bonus_reason || !bonus.bonus_reason.trim()) }" :disabled="!canAddBonuses" />
+                                <InputText
+                                    v-model="bonus.bonus_reason"
+                                    placeholder="Ej: Promoción por compra mayor a $1000"
+                                    :class="{
+                                        'p-invalid': submitted && (!bonus.bonus_reason || !bonus.bonus_reason.trim())
+                                    }"
+                                    :disabled="!canAddBonuses"
+                                />
                                 <small v-if="submitted && (!bonus.bonus_reason || !bonus.bonus_reason.trim())" class="p-error"> Razón requerida </small>
                             </div>
 

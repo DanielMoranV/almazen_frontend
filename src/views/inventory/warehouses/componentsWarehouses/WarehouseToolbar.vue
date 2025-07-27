@@ -26,7 +26,10 @@ defineEmits(['refresh', 'create']);
                         </div>
                         <div class="title-text">
                             <h1 class="page-title">Gestión de Almacenes</h1>
-                            <p v-if="totalWarehouses > 0" class="subtitle">{{ totalWarehouses }} {{ totalWarehouses === 1 ? 'almacén' : 'almacenes' }} registrados</p>
+                            <p v-if="totalWarehouses > 0" class="subtitle">
+                                {{ totalWarehouses }}
+                                {{ totalWarehouses === 1 ? 'almacén' : 'almacenes' }} registrados
+                            </p>
                             <p v-else class="subtitle">Comienza agregando tu primer almacén</p>
                         </div>
                     </div>

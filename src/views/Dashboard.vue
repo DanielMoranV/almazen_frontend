@@ -53,7 +53,15 @@ const salesChartData = computed(() => {
     const trend = getDashboardMetrics.value.sales_trend_month || [];
     return {
         labels: trend.map((i) => i.date),
-        datasets: [{ label: 'Ventas', fill: false, borderColor: '#4caf50', tension: 0.3, data: trend.map((i) => i.total_sales) }]
+        datasets: [
+            {
+                label: 'Ventas',
+                fill: false,
+                borderColor: '#4caf50',
+                tension: 0.3,
+                data: trend.map((i) => i.total_sales)
+            }
+        ]
     };
 });
 
@@ -73,22 +81,12 @@ const topProductsMonthChartData = computed(() => {
     };
 });
 
-const productsChartData = computed(() => {
-    const trend = getDashboardMetrics.value.products_trend_month || [];
-    return {
-        labels: trend.map((i) => i.date),
-        datasets: [{ label: 'Unidades', fill: false, borderColor: '#2196f3', tension: 0.3, data: trend.map((i) => i.total_quantity) }]
-    };
-});
-
 const refreshDashboard = async () => {
     await dashboardStore.fetchAllDashboardData();
 };
 
 onMounted(async () => {
     await refreshDashboard();
-
-    console.log(getDashboardMetrics.value);
 
     // Auto-refresh cada 5 minutos
     refreshInterval.value = setInterval(refreshDashboard, 5 * 60 * 1000);
@@ -116,7 +114,10 @@ onUnmounted(() => {
                 </div>
                 <div class="flex items-center space-x-4">
                     <Button icon="pi pi-refresh" :loading="isLoadingDashboard" @click="refreshDashboard" class="p-button-outlined" v-tooltip.top="'Actualizar datos'" />
-                    <span class="text-sm text-gray-500" v-if="getDashboardMetrics.last_updated"> Actualizado: {{ new Date(getDashboardMetrics.last_updated).toLocaleString('es-PE') }} </span>
+                    <span class="text-sm text-gray-500" v-if="getDashboardMetrics.last_updated">
+                        Actualizado:
+                        {{ new Date(getDashboardMetrics.last_updated).toLocaleString('es-PE') }}
+                    </span>
                 </div>
             </div>
 
@@ -135,8 +136,13 @@ onUnmounted(() => {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-600">Total Productos</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ formatNumber(getDashboardMetrics.total_products) }}</p>
-                                    <p class="text-xs text-gray-500">{{ formatNumber(getDashboardMetrics.active_products) }} activos</p>
+                                    <p class="text-2xl font-bold text-gray-900">
+                                        {{ formatNumber(getDashboardMetrics.total_products) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ formatNumber(getDashboardMetrics.active_products) }}
+                                        activos
+                                    </p>
                                 </div>
                                 <div class="p-3 bg-blue-100 rounded-full">
                                     <i class="pi pi-box text-blue-600 text-xl"></i>
@@ -151,8 +157,13 @@ onUnmounted(() => {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-600">Ventas Hoy</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(getDashboardMetrics.sales_today) }}</p>
-                                    <p class="text-xs text-green-600">{{ formatNumber(getDashboardMetrics.sales_count_today) }} transacciones</p>
+                                    <p class="text-2xl font-bold text-gray-900">
+                                        {{ formatCurrency(getDashboardMetrics.sales_today) }}
+                                    </p>
+                                    <p class="text-xs text-green-600">
+                                        {{ formatNumber(getDashboardMetrics.sales_count_today) }}
+                                        transacciones
+                                    </p>
                                 </div>
                                 <div class="p-3 bg-green-100 rounded-full">
                                     <i class="pi pi-chart-line text-green-600 text-xl"></i>
@@ -167,8 +178,13 @@ onUnmounted(() => {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-600">Compras Hoy</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(getDashboardMetrics.purchases_today_total ?? 0) }}</p>
-                                    <p class="text-xs text-teal-600">{{ formatNumber(getDashboardMetrics.purchases_today_count ?? 0) }} transacciones</p>
+                                    <p class="text-2xl font-bold text-gray-900">
+                                        {{ formatCurrency(getDashboardMetrics.purchases_today_total ?? 0) }}
+                                    </p>
+                                    <p class="text-xs text-teal-600">
+                                        {{ formatNumber(getDashboardMetrics.purchases_today_count ?? 0) }}
+                                        transacciones
+                                    </p>
                                 </div>
                                 <div class="p-3 bg-teal-100 rounded-full">
                                     <i class="pi pi-shopping-bag text-teal-600 text-xl"></i>
@@ -183,8 +199,13 @@ onUnmounted(() => {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-600">Compras Pendientes</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ formatNumber(getDashboardMetrics.purchases_pending) }}</p>
-                                    <p class="text-xs text-gray-500">{{ formatCurrency(getDashboardMetrics.purchases_this_month) }} este mes</p>
+                                    <p class="text-2xl font-bold text-gray-900">
+                                        {{ formatNumber(getDashboardMetrics.purchases_pending) }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ formatCurrency(getDashboardMetrics.purchases_this_month) }}
+                                        este mes
+                                    </p>
                                 </div>
                                 <div class="p-3 bg-yellow-100 rounded-full">
                                     <i class="pi pi-shopping-cart text-yellow-600 text-xl"></i>
@@ -199,7 +220,9 @@ onUnmounted(() => {
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm font-medium text-gray-600">Valor Inventario</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(getDashboardMetrics.inventory_value) }}</p>
+                                    <p class="text-2xl font-bold text-gray-900">
+                                        {{ formatCurrency(getDashboardMetrics.inventory_value) }}
+                                    </p>
                                     <p class="text-xs" :class="getInventoryHealthScore >= 90 ? 'text-green-600' : getInventoryHealthScore >= 70 ? 'text-yellow-600' : 'text-red-600'">Salud: {{ getInventoryHealthScore }}%</p>
                                 </div>
                                 <div class="p-3 bg-purple-100 rounded-full">
@@ -231,9 +254,14 @@ onUnmounted(() => {
                             <div v-else class="space-y-3 max-h-64 overflow-y-auto">
                                 <div v-for="product in getLowStockProducts.slice(0, 5)" :key="product.product_name" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                     <div class="flex-1">
-                                        <p class="font-medium text-gray-900">{{ product.product_name }}</p>
+                                        <p class="font-medium text-gray-900">
+                                            {{ product.product_name }}
+                                        </p>
                                         <p class="text-sm text-gray-500">{{ product.sku }} - {{ product.warehouse }}</p>
-                                        <p class="text-xs text-gray-400">Stock: {{ product.current_stock }} / Min: {{ product.min_stock }}</p>
+                                        <p class="text-xs text-gray-400">
+                                            Stock: {{ product.current_stock }} / Min:
+                                            {{ product.min_stock }}
+                                        </p>
                                     </div>
                                     <Badge :value="product.urgency" :class="getUrgencyClass(product.urgency)" class="text-xs px-2 py-1 rounded-full" />
                                 </div>
@@ -263,9 +291,15 @@ onUnmounted(() => {
                             <div v-else class="space-y-3 max-h-64 overflow-y-auto">
                                 <div v-for="batch in getExpiringProducts.slice(0, 5)" :key="batch.batch_code" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                     <div class="flex-1">
-                                        <p class="font-medium text-gray-900">{{ batch.product_name }}</p>
+                                        <p class="font-medium text-gray-900">
+                                            {{ batch.product_name }}
+                                        </p>
                                         <p class="text-sm text-gray-500">Lote: {{ batch.batch_code }}</p>
-                                        <p class="text-xs text-gray-400">Vence: {{ formatExpirationDate(batch.expiration_date) }} ({{ batch.days_to_expire }} días)</p>
+                                        <p class="text-xs text-gray-400">
+                                            Vence:
+                                            {{ formatExpirationDate(batch.expiration_date) }} ({{ batch.days_to_expire }}
+                                            días)
+                                        </p>
                                         <p class="text-xs text-gray-400">Stock: {{ batch.total_stock }}</p>
                                     </div>
                                     <Badge :value="batch.urgency" :class="getUrgencyClass(batch.urgency)" class="text-xs px-2 py-1 rounded-full" />
@@ -289,19 +323,31 @@ onUnmounted(() => {
                     <template #content>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="text-center">
-                                <p class="text-3xl font-bold text-green-600">{{ formatCurrency(getDashboardMetrics.sales_today) }}</p>
+                                <p class="text-3xl font-bold text-green-600">
+                                    {{ formatCurrency(getDashboardMetrics.sales_today) }}
+                                </p>
                                 <p class="text-sm text-gray-600">Ventas Hoy</p>
-                                <p class="text-xs text-gray-500">{{ formatNumber(getDashboardMetrics.sales_count_today) }} transacciones</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ formatNumber(getDashboardMetrics.sales_count_today) }}
+                                    transacciones
+                                </p>
                             </div>
                             <div class="text-center">
-                                <p class="text-3xl font-bold text-blue-600">{{ formatCurrency(getDashboardMetrics.sales_this_month) }}</p>
+                                <p class="text-3xl font-bold text-blue-600">
+                                    {{ formatCurrency(getDashboardMetrics.sales_this_month) }}
+                                </p>
                                 <p class="text-sm text-gray-600">Ventas Este Mes</p>
                                 <p class="text-xs" :class="getTotalSalesGrowth > 100 ? 'text-green-500' : 'text-gray-500'">{{ getTotalSalesGrowth }}% vs promedio diario</p>
                             </div>
                             <div class="text-center">
-                                <p class="text-3xl font-bold text-purple-600">{{ formatCurrency(getDashboardMetrics.purchases_this_month) }}</p>
+                                <p class="text-3xl font-bold text-purple-600">
+                                    {{ formatCurrency(getDashboardMetrics.purchases_this_month) }}
+                                </p>
                                 <p class="text-sm text-gray-600">Compras Este Mes</p>
-                                <p class="text-xs text-gray-500">{{ formatNumber(getDashboardMetrics.purchases_pending) }} pendientes</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ formatNumber(getDashboardMetrics.purchases_pending) }}
+                                    pendientes
+                                </p>
                             </div>
                         </div>
                     </template>

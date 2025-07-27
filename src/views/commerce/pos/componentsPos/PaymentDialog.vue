@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, ref, watch, computed } from 'vue';
+import { defineEmits, defineProps, ref, watch } from 'vue';
 
 const props = defineProps({
     showMultiplePaymentDialog: Boolean,
@@ -58,7 +58,7 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
-const _getPaymentMethodIcon = (methodId) => {
+const getPaymentMethodIcon = (methodId) => {
     const method = props.availablePaymentMethods.find((pm) => pm.id === methodId);
     if (!method) return 'pi-circle';
 
@@ -299,7 +299,9 @@ const updatePaymentMethod = (index, field, value) => {
                     <div class="grid grid-cols-3 gap-4 text-center">
                         <div>
                             <div class="text-sm text-gray-600">Total a Pagar</div>
-                            <div class="text-lg font-bold text-gray-800">{{ formatCurrency(props.cartTotal) }}</div>
+                            <div class="text-lg font-bold text-gray-800">
+                                {{ formatCurrency(props.cartTotal) }}
+                            </div>
                         </div>
                         <div>
                             <div class="text-sm text-gray-600">Total Pagos</div>

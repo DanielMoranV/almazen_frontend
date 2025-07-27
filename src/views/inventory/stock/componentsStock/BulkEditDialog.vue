@@ -244,7 +244,10 @@ watch([scope, selectedWarehouse, selectedBatch], () => {
                             <div class="text-right text-xs text-gray-600">
                                 <div>Precio: S/ {{ stock.current_values.sale_price || 'N/A' }}</div>
                                 <div>Costo: S/ {{ stock.current_values.unit_cost || 'N/A' }}</div>
-                                <div>Min: {{ stock.current_values.min_stock || 'N/A' }} | Max: {{ stock.current_values.max_stock || 'N/A' }}</div>
+                                <div>
+                                    Min: {{ stock.current_values.min_stock || 'N/A' }} | Max:
+                                    {{ stock.current_values.max_stock || 'N/A' }}
+                                </div>
                             </div>
                         </div>
                     </div>

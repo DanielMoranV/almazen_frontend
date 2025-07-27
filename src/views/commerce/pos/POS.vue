@@ -829,15 +829,24 @@ const validateSelectedPaymentMethods = () => {
         const pm = selectedPaymentMethods.value[i];
 
         if (!pm.method_id) {
-            return { valid: false, message: `Método de pago ${i + 1}: Debe seleccionar un método` };
+            return {
+                valid: false,
+                message: `Método de pago ${i + 1}: Debe seleccionar un método`
+            };
         }
 
         if (!pm.amount || pm.amount <= 0) {
-            return { valid: false, message: `Método de pago ${i + 1}: Monto debe ser mayor a cero` };
+            return {
+                valid: false,
+                message: `Método de pago ${i + 1}: Monto debe ser mayor a cero`
+            };
         }
 
         if (pm.requires_reference && !pm.reference) {
-            return { valid: false, message: `Método de pago ${i + 1}: Requiere número de referencia` };
+            return {
+                valid: false,
+                message: `Método de pago ${i + 1}: Requiere número de referencia`
+            };
         }
 
         // Validar límites del método de pago
@@ -845,7 +854,10 @@ const validateSelectedPaymentMethods = () => {
         if (method) {
             const validation = paymentMethodsStore.validateMethod(pm.method_id, pm.amount, !!pm.reference);
             if (!validation.valid) {
-                return { valid: false, message: `Método de pago ${i + 1}: ${validation.message}` };
+                return {
+                    valid: false,
+                    message: `Método de pago ${i + 1}: ${validation.message}`
+                };
             }
         }
     }
@@ -868,7 +880,10 @@ const validateSelectedPaymentMethods = () => {
     });
 
     if (cashMethods.length > 1) {
-        return { valid: false, message: 'Solo se permite un método de pago en efectivo por venta' };
+        return {
+            valid: false,
+            message: 'Solo se permite un método de pago en efectivo por venta'
+        };
     }
 
     // Validar sesión de caja para métodos que la requieren
@@ -878,7 +893,10 @@ const validateSelectedPaymentMethods = () => {
     });
 
     if (cashRegisterMethods.length > 0 && requiresCashSession.value && !hasActiveSession.value) {
-        return { valid: false, message: 'Debe tener un turno de caja activo para procesar pagos en efectivo' };
+        return {
+            valid: false,
+            message: 'Debe tener un turno de caja activo para procesar pagos en efectivo'
+        };
     }
 
     return { valid: true, message: 'Métodos de pago válidos' };

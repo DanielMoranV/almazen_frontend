@@ -69,7 +69,7 @@ export const useAuthStore = defineStore('authStore', {
             this.resetState();
             try {
                 const res = await logout();
-                const processed = handleProcessSuccess(res, this);
+                handleProcessSuccess(res, this);
             } catch {
                 console.warn('Fallo logout en backend, limpiando local...');
             } finally {

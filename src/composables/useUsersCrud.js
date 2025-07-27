@@ -1,14 +1,13 @@
 // src/composables/useUsersCrud.js
-import { ref, onMounted, onBeforeMount } from 'vue';
-import { useToast } from 'primevue/usetoast';
 import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
+import { useToast } from 'primevue/usetoast';
 import { useForm } from 'vee-validate';
-import * as yup from 'yup';
+import { onBeforeMount, onMounted, ref } from 'vue';
 
 import { Positions } from '@/constants/positions';
+import { userSchema } from '@/schemas/userSchema';
 import { useUsersStore } from '@/stores/usersStore';
 import { exportToExcel } from '@/utils/excelUtils';
-import { userSchema } from '@/schemas/userSchema';
 
 export function useUsersCrud() {
     const toast = useToast();
@@ -22,7 +21,7 @@ export function useUsersCrud() {
     const submitted = ref(false);
 
     // Inicialización del formulario con vee-validate
-    const { handleSubmit, resetForm, setValues, setFieldValue, validate } = useForm({
+    const { handleSubmit, resetForm, setValues } = useForm({
         validationSchema: userSchema,
         initialValues: {
             id: null,
@@ -38,18 +37,37 @@ export function useUsersCrud() {
     });
     const positions = Object.entries(Positions).map(([key, value]) => ({
         label: value,
-        value: value
+        value: value,
+        key: key
     }));
 
     function initFilters() {
         filters.value = {
             global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-            name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            dni: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            email: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            phone: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            position: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }] },
-            is_active: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] }
+            name: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+            },
+            dni: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+            },
+            email: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+            },
+            phone: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+            },
+            position: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+            },
+            is_active: {
+                operator: FilterOperator.AND,
+                constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }]
+            }
         };
     }
 
@@ -86,11 +104,21 @@ export function useUsersCrud() {
             await usersStore.fetchUsers();
             if (usersStore.success) {
                 users.value = usersStore.usersList;
-                toast.add({ severity: 'success', summary: 'Usuarios cargados', detail: usersStore.message, life: 3000 });
+                toast.add({
+                    severity: 'success',
+                    summary: 'Usuarios cargados',
+                    detail: usersStore.message,
+                    life: 3000
+                });
             } else {
                 if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
                     usersStore.validationErrors.forEach((err) => {
-                        toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                        toast.add({
+                            severity: 'error',
+                            summary: 'Error de validación',
+                            detail: err,
+                            life: 4000
+                        });
                     });
                 } else {
                     toast.add({
@@ -120,10 +148,20 @@ export function useUsersCrud() {
 
         if (usersStore.success) {
             users.value = usersStore.usersList;
-            toast.add({ severity: 'success', summary: 'Éxito', detail: usersStore.message, life: 3000 });
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: usersStore.message,
+                life: 3000
+            });
             userDialog.value = false;
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: usersStore.message,
+                life: 3000
+            });
         }
     });
 
@@ -134,14 +172,29 @@ export function useUsersCrud() {
 
         if (usersStore.success) {
             users.value = usersStore.usersList;
-            toast.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario eliminado correctamente', life: 3000 });
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: 'Usuario eliminado correctamente',
+                life: 3000
+            });
         } else {
             if (usersStore.validationErrors && usersStore.validationErrors.length > 0) {
                 usersStore.validationErrors.forEach((err) => {
-                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Error de validación',
+                        detail: err,
+                        life: 4000
+                    });
                 });
             } else {
-                toast.add({ severity: 'error', summary: 'Error', detail: usersStore.message, life: 3000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: usersStore.message,
+                    life: 3000
+                });
             }
         }
 

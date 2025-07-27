@@ -212,11 +212,21 @@ const onStatusChange = (value) => {
                         <tbody>
                             <tr v-for="invoice in invoices" :key="invoice.id" class="cursor-pointer hover:surface-200" @click="viewInvoiceDetails(invoice)">
                                 <td class="p-3 border-bottom-1 surface-border">{{ invoice.id }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ invoice.orderNumber }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ invoice.customer }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ invoice.issueDate }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ invoice.dueDate }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ formatCurrency(invoice.total) }}</td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ invoice.orderNumber }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ invoice.customer }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ invoice.issueDate }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ invoice.dueDate }}
+                                </td>
+                                <td class="text-right p-3 border-bottom-1 surface-border">
+                                    {{ formatCurrency(invoice.total) }}
+                                </td>
                                 <td class="text-center p-3 border-bottom-1 surface-border">
                                     <span class="px-2 py-1 text-xs border-round" :class="getStatusClass(invoice.status)">
                                         {{ getStatusLabel(invoice.status) }}

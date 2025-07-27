@@ -1,4 +1,4 @@
-import { fetchPaymentMethods, getPaymentMethod, createPaymentMethod, updatePaymentMethod, deletePaymentMethod } from '@/api';
+import { createPaymentMethod, deletePaymentMethod, fetchPaymentMethods, getPaymentMethod, updatePaymentMethod } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
 
@@ -51,7 +51,7 @@ export const usePaymentMethodsStore = defineStore('paymentMethodsStore', {
             try {
                 // Limpiar parámetros vacíos o nulos para evitar errores de validación en backend
                 const mergedParams = { ...this.filters, ...params };
-                const finalParams = Object.fromEntries(Object.entries(mergedParams).filter(([_, v]) => v !== null && v !== undefined && v !== ''));
+                const finalParams = Object.fromEntries(Object.entries(mergedParams).filter(([key, v]) => v !== null && v !== undefined && v !== ''));
                 const res = await fetchPaymentMethods(finalParams);
                 const processed = handleProcessSuccess(res, this);
 

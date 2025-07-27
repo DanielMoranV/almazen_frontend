@@ -26,7 +26,10 @@ defineEmits(['refresh', 'create']);
                         </div>
                         <div class="title-text">
                             <h1 class="page-title">Gestión de Proveedores</h1>
-                            <p v-if="totalProviders > 0" class="subtitle">{{ totalProviders }} {{ totalProviders === 1 ? 'proveedor' : 'proveedores' }} registrados</p>
+                            <p v-if="totalProviders > 0" class="subtitle">
+                                {{ totalProviders }}
+                                {{ totalProviders === 1 ? 'proveedor' : 'proveedores' }} registrados
+                            </p>
                             <p v-else class="subtitle">Comienza agregando tu primer proveedor</p>
                         </div>
                     </div>

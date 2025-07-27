@@ -1,6 +1,6 @@
 <script setup>
 import { defineProps } from 'vue';
-const props = defineProps({
+defineProps({
     report: { type: Object, required: true }
 });
 
@@ -16,7 +16,10 @@ const formatDate = (d) => (d ? new Date(d).toLocaleString('es-PE') : '-');
         <header class="text-center mb-4">
             <h1 class="text-2xl font-bold">Reporte de Sesión #{{ report.session?.id }}</h1>
             <p class="text-sm text-gray-600">{{ report.session?.user?.name }} — {{ report.session?.cash_register?.name }}</p>
-            <p class="text-sm text-gray-600">Apertura: {{ formatDate(report.session?.opened_at) }} | Cierre: {{ formatDate(report.session?.closed_at) || '—' }}</p>
+            <p class="text-sm text-gray-600">
+                Apertura: {{ formatDate(report.session?.opened_at) }} | Cierre:
+                {{ formatDate(report.session?.closed_at) || '—' }}
+            </p>
         </header>
 
         <!-- Resumen -->
@@ -35,13 +38,27 @@ const formatDate = (d) => (d ? new Date(d).toLocaleString('es-PE') : '-');
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="border px-2 py-1 text-right">{{ currency(report.summary?.opening_amount) }}</td>
-                        <td class="border px-2 py-1 text-right">{{ currency(report.summary?.expected_amount) }}</td>
-                        <td class="border px-2 py-1 text-right">{{ currency(report.summary?.actual_amount) }}</td>
-                        <td class="border px-2 py-1 text-right">{{ currency(report.summary?.difference_amount) }}</td>
-                        <td class="border px-2 py-1 text-right">{{ currency(report.movements_summary?.total_sales) }}</td>
-                        <td class="border px-2 py-1 text-right">{{ currency(report.movements_summary?.total_expenses) }}</td>
-                        <td class="border px-2 py-1 text-center">{{ report.movements_summary?.sales_count }}</td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ currency(report.summary?.opening_amount) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ currency(report.summary?.expected_amount) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ currency(report.summary?.actual_amount) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ currency(report.summary?.difference_amount) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ currency(report.movements_summary?.total_sales) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ currency(report.movements_summary?.total_expenses) }}
+                        </td>
+                        <td class="border px-2 py-1 text-center">
+                            {{ report.movements_summary?.sales_count }}
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -63,10 +80,13 @@ const formatDate = (d) => (d ? new Date(d).toLocaleString('es-PE') : '-');
                     <tr v-for="sale in report.sales" :key="sale.sale_id">
                         <td class="border px-2 py-1">{{ sale.sale_id }}</td>
                         <td class="border px-2 py-1">{{ sale.document_number }}</td>
-                        <td class="border px-2 py-1 text-right">{{ currency(sale.total_amount) }}</td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ currency(sale.total_amount) }}
+                        </td>
                         <td class="border px-2 py-1">
                             <div v-for="pay in sale.payments" :key="pay.payment_method_name">
-                                {{ pay.payment_method_name }}: {{ currency(pay.amount) }} <span v-if="pay.reference_number">(Ref: {{ pay.reference_number }})</span>
+                                {{ pay.payment_method_name }}: {{ currency(pay.amount) }}
+                                <span v-if="pay.reference_number">(Ref: {{ pay.reference_number }})</span>
                             </div>
                         </td>
                     </tr>
@@ -99,11 +119,13 @@ const formatDate = (d) => (d ? new Date(d).toLocaleString('es-PE') : '-');
 .print-container {
     font-family: 'Helvetica', Arial, sans-serif;
 }
+
 @media print {
     .print-container {
         width: 100%;
         margin: 0;
     }
+
     table {
         page-break-inside: avoid;
     }

@@ -136,7 +136,9 @@ const isWorkflowSelected = (workflow) => {
                     Características del Flujo: {{ getWorkflowLabel(localConfig.purchase_workflow) }}
                 </h5>
                 <div class="workflow-description">
-                    <p class="flow-path">{{ getWorkflowDescription(localConfig.purchase_workflow) }}</p>
+                    <p class="flow-path">
+                        {{ getWorkflowDescription(localConfig.purchase_workflow) }}
+                    </p>
                 </div>
                 <ul v-if="localConfig.purchase_workflow === 'standard'">
                     <li><i class="pi pi-check text-green-500"></i> Control total sobre cada compra</li>

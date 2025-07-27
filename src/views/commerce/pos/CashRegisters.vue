@@ -78,7 +78,12 @@ const handleSubmit = async () => {
             await cashRegistersStore.updateCashRegister(form.value, selectedRegister.value.id);
         }
         if (cashRegistersStore.success) {
-            toast.add({ severity: 'success', summary: 'Éxito', detail: cashRegistersStore.message || 'Guardado correctamente', life: 3000 });
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: cashRegistersStore.message || 'Guardado correctamente',
+                life: 3000
+            });
             showFormDialog.value = false;
             await cashRegistersStore.fetchCashRegisters();
         } else {
@@ -93,7 +98,12 @@ const handleDelete = async () => {
     try {
         await cashRegistersStore.removeCashRegister(selectedRegister.value.id);
         if (cashRegistersStore.success) {
-            toast.add({ severity: 'success', summary: 'Eliminado', detail: cashRegistersStore.message || 'Caja eliminada', life: 3000 });
+            toast.add({
+                severity: 'success',
+                summary: 'Eliminado',
+                detail: cashRegistersStore.message || 'Caja eliminada',
+                life: 3000
+            });
         } else {
             showErrors();
         }
@@ -108,7 +118,12 @@ const showErrors = () => {
     if (cashRegistersStore.validationErrors.length) {
         cashRegistersStore.validationErrors.forEach((err) => toast.add({ severity: 'error', summary: 'Validación', detail: err, life: 4000 }));
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: cashRegistersStore.message || 'Ocurrió un error', life: 4000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: cashRegistersStore.message || 'Ocurrió un error',
+            life: 4000
+        });
     }
 };
 </script>

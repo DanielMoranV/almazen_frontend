@@ -219,7 +219,9 @@ const targetWorkflow = computed(() => {
                     <div class="impact-content">
                         <strong>Recomendaciones:</strong>
                         <ul>
-                            <li v-for="(action, index) in recommendedActions" :key="index">{{ action }}</li>
+                            <li v-for="(action, index) in recommendedActions" :key="index">
+                                {{ action }}
+                            </li>
                         </ul>
                     </div>
                 </div>

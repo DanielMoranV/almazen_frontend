@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
-import { useToast } from 'primevue/usetoast';
 import { useBatchesStore } from '@/stores/batchesStore';
+import { useToast } from 'primevue/usetoast';
+import { computed, ref, watch } from 'vue';
 
 const toast = useToast();
 const batchesStore = useBatchesStore();
@@ -341,8 +341,15 @@ const formatDate = (date) => {
                                 <div class="quantity-required">
                                     Requerido: <strong>{{ productBatch.requiredQuantity }}</strong>
                                 </div>
-                                <div class="quantity-assigned" :class="{ 'quantity-valid': isProductQuantityValid(productIndex), 'quantity-invalid': !isProductQuantityValid(productIndex) }">
-                                    Asignado: <strong>{{ getTotalQuantityForProduct(productIndex) }}</strong>
+                                <div
+                                    class="quantity-assigned"
+                                    :class="{
+                                        'quantity-valid': isProductQuantityValid(productIndex),
+                                        'quantity-invalid': !isProductQuantityValid(productIndex)
+                                    }"
+                                >
+                                    Asignado:
+                                    <strong>{{ getTotalQuantityForProduct(productIndex) }}</strong>
                                 </div>
                             </div>
                         </div>
@@ -382,7 +389,9 @@ const formatDate = (date) => {
                                             filter
                                             filterPlaceholder="Buscar lote..."
                                             @change="handleExistingBatchSelect(productIndex, batchIndex, $event)"
-                                            :class="{ 'p-invalid': submitted && batch.batchType === 'existing' && !batch.existingBatchId }"
+                                            :class="{
+                                                'p-invalid': submitted && batch.batchType === 'existing' && !batch.existingBatchId
+                                            }"
                                             :loading="loadingBatches"
                                         >
                                             <template #option="slotProps">
@@ -392,9 +401,17 @@ const formatDate = (date) => {
                                                         <span class="batch-stock" v-if="slotProps.option.totalStock > 0"> Stock: {{ slotProps.option.totalStock }} </span>
                                                     </div>
                                                     <div class="batch-option-details">
-                                                        <span class="batch-expiration">{{ slotProps.option.expirationDate ? formatDate(slotProps.option.expirationDate) : 'Sin vencimiento' }}</span>
-                                                        <span v-if="slotProps.option.daysToExpire !== null" class="batch-days" :class="{ 'text-red-500': slotProps.option.daysToExpire < 30, 'text-yellow-500': slotProps.option.daysToExpire < 90 }">
-                                                            {{ Math.floor(slotProps.option.daysToExpire) }} días
+                                                        <span class="batch-expiration">{{ slotProps.option.expirationDate ? formatDate(slotProps.option.expirationDate) : `Sin vencimiento` }}</span>
+                                                        <span
+                                                            v-if="slotProps.option.daysToExpire !== null"
+                                                            class="batch-days"
+                                                            :class="{
+                                                                'text-red-500': slotProps.option.daysToExpire < 30,
+                                                                'text-yellow-500': slotProps.option.daysToExpire < 90
+                                                            }"
+                                                        >
+                                                            {{ Math.floor(slotProps.option.daysToExpire) }}
+                                                            días
                                                         </span>
                                                     </div>
                                                 </div>
@@ -414,7 +431,13 @@ const formatDate = (date) => {
                                         <!-- Número de lote -->
                                         <div class="field">
                                             <label>Número de Lote</label>
-                                            <InputText v-model="batch.batchNumber" placeholder="Ej: ABC240101001" :class="{ 'p-invalid': submitted && batch.batchType === 'new' && !batch.batchNumber }" />
+                                            <InputText
+                                                v-model="batch.batchNumber"
+                                                placeholder="Ej: ABC240101001"
+                                                :class="{
+                                                    'p-invalid': submitted && batch.batchType === 'new' && !batch.batchNumber
+                                                }"
+                                            />
                                             <small v-if="submitted && batch.batchType === 'new' && !batch.batchNumber" class="p-error"> Número de lote requerido </small>
                                         </div>
 
@@ -427,7 +450,9 @@ const formatDate = (date) => {
                                                 dateFormat="dd/mm/yy"
                                                 showIcon
                                                 iconDisplay="input"
-                                                :class="{ 'p-invalid': submitted && batch.batchType === 'new' && !batch.expirationDate }"
+                                                :class="{
+                                                    'p-invalid': submitted && batch.batchType === 'new' && !batch.expirationDate
+                                                }"
                                                 :minDate="new Date()"
                                             />
                                             <small v-if="submitted && batch.batchType === 'new' && !batch.expirationDate" class="p-error"> Fecha de vencimiento requerida </small>
@@ -450,7 +475,15 @@ const formatDate = (date) => {
                                     <!-- Cantidad (siempre visible) -->
                                     <div class="field">
                                         <label>Cantidad</label>
-                                        <InputNumber v-model="batch.quantity" :min="1" :max="Number(productBatch.requiredQuantity)" placeholder="0" :class="{ 'p-invalid': submitted && (!batch.quantity || batch.quantity <= 0) }" />
+                                        <InputNumber
+                                            v-model="batch.quantity"
+                                            :min="1"
+                                            :max="Number(productBatch.requiredQuantity)"
+                                            placeholder="0"
+                                            :class="{
+                                                'p-invalid': submitted && (!batch.quantity || batch.quantity <= 0)
+                                            }"
+                                        />
                                         <small v-if="submitted && (!batch.quantity || batch.quantity <= 0)" class="p-error"> Cantidad debe ser mayor a 0 </small>
                                     </div>
 

@@ -28,31 +28,61 @@ const form = ref({
 
 const onSubmit = async () => {
     if (!form.value.name || !form.value.dni || !form.value.email || !form.value.password || !form.value.password_confirmation || !form.value.company_name) {
-        toast.add({ severity: 'error', summary: 'Faltan campos', detail: 'Todos los campos son obligatorios.', life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Faltan campos',
+            detail: 'Todos los campos son obligatorios.',
+            life: 3000
+        });
         return;
     }
 
     if (form.value.categories_company.length === 0) {
-        toast.add({ severity: 'error', summary: 'Categorías requeridas', detail: 'Debes seleccionar al menos una categoría de empresa.', life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Categorías requeridas',
+            detail: 'Debes seleccionar al menos una categoría de empresa.',
+            life: 3000
+        });
         return;
     }
 
     if (form.value.password !== form.value.password_confirmation) {
-        toast.add({ severity: 'warn', summary: 'Contraseñas', detail: 'Las contraseñas no coinciden.', life: 3000 });
+        toast.add({
+            severity: 'warn',
+            summary: 'Contraseñas',
+            detail: 'Las contraseñas no coinciden.',
+            life: 3000
+        });
         return;
     }
 
     await authStore.register(form.value);
     if (authStore.isAuthenticated) {
-        toast.add({ severity: 'success', summary: 'Registro exitoso', detail: 'Cuenta creada correctamente.', life: 3000 });
+        toast.add({
+            severity: 'success',
+            summary: 'Registro exitoso',
+            detail: 'Cuenta creada correctamente.',
+            life: 3000
+        });
         router.push('/dashboard');
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
             authStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: authStore.message,
+                life: 3000
+            });
         }
     }
 };

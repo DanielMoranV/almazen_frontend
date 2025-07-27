@@ -483,7 +483,12 @@ const showError = (detail) => {
 const handleError = (summary, message, validationErrors = null) => {
     if (validationErrors && validationErrors.length > 0) {
         validationErrors.forEach((err) => {
-            toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            toast.add({
+                severity: 'error',
+                summary: 'Error de validación',
+                detail: err,
+                life: 4000
+            });
         });
     } else {
         toast.add({ severity: 'error', summary, detail: message, life: 4000 });
@@ -548,7 +553,13 @@ function formatCurrencyPEN(value) {
                     <div class="workflow-indicator">
                         <i class="pi pi-cog"></i>
                         <span class="workflow-label">Flujo de Trabajo:</span>
-                        <span class="workflow-type" :class="{ simplified: companiesStore.companyConfigState?.purchase_workflow === 'simplified', standard: companiesStore.companyConfigState?.purchase_workflow === 'standard' }">
+                        <span
+                            class="workflow-type"
+                            :class="{
+                                simplified: companiesStore.companyConfigState?.purchase_workflow === 'simplified',
+                                standard: companiesStore.companyConfigState?.purchase_workflow === 'standard'
+                            }"
+                        >
                             {{ companiesStore.companyConfigState?.purchase_workflow === 'simplified' ? 'Simplificado' : 'Estándar' }}
                         </span>
                     </div>

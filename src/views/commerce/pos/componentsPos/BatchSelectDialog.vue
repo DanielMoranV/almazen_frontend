@@ -43,8 +43,14 @@ const formatCurrency = (amount) => {
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div><strong>SKU:</strong> {{ props.selectedProductForBatch.sku }}</div>
-                    <div><strong>Código de Barras:</strong> {{ props.selectedProductForBatch.barcode }}</div>
-                    <div><strong>Stock Total:</strong> {{ props.selectedProductForBatch.stock }} unidades</div>
+                    <div>
+                        <strong>Código de Barras:</strong>
+                        {{ props.selectedProductForBatch.barcode }}
+                    </div>
+                    <div>
+                        <strong>Stock Total:</strong>
+                        {{ props.selectedProductForBatch.stock }} unidades
+                    </div>
                 </div>
             </div>
 
@@ -70,17 +76,23 @@ const formatCurrency = (amount) => {
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                                 <div class="bg-green-50 p-3 rounded-lg">
                                     <div class="text-green-600 font-semibold mb-1">Precio de Venta</div>
-                                    <div class="text-xl font-bold text-green-700">{{ formatCurrency(parseFloat(batch.sale_price)) }}</div>
+                                    <div class="text-xl font-bold text-green-700">
+                                        {{ formatCurrency(parseFloat(batch.sale_price)) }}
+                                    </div>
                                 </div>
 
                                 <div class="bg-blue-50 p-3 rounded-lg">
                                     <div class="text-blue-600 font-semibold mb-1">Stock Disponible</div>
-                                    <div class="text-xl font-bold text-blue-700">{{ parseFloat(batch.available_quantity).toFixed(2) }}</div>
+                                    <div class="text-xl font-bold text-blue-700">
+                                        {{ parseFloat(batch.available_quantity).toFixed(2) }}
+                                    </div>
                                 </div>
 
                                 <div class="bg-purple-50 p-3 rounded-lg">
                                     <div class="text-purple-600 font-semibold mb-1">Fecha de Vencimiento</div>
-                                    <div class="font-bold text-purple-700">{{ new Date(batch.expiration_date).toLocaleDateString('es-PE') }}</div>
+                                    <div class="font-bold text-purple-700">
+                                        {{ new Date(batch.expiration_date).toLocaleDateString('es-PE') }}
+                                    </div>
                                 </div>
 
                                 <div class="bg-yellow-50 p-3 rounded-lg">

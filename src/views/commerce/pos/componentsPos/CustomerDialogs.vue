@@ -108,7 +108,10 @@ watch(
                             <div class="flex items-center justify-between">
                                 <div>
                                     <div class="font-semibold text-gray-800">{{ option.name }}</div>
-                                    <div class="text-sm text-gray-600">{{ option.identity_document_type?.toUpperCase() }}: {{ option.identity_document || 'Sin documento' }}</div>
+                                    <div class="text-sm text-gray-600">
+                                        {{ option.identity_document_type?.toUpperCase() }}:
+                                        {{ option.identity_document || 'Sin documento' }}
+                                    </div>
                                 </div>
                                 <div class="text-xs text-gray-500">
                                     {{ option.email || 'Sin email' }}

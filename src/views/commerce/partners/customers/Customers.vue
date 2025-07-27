@@ -92,7 +92,12 @@ const handleRefresh = async () => {
 const handleApiErrors = (store) => {
     if (store.validationErrors && store.validationErrors.length > 0) {
         store.validationErrors.forEach((err) => {
-            toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+            toast.add({
+                severity: 'error',
+                summary: 'Error de validación',
+                detail: err,
+                life: 4000
+            });
         });
     } else {
         showError('Error', store.message || 'Ha ocurrido un error inesperado');

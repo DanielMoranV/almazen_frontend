@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/authStore';
 import cache from '@/utils/cache';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import ProgressSpinner from 'primevue/progressspinner';
 import { onBeforeMount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import AppConfigurator from './AppConfigurator.vue';
@@ -70,7 +69,14 @@ onBeforeMount(() => {
                 </button>
                 <div class="relative">
                     <button
-                        v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
+                        v-styleclass="{
+                            selector: '@next',
+                            enterFromClass: 'hidden',
+                            enterActiveClass: 'animate-scalein',
+                            leaveToClass: 'hidden',
+                            leaveActiveClass: 'animate-fadeout',
+                            hideOnOutsideClick: true
+                        }"
                         type="button"
                         class="layout-topbar-action layout-topbar-action-highlight"
                     >
@@ -82,7 +88,14 @@ onBeforeMount(() => {
 
             <button
                 class="layout-topbar-menu-button layout-topbar-action"
-                v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
+                v-styleclass="{
+                    selector: '@next',
+                    enterFromClass: 'hidden',
+                    enterActiveClass: 'animate-scalein',
+                    leaveToClass: 'hidden',
+                    leaveActiveClass: 'animate-fadeout',
+                    hideOnOutsideClick: true
+                }"
             >
                 <i class="pi pi-ellipsis-v"></i>
             </button>

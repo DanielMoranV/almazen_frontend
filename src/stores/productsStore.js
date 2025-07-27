@@ -1,7 +1,6 @@
+import { createProduct, deleteProduct, fetchProducts, searchProductsForSale, updateProduct } from '@/api';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
-import { fetchProducts, createProduct, deleteProduct, updateProduct, searchProductsForSale } from '@/api';
-import cache from '@/utils/cache';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useProductsStore = defineStore('productsStore', {
     state: () => ({

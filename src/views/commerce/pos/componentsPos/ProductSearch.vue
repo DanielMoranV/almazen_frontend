@@ -113,7 +113,8 @@ const clearSearch = () => {
                         <div>
                             <div class="font-bold text-blue-900">{{ filteredProducts.length }} productos encontrados</div>
                             <div v-if="selectedWarehouse" class="text-sm text-blue-700">
-                                en <span class="font-semibold">{{ warehousesList.find((w) => w.id === selectedWarehouse)?.name }}</span>
+                                en
+                                <span class="font-semibold">{{ warehousesList.find((w) => w.id === selectedWarehouse)?.name }}</span>
                             </div>
                         </div>
                     </div>

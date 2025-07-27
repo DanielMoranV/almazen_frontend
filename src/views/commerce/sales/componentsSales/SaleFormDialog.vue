@@ -46,7 +46,6 @@ const statusOptions = [
 ];
 
 const isCreating = computed(() => !form.value.id);
-const isEditing = computed(() => !!form.value.id);
 
 // Validar si se puede cambiar el estado basado en status_info de la API
 const canChangeStatus = computed(() => {
@@ -79,17 +78,6 @@ const availableStatusOptions = computed(() => {
     }
 
     return statusOptions;
-});
-
-// Validar si se puede eliminar (solo para mostrar información)
-const canDelete = computed(() => {
-    if (isCreating.value) return false;
-
-    if (props.sale?.status_info) {
-        return props.sale.status_info.can_delete;
-    }
-
-    return form.value.status === 'PENDIENTE';
 });
 
 const resetForm = () => {
@@ -169,20 +157,6 @@ const handleCancel = () => {
     emit('update:visible', false);
     resetForm();
 };
-
-// Obtener nombre del cliente seleccionado
-const selectedCustomerName = computed(() => {
-    if (!form.value.customer_id) return '';
-    const customer = customersStore.customersList.find((c) => c.id === form.value.customer_id);
-    return customer ? customer.name : '';
-});
-
-// Obtener nombre del almacén seleccionado
-const selectedWarehouseName = computed(() => {
-    if (!form.value.warehouse_id) return '';
-    const warehouse = warehousesStore.warehousesList.find((w) => w.id === form.value.warehouse_id);
-    return warehouse ? warehouse.name : '';
-});
 </script>
 
 <template>
@@ -332,7 +306,9 @@ const selectedWarehouseName = computed(() => {
                         optionLabel="name"
                         optionValue="id"
                         placeholder="Seleccione un almacén"
-                        :class="{ 'p-invalid': submitted && form.status === 'PAGADO' && !form.warehouse_id }"
+                        :class="{
+                            'p-invalid': submitted && form.status === 'PAGADO' && !form.warehouse_id
+                        }"
                         class="form-select"
                     />
                     <small class="p-error" v-if="submitted && form.status === 'PAGADO' && !form.warehouse_id"> El almacén es requerido para ventas pagadas. </small>

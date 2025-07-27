@@ -22,7 +22,7 @@ export function prepareWordListWithSuggestions(phrase = '', suggestions = []) {
     return result;
 }
 
-export function removeFromListWithSuggestions(listWithSuggestions = [], phrase = '', suggestion = '') {
+export function removeFromListWithSuggestions(listWithSuggestions = [], phrase = '') {
     const index = listWithSuggestions.findIndex((text) => text.phrase === phrase);
     const result = listWithSuggestions.slice();
     if (index >= 0) {

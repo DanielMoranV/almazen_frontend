@@ -1,6 +1,5 @@
 <script setup>
 import { FilterMatchMode } from '@primevue/core/api';
-import { useToast } from 'primevue/usetoast';
 import { ref, watch } from 'vue';
 import PrintOrderDialog from './PrintOrderDialog.vue';
 import PurchaseOrderTimeline from './PurchaseOrderTimeline.vue';
@@ -60,9 +59,6 @@ const showTrackingDialog = ref(false);
 const selectedOrderTracking = ref(null);
 
 // --- Estados para Dialog de bonificaciones ---
-const showBonusDialog = ref(false);
-const selectedOrderBonuses = ref([]);
-const selectedOrderForBonuses = ref(null);
 
 function openItemsDialog(order) {
     // Combinar items regulares y bonificaciones
@@ -100,10 +96,6 @@ function closeTrackingDialog() {
 }
 
 // Métodos auxiliares para el diálogo
-const getTotalQuantity = () => {
-    if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
-    return selectedOrderItems.value.reduce((total, item) => total + (Math.trunc(item.quantity) || 0), 0);
-};
 
 const getRegularItemsCount = () => {
     if (!selectedOrderItems.value || selectedOrderItems.value.length === 0) return 0;
@@ -157,7 +149,7 @@ const handleImageError = (event) => {
 };
 // --- Fin Dialog ---
 
-const props = defineProps({
+defineProps({
     purchaseOrders: { type: Array, required: true },
     loading: { type: Boolean, default: false }
 });
@@ -203,7 +195,11 @@ const formatDate = (value) => {
     if (!value) return '-';
     const date = new Date(value);
     if (isNaN(date.getTime())) return '-';
-    return new Intl.DateTimeFormat('es-PE', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+    return new Intl.DateTimeFormat('es-PE', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(date);
 };
 
 const getStatusLabel = (status) => {
@@ -211,24 +207,6 @@ const getStatusLabel = (status) => {
     return statusOption ? statusOption.name : status;
 };
 
-const getSeverity = (status) => {
-    switch (status) {
-        case 'PENDIENTE':
-            return 'warning';
-        case 'APROBADO':
-            return 'success';
-        case 'RECHAZADO':
-            return 'danger';
-        case 'RECIBIDO':
-            return 'info';
-        case 'CANCELADO':
-            return 'secondary';
-        default:
-            return 'info';
-    }
-};
-
-const toast = useToast();
 const showPrintDialog = ref(false);
 const orderToPrint = ref(null);
 function printOrder(order) {
@@ -236,13 +214,6 @@ function printOrder(order) {
     showPrintDialog.value = true;
 }
 
-const showSuccess = (summary, detail) => {
-    toast.add({ severity: 'success', summary, detail, life: 4000 });
-};
-
-const showError = (summary) => {
-    toast.add({ severity: 'error', summary, life: 4000 });
-};
 const getStatusClass = (status) => {
     switch (status) {
         case 'PENDIENTE':
@@ -690,6 +661,7 @@ const getStatusIcon = (status) => {
             0% 0%,
             0% 0%;
     }
+
     100% {
         background-position:
             100% 100%,

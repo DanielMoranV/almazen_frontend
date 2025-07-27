@@ -104,7 +104,12 @@ const clearFilters = async () => {
                         </Column>
                         <Column field="description" header="Descripción" />
                         <Column field="amount" header="Monto" sortable>
-                            <template #body="{ data }">{{ new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(data.amount) }}</template>
+                            <template #body="{ data }">{{
+                                new Intl.NumberFormat('es-PE', {
+                                    style: 'currency',
+                                    currency: 'PEN'
+                                }).format(data.amount)
+                            }}</template>
                         </Column>
                     </DataTable>
                 </template>

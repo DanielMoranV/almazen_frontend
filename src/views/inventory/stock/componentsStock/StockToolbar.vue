@@ -111,7 +111,10 @@ const getStatusLabel = (value) => {
                         </div>
                         <div class="title-text">
                             <h1 class="page-title">Stock por Producto</h1>
-                            <p v-if="totalProducts > 0" class="subtitle">{{ totalProducts }} {{ totalProducts === 1 ? 'producto' : 'productos' }} • {{ totalQuantity }} unidades</p>
+                            <p v-if="totalProducts > 0" class="subtitle">
+                                {{ totalProducts }}
+                                {{ totalProducts === 1 ? 'producto' : 'productos' }} • {{ totalQuantity }} unidades
+                            </p>
                             <p v-else class="subtitle">No hay productos disponibles</p>
                         </div>
                     </div>

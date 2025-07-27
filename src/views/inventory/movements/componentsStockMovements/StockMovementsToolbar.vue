@@ -162,7 +162,10 @@ const formatDate = (date) => {
                         </div>
                         <div class="title-text">
                             <h1 class="page-title">Movimientos de Stock</h1>
-                            <p v-if="totalMovements > 0" class="subtitle">{{ totalMovements }} {{ totalMovements === 1 ? 'movimiento' : 'movimientos' }} • {{ totalEntries }} entradas • {{ totalExits }} salidas</p>
+                            <p v-if="totalMovements > 0" class="subtitle">
+                                {{ totalMovements }}
+                                {{ totalMovements === 1 ? 'movimiento' : 'movimientos' }} • {{ totalEntries }} entradas • {{ totalExits }} salidas
+                            </p>
                             <p v-else class="subtitle">No hay movimientos registrados</p>
                         </div>
                     </div>

@@ -67,7 +67,12 @@ const updateUser = async () => {
     validateFields();
 
     if (!isFormValid()) {
-        toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'Por favor, complete todos los campos requeridos', life: 3000 });
+        toast.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'Por favor, complete todos los campos requeridos',
+            life: 3000
+        });
         isLoading.value = false;
         return;
     }
@@ -83,14 +88,29 @@ const updateUser = async () => {
     await authStore.updateUser(payload);
 
     if (authStore.success) {
-        toast.add({ severity: 'success', summary: 'Perfil actualizado', detail: authStore.message, life: 3000 });
+        toast.add({
+            severity: 'success',
+            summary: 'Perfil actualizado',
+            detail: authStore.message,
+            life: 3000
+        });
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
             authStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
-            toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+            toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: authStore.message,
+                life: 3000
+            });
         }
     }
     isLoading.value = false;
@@ -102,27 +122,52 @@ const updatePassword = async () => {
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
     if (!password || !confirmPassword) {
-        toast.add({ severity: 'warn', summary: 'Advertencia', detail: 'Por favor, complete todos los campos requeridos', life: 3000 });
+        toast.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'Por favor, complete todos los campos requeridos',
+            life: 3000
+        });
         isLoadingPassword.value = false;
         return;
     }
     if (password === confirmPassword) {
         await authStore.updateUser({ password: password, id: user.value.id });
         if (authStore.success) {
-            toast.add({ severity: 'success', summary: 'Contraseña actualizada', detail: authStore.message, life: 3000 });
+            toast.add({
+                severity: 'success',
+                summary: 'Contraseña actualizada',
+                detail: authStore.message,
+                life: 3000
+            });
             passwordInput.value = '';
             confirmPasswordInput.value = '';
         } else {
             if (authStore.validationErrors && authStore.validationErrors.length > 0) {
                 authStore.validationErrors.forEach((err) => {
-                    toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Error de validación',
+                        detail: err,
+                        life: 4000
+                    });
                 });
             } else {
-                toast.add({ severity: 'error', summary: 'Error', detail: authStore.message, life: 3000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: authStore.message,
+                    life: 3000
+                });
             }
         }
     } else {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Contraseña de confirmación no coincide', life: 3000 });
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Contraseña de confirmación no coincide',
+            life: 3000
+        });
     }
     isLoadingPassword.value = false;
 };

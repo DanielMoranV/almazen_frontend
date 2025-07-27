@@ -370,13 +370,27 @@ const clearFilters = () => {
                         </thead>
                         <tbody>
                             <tr v-for="transfer in filteredTransfers" :key="transfer.id" class="cursor-pointer hover:surface-200" @click="viewTransferDetails(transfer)">
-                                <td class="p-3 border-bottom-1 surface-border">{{ transfer.id }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ transfer.sourceWarehouse }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ transfer.destinationWarehouse }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ transfer.date }}</td>
-                                <td class="p-3 border-bottom-1 surface-border">{{ transfer.expectedDate }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ transfer.items }}</td>
-                                <td class="text-right p-3 border-bottom-1 surface-border">{{ transfer.totalQuantity }}</td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ transfer.id }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ transfer.sourceWarehouse }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ transfer.destinationWarehouse }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ transfer.date }}
+                                </td>
+                                <td class="p-3 border-bottom-1 surface-border">
+                                    {{ transfer.expectedDate }}
+                                </td>
+                                <td class="text-right p-3 border-bottom-1 surface-border">
+                                    {{ transfer.items }}
+                                </td>
+                                <td class="text-right p-3 border-bottom-1 surface-border">
+                                    {{ transfer.totalQuantity }}
+                                </td>
                                 <td class="text-center p-3 border-bottom-1 surface-border">
                                     <span class="px-2 py-1 text-xs border-round" :class="getStatusClass(transfer.status)">
                                         {{ getStatusLabel(transfer.status) }}
@@ -389,7 +403,9 @@ const clearFilters = () => {
                                         </button>
                                         <button
                                             class="p-button p-component p-button-icon-only p-button-rounded p-button-text mr-2"
-                                            :class="{ 'p-button-success': transfer.status === 'in_transit' }"
+                                            :class="{
+                                                'p-button-success': transfer.status === 'in_transit'
+                                            }"
                                             @click.stop="completeTransfer(transfer, $event)"
                                             :disabled="transfer.status !== 'in_transit'"
                                         >
@@ -397,7 +413,9 @@ const clearFilters = () => {
                                         </button>
                                         <button
                                             class="p-button p-component p-button-icon-only p-button-rounded p-button-text"
-                                            :class="{ 'p-button-danger': transfer.status !== 'completed' && transfer.status !== 'cancelled' }"
+                                            :class="{
+                                                'p-button-danger': transfer.status !== 'completed' && transfer.status !== 'cancelled'
+                                            }"
                                             @click.stop="cancelTransfer(transfer, $event)"
                                             :disabled="transfer.status === 'completed' || transfer.status === 'cancelled'"
                                         >

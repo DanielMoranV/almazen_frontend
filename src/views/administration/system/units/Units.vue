@@ -30,7 +30,12 @@ const loadUnits = async () => {
     } else {
         if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
             unitsStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
             showError(unitsStore.message);
@@ -49,7 +54,12 @@ const handleUnitSubmit = async (unitData) => {
     } else {
         if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
             unitsStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
             showError(unitsStore.message);
@@ -66,7 +76,12 @@ const handleUnitDelete = async () => {
     } else {
         if (unitsStore.validationErrors && unitsStore.validationErrors.length > 0) {
             unitsStore.validationErrors.forEach((err) => {
-                toast.add({ severity: 'error', summary: 'Error de validación', detail: err, life: 4000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error de validación',
+                    detail: err,
+                    life: 4000
+                });
             });
         } else {
             showError(unitsStore.message);

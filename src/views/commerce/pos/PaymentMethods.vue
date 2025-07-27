@@ -192,12 +192,22 @@ const handleApiErrors = () => {
 };
 
 const getMethodTypeIcon = (type) => {
-    const iconMap = { CASH: 'pi-money-bill', CARD: 'pi-credit-card', TRANSFER: 'pi-send', CREDIT: 'pi-clock' };
+    const iconMap = {
+        CASH: 'pi-money-bill',
+        CARD: 'pi-credit-card',
+        TRANSFER: 'pi-send',
+        CREDIT: 'pi-clock'
+    };
     return iconMap[type] || 'pi-circle';
 };
 
 const getMethodTypeColor = (type) => {
-    const colorMap = { CASH: 'success', CARD: 'info', TRANSFER: 'warning', CREDIT: 'secondary' };
+    const colorMap = {
+        CASH: 'success',
+        CARD: 'info',
+        TRANSFER: 'warning',
+        CREDIT: 'secondary'
+    };
     return colorMap[type] || 'secondary';
 };
 
