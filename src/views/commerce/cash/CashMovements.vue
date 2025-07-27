@@ -1,10 +1,9 @@
 <script setup>
 import { useCashMovementsStore } from '@/stores/cashMovementsStore';
 import { useCashSessionsStore } from '@/stores/cashSessionsStore';
-import { useToast } from 'primevue/usetoast';
+import DatePicker from 'primevue/datepicker';
 import { computed, onMounted, ref } from 'vue';
 
-const toast = useToast();
 const movementsStore = useCashMovementsStore();
 const sessionsStore = useCashSessionsStore();
 
@@ -24,6 +23,7 @@ onMounted(async () => {
     }
     await movementsStore.fetchMovements();
     console.log('movementsStore.movementsList', movementsStore.movementsList);
+    console.log('movementsStore.movementsSummary', summary.value);
 });
 
 const typeOptions = [
@@ -76,11 +76,11 @@ const clearFilters = async () => {
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Desde</label>
-                                <Calendar v-model="filters.date_from" dateFormat="yy-mm-dd" @date-select="applyFilters" class="w-full" placeholder="Seleccione una fecha desde" />
+                                <DatePicker v-model="filters.date_from" dateFormat="yy-mm-dd" @date-select="applyFilters" class="w-full" placeholder="Seleccione una fecha desde" />
                             </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-2">Hasta</label>
-                                <Calendar v-model="filters.date_to" dateFormat="yy-mm-dd" @date-select="applyFilters" class="w-full" placeholder="Seleccione una fecha hasta" />
+                                <DatePicker v-model="filters.date_to" dateFormat="yy-mm-dd" @date-select="applyFilters" class="w-full" placeholder="Seleccione una fecha hasta" />
                             </div>
                             <div class="flex gap-2">
                                 <Button icon="pi pi-filter-slash" severity="secondary" outlined title="Limpiar" @click="clearFilters" />
@@ -88,6 +88,50 @@ const clearFilters = async () => {
                             </div>
                         </div>
                     </Panel>
+
+                    <!-- Resumen de Movimientos -->
+                    <div class="mb-4">
+                        <Panel header="Resumen de Movimientos" :toggleable="true">
+                            <div class="flex flex-wrap gap-2">
+                                <div class="flex-grow-1 flex-shrink-0" style="min-width: 150px; max-width: 200px">
+                                    <div class="p-3 border-round bg-blue-50 shadow-1 h-full">
+                                        <div class="text-sm text-blue-800 font-medium">Total</div>
+                                        <div class="text-xl font-bold text-blue-900">S/ {{ summary?.total_amount || '0.00' }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 flex-shrink-0" style="min-width: 150px; max-width: 200px">
+                                    <div class="p-3 border-round bg-green-50 shadow-1 h-full">
+                                        <div class="text-sm text-green-800 font-medium">Ventas</div>
+                                        <div class="text-xl font-bold text-green-900">S/ {{ summary?.sales_amount || '0.00' }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 flex-shrink-0" style="min-width: 150px; max-width: 200px">
+                                    <div class="p-3 border-round bg-yellow-50 shadow-1 h-full">
+                                        <div class="text-sm text-yellow-800 font-medium">Depósitos</div>
+                                        <div class="text-xl font-bold text-yellow-900">S/ {{ summary?.deposits_amount || '0.00' }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 flex-shrink-0" style="min-width: 150px; max-width: 200px">
+                                    <div class="p-3 border-round bg-red-50 shadow-1 h-full">
+                                        <div class="text-sm text-red-800 font-medium">Egresos</div>
+                                        <div class="text-xl font-bold text-red-900">S/ {{ summary?.expenses_amount || '0.00' }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 flex-shrink-0" style="min-width: 150px; max-width: 200px">
+                                    <div class="p-3 border-round bg-orange-50 shadow-1 h-full">
+                                        <div class="text-sm text-orange-800 font-medium">Retiros</div>
+                                        <div class="text-xl font-bold text-orange-900">S/ {{ summary?.withdrawals_amount || '0.00' }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 flex-shrink-0" style="min-width: 150px; max-width: 200px">
+                                    <div class="p-3 border-round bg-purple-50 shadow-1 h-full">
+                                        <div class="text-sm text-purple-800 font-medium">Ajustes</div>
+                                        <div class="text-xl font-bold text-purple-900">S/ {{ summary?.adjustments_amount || '0.00' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Panel>
+                    </div>
 
                     <!-- Tabla -->
                     <DataTable :value="movements" :loading="isLoading" :paginator="true" :rows="15" stripedRows responsiveLayout="scroll">

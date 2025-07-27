@@ -45,14 +45,14 @@ const isInitializing = ref(true);
 // Quick search for barcode scanner
 
 // Session and warehouse management
-const activeSession = ref(null);
+// const activeSession = ref(null);
 const selectedWarehouse = ref(null);
 
 // Cart and payment
 const cart = ref([]);
 const selectedPaymentMethods = ref([]);
 const paymentStatus = ref('PAGADO'); // PAGADO o PENDIENTE
-const showPaymentDialog = ref(false);
+// const showPaymentDialog = ref(false);
 const showCartSummary = ref(false);
 const showBatchDialog = ref(false);
 const selectedProductForBatch = ref(null);
@@ -63,9 +63,9 @@ const showMultiplePaymentDialog = ref(false);
 
 // Store reactive data
 const { warehousesList, isLoadingWarehouses } = storeToRefs(warehousesStore);
-const { saleProductsList, isLoadingSaleProducts } = storeToRefs(productsStore);
+const { saleProductsList } = storeToRefs(productsStore);
 const { paymentMethodsList } = storeToRefs(paymentMethodsStore);
-const { currentSession, hasActiveSession, currentSessionInfo } = storeToRefs(cashSessionsStore);
+const { hasActiveSession, currentSessionInfo } = storeToRefs(cashSessionsStore);
 
 // Search and product data
 const searchQuery = ref('');
@@ -344,17 +344,6 @@ onMounted(async () => {
         }
     }
 });
-
-const checkActiveSession = () => {
-    setTimeout(() => {
-        activeSession.value = {
-            id: 1,
-            cashier: authStore.currentUser?.name || 'Usuario',
-            openedAt: new Date().toLocaleString(),
-            initialAmount: 1000
-        };
-    }, 500);
-};
 
 const filteredProducts = computed(() => {
     return products.value.filter((product) => {
@@ -761,54 +750,54 @@ const validateCustomerForVoucher = () => {
 };
 
 // Funciones para gestionar múltiples métodos de pago
-const addPaymentMethod = () => {
-    const remainingAmount = getRemainingAmount();
-    if (remainingAmount <= 0) {
-        showToast('warn', {
-            severity: 'warn',
-            summary: 'Pago Completo',
-            detail: 'El monto total ya está cubierto'
-        });
-        return;
-    }
+// const addPaymentMethod = () => {
+//     const remainingAmount = getRemainingAmount();
+//     if (remainingAmount <= 0) {
+//         showToast('warn', {
+//             severity: 'warn',
+//             summary: 'Pago Completo',
+//             detail: 'El monto total ya está cubierto'
+//         });
+//         return;
+//     }
 
-    selectedPaymentMethods.value.push({
-        method_id: null,
-        method_name: '',
-        amount: remainingAmount,
-        reference: '',
-        requires_reference: false
-    });
-};
+//     selectedPaymentMethods.value.push({
+//         method_id: null,
+//         method_name: '',
+//         amount: remainingAmount,
+//         reference: '',
+//         requires_reference: false
+//     });
+// };
 
-const removePaymentMethod = (index) => {
-    selectedPaymentMethods.value.splice(index, 1);
-};
+// const removePaymentMethod = (index) => {
+//     selectedPaymentMethods.value.splice(index, 1);
+// };
 
-const updatePaymentMethod = (index, field, value) => {
-    const paymentMethod = selectedPaymentMethods.value[index];
+// const updatePaymentMethod = (index, field, value) => {
+//     const paymentMethod = selectedPaymentMethods.value[index];
 
-    if (field === 'method_id') {
-        const method = availablePaymentMethods.value.find((pm) => pm.id === value);
-        if (method) {
-            paymentMethod.method_id = method.id;
-            paymentMethod.method_name = method.name;
-            paymentMethod.requires_reference = method.requires_reference;
+//     if (field === 'method_id') {
+//         const method = availablePaymentMethods.value.find((pm) => pm.id === value);
+//         if (method) {
+//             paymentMethod.method_id = method.id;
+//             paymentMethod.method_name = method.name;
+//             paymentMethod.requires_reference = method.requires_reference;
 
-            // Limpiar referencia si ya no es requerida
-            if (!method.requires_reference) {
-                paymentMethod.reference = '';
-            }
-        }
-    } else {
-        paymentMethod[field] = value;
-    }
-};
+//             // Limpiar referencia si ya no es requerida
+//             if (!method.requires_reference) {
+//                 paymentMethod.reference = '';
+//             }
+//         }
+//     } else {
+//         paymentMethod[field] = value;
+//     }
+// };
 
-const getRemainingAmount = () => {
-    const totalPaid = selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
-    return Math.max(0, cartTotal.value - totalPaid);
-};
+// const getRemainingAmount = () => {
+//     const totalPaid = selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
+//     return Math.max(0, cartTotal.value - totalPaid);
+// };
 
 const getTotalPaymentAmount = () => {
     return selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
@@ -919,33 +908,33 @@ const openMultiplePaymentDialog = () => {
     showMultiplePaymentDialog.value = true;
 };
 
-const getPaymentMethodIcon = (methodId) => {
-    const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
-    if (!method) return 'pi-circle';
+// const getPaymentMethodIcon = (methodId) => {
+//     const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
+//     if (!method) return 'pi-circle';
 
-    const iconMap = {
-        CASH: 'pi-money-bill',
-        CARD: 'pi-credit-card',
-        TRANSFER: 'pi-send',
-        CREDIT: 'pi-clock'
-    };
+//     const iconMap = {
+//         CASH: 'pi-money-bill',
+//         CARD: 'pi-credit-card',
+//         TRANSFER: 'pi-send',
+//         CREDIT: 'pi-clock'
+//     };
 
-    return iconMap[method.type] || 'pi-circle';
-};
+//     return iconMap[method.type] || 'pi-circle';
+// };
 
-const getPaymentMethodColor = (methodId) => {
-    const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
-    if (!method) return 'secondary';
+// const getPaymentMethodColor = (methodId) => {
+//     const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
+//     if (!method) return 'secondary';
 
-    const colorMap = {
-        CASH: 'success',
-        CARD: 'info',
-        TRANSFER: 'warning',
-        CREDIT: 'secondary'
-    };
+//     const colorMap = {
+//         CASH: 'success',
+//         CARD: 'info',
+//         TRANSFER: 'warning',
+//         CREDIT: 'secondary'
+//     };
 
-    return colorMap[method.type] || 'secondary';
-};
+//     return colorMap[method.type] || 'secondary';
+// };
 </script>
 
 <template>
