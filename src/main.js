@@ -10,6 +10,8 @@ import KeyFilter from 'primevue/keyfilter';
 import StyleClass from 'primevue/styleclass';
 import ToastService from 'primevue/toastservice';
 import registerPrimeVueComponents from './plugins/primevue-components';
+import Chart from 'primevue/chart';
+import 'chart.js/auto';
 
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
@@ -172,6 +174,8 @@ import '@/assets/tailwind.css';
     app.use(ToastService);
     app.use(ConfirmationService);
     registerPrimeVueComponents(app);
+    // Registrar componente Chart globalmente
+    app.component('Chart', Chart);
 
     app.mount('#app');
 })();

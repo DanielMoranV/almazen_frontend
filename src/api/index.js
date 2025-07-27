@@ -185,6 +185,9 @@ export const fetchStockExits = (params = {}) => {
     return axios.get(`/stock-movements/exits/list${queryString ? `?${queryString}` : ''}`);
 };
 
+// Reports
+export const exportReport = (type) => axios.get('/reports/export', { params: { type }, responseType: 'blob' });
+
 // Dashboard
 export const fetchDashboardMetrics = () => axios.get('/dashboard/metrics');
 export const fetchLowStockProducts = () => axios.get('/dashboard/low-stock');

@@ -15,6 +15,13 @@ export const useDashboardStore = defineStore('dashboardStore', {
             low_stock_count: 0,
             out_of_stock_count: 0,
             inventory_value: 0,
+            purchases_today_total: 0,
+            purchases_today_count: 0,
+            top_sellers_today: [],
+            top_products_today: [],
+            sales_trend_month: [],
+            products_trend_month: [],
+            top_products_month: [],
             last_updated: null
         },
         lowStockProducts: [],
