@@ -1,10 +1,8 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import { useRouter } from 'vue-router';
+import { computed, onMounted, ref } from 'vue';
 
 const toast = useToast();
-const router = useRouter();
 const loading = ref(false);
 const quotes = ref([]);
 const searchQuery = ref('');

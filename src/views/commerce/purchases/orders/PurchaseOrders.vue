@@ -315,7 +315,7 @@ const performAdvancedSearch = async () => {
     };
 
     // Filtrar parámetros vacíos
-    const filteredParams = Object.fromEntries(Object.entries(searchParams).filter(([_, value]) => value !== null && value !== ''));
+    const filteredParams = Object.fromEntries(Object.entries(searchParams).filter(([, /* key */ value]) => value !== null && value !== ''));
 
     await purchaseStore.searchPurchaseOrdersAdvanced(filteredParams);
 

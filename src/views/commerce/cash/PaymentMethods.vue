@@ -33,7 +33,7 @@ const methodForm = ref({
 // Estados computados del store
 const methods = computed(() => paymentMethodsStore.paymentMethodsList);
 const isLoading = computed(() => paymentMethodsStore.isLoadingPaymentMethods);
-const hasMethods = computed(() => methods.value.length > 0);
+// const hasMethods = computed(() => methods.value.length > 0);
 
 // Opciones para formularios
 const methodTypes = [

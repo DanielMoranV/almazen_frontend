@@ -159,7 +159,7 @@ const getTypeLabel = (type) => {
     return labels[type] || type;
 };
 
-const getQuantityClass = (type, quantity) => {
+const getQuantityClass = (type) => {
     if (type === 'ENTRADA') return 'quantity-positive';
     if (type === 'SALIDA') return 'quantity-negative';
     return 'quantity-neutral';
@@ -289,7 +289,7 @@ const formatQuantity = (type, quantity) => {
         <Column field="quantity" header="Cantidad" sortable style="min-width: 6rem; max-width: 8rem">
             <template #body="{ data }">
                 <div class="text-center">
-                    <span class="quantity-amount" :class="getQuantityClass(data.type, data.quantity)">
+                    <span class="quantity-amount" :class="getQuantityClass(data.type)">
                         {{ formatQuantity(data.type, data.quantity) }}
                     </span>
                 </div>

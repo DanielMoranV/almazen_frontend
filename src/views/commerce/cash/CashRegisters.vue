@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useToast } from 'primevue/usetoast';
-import { useCashRegistersStore } from '@/stores/cashRegistersStore';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
+import { useCashRegistersStore } from '@/stores/cashRegistersStore';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
 
 const toast = useToast();
 const cashRegistersStore = useCashRegistersStore();
@@ -156,7 +156,7 @@ const showErrors = () => {
                                 <Button label="Crear Caja" icon="pi pi-plus" severity="success" @click="openCreateDialog" />
                             </div>
                         </template>
-                        
+
                         <Column field="name" header="Nombre" sortable />
                         <Column field="code" header="Código" sortable />
                         <Column field="location" header="Ubicación" sortable />

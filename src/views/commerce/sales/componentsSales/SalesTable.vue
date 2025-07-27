@@ -49,7 +49,7 @@ const localFilters = ref(initFilters());
 
 watch(
     () => sales,
-    (newSales) => {
+    () => {
         localFilters.value = { ...initFilters() };
     },
     { deep: true }

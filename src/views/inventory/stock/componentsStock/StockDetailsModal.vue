@@ -90,12 +90,12 @@ const calculateProfitMargin = (salePrice, unitCost) => {
 };
 
 // Helper function to format percentage
-const formatPercentage = (value) => {
-    if (!value || isNaN(value) || value === null || value === undefined) return '-';
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return '-';
-    return `${numValue.toFixed(1)}%`;
-};
+// const formatPercentage = (value) => {
+//     if (!value || isNaN(value) || value === null || value === undefined) return '-';
+//     const numValue = parseFloat(value);
+//     if (isNaN(numValue)) return '-';
+//     return `${numValue.toFixed(1)}%`;
+// };
 
 // Helper function to get profit margin class for styling
 const getProfitMarginClass = (salePrice, unitCost) => {

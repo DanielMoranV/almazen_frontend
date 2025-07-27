@@ -1,40 +1,40 @@
 <script setup>
-import { computed } from 'vue';
+// import { computed } from 'vue';
 
-const props = defineProps({
-    totalProducts: {
-        type: Number,
-        default: 0
-    },
-    totalQuantity: {
-        type: Number,
-        default: 0
-    },
-    lowStockProducts: {
-        type: Number,
-        default: 0
-    },
-    outOfStockProducts: {
-        type: Number,
-        default: 0
-    },
-    totalCostValue: {
-        type: Number,
-        default: 0
-    },
-    totalSaleValue: {
-        type: Number,
-        default: 0
-    },
-    loading: {
-        type: Boolean,
-        default: false
-    }
-});
+// const props = defineProps({
+//     totalProducts: {
+//         type: Number,
+//         default: 0
+//     },
+//     totalQuantity: {
+//         type: Number,
+//         default: 0
+//     },
+//     lowStockProducts: {
+//         type: Number,
+//         default: 0
+//     },
+//     outOfStockProducts: {
+//         type: Number,
+//         default: 0
+//     },
+//     totalCostValue: {
+//         type: Number,
+//         default: 0
+//     },
+//     totalSaleValue: {
+//         type: Number,
+//         default: 0
+//     },
+//     loading: {
+//         type: Boolean,
+//         default: false
+//     }
+// });
 
-const formatNumber = (value) => {
-    return value ? value.toLocaleString() : '0';
-};
+// const formatNumber = (value) => {
+//     return value ? value.toLocaleString() : '0';
+// };
 
 const formatCurrency = (value, detailed = false) => {
     if (!value) return 'S/ 0.00';

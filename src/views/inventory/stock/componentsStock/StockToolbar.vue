@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { InputText, Select, Button } from 'primevue';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
     totalProducts: {

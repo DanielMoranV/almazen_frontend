@@ -2,7 +2,6 @@
 import { useProductStocksStore } from '@/stores/productStocksStore';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
 
 // Components
 import BulkEditDialog from './componentsStock/BulkEditDialog.vue';
@@ -13,7 +12,6 @@ import StockTable from './componentsStock/StockTable.vue';
 import StockToolbar from './componentsStock/StockToolbar.vue';
 
 const toast = useToast();
-const router = useRouter();
 const stocksStore = useProductStocksStore();
 
 // Local reactive refs for UI
@@ -112,25 +110,25 @@ const handleRefresh = async () => {
     }
 };
 
-const exportToExcel = () => {
-    // TODO: Implement Excel export functionality
-    toast.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Reporte de inventario exportado a Excel',
-        life: 3000
-    });
-};
+// const exportToExcel = () => {
+//     // TODO: Implement Excel export functionality
+//     toast.add({
+//         severity: 'success',
+//         summary: 'Éxito',
+//         detail: 'Reporte de inventario exportado a Excel',
+//         life: 3000
+//     });
+// };
 
-const printInventory = () => {
-    // TODO: Implement print functionality
-    toast.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Reporte de inventario enviado a impresión',
-        life: 3000
-    });
-};
+// const printInventory = () => {
+//     // TODO: Implement print functionality
+//     toast.add({
+//         severity: 'success',
+//         summary: 'Éxito',
+//         detail: 'Reporte de inventario enviado a impresión',
+//         life: 3000
+//     });
+// };
 
 const viewProductDetails = (item) => {
     selectedProductForDetails.value = item;
