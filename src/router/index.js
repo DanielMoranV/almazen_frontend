@@ -21,6 +21,14 @@ const router = createRouter({
                     }
                 },
                 {
+                    path: '/onboarding-guide',
+                    name: 'onboarding-guide',
+                    component: () => import('@/views/pages/OnboardingGuide.vue'),
+                    meta: {
+                        positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
+                    }
+                },
+                {
                     path: '/reports',
                     name: 'reports',
                     component: () => import('@/views/reports/Reports.vue'),

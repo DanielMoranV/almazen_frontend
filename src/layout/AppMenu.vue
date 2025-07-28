@@ -247,6 +247,17 @@ const model = ref([
             }
         ],
         positions: ['Developer', 'Administrador']
+    },
+    {
+        label: 'Ayuda',
+        items: [
+            {
+                label: 'Guía de Inicio',
+                icon: 'pi pi-question-circle',
+                to: '/onboarding-guide',
+                positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
+            }
+        ]
     }
 ]);
 
