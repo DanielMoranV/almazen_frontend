@@ -22,6 +22,10 @@ const goToCompanyConfig = () => {
     router.push({ name: 'companyConfig' });
 };
 
+const goToPos = () => {
+    router.push({ name: 'pos' });
+};
+
 const goToRefresh = () => {
     cache.refresh();
     window.location.reload();
@@ -102,6 +106,10 @@ onBeforeMount(() => {
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
+                    <button @click="goToPos()" type="button" class="layout-topbar-action" v-if="authStore.currentUser?.position === 'Developer' || authStore.currentUser?.position === 'Administrador' || authStore.currentUser?.position === 'Ventas' || authStore.currentUser?.position === 'Cajero'">
+                        <i class="pi pi-desktop"></i>
+                        <span>POS</span>
+                    </button>
                     <button @click="goToRefresh()" type="button" class="layout-topbar-action">
                         <i class="pi pi-refresh"></i>
                         <span>Actualizar</span>
