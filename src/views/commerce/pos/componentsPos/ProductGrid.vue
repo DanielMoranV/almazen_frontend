@@ -38,7 +38,7 @@ const handleImageLoad = (event) => {
 </script>
 
 <template>
-    <div v-if="isSearching" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    <div v-if="isSearching" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card v-for="i in 10" :key="i" class="shadow-sm">
             <template #content>
                 <div class="space-y-3">
@@ -51,13 +51,13 @@ const handleImageLoad = (event) => {
         </Card>
     </div>
 
-    <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+    <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
         <Card
             v-for="product in filteredProducts"
             :key="product.id"
             @click="$emit('add-to-cart', product)"
             :data-product-id="product.id"
-            class="cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 touch-manipulation shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:bg-white/95 group"
+            class="cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 touch-manipulation shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:bg-white/95 group min-h-[180px]"
             :class="{
                 'opacity-60 cursor-not-allowed': product.stock === 0,
                 'ring-2 ring-red-200': product.stock === 0
@@ -66,7 +66,7 @@ const handleImageLoad = (event) => {
             <template #content>
                 <div class="p-2">
                     <!-- Product Image -->
-                    <div class="relative aspect-square mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden">
+                    <div class="relative aspect-square mb-2 sm:mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden">
                         <img
                             :src="product.image"
                             :alt="product.name"
@@ -92,8 +92,8 @@ const handleImageLoad = (event) => {
                     </div>
 
                     <!-- Product Info -->
-                    <div class="text-center space-y-2">
-                        <h3 class="font-bold text-gray-900 text-sm leading-tight line-clamp-2 min-h-[2.5rem]">
+                    <div class="text-center space-y-1 sm:space-y-2">
+                        <h3 class="font-bold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem]">
                             {{ product.name }}
                         </h3>
                         <div class="text-xl font-black text-blue-600">

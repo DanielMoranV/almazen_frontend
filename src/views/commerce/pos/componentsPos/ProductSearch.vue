@@ -50,9 +50,9 @@ const clearSearch = () => {
         </template>
 
         <div class="space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                 <!-- Enhanced Search -->
-                <div class="lg:col-span-2">
+                <div class="md:col-span-2">
                     <label class="block text-sm font-bold text-gray-700 mb-3">
                         <i class="pi pi-search mr-2 text-blue-600"></i>
                         Búsqueda de productos
@@ -60,8 +60,8 @@ const clearSearch = () => {
                     <div class="relative">
                         <InputText
                             v-model="internalSearchQuery"
-                            placeholder="Escribe el nombre del producto, código o SKU..."
-                            class="w-full text-lg py-4 pl-14 pr-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-200/50 rounded-xl transition-all duration-300 shadow-sm hover:border-blue-300 hover:shadow-md bg-white/80 backdrop-blur-sm"
+                            placeholder="Buscar producto, código o SKU..."
+                            class="w-full text-lg py-3 sm:py-4 pl-10 sm:pl-14 pr-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-200/50 rounded-xl transition-all duration-300 shadow-sm hover:border-blue-300 hover:shadow-md bg-white/80 backdrop-blur-sm touch-manipulation"
                         />
                         <div v-if="isSearching" class="absolute right-4 top-1/2 transform -translate-y-1/2">
                             <ProgressSpinner class="w-6 h-6" stroke-width="4" />
@@ -91,8 +91,8 @@ const clearSearch = () => {
                         checkmark
                         highlight-on-select
                         :pt="{
-                            root: 'border-2 border-gray-200 hover:border-blue-300 focus:border-blue-500 rounded-xl shadow-sm transition-all duration-300 bg-white/80 backdrop-blur-sm',
-                            input: 'py-3 px-4 text-base font-medium',
+                            root: 'border-2 border-gray-200 hover:border-blue-300 focus:border-blue-500 rounded-xl shadow-sm transition-all duration-300 bg-white/80 backdrop-blur-sm touch-manipulation',
+                            input: 'py-2 sm:py-3 px-3 sm:px-4 text-base font-medium',
                             dropdown: 'p-3'
                         }"
                     />

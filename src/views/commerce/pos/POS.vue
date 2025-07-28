@@ -743,56 +743,6 @@ const validateCustomerForVoucher = () => {
     return true;
 };
 
-// Funciones para gestionar múltiples métodos de pago
-// const addPaymentMethod = () => {
-//     const remainingAmount = getRemainingAmount();
-//     if (remainingAmount <= 0) {
-//         showToast('warn', {
-//             severity: 'warn',
-//             summary: 'Pago Completo',
-//             detail: 'El monto total ya está cubierto'
-//         });
-//         return;
-//     }
-
-//     selectedPaymentMethods.value.push({
-//         method_id: null,
-//         method_name: '',
-//         amount: remainingAmount,
-//         reference: '',
-//         requires_reference: false
-//     });
-// };
-
-// const removePaymentMethod = (index) => {
-//     selectedPaymentMethods.value.splice(index, 1);
-// };
-
-// const updatePaymentMethod = (index, field, value) => {
-//     const paymentMethod = selectedPaymentMethods.value[index];
-
-//     if (field === 'method_id') {
-//         const method = availablePaymentMethods.value.find((pm) => pm.id === value);
-//         if (method) {
-//             paymentMethod.method_id = method.id;
-//             paymentMethod.method_name = method.name;
-//             paymentMethod.requires_reference = method.requires_reference;
-
-//             // Limpiar referencia si ya no es requerida
-//             if (!method.requires_reference) {
-//                 paymentMethod.reference = '';
-//             }
-//         }
-//     } else {
-//         paymentMethod[field] = value;
-//     }
-// };
-
-// const getRemainingAmount = () => {
-//     const totalPaid = selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
-//     return Math.max(0, cartTotal.value - totalPaid);
-// };
-
 const getTotalPaymentAmount = () => {
     return selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
 };
@@ -901,34 +851,6 @@ const openMultiplePaymentDialog = () => {
 
     showMultiplePaymentDialog.value = true;
 };
-
-// const getPaymentMethodIcon = (methodId) => {
-//     const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
-//     if (!method) return 'pi-circle';
-
-//     const iconMap = {
-//         CASH: 'pi-money-bill',
-//         CARD: 'pi-credit-card',
-//         TRANSFER: 'pi-send',
-//         CREDIT: 'pi-clock'
-//     };
-
-//     return iconMap[method.type] || 'pi-circle';
-// };
-
-// const getPaymentMethodColor = (methodId) => {
-//     const method = availablePaymentMethods.value.find((pm) => pm.id === methodId);
-//     if (!method) return 'secondary';
-
-//     const colorMap = {
-//         CASH: 'success',
-//         CARD: 'info',
-//         TRANSFER: 'warning',
-//         CREDIT: 'secondary'
-//     };
-
-//     return colorMap[method.type] || 'secondary';
-// };
 </script>
 
 <template>
@@ -944,10 +866,10 @@ const openMultiplePaymentDialog = () => {
             @show-cart-summary="showCartSummary = true"
         />
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                 <!-- Products Section -->
-                <div class="lg:col-span-3 space-y-6">
+                <div class="lg:col-span-3 space-y-4 sm:space-y-6">
                     <!-- Search and Filters Panel -->
                     <ProductSearch
                         v-model:searchQuery="searchQuery"
@@ -976,6 +898,16 @@ const openMultiplePaymentDialog = () => {
                     @clear-cart="clearCart"
                     @open-multiple-payment-dialog="openMultiplePaymentDialog"
                 />
+                <!-- Mobile Floating Action Button for Cart -->
+                <div class="fixed right-4 bottom-4 lg:hidden z-50">
+                    <Button
+                        @click="showCartSummary = true"
+                        icon="pi pi-shopping-cart"
+                        class="p-4 w-16 h-16 rounded-full shadow-lg bg-gradient-to-r from-green-600 to-emerald-600"
+                        badge-class="bg-white text-green-600 font-bold"
+                        :badge="cartItemsCount > 0 ? cartItemsCount.toString() : null"
+                    />
+                </div>
             </div>
         </div>
 

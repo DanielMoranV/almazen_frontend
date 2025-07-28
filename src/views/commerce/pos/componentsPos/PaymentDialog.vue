@@ -148,7 +148,7 @@ const updatePaymentMethod = (index, field, value) => {
         @update:visible="$emit('update:showMultiplePaymentDialog', $event)"
         header="Métodos de Pago"
         :modal="true"
-        :style="{ width: '95vw', maxWidth: '900px' }"
+        :style="{ width: '98vw', maxWidth: '900px' }"
         :pt="{
             header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
             content: 'p-6'
@@ -177,20 +177,20 @@ const updatePaymentMethod = (index, field, value) => {
                         <i class="pi pi-wallet mr-2 text-purple-600"></i>
                         Métodos de Pago
                     </h3>
-                    <Button @click="addPaymentMethod" label="Agregar Método" icon="pi pi-plus" size="small" severity="success" outlined :disabled="selectedPaymentMethods.length >= 10" />
+                    <Button @click="addPaymentMethod" label="Agregar Método" icon="pi pi-plus" size="small" class="touch-manipulation py-2 px-3" severity="success" outlined :disabled="selectedPaymentMethods.length >= 10" />
                 </div>
 
                 <!-- Payment Methods List -->
                 <div class="space-y-3" v-if="props.selectedPaymentMethods.length > 0">
                     <Card v-for="(payment, index) in props.selectedPaymentMethods" :key="index" class="shadow-sm border border-gray-200">
                         <template #content>
-                            <div class="space-y-4">
+                            <div class="space-y-3 sm:space-y-4">
                                 <div class="flex justify-between items-start">
                                     <h4 class="font-semibold text-gray-800">Método de Pago {{ index + 1 }}</h4>
                                     <Button @click="removePaymentMethod(index)" icon="pi pi-trash" size="small" severity="danger" text rounded v-if="props.selectedPaymentMethods.length > 1" />
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                                     <!-- Method Selection -->
                                     <div>
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Método</label>
@@ -295,7 +295,7 @@ const updatePaymentMethod = (index, field, value) => {
                 </div>
 
                 <!-- Payment Summary -->
-                <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border-2 border-green-200">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-3 sm:p-4 rounded-xl border-2 border-green-200">
                     <div class="grid grid-cols-3 gap-4 text-center">
                         <div>
                             <div class="text-sm text-gray-600">Total a Pagar</div>
@@ -320,7 +320,7 @@ const updatePaymentMethod = (index, field, value) => {
             </div>
 
             <!-- Voucher Type and Payment Status -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-3">
                         <i class="pi pi-file-text mr-2 text-purple-600"></i>
@@ -368,14 +368,14 @@ const updatePaymentMethod = (index, field, value) => {
             </div>
 
             <!-- Actions -->
-            <div class="flex space-x-4 pt-6 border-t border-gray-200">
-                <Button @click="$emit('update:showMultiplePaymentDialog', false)" label="Cancelar" icon="pi pi-times" severity="secondary" outlined class="flex-1 h-14 text-lg font-semibold" />
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-4 sm:pt-6 border-t border-gray-200">
+                <Button @click="$emit('update:showMultiplePaymentDialog', false)" label="Cancelar" icon="pi pi-times" severity="secondary" outlined class="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold touch-manipulation" />
                 <Button
                     @click="$emit('process-payment')"
                     label="Confirmar Pago"
                     icon="pi pi-check"
                     severity="success"
-                    class="flex-1 h-14 text-lg font-bold"
+                    class="flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold touch-manipulation"
                     :loading="props.loading"
                     :disabled="getRemainingAmount() !== 0 || props.selectedPaymentMethods.length === 0"
                 />

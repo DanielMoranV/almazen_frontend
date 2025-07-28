@@ -65,7 +65,7 @@ watch(
         @update:visible="$emit('update:showCustomerDialog', $event)"
         header="Seleccionar Cliente"
         :modal="true"
-        :style="{ width: '95vw', maxWidth: '600px' }"
+        :style="{ width: '98vw', maxWidth: '600px' }"
         :pt="{
             header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
             content: 'p-6'
@@ -96,10 +96,10 @@ watch(
                     class="w-full"
                     :pt="{
                         root: 'w-full',
-                        input: 'w-full py-3 px-4 text-base border-2 border-gray-200 hover:border-purple-300 focus:border-purple-500 rounded-xl',
+                        input: 'w-full py-2 sm:py-3 px-3 sm:px-4 text-base border-2 border-gray-200 hover:border-purple-300 focus:border-purple-500 rounded-xl touch-manipulation',
                         panel: 'bg-white border border-gray-300 rounded-lg shadow-lg mt-1',
                         list: 'max-h-60 overflow-auto p-2',
-                        item: 'p-3 hover:bg-purple-50 rounded-lg cursor-pointer border-b border-gray-100'
+                        item: 'p-3 hover:bg-purple-50 rounded-lg cursor-pointer border-b border-gray-100 touch-manipulation'
                     }"
                     fluid
                 >
@@ -128,7 +128,7 @@ watch(
 
             <!-- Quick Actions -->
             <div class="border-t border-gray-200 pt-6">
-                <div class="flex justify-between items-center">
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:justify-between items-center">
                     <Button
                         @click="
                             $emit('update:showCreateCustomerDialog', true);
@@ -138,10 +138,10 @@ watch(
                         icon="pi pi-plus"
                         severity="success"
                         outlined
-                        class="font-semibold"
+                        class="font-semibold touch-manipulation py-2 px-3 w-full sm:w-auto"
                     />
 
-                    <Button @click="$emit('update:showCustomerDialog', false)" label="Cancelar" icon="pi pi-times" severity="secondary" outlined />
+                    <Button @click="$emit('update:showCustomerDialog', false)" label="Cancelar" icon="pi pi-times" severity="secondary" outlined class="touch-manipulation py-2 px-3 w-full sm:w-auto" />
                 </div>
             </div>
         </div>
@@ -153,7 +153,7 @@ watch(
         @update:visible="$emit('update:showCreateCustomerDialog', $event)"
         header="Crear Nuevo Cliente"
         :modal="true"
-        :style="{ width: '95vw', maxWidth: '500px' }"
+        :style="{ width: '98vw', maxWidth: '500px' }"
         :pt="{
             header: 'bg-gradient-to-r from-green-600 to-emerald-600 text-white',
             content: 'p-6'
@@ -170,11 +170,11 @@ watch(
             <!-- Name -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-2"> Nombre completo <span class="text-red-500">*</span> </label>
-                <InputText v-model="internalNewCustomer.name" placeholder="Nombre completo del cliente" class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                <InputText v-model="internalNewCustomer.name" placeholder="Nombre completo del cliente" class="w-full py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" />
             </div>
 
             <!-- Identity Document -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Tipo</label>
                     <Select
@@ -190,26 +190,26 @@ watch(
                         class="w-full"
                     />
                 </div>
-                <div class="md:col-span-2">
+                <div class="sm:col-span-2">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Número de documento</label>
-                    <InputText v-model="internalNewCustomer.identity_document" placeholder="Número de documento" class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                    <InputText v-model="internalNewCustomer.identity_document" placeholder="Número de documento" class="w-full py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" />
                 </div>
             </div>
 
             <!-- Email -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                <InputText v-model="internalNewCustomer.email" type="email" placeholder="email@ejemplo.com" class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                <InputText v-model="internalNewCustomer.email" type="email" placeholder="email@ejemplo.com" class="w-full py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" />
             </div>
 
             <!-- Phone -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-2">Teléfono</label>
-                <InputText v-model="internalNewCustomer.phone" placeholder="987654321" class="w-full py-3 px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl" />
+                <InputText v-model="internalNewCustomer.phone" placeholder="987654321" class="w-full py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" />
             </div>
 
             <!-- Actions -->
-            <div class="flex space-x-3 pt-4 border-t border-gray-200">
+            <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
                 <Button
                     @click="
                         $emit('update:showCreateCustomerDialog', false);
@@ -219,9 +219,9 @@ watch(
                     icon="pi pi-times"
                     severity="secondary"
                     outlined
-                    class="flex-1"
+                    class="flex-1 touch-manipulation py-2 px-3"
                 />
-                <Button @click="$emit('create-quick-customer')" label="Crear Cliente" icon="pi pi-check" severity="success" class="flex-1 font-semibold" :loading="props.loading" />
+                <Button @click="$emit('create-quick-customer')" label="Crear Cliente" icon="pi pi-check" severity="success" class="flex-1 font-semibold touch-manipulation py-2 px-3" :loading="props.loading" />
             </div>
         </div>
     </Dialog>
