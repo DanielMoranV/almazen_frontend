@@ -1,40 +1,40 @@
 <script setup>
 // import { computed } from 'vue';
 
-// const props = defineProps({
-//     totalProducts: {
-//         type: Number,
-//         default: 0
-//     },
-//     totalQuantity: {
-//         type: Number,
-//         default: 0
-//     },
-//     lowStockProducts: {
-//         type: Number,
-//         default: 0
-//     },
-//     outOfStockProducts: {
-//         type: Number,
-//         default: 0
-//     },
-//     totalCostValue: {
-//         type: Number,
-//         default: 0
-//     },
-//     totalSaleValue: {
-//         type: Number,
-//         default: 0
-//     },
-//     loading: {
-//         type: Boolean,
-//         default: false
-//     }
-// });
+const props = defineProps({
+    totalProducts: {
+        type: Number,
+        default: 0
+    },
+    totalQuantity: {
+        type: Number,
+        default: 0
+    },
+    lowStockProducts: {
+        type: Number,
+        default: 0
+    },
+    outOfStockProducts: {
+        type: Number,
+        default: 0
+    },
+    totalCostValue: {
+        type: Number,
+        default: 0
+    },
+    totalSaleValue: {
+        type: Number,
+        default: 0
+    },
+    loading: {
+        type: Boolean,
+        default: false
+    }
+});
 
-// const formatNumber = (value) => {
-//     return value ? value.toLocaleString() : '0';
-// };
+const formatNumber = (value) => {
+    return value ? value.toLocaleString() : '0';
+};
 
 const formatCurrency = (value, detailed = false) => {
     if (!value) return 'S/ 0.00';
@@ -83,8 +83,8 @@ const formatCompactCurrency = (value) => {
                     </div>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value" v-tooltip.top="loading ? '' : `Total exacto: ${totalProducts.toLocaleString()} productos`">
-                        {{ loading ? '...' : formatCompactNumber(totalProducts) }}
+                    <div class="stat-value" v-tooltip.top="props.loading ? '' : `Total exacto: ${props.totalProducts.toLocaleString()} productos`">
+                        {{ props.loading ? '...' : formatCompactNumber(props.totalProducts) }}
                     </div>
                     <div class="stat-label">Total Productos</div>
                 </div>
@@ -101,8 +101,8 @@ const formatCompactCurrency = (value) => {
                     </div>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value" v-tooltip.top="loading ? '' : `Stock exacto: ${totalQuantity.toLocaleString()} unidades`">
-                        {{ loading ? '...' : formatCompactNumber(totalQuantity) }}
+                    <div class="stat-value" v-tooltip.top="props.loading ? '' : `Stock exacto: ${props.totalQuantity.toLocaleString()} unidades`">
+                        {{ props.loading ? '...' : formatCompactNumber(props.totalQuantity) }}
                     </div>
                     <div class="stat-label">Stock Total</div>
                     <div class="stat-sublabel">unidades</div>
@@ -115,13 +115,13 @@ const formatCompactCurrency = (value) => {
                     <div class="stat-icon">
                         <i class="pi pi-exclamation-triangle"></i>
                     </div>
-                    <div class="stat-trend warning" v-if="!loading && lowStockProducts > 0">
+                    <div class="stat-trend warning" v-if="!props.loading && props.lowStockProducts > 0">
                         <i class="pi pi-exclamation-circle"></i>
                     </div>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value" v-tooltip.top="loading ? '' : `${lowStockProducts.toLocaleString()} productos con stock bajo`">
-                        {{ loading ? '...' : formatCompactNumber(lowStockProducts) }}
+                    <div class="stat-value" v-tooltip.top="props.loading ? '' : `${props.lowStockProducts.toLocaleString()} productos con stock bajo`">
+                        {{ props.loading ? '...' : formatCompactNumber(props.lowStockProducts) }}
                     </div>
                     <div class="stat-label">Stock Bajo</div>
                     <div class="stat-sublabel">productos</div>
@@ -134,13 +134,13 @@ const formatCompactCurrency = (value) => {
                     <div class="stat-icon">
                         <i class="pi pi-times-circle"></i>
                     </div>
-                    <div class="stat-trend danger" v-if="!loading && outOfStockProducts > 0">
+                    <div class="stat-trend danger" v-if="!props.loading && props.outOfStockProducts > 0">
                         <i class="pi pi-ban"></i>
                     </div>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value" v-tooltip.top="loading ? '' : `${outOfStockProducts.toLocaleString()} productos agotados`">
-                        {{ loading ? '...' : formatCompactNumber(outOfStockProducts) }}
+                    <div class="stat-value" v-tooltip.top="props.loading ? '' : `${props.outOfStockProducts.toLocaleString()} productos agotados`">
+                        {{ props.loading ? '...' : formatCompactNumber(props.outOfStockProducts) }}
                     </div>
                     <div class="stat-label">Agotados</div>
                     <div class="stat-sublabel">productos</div>
@@ -153,13 +153,13 @@ const formatCompactCurrency = (value) => {
                     <div class="stat-icon">
                         <i class="pi pi-dollar"></i>
                     </div>
-                    <div class="stat-trend neutral" v-if="!loading">
+                    <div class="stat-trend neutral" v-if="!props.loading">
                         <i class="pi pi-minus"></i>
                     </div>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value" v-tooltip.top="loading ? '' : `Valor exacto: ${formatCurrency(totalCostValue, true)}`">
-                        {{ loading ? '...' : formatCompactCurrency(totalCostValue) }}
+                    <div class="stat-value" v-tooltip.top="props.loading ? '' : `Valor exacto: ${formatCurrency(props.totalCostValue, true)}`">
+                        {{ props.loading ? '...' : formatCompactCurrency(props.totalCostValue) }}
                     </div>
                     <div class="stat-label">Valor Costo</div>
                     <div class="stat-sublabel">total inventario</div>
@@ -172,13 +172,13 @@ const formatCompactCurrency = (value) => {
                     <div class="stat-icon">
                         <i class="pi pi-money-bill"></i>
                     </div>
-                    <div class="stat-trend positive" v-if="!loading">
+                    <div class="stat-trend positive" v-if="!props.loading">
                         <i class="pi pi-plus"></i>
                     </div>
                 </div>
                 <div class="stat-content">
-                    <div class="stat-value" v-tooltip.top="loading ? '' : `Valor exacto: ${formatCurrency(totalSaleValue, true)}`">
-                        {{ loading ? '...' : formatCompactCurrency(totalSaleValue) }}
+                    <div class="stat-value" v-tooltip.top="props.loading ? '' : `Valor exacto: ${formatCurrency(props.totalSaleValue, true)}`">
+                        {{ props.loading ? '...' : formatCompactCurrency(props.totalSaleValue) }}
                     </div>
                     <div class="stat-label">Valor Venta</div>
                     <div class="stat-sublabel">total inventario</div>

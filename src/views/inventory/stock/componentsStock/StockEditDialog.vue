@@ -23,7 +23,10 @@ const formData = ref({
     sale_price: null,
     min_stock: null,
     max_stock: null,
-    unit_cost: null
+    unit_cost: null,
+    actual_quantity: null,
+    warehouse_id: null,
+    product_id: null
 });
 
 const loading = computed(() => stocksStore.isLoadingStock);
@@ -36,7 +39,10 @@ watch(
                 sale_price: newData.sale_price || null,
                 min_stock: newData.min_stock || null,
                 max_stock: newData.max_stock || null,
-                unit_cost: newData.unit_cost || null
+                unit_cost: newData.unit_cost || null,
+                actual_quantity: newData.actual_quantity || null,
+                warehouse_id: newData.warehouse_id || null,
+                product_id: newData.product_id || null
             };
         }
     },
@@ -53,7 +59,10 @@ const resetForm = () => {
         sale_price: null,
         min_stock: null,
         max_stock: null,
-        unit_cost: null
+        unit_cost: null,
+        actual_quantity: null,
+        warehouse_id: null,
+        product_id: null
     };
 };
 
@@ -77,6 +86,11 @@ const saveStock = async () => {
                 payload[key] = formData.value[key];
             }
         });
+        
+        // Asegurarse de que los campos requeridos estén presentes
+        if (!payload.actual_quantity) payload.actual_quantity = props.stockData.actual_quantity;
+        if (!payload.warehouse_id) payload.warehouse_id = props.stockData.warehouse_id;
+        if (!payload.product_id) payload.product_id = props.stockData.product_id;
 
         if (Object.keys(payload).length === 0) {
             toast.add({
