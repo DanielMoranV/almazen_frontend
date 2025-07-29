@@ -1,6 +1,6 @@
 <script setup>
-import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import { exportInventoryToExcel } from '@/utils/excelUtils';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -314,6 +314,7 @@ const formatDate = (dateString) => {
             <template #body="{ data }">
                 <div class="product-cell">
                     <span class="product-name">{{ data.name }}</span>
+                    <span v-if="data.brand" class="brand-tag">{{ data.brand }}</span>
                 </div>
             </template>
         </Column>
@@ -694,11 +695,15 @@ const formatDate = (dateString) => {
 
 /* Product cell */
 .product-cell {
-    @apply max-w-xs;
+    @apply flex flex-col gap-1;
 }
 
 .product-name {
     @apply font-medium text-gray-900 dark:text-gray-100 truncate;
+}
+
+.brand-tag {
+    @apply text-xs bg-gray-200 text-gray-800 px-2 py-1 rounded-full dark:bg-gray-600 dark:text-gray-300 self-start;
 }
 
 /* Warehouses cell */
