@@ -32,9 +32,9 @@ const props = defineProps({
     }
 });
 
-const formatNumber = (value) => {
-    return value ? value.toLocaleString() : '0';
-};
+// const formatNumber = (value) => {
+//     return value ? value.toLocaleString() : '0';
+// };
 
 const formatCurrency = (value, detailed = false) => {
     if (!value) return 'S/ 0.00';

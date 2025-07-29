@@ -15,6 +15,36 @@ const providers = computed(() => providersStore.providersList);
 const warehouses = computed(() => warehousesStore.warehousesList);
 const products = computed(() => productsStore.productsList);
 
+/**
+ * Función personalizada para filtrar productos por nombre, código de barras y SKU
+ * @param {string} value - Término de búsqueda ingresado por el usuario
+ * @param {Object} option - Objeto de producto a filtrar
+ * @returns {boolean} - true si el producto coincide con la búsqueda
+ */
+const filterProductsBy = (value, option) => {
+    if (!value) return true;
+
+    // Depurar la estructura del objeto producto (solo para el primer producto)
+    if (!window._debuggedProduct) {
+        console.log('Estructura del objeto producto:', option);
+        window._debuggedProduct = true;
+    }
+
+    const searchValue = value.toString().toLowerCase().trim();
+
+    // Buscar coincidencias en nombre, barcode y SKU
+    // Asegurarse de que los campos existan antes de intentar acceder a ellos
+    const nameMatch = option.name?.toLowerCase().includes(searchValue);
+
+    // Verificar si barcode existe y tiene un valor antes de buscar
+    const barcodeMatch = option.barcode ? option.barcode.toString().toLowerCase().includes(searchValue) : option.code ? option.code.toString().toLowerCase().includes(searchValue) : false;
+
+    // Verificar si sku existe y tiene un valor antes de buscar
+    const skuMatch = option.sku ? option.sku.toString().toLowerCase().includes(searchValue) : false;
+
+    return nameMatch || barcodeMatch || skuMatch;
+};
+
 const submitted = ref(false);
 
 onMounted(async () => {
@@ -122,7 +152,7 @@ const handleCancel = () => {
 };
 // --- Autocálculo de totales y descuentos ---
 // Autocálculo de IGV incluido en boleta/factura
-watch([() => form.value.total_amount, () => form.value.document_type], ([total, docType]) => {
+watch([() => form.value.total_amount, () => form.value.document_type], ([total]) => {
     if (isFacturaOrBoleta.value && total > 0) {
         const base = +(total / 1.18).toFixed(2);
         const igv = +(total - base).toFixed(2);
@@ -352,7 +382,29 @@ watch(
                     >
                         <Column field="product_id" header="Producto" style="min-width: 180px">
                             <template #body="{ data }">
-                                <Select v-model="data.product_id" :options="products" optionLabel="name" optionValue="id" placeholder="Seleccionar..." filter size="small" class="w-full" />
+                                <Select
+                                    v-model="data.product_id"
+                                    :options="products"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    placeholder="Seleccionar..."
+                                    filter
+                                    :filterBy="filterProductsBy"
+                                    size="small"
+                                    class="w-full"
+                                    :filterFields="['name', 'barcode', 'code', 'sku']"
+                                >
+                                    <template #option="slotProps">
+                                        <div class="flex flex-col gap-1">
+                                            <span class="font-medium">{{ slotProps.option.name }}</span>
+                                            <div class="flex items-center gap-2 text-xs text-gray-500">
+                                                <span v-if="slotProps.option.barcode">Código: {{ slotProps.option.barcode }}</span>
+                                                <span v-if="slotProps.option.code && !slotProps.option.barcode">Código: {{ slotProps.option.code }}</span>
+                                                <span v-if="slotProps.option.sku">SKU: {{ slotProps.option.sku }}</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </Select>
                             </template>
                         </Column>
 
