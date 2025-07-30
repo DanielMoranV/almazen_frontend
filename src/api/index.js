@@ -229,3 +229,11 @@ export const fetchCashMovements = (params = {}) => {
     return axios.get(`/cash-movements${queryString ? `?${queryString}` : ''}`);
 };
 export const getCashMovement = (id) => axios.get(`/cash-movements/${id}`);
+
+// Stock Transfers
+export const fetchStockTransfers = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stock-transfers${queryString ? `?${queryString}` : ''}`);
+};
+export const createStockTransfer = (payload) => axios.post('/stock-transfers', payload);
+export const restoreStockTransfer = (id) => axios.post(`/stock-transfers/${id}/restore`);

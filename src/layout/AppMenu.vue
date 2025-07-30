@@ -156,7 +156,7 @@ const model = ref([
                 icon: 'pi pi-building',
                 to: '/inventory/warehouses',
                 positions: ['Developer', 'Administrador', 'Logística']
-            }
+            },
             // {
             //     label: 'Ajustes',
             //     icon: 'pi pi-wrench',
@@ -176,12 +176,12 @@ const model = ref([
             //     ],
             //     positions: ['Developer', 'Administrador', 'Logística']
             // },
-            // {
-            //     label: 'Transferencias',
-            //     icon: 'pi pi-arrow-right-arrow-left',
-            //     to: '/transfers',
-            //     positions: ['Developer', 'Administrador', 'Logística']
-            // }
+            {
+                label: 'Transferencias',
+                icon: 'pi pi-arrow-right-arrow-left',
+                to: '/inventory/transfers',
+                positions: ['Developer', 'Administrador', 'Logística']
+            }
         ],
         positions: ['Developer', 'Administrador', 'Logística']
     },

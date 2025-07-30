@@ -145,9 +145,9 @@ const router = createRouter({
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
                 {
-                    path: '/transfers',
+                    path: '/inventory/transfers',
                     name: 'transfers',
-                    component: () => import('@/views/inventory/transfers/Transfers.vue'),
+                    component: () => import('@/views/inventory/transfers/StockTransfers.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
 
