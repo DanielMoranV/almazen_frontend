@@ -152,6 +152,12 @@ const model = ref([
                 positions: ['Developer', 'Administrador', 'Logística']
             },
             {
+                label: 'Ajustes de Stock',
+                icon: 'pi pi-sliders-h',
+                to: '/inventory/adjustments/stock',
+                positions: ['Developer', 'Administrador', 'Logística']
+            },
+            {
                 label: 'Almacenes',
                 icon: 'pi pi-building',
                 to: '/inventory/warehouses',

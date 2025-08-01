@@ -139,6 +139,12 @@ const router = createRouter({
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
                 {
+                    path: '/inventory/adjustments/stock',
+                    name: 'stockAdjustments',
+                    component: () => import('@/views/inventory/adjustments/Adjustments.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Logística'] }
+                },
+                {
                     path: '/physical-count',
                     name: 'physicalCount',
                     component: () => import('@/views/inventory/stock/Stock.vue'), // Placeholder until specific view is created

@@ -185,6 +185,23 @@ export const fetchStockExits = (params = {}) => {
     return axios.get(`/stock-movements/exits/list${queryString ? `?${queryString}` : ''}`);
 };
 
+// Stock Adjustments
+export const fetchStockAdjustments = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stock-adjustments${queryString ? `?${queryString}` : ''}`);
+};
+
+export const getStockAdjustment = (id) => axios.get(`/stock-adjustments/${id}`);
+
+export const getStockAdjustmentsSummary = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stock-adjustments/summary${queryString ? `?${queryString}` : ''}`);
+};
+
+export const createStockAdjustment = (payload) => axios.post('/stock-adjustments', payload);
+
+export const createBulkStockAdjustments = (payload) => axios.post('/stock-adjustments/bulk', payload);
+
 // Reports
 export const exportReport = (type) => axios.get('/reports/export', { params: { type }, responseType: 'blob' });
 
