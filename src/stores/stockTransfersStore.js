@@ -32,6 +32,7 @@ export const useStockTransfersStore = defineStore('stockTransfers', {
                 if (processed.success) {
                     this.transfers = processed.data || [];
                 }
+                console.log('Transfers loaded:', this.transfers);
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);

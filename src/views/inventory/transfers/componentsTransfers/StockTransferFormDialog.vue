@@ -7,7 +7,7 @@ import { computed, ref, watch } from 'vue';
 import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import InputNumber from 'primevue/inputnumber';
 import ProgressSpinner from 'primevue/progressspinner';
 import Tag from 'primevue/tag';
@@ -411,9 +411,9 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                             <span class="required-indicator">*</span>
                         </div>
                         <div class="field-card-content">
-                            <Dropdown v-model="formData.to_warehouse_id" :options="filteredWarehouseOptions"
+                            <Select v-model="formData.to_warehouse_id" :options="filteredWarehouseOptions"
                                 optionLabel="label" optionValue="value" placeholder="Seleccione el almacén destino"
-                                :filter="true" filterPlaceholder="Buscar almacén..."
+                                filter filterPlaceholder="Buscar almacén..."
                                 :invalid="!formData.to_warehouse_id" class="w-full">
                                 <template #value="slotProps">
                                     <div v-if="slotProps.value" class="selected-warehouse">
@@ -422,7 +422,7 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                                     </div>
                                     <span v-else class="placeholder-text">Seleccione el almacén destino</span>
                                 </template>
-                            </Dropdown>
+                            </Select>
                             <small class="field-help">Almacén donde se transferirá el stock</small>
                         </div>
                     </div>

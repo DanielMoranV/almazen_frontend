@@ -1,10 +1,10 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 // PrimeVue Components
 import Button from 'primevue/button';
-import Calendar from 'primevue/calendar';
-import Dropdown from 'primevue/dropdown';
+import DatePicker from 'primevue/datepicker';
+import Select from 'primevue/select';
 import InputText from 'primevue/inputtext';
 import SplitButton from 'primevue/splitbutton';
 import Tag from 'primevue/tag';
@@ -53,6 +53,13 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:dateFromFilter', 'update:dateToFilter', 'update:fromWarehouseFilter', 'update:toWarehouseFilter', 'update:productFilter', 'update:statusFilter', 'refresh', 'clearFilters', 'export', 'applyFilters']);
+
+// Collapsible filters state
+const filtersCollapsed = ref(false);
+
+const toggleFilters = () => {
+    filtersCollapsed.value = !filtersCollapsed.value;
+};
 
 // Computed for v-model bindings
 const dateFromModel = computed({
@@ -115,6 +122,14 @@ const exportItems = [
         <!-- Header with summary -->
         <div class="toolbar-header">
             <div class="toolbar-title">
+                <Button 
+                    :icon="filtersCollapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'"
+                    @click="toggleFilters"
+                    text
+                    size="small"
+                    class="toggle-button"
+                    v-tooltip.top="filtersCollapsed ? 'Mostrar filtros' : 'Ocultar filtros'"
+                />
                 <i class="pi pi-filter"></i>
                 <span>Filtros de Búsqueda</span>
                 <Tag v-if="hasActiveFilters" value="Filtros Activos" severity="info" class="ml-2" />
@@ -126,7 +141,8 @@ const exportItems = [
         </div>
 
         <!-- Filters Grid -->
-        <div class="filters-grid">
+        <transition name="slide-down">
+            <div v-show="!filtersCollapsed" class="filters-grid">
             <!-- Date Range Filters -->
             <div class="filter-group">
                 <h4 class="filter-group-title">
@@ -136,12 +152,12 @@ const exportItems = [
                 <div class="filter-row">
                     <div class="filter-item">
                         <label>Fecha Desde:</label>
-                        <Calendar v-model="dateFromModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha"
+                        <DatePicker v-model="dateFromModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha"
                             class="w-full" />
                     </div>
                     <div class="filter-item">
                         <label>Fecha Hasta:</label>
-                        <Calendar v-model="dateToModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha"
+                        <DatePicker v-model="dateToModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha"
                             class="w-full" />
                     </div>
                 </div>
@@ -156,14 +172,14 @@ const exportItems = [
                 <div class="filter-row">
                     <div class="filter-item">
                         <label>Almacén Origen:</label>
-                        <Dropdown v-model="fromWarehouseModel" :options="warehouseOptions" optionLabel="label"
-                            optionValue="value" placeholder="Seleccionar almacén origen" class="w-full" :filter="true"
+                        <Select v-model="fromWarehouseModel" :options="warehouseOptions" optionLabel="label"
+                            optionValue="value" placeholder="Seleccionar almacén origen" class="w-full" filter
                             filterPlaceholder="Buscar almacén..." />
                     </div>
                     <div class="filter-item">
                         <label>Almacén Destino:</label>
-                        <Dropdown v-model="toWarehouseModel" :options="warehouseOptions" optionLabel="label"
-                            optionValue="value" placeholder="Seleccionar almacén destino" class="w-full" :filter="true"
+                        <Select v-model="toWarehouseModel" :options="warehouseOptions" optionLabel="label"
+                            optionValue="value" placeholder="Seleccionar almacén destino" class="w-full" filter
                             filterPlaceholder="Buscar almacén..." />
                     </div>
                 </div>
@@ -183,12 +199,13 @@ const exportItems = [
                     </div>
                     <div class="filter-item">
                         <label>Estado:</label>
-                        <Dropdown v-model="statusModel" :options="statusOptions" optionLabel="label" optionValue="value"
+                        <Select v-model="statusModel" :options="statusOptions" optionLabel="label" optionValue="value"
                             placeholder="Seleccionar estado" class="w-full" />
                     </div>
                 </div>
             </div>
-        </div>
+            </div>
+        </transition>
 
         <!-- Action Buttons -->
         <div class="toolbar-actions">
@@ -220,6 +237,14 @@ const exportItems = [
 }
 
 .toolbar-title i {
+    @apply text-purple-500;
+}
+
+.toggle-button {
+    @apply mr-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors;
+}
+
+.toggle-button:deep(.p-button-icon) {
     @apply text-purple-500;
 }
 
@@ -322,5 +347,20 @@ const exportItems = [
     .filter-row {
         @apply grid-cols-1;
     }
+}
+
+/* Slide down transition */
+.slide-down-enter-active,
+.slide-down-leave-active {
+    transition: all 0.3s ease-in-out;
+    max-height: 1000px;
+    opacity: 1;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
 }
 </style>

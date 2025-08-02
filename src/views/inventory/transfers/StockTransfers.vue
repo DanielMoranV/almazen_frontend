@@ -13,7 +13,6 @@ import Toast from 'primevue/toast';
 
 // Components
 import StockTransferFormDialog from './componentsTransfers/StockTransferFormDialog.vue';
-import StockTransfersStatistics from './componentsTransfers/StockTransfersStatistics.vue';
 import StockTransfersTable from './componentsTransfers/StockTransfersTable.vue';
 import StockTransfersToolbar from './componentsTransfers/StockTransfersToolbar.vue';
 
@@ -64,11 +63,8 @@ const errorMessage = ref('');
 const loading = computed(() => stockTransfersStore.isLoading);
 const transferItems = computed(() => transfers.value || []);
 
-// Statistics computed from store
+// Total transfers computed from store
 const totalTransfers = computed(() => transferItems.value.length);
-const completedTransfers = computed(() => transferItems.value.filter((t) => t.status === 'completed').length);
-const pendingTransfers = computed(() => transferItems.value.filter((t) => t.status === 'pending').length);
-const cancelledTransfers = computed(() => transferItems.value.filter((t) => t.status === 'cancelled').length);
 
 // Utility function to format dates for API (YYYY-MM-DD format)
 const formatDateForAPI = (date, type = 'start') => {
@@ -335,11 +331,6 @@ const exportTransfers = (format) => {
             </div>
         </div>
 
-        <!-- Estadísticas -->
-        <div class="statistics-section">
-            <StockTransfersStatistics :total-transfers="totalTransfers" :completed-transfers="completedTransfers"
-                :pending-transfers="pendingTransfers" :cancelled-transfers="cancelledTransfers" :loading="loading" />
-        </div>
 
         <!-- Toolbar Principal -->
         <StockTransfersToolbar :total-transfers="totalTransfers" :is-loading="loading"
@@ -409,10 +400,6 @@ const exportTransfers = (format) => {
     @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white;
 }
 
-/* Sección de estadísticas */
-.statistics-section {
-    @apply mb-6;
-}
 
 /* Animaciones de transición */
 .slide-up-enter-active {

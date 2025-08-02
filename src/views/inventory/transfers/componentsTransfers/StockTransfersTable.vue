@@ -22,7 +22,8 @@ const emit = defineEmits(['edit', 'restore', 'clearFilters']);
 // Format date utility
 const formatDate = (dateString) => {
     if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -46,7 +47,10 @@ const getStatusSeverity = (status) => {
 };
 
 // Get status label
-const getStatusLabel = (status) => {
+const getStatusLabel = (status, hasRestored = false) => {
+    if (hasRestored) {
+        return 'Restaurado';
+    }
     switch (status) {
         case 'completed':
             return 'Completado';
@@ -56,6 +60,37 @@ const getStatusLabel = (status) => {
             return 'Cancelado';
         default:
             return 'Desconocido';
+    }
+};
+
+// Get status icon
+const getStatusIcon = (status, hasRestored = false) => {
+    if (hasRestored) {
+        return 'pi pi-refresh';
+    }
+    switch (status) {
+        case 'completed':
+            return 'pi pi-check-circle';
+        case 'pending':
+            return 'pi pi-clock';
+        case 'cancelled':
+            return 'pi pi-times-circle';
+        default:
+            return 'pi pi-question-circle';
+    }
+};
+
+// Get status color
+const getStatusColor = (status) => {
+    switch (status) {
+        case 'completed':
+            return '#10b981'; // green
+        case 'pending':
+            return '#f59e0b'; // yellow
+        case 'cancelled':
+            return '#ef4444'; // red
+        default:
+            return '#6b7280'; // gray
     }
 };
 </script>
@@ -68,15 +103,24 @@ const getStatusLabel = (status) => {
                 <span>Lista de Transferencias</span>
             </div>
             <div class="table-summary" v-if="transfers.length > 0">
-                <span class="text-sm text-gray-600 dark:text-gray-400"> Mostrando {{ transfers.length }} transferencia{{
-                    transfers.length !== 1 ? 's' : '' }} </span>
+                <span class="text-sm text-gray-600 dark:text-gray-400"> Mostrando {{ transfers.length }} transferencia{{ transfers.length !== 1 ? 's' : '' }} </span>
             </div>
         </div>
 
-        <DataTable :value="transfers" :loading="loading" dataKey="id" responsiveLayout="scroll" class="transfers-table"
-            stripedRows :paginator="true" :rows="10" :rowsPerPageOptions="[10, 25, 50]"
+        <DataTable
+            :value="transfers"
+            :loading="loading"
+            dataKey="id"
+            class="transfers-table"
+            stripedRows
+            :paginator="true"
+            :rows="10"
+            :rowsPerPageOptions="[10, 25, 50]"
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros">
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+            scrollable
+            scrollHeight="600px"
+        >
             <!-- Loading template -->
             <template #loading>
                 <div class="loading-container">
@@ -101,12 +145,13 @@ const getStatusLabel = (status) => {
             </Column>
 
             <!-- Date Column -->
-            <Column field="date" header="Fecha y Hora" sortable class="date-column">
+            <Column field="transfer_date" header="Fecha y Hora" sortable class="date-column">
                 <template #body="{ data }">
                     <div class="date-cell">
-                        <div class="date-primary">{{ formatDate(data.date) }}</div>
-                        <div class="date-secondary">{{ data.created_at ? 'Creado: ' + formatDate(data.created_at) : ''
-                            }}</div>
+                        <div class="date-primary">{{ formatDate(data.transfer_date || data.created_at) }}</div>
+                        <div class="date-secondary" v-if="data.created_at && data.transfer_date !== data.created_at">
+                            Creado: {{ formatDate(data.created_at) }}
+                        </div>
                     </div>
                 </template>
             </Column>
@@ -116,12 +161,13 @@ const getStatusLabel = (status) => {
                 <template #body="{ data }">
                     <div class="warehouse-cell from-warehouse">
                         <div class="warehouse-icon">
-                            <i class="pi pi-warehouse"></i>
+                            <i class="pi pi-building" style="font-size: 1rem;"></i>
                         </div>
                         <div class="warehouse-info">
-                            <div class="warehouse-name">{{ data.from_warehouse?.name || `ID: ${data.from_warehouse_id}`
-                                }}</div>
-                            <div class="warehouse-id">ID: {{ data.from_warehouse_id }}</div>
+                            <div class="warehouse-name">
+                                {{ data.from_warehouse?.name || (data.from_warehouse_id ? `ID: ${data.from_warehouse_id}` : 'N/A') }}
+                            </div>
+                            <div class="warehouse-id" v-if="data.from_warehouse_id">ID: {{ data.from_warehouse_id }}</div>
                         </div>
                     </div>
                 </template>
@@ -132,12 +178,13 @@ const getStatusLabel = (status) => {
                 <template #body="{ data }">
                     <div class="warehouse-cell to-warehouse">
                         <div class="warehouse-icon">
-                            <i class="pi pi-warehouse"></i>
+                            <i class="pi pi-home" style="font-size: 1rem;"></i>
                         </div>
                         <div class="warehouse-info">
-                            <div class="warehouse-name">{{ data.to_warehouse?.name || `ID: ${data.to_warehouse_id}` }}
+                            <div class="warehouse-name">
+                                {{ data.to_warehouse?.name || (data.to_warehouse_id ? `ID: ${data.to_warehouse_id}` : 'N/A') }}
                             </div>
-                            <div class="warehouse-id">ID: {{ data.to_warehouse_id }}</div>
+                            <div class="warehouse-id" v-if="data.to_warehouse_id">ID: {{ data.to_warehouse_id }}</div>
                         </div>
                     </div>
                 </template>
@@ -148,14 +195,15 @@ const getStatusLabel = (status) => {
                 <template #body="{ data }">
                     <div class="product-cell">
                         <div class="product-icon">
-                            <i class="pi pi-box"></i>
+                            <i class="pi pi-shopping-bag" style="font-size: 1rem;"></i>
                         </div>
                         <div class="product-info">
-                            <div class="product-name">{{ data.product?.name || `ID: ${data.product_id}` }}</div>
+                            <div class="product-name">
+                                {{ data.product?.name || (data.product_id ? `ID: ${data.product_id}` : 'N/A') }}
+                            </div>
                             <div class="product-details">
                                 <span v-if="data.product?.sku" class="product-sku">SKU: {{ data.product.sku }}</span>
-                                <span v-if="data.product?.code" class="product-code">Código: {{ data.product.code
-                                    }}</span>
+                                <span v-if="data.product?.code" class="product-code">Código: {{ data.product.code }}</span>
                             </div>
                         </div>
                     </div>
@@ -166,8 +214,7 @@ const getStatusLabel = (status) => {
             <Column header="Lote" class="batch-column">
                 <template #body="{ data }">
                     <div class="batch-cell">
-                        <Tag v-if="data.batch?.code || data.batch_id"
-                            :value="data.batch?.code || `ID: ${data.batch_id}`" severity="secondary" />
+                        <Tag v-if="data.batch?.code || data.batch_id" :value="data.batch?.code || `ID: ${data.batch_id}`" severity="secondary" />
                         <span v-else class="no-batch">Sin lote</span>
                     </div>
                 </template>
@@ -177,7 +224,7 @@ const getStatusLabel = (status) => {
             <Column field="quantity" header="Cantidad" sortable class="quantity-column">
                 <template #body="{ data }">
                     <div class="quantity-cell">
-                        <div class="quantity-value">{{ data.quantity }}</div>
+                        <div class="quantity-value">{{ Math.floor(parseFloat(data.quantity) || 0) }}</div>
                         <div class="quantity-unit">unidades</div>
                     </div>
                 </template>
@@ -188,10 +235,10 @@ const getStatusLabel = (status) => {
                 <template #body="{ data }">
                     <div class="user-cell">
                         <div class="user-icon">
-                            <i class="pi pi-user"></i>
+                            <i class="pi pi-user" style="font-size: 1rem;"></i>
                         </div>
                         <div class="user-info">
-                            <div class="user-name">{{ data.user?.name || `ID: ${data.user_id}` }}</div>
+                            <div class="user-name">{{ data.user?.name || (data.user_id ? `ID: ${data.user_id}` : 'N/A') }}</div>
                             <div class="user-role">{{ data.user?.role || 'Usuario' }}</div>
                         </div>
                     </div>
@@ -202,8 +249,12 @@ const getStatusLabel = (status) => {
             <Column header="Estado" class="status-column">
                 <template #body="{ data }">
                     <div class="status-cell">
-                        <Tag :value="getStatusLabel(data.status || 'completed')"
-                            :severity="getStatusSeverity(data.status || 'completed')" />
+                        <i 
+                            :class="getStatusIcon(data.status || 'completed', !!data.restored_at)"
+                            :style="{ color: data.restored_at ? '#10b981' : getStatusColor(data.status || 'completed') }"
+                            v-tooltip.top="getStatusLabel(data.status || 'completed', !!data.restored_at)"
+                            class="status-icon"
+                        />
                     </div>
                 </template>
             </Column>
@@ -212,7 +263,7 @@ const getStatusLabel = (status) => {
             <Column header="Motivo" class="reason-column">
                 <template #body="{ data }">
                     <div class="reason-cell">
-                        <span v-if="data.reason" class="reason-text" :title="data.reason">
+                        <span v-if="data.reason && data.reason.trim()" class="reason-text" :title="data.reason">
                             {{ data.reason.length > 30 ? data.reason.substring(0, 30) + '...' : data.reason }}
                         </span>
                         <span v-else class="no-reason">Sin motivo especificado</span>
@@ -224,10 +275,26 @@ const getStatusLabel = (status) => {
             <Column header="Acciones" class="actions-column">
                 <template #body="{ data }">
                     <div class="actions-cell">
-                        <Button icon="pi pi-eye" severity="info" size="small" @click="$emit('edit', data)"
-                            v-tooltip.top="'Ver detalles'" class="action-button view-button" />
-                        <Button icon="pi pi-refresh" severity="secondary" size="small" @click="$emit('restore', data)"
-                            v-tooltip.top="'Restaurar transferencia'" class="action-button restore-button" />
+                        <Button 
+                            icon="pi pi-eye" 
+                            severity="info" 
+                            size="small" 
+                            @click="$emit('edit', data)" 
+                            v-tooltip.top="`Ver detalles de transferencia #${data.id}`"
+                            class="action-button view-button" 
+                            :disabled="!data.id"
+                            text
+                        />
+                        <Button
+                            icon="pi pi-refresh"
+                            severity="success"
+                            size="small"
+                            @click="$emit('restore', data)"
+                            v-tooltip.top="data.restored_at ? `Transferencia ya restaurada el ${new Date(data.restored_at).toLocaleDateString('es-ES')}` : `Restaurar transferencia #${data.id}`"
+                            class="action-button restore-button"
+                            :disabled="!data.id || data.status === 'cancelled' || data.restored_at"
+                            text
+                        />
                     </div>
                 </template>
             </Column>
@@ -240,8 +307,7 @@ const getStatusLabel = (status) => {
                     </div>
                     <div class="empty-title">No se encontraron transferencias</div>
                     <div class="empty-description">No hay transferencias que coincidan con los filtros aplicados</div>
-                    <Button label="Limpiar Filtros" icon="pi pi-filter-slash" outlined @click="$emit('clearFilters')"
-                        class="empty-action" />
+                    <Button label="Limpiar Filtros" icon="pi pi-filter-slash" outlined @click="$emit('clearFilters')" class="empty-action" />
                 </div>
             </template>
         </DataTable>
@@ -341,7 +407,11 @@ const getStatusLabel = (status) => {
 }
 
 .warehouse-icon {
-    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm;
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium;
+}
+
+.warehouse-icon i {
+    @apply text-base;
 }
 
 .from-warehouse .warehouse-icon {
@@ -369,7 +439,11 @@ const getStatusLabel = (status) => {
 }
 
 .product-icon {
-    @apply w-8 h-8 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 flex items-center justify-center text-sm;
+    @apply w-8 h-8 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300 flex items-center justify-center text-sm font-medium;
+}
+
+.product-icon i {
+    @apply text-base;
 }
 
 .product-info {
@@ -414,7 +488,11 @@ const getStatusLabel = (status) => {
 }
 
 .user-icon {
-    @apply w-8 h-8 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300 flex items-center justify-center text-sm;
+    @apply w-8 h-8 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300 flex items-center justify-center text-sm font-medium;
+}
+
+.user-icon i {
+    @apply text-base;
 }
 
 .user-info {
@@ -431,6 +509,14 @@ const getStatusLabel = (status) => {
 
 .status-cell {
     @apply text-center;
+}
+
+.status-icon {
+    @apply text-xl cursor-help transition-transform duration-200;
+}
+
+.status-icon:hover {
+    @apply transform scale-110;
 }
 
 .reason-cell {
