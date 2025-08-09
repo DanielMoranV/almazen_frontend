@@ -154,6 +154,8 @@ onMounted(async () => {
         showToast(severity, summary, adjustmentsStore.message);
         adjustmentsStore.clearMessage();
     }
+
+    console.log(adjustmentsStore.adjustmentsList);
 });
 
 // Utility function for showing toast messages
@@ -228,29 +230,34 @@ const clearFilters = () => {
         <Toast />
 
         <!-- Toolbar Principal con Filtros Integrados -->
-        <StockAdjustmentsToolbar :total-adjustments="totalAdjustments" :total-positive="totalPositive"
-            :total-negative="totalNegative" :is-loading="loading" v-model:type-filter="typeFilter"
-            v-model:warehouse-filter="warehouseFilter" v-model:date-from-filter="dateFromFilter"
-            v-model:date-to-filter="dateToFilter" :warehouse-options="warehouseOptions" @refresh="handleRefresh"
-            @clear-filters="clearFilters" @new-adjustment="openNewAdjustmentModal" />
+        <StockAdjustmentsToolbar
+            :total-adjustments="totalAdjustments"
+            :total-positive="totalPositive"
+            :total-negative="totalNegative"
+            :is-loading="loading"
+            v-model:type-filter="typeFilter"
+            v-model:warehouse-filter="warehouseFilter"
+            v-model:date-from-filter="dateFromFilter"
+            v-model:date-to-filter="dateToFilter"
+            :warehouse-options="warehouseOptions"
+            @refresh="handleRefresh"
+            @clear-filters="clearFilters"
+            @new-adjustment="openNewAdjustmentModal"
+        />
 
         <!-- Estadísticas -->
-        <StockAdjustmentsStatistics :total-adjustments="totalAdjustments" :total-positive="totalPositive"
-            :total-negative="totalNegative" :total-quantity-adjusted="totalQuantityAdjusted" :loading="loading" />
+        <StockAdjustmentsStatistics :total-adjustments="totalAdjustments" :total-positive="totalPositive" :total-negative="totalNegative" :total-quantity-adjusted="totalQuantityAdjusted" :loading="loading" />
 
         <!-- Tabla de Ajustes -->
         <transition name="slide-up" appear>
-            <StockAdjustmentsTable :adjustments="adjustmentItems" :loading="loading"
-                @view-details="viewAdjustmentDetails" @clear-filters="clearFilters" />
+            <StockAdjustmentsTable :adjustments="adjustmentItems" :loading="loading" @view-details="viewAdjustmentDetails" @clear-filters="clearFilters" />
         </transition>
 
         <!-- Modal de Detalles -->
-        <StockAdjustmentDetailsModal v-model:visible="showDetailsModal"
-            :adjustment-data="selectedAdjustmentForDetails" />
+        <StockAdjustmentDetailsModal v-model:visible="showDetailsModal" :adjustment-data="selectedAdjustmentForDetails" />
 
         <!-- Modal de Nuevo Ajuste -->
-        <NewStockAdjustmentModal v-model:visible="showNewAdjustmentModal"
-            @adjustment-created="handleAdjustmentCreated" />
+        <NewStockAdjustmentModal v-model:visible="showNewAdjustmentModal" @adjustment-created="handleAdjustmentCreated" />
     </div>
 </template>
 

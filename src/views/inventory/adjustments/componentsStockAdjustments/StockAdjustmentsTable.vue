@@ -1,5 +1,10 @@
 <script setup>
 import { computed } from 'vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Button from 'primevue/button';
+import Tag from 'primevue/tag';
+import ProgressSpinner from 'primevue/progressspinner';
 
 const props = defineProps({
     adjustments: {
@@ -30,21 +35,21 @@ const formatDate = (dateString) => {
 // Obtener clase CSS para el tipo de ajuste
 const getTypeClass = (type) => {
     switch (type) {
-        case 'POSITIVO':
-            return 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700';
-        case 'NEGATIVO':
-            return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700';
+        case 'ENTRADA':
+            return 'type-tag-entrada';
+        case 'SALIDA':
+            return 'type-tag-salida';
         default:
-            return 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-700';
+            return 'type-tag-default';
     }
 };
 
 // Obtener icono para el tipo de ajuste
 const getTypeIcon = (type) => {
     switch (type) {
-        case 'POSITIVO':
+        case 'ENTRADA':
             return 'pi-plus-circle';
-        case 'NEGATIVO':
+        case 'SALIDA':
             return 'pi-minus-circle';
         default:
             return 'pi-sliders-h';
@@ -54,16 +59,16 @@ const getTypeIcon = (type) => {
 // Formatear cantidad con signo y color
 const formatQuantity = (quantity, type) => {
     const num = parseFloat(quantity || 0);
-    const sign = type === 'POSITIVO' ? '+' : '-';
+    const sign = type === 'ENTRADA' ? '+' : '-';
     return `${sign}${Math.abs(num).toLocaleString()}`;
 };
 
 // Obtener clase CSS para la cantidad
 const getQuantityClass = (type) => {
     switch (type) {
-        case 'POSITIVO':
+        case 'ENTRADA':
             return 'text-green-600 dark:text-green-400 font-semibold';
-        case 'NEGATIVO':
+        case 'SALIDA':
             return 'text-red-600 dark:text-red-400 font-semibold';
         default:
             return 'text-gray-600 dark:text-gray-400';
@@ -89,19 +94,26 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
             </div>
             <h6 class="empty-title">No hay ajustes de stock</h6>
             <p class="empty-description">No se encontraron ajustes que coincidan con los filtros aplicados.</p>
-            <Button label="Limpiar Filtros" icon="pi pi-filter-slash" class="clear-filters-btn"
-                @click="emit('clearFilters')" />
+            <Button label="Limpiar Filtros" icon="pi pi-filter-slash" class="clear-filters-btn" @click="emit('clearFilters')" />
         </div>
 
         <!-- Table with data -->
         <div v-else class="table-wrapper">
-            <DataTable :value="adjustments" :loading="loading" responsive-layout="scroll" :paginator="true" :rows="20"
+            <DataTable
+                :value="adjustments"
+                :loading="loading"
+                responsive-layout="scroll"
+                :paginator="true"
+                :rows="20"
                 paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                 :rows-per-page-options="[10, 20, 50]"
                 current-page-report-template="Mostrando {first} a {last} de {totalRecords} ajustes"
-                class="enhanced-datatable" striped-rows show-gridlines>
+                class="enhanced-datatable"
+                striped-rows
+                show-gridlines
+            >
                 <!-- Producto -->
-                <Column field="product_name" header="Producto" :sortable="true" style="min-width: 200px">
+                <Column field="product_name" :sortable="true" style="min-width: 200px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-box mr-2"></i>
@@ -117,7 +129,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                 </Column>
 
                 <!-- Almacén -->
-                <Column field="warehouse_name" header="Almacén" :sortable="true" style="min-width: 150px">
+                <Column field="warehouse_name" :sortable="true" style="min-width: 150px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-building mr-2"></i>
@@ -133,7 +145,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                 </Column>
 
                 <!-- Tipo de Ajuste -->
-                <Column field="adjustment_type" header="Tipo" :sortable="true" style="min-width: 120px">
+                <Column field="movement_type" :sortable="true" style="min-width: 120px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-tag mr-2"></i>
@@ -141,15 +153,15 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                         </div>
                     </template>
                     <template #body="{ data }">
-                        <Tag :value="data.adjustment_type" :class="getTypeClass(data.adjustment_type)" class="type-tag">
-                            <i :class="`pi ${getTypeIcon(data.adjustment_type)} mr-1`"></i>
-                            {{ data.adjustment_type }}
+                        <Tag :value="data.movement_type" :class="getTypeClass(data.movement_type)" class="type-tag">
+                            <i :class="`pi ${getTypeIcon(data.movement_type)} mr-1`"></i>
+                            {{ data.movement_type }}
                         </Tag>
                     </template>
                 </Column>
 
                 <!-- Cantidad -->
-                <Column field="quantity" header="Cantidad" :sortable="true" style="min-width: 120px">
+                <Column field="quantity" :sortable="true" style="min-width: 120px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-chart-bar mr-2"></i>
@@ -157,15 +169,15 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                         </div>
                     </template>
                     <template #body="{ data }">
-                        <div class="quantity-cell" :class="getQuantityClass(data.adjustment_type)">
-                            <i :class="`pi ${getTypeIcon(data.adjustment_type)} mr-1`"></i>
-                            {{ formatQuantity(data.quantity, data.adjustment_type) }}
+                        <div class="quantity-cell" :class="getQuantityClass(data.movement_type)">
+                            <i :class="`pi ${getTypeIcon(data.movement_type)} mr-1`"></i>
+                            {{ formatQuantity(data.quantity, data.movement_type) }}
                         </div>
                     </template>
                 </Column>
 
                 <!-- Razón -->
-                <Column field="reason" header="Razón" :sortable="true" style="min-width: 200px">
+                <Column field="reason" :sortable="true" style="min-width: 200px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-info-circle mr-2"></i>
@@ -180,7 +192,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                 </Column>
 
                 <!-- Documento de Referencia -->
-                <Column field="reference_document" header="Referencia" :sortable="true" style="min-width: 120px">
+                <Column field="reference_document" :sortable="true" style="min-width: 120px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-file mr-2"></i>
@@ -196,7 +208,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                 </Column>
 
                 <!-- Usuario -->
-                <Column field="user_name" header="Usuario" :sortable="true" style="min-width: 120px">
+                <Column field="user_name" :sortable="true" style="min-width: 120px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-user mr-2"></i>
@@ -212,7 +224,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                 </Column>
 
                 <!-- Fecha -->
-                <Column field="created_at" header="Fecha" :sortable="true" style="min-width: 140px">
+                <Column field="created_at" :sortable="true" style="min-width: 140px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-calendar mr-2"></i>
@@ -227,7 +239,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                 </Column>
 
                 <!-- Acciones -->
-                <Column header="Acciones" style="min-width: 100px">
+                <Column style="min-width: 100px">
                     <template #header>
                         <div class="column-header">
                             <i class="pi pi-cog mr-2"></i>
@@ -236,8 +248,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                     </template>
                     <template #body="{ data }">
                         <div class="actions-cell">
-                            <Button icon="pi pi-eye" class="action-btn" @click="emit('viewDetails', data)"
-                                v-tooltip.bottom="'Ver detalles'" />
+                            <Button icon="pi pi-eye" class="action-btn" @click="emit('viewDetails', data)" v-tooltip.bottom="'Ver detalles'" />
                         </div>
                     </template>
                 </Column>
@@ -341,6 +352,43 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
 
 .type-tag {
     @apply text-xs font-medium px-2 py-1 border;
+}
+
+:deep(.type-tag-entrada) {
+    background-color: rgb(240 253 244) !important;
+    color: rgb(21 128 61) !important;
+    border-color: rgb(187 247 208) !important;
+}
+
+:deep(.type-tag-salida) {
+    background-color: rgb(254 242 242) !important;
+    color: rgb(185 28 28) !important;
+    border-color: rgb(254 202 202) !important;
+}
+
+:deep(.type-tag-default) {
+    background-color: rgb(249 250 251) !important;
+    color: rgb(55 65 81) !important;
+    border-color: rgb(229 231 235) !important;
+}
+
+/* Dark mode variants */
+:deep(.dark .type-tag-entrada) {
+    background-color: rgb(20 83 45 / 0.2) !important;
+    color: rgb(74 222 128) !important;
+    border-color: rgb(21 128 61) !important;
+}
+
+:deep(.dark .type-tag-salida) {
+    background-color: rgb(127 29 29 / 0.2) !important;
+    color: rgb(248 113 113) !important;
+    border-color: rgb(185 28 28) !important;
+}
+
+:deep(.dark .type-tag-default) {
+    background-color: rgb(17 24 39 / 0.2) !important;
+    color: rgb(156 163 175) !important;
+    border-color: rgb(75 85 99) !important;
 }
 
 .quantity-cell {
