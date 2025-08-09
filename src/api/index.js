@@ -202,6 +202,22 @@ export const createStockAdjustment = (payload) => axios.post('/stock-adjustments
 
 export const createBulkStockAdjustments = (payload) => axios.post('/stock-adjustments/bulk', payload);
 
+// Stock Adjustments Excel - Mass Import/Export
+export const downloadStockAdjustmentTemplate = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/stock-adjustments/template${queryString ? `?${queryString}` : ''}`, {
+        responseType: 'blob'
+    });
+};
+
+export const importStockAdjustmentsFromExcel = (formData) => {
+    return axios.post('/stock-adjustments/import-excel', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
 // Reports
 export const exportReport = (type) => axios.get('/reports/export', { params: { type }, responseType: 'blob' });
 

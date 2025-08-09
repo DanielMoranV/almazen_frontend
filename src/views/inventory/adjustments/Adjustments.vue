@@ -5,6 +5,7 @@ import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
 
 // Components
+import ExcelImportDialog from './componentsStockAdjustments/ExcelImportDialog.vue';
 import NewStockAdjustmentModal from './componentsStockAdjustments/NewStockAdjustmentModal.vue';
 import StockAdjustmentDetailsModal from './componentsStockAdjustments/StockAdjustmentDetailsModal.vue';
 import StockAdjustmentsStatistics from './componentsStockAdjustments/StockAdjustmentsStatistics.vue';
@@ -41,6 +42,7 @@ const dateToFilter = ref(defaultDates.to);
 // Dialog refs
 const showDetailsModal = ref(false);
 const showNewAdjustmentModal = ref(false);
+const showExcelImportDialog = ref(false);
 const selectedAdjustmentForDetails = ref(null);
 
 // Error handling state
@@ -220,6 +222,35 @@ const clearFilters = () => {
     // Clear store filters (this will trigger the watcher to update with new default dates)
     adjustmentsStore.clearFilters();
 };
+
+const openExcelImportDialog = () => {
+    showExcelImportDialog.value = true;
+};
+
+const handleExcelImportCompleted = async (result) => {
+    if (result.success) {
+        // Recargar la lista de ajustes
+        await loadAdjustments();
+        
+        // Mostrar mensaje de éxito
+        if (result.data.summary) {
+            const { successful_adjustments, failed_rows } = result.data.summary;
+            if (failed_rows > 0) {
+                showToast('warn', 'Importación Parcial', 
+                    `Se procesaron ${successful_adjustments} ajustes exitosamente. ${failed_rows} filas tuvieron errores.`);
+            } else {
+                showToast('success', 'Importación Exitosa', 
+                    `Se procesaron ${successful_adjustments} ajustes correctamente.`);
+            }
+        }
+        
+        // Cerrar el modal
+        showExcelImportDialog.value = false;
+    } else {
+        showToast('error', 'Error de Importación', 
+            result.message || 'Error al importar el archivo Excel');
+    }
+};
 </script>
 
 <template>
@@ -241,6 +272,7 @@ const clearFilters = () => {
             @refresh="handleRefresh"
             @clear-filters="clearFilters"
             @new-adjustment="openNewAdjustmentModal"
+            @excel-import="openExcelImportDialog"
         />
 
         <!-- Estadísticas -->
@@ -256,6 +288,9 @@ const clearFilters = () => {
 
         <!-- Modal de Nuevo Ajuste -->
         <NewStockAdjustmentModal v-model:visible="showNewAdjustmentModal" @adjustment-created="handleAdjustmentCreated" />
+
+        <!-- Modal de Importación Excel -->
+        <ExcelImportDialog v-model:visible="showExcelImportDialog" @import-completed="handleExcelImportCompleted" />
     </div>
 </template>
 

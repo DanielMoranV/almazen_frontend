@@ -1,10 +1,15 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { exportToExcel } from '@/utils/excelUtils';
+import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import ProgressSpinner from 'primevue/progressspinner';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
 
 const props = defineProps({
     adjustments: {
@@ -18,6 +23,76 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['viewDetails', 'clearFilters']);
+
+// Inicializar filtros
+const initFilters = () => ({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    product_name: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+    },
+    product_sku: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+    },
+    movement_type: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }]
+    },
+    warehouse_name: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+    },
+    reason: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }]
+    }
+});
+
+const localFilters = ref(initFilters());
+
+// Limpiar filtros cuando cambian los datos
+watch(
+    () => props.adjustments,
+    () => {
+        localFilters.value = { ...initFilters() };
+    },
+    { deep: true }
+);
+
+// Función para limpiar filtros
+const clearFilters = () => {
+    localFilters.value = initFilters();
+    emit('clearFilters');
+};
+
+// Función para exportar a Excel
+const exportAdjustments = async () => {
+    const columns = [
+        { header: 'ID', key: 'id', width: 8 },
+        { header: 'Fecha', key: 'created_at', width: 15 },
+        { header: 'Tipo', key: 'movement_type', width: 12 },
+        { header: 'Producto', key: 'product_name', width: 30 },
+        { header: 'SKU', key: 'product_sku', width: 15 },
+        { header: 'Almacén', key: 'warehouse_name', width: 20 },
+        { header: 'Cantidad', key: 'quantity', width: 12 },
+        { header: 'Razón', key: 'reason', width: 25 },
+        { header: 'Documento', key: 'reference_document', width: 15 },
+        { header: 'Usuario', key: 'user_name', width: 15 }
+    ];
+
+    const formattedAdjustments = props.adjustments.map((item) => ({
+        ...item,
+        id: item.id || '-',
+        created_at: formatDate(item.created_at),
+        quantity: formatQuantity(item.quantity, item.movement_type),
+        reason: item.reason || 'Sin especificar',
+        reference_document: item.reference_document || '-',
+        user_name: item.user_name || '-'
+    }));
+
+    await exportToExcel(columns, formattedAdjustments, 'Ajustes_Stock', 'Ajustes_Stock');
+};
 
 // Formatear fecha
 const formatDate = (dateString) => {
@@ -94,7 +169,7 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
             </div>
             <h6 class="empty-title">No hay ajustes de stock</h6>
             <p class="empty-description">No se encontraron ajustes que coincidan con los filtros aplicados.</p>
-            <Button label="Limpiar Filtros" icon="pi pi-filter-slash" class="clear-filters-btn" @click="emit('clearFilters')" />
+            <Button label="Limpiar Filtros" icon="pi pi-filter-slash" class="clear-filters-btn" @click="clearFilters()" />
         </div>
 
         <!-- Table with data -->
@@ -111,7 +186,63 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                 class="enhanced-datatable"
                 striped-rows
                 show-gridlines
+                :filters="localFilters"
+                v-model:filters="localFilters"
+                :globalFilterFields="['product_name', 'product_sku', 'reason', 'reference_document', 'warehouse_name', 'user_name']"
+                dataKey="id"
+                removableSort
             >
+                <template #header>
+                    <div class="table-header">
+                        <div class="header-backdrop"></div>
+                        <div class="header-content">
+                            <div class="search-section">
+                                <div class="search-container">
+                                    <IconField>
+                                        <InputIcon>
+                                            <i class="pi pi-search text-white" />
+                                        </InputIcon>
+                                        <InputText 
+                                            v-model="localFilters['global'].value" 
+                                            placeholder="Buscar por producto, SKU, razón, documento..." 
+                                            class="search-input" 
+                                            fluid 
+                                        />
+                                    </IconField>
+                                </div>
+                            </div>
+                            <div class="actions-section">
+                                <Button 
+                                    type="button" 
+                                    icon="pi pi-file-excel" 
+                                    label="Exportar" 
+                                    class="export-btn" 
+                                    @click="exportAdjustments()" 
+                                    v-tooltip.top="'Exportar ajustes a Excel'" 
+                                    :disabled="!adjustments.length" 
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template #empty>
+                    <div class="empty-table-state">
+                        <div class="empty-icon">
+                            <i class="pi pi-sliders-h"></i>
+                        </div>
+                        <h3 class="empty-title">No hay ajustes disponibles</h3>
+                        <p class="empty-description">No se encontraron ajustes que coincidan con los filtros aplicados.</p>
+                        <Button icon="pi pi-filter-slash" label="Limpiar filtros" class="p-button-outlined" @click="clearFilters()" />
+                    </div>
+                </template>
+
+                <template #loading>
+                    <div class="loading-table-state">
+                        <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" />
+                        <p class="loading-text">Cargando ajustes...</p>
+                    </div>
+                </template>
                 <!-- Producto -->
                 <Column field="product_name" :sortable="true" style="min-width: 200px">
                     <template #header>
@@ -258,8 +389,85 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
 </template>
 
 <style scoped>
+/* Encabezado de la tabla */
+.table-header {
+    @apply relative overflow-hidden mb-0 rounded-t-2xl;
+    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #3b82f6 100%);
+    padding: 1.5rem 2rem;
+}
+
+.header-backdrop {
+    @apply absolute inset-0 opacity-10;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px), radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size:
+        40px 40px,
+        25px 25px;
+    animation: pattern-drift 25s linear infinite;
+}
+
+.header-content {
+    @apply relative z-10 flex justify-between items-center gap-6;
+}
+
+.search-section {
+    @apply flex-1 max-w-md;
+}
+
+.search-input {
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white placeholder-white/70 rounded-xl px-4 py-3 font-medium transition-all duration-300;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.search-input:focus {
+    @apply bg-white/30 border-white/50 ring-2 ring-white/20;
+    transform: translateY(-1px);
+}
+
+.export-btn {
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-300;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.export-btn:hover:not(:disabled) {
+    @apply bg-white/30 border-white/40;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Estados de tabla vacía y carga */
+.empty-table-state {
+    @apply text-center py-16 px-8;
+}
+
+.empty-table-state .empty-icon {
+    @apply mx-auto mb-4 w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center;
+}
+
+.empty-table-state .empty-icon i {
+    @apply text-3xl text-gray-400 dark:text-gray-500;
+}
+
+.empty-table-state .empty-title {
+    @apply text-xl font-bold text-gray-700 dark:text-gray-300 mb-2;
+}
+
+.empty-table-state .empty-description {
+    @apply text-gray-500 dark:text-gray-400 mb-6;
+}
+
+.loading-table-state {
+    @apply text-center py-16 px-8;
+}
+
+.loading-table-state .loading-text {
+    @apply text-gray-600 dark:text-gray-400 mt-4 text-lg font-medium;
+}
+
 .table-container {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden;
+    @apply rounded-xl shadow-lg overflow-hidden;
+    box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Loading state */
@@ -303,16 +511,16 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
 
 /* Enhanced datatable styles */
 :deep(.enhanced-datatable) {
-    @apply border-0;
+    @apply border-0 bg-white dark:bg-gray-800;
 }
 
 :deep(.enhanced-datatable .p-datatable-header) {
-    @apply bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600;
+    @apply bg-transparent border-none p-0;
 }
 
 :deep(.enhanced-datatable .p-datatable-thead > tr > th) {
-    @apply bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 font-semibold;
-    padding: 1rem 0.75rem;
+    @apply sticky top-0 z-20 bg-green-600 font-bold text-sm py-4 px-3 border-none text-center;
+    color: white !important;
 }
 
 :deep(.enhanced-datatable .p-datatable-tbody > tr) {
@@ -320,13 +528,17 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
 }
 
 :deep(.enhanced-datatable .p-datatable-tbody > tr > td) {
-    @apply border-b border-gray-100 dark:border-gray-600;
-    padding: 1rem 0.75rem;
+    @apply py-4 px-3 align-middle border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 font-medium;
 }
 
 /* Column headers */
 .column-header {
-    @apply flex items-center text-gray-700 dark:text-gray-300 font-semibold;
+    @apply flex items-center font-semibold;
+    color: white !important;
+}
+
+.column-header i {
+    color: white !important;
 }
 
 /* Cell styles */
@@ -433,8 +645,25 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    .table-header {
+        @apply p-4;
+    }
+
+    .header-content {
+        @apply flex-col gap-4;
+    }
+
+    .search-section {
+        @apply max-w-none w-full;
+    }
+
+    .export-btn {
+        @apply w-full justify-center;
+    }
+
+    :deep(.enhanced-datatable .p-datatable-thead > tr > th),
     :deep(.enhanced-datatable .p-datatable-tbody > tr > td) {
-        padding: 0.75rem 0.5rem;
+        @apply text-xs py-3 px-2;
     }
 
     .column-header {
@@ -453,13 +682,28 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
 }
 
 /* Hover effects */
-:deep(.enhanced-datatable .p-datatable-tbody > tr:hover) {
-    @apply bg-blue-50 dark:bg-blue-900/10;
+:deep(.enhanced-datatable .p-datatable-tbody > tr:hover > td) {
+    @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800;
 }
 
 /* Striped rows */
-:deep(.enhanced-datatable .p-datatable-tbody > tr:nth-child(even)) {
-    @apply bg-gray-50/50 dark:bg-gray-700/50;
+:deep(.enhanced-datatable .p-datatable-tbody > tr:nth-child(even) > td) {
+    @apply bg-gray-50 dark:bg-gray-700/50;
+}
+
+/* Animación del patrón */
+@keyframes pattern-drift {
+    0% {
+        background-position:
+            0% 0%,
+            0% 0%;
+    }
+
+    100% {
+        background-position:
+            100% 100%,
+            -100% -100%;
+    }
 }
 
 /* Grid lines */

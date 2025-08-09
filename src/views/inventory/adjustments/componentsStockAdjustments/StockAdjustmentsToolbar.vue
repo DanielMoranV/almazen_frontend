@@ -43,7 +43,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['update:typeFilter', 'update:warehouseFilter', 'update:dateFromFilter', 'update:dateToFilter', 'refresh', 'clearFilters', 'newAdjustment']);
+const emit = defineEmits(['update:typeFilter', 'update:warehouseFilter', 'update:dateFromFilter', 'update:dateToFilter', 'refresh', 'clearFilters', 'newAdjustment', 'excelImport']);
 
 // Estado local para los filtros
 const localTypeFilter = ref(props.typeFilter);
@@ -188,6 +188,8 @@ const getWarehouseLabel = (value) => {
 
                 <!-- Sección derecha: Acciones -->
                 <div class="actions-section">
+                    <Button icon="pi pi-file-excel" class="excel-import-btn-compact"
+                        @click="$emit('excelImport')" v-tooltip.bottom="'Importar desde Excel'" />
                     <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading"
                         @click="$emit('refresh')" v-tooltip.bottom="'Actualizar ajustes'" :disabled="isLoading" />
                     <Button icon="pi pi-plus" class="new-adjustment-btn-compact"
@@ -340,6 +342,24 @@ const getWarehouseLabel = (value) => {
 .new-adjustment-btn-compact:hover {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
     transform: scale(1.05);
+}
+
+/* Botón de importar Excel - rectangular con icono Excel */
+.excel-import-btn-compact {
+    @apply bg-white/20 border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.excel-import-btn-compact:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
 /* Animación del patrón de fondo */
@@ -556,7 +576,8 @@ const getWarehouseLabel = (value) => {
 
     .clear-filters-btn-compact,
     .refresh-btn-compact,
-    .new-adjustment-btn-compact {
+    .new-adjustment-btn-compact,
+    .excel-import-btn-compact {
         width: 36px;
         height: 36px;
         min-width: 36px;

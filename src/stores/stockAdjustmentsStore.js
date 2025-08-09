@@ -1,4 +1,4 @@
-import { createBulkStockAdjustments, createStockAdjustment, fetchStockAdjustments, getStockAdjustment, getStockAdjustmentsSummary } from '@/api';
+import { createBulkStockAdjustments, createStockAdjustment, downloadStockAdjustmentTemplate, fetchStockAdjustments, getStockAdjustment, getStockAdjustmentsSummary, importStockAdjustmentsFromExcel } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
 
@@ -41,7 +41,12 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
         },
 
         // Resumen de ajustes
-        summary: null
+        summary: null,
+
+        // Excel Import/Export
+        isExcelProcessing: false,
+        importResult: null,
+        importErrors: []
     }),
 
     getters: {
@@ -342,6 +347,114 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
             this.message = '';
             this.success = false;
             this.validationErrors = [];
+        },
+
+        // Descargar plantilla Excel
+        async downloadTemplate(params = {}) {
+            this.isExcelProcessing = true;
+            this.clearMessage();
+            try {
+                const queryParams = {
+                    warehouse_id: params.warehouse_id,
+                    include_expired: params.include_expired || false
+                };
+
+                // Filtrar parámetros nulos
+                Object.keys(queryParams).forEach((key) => {
+                    if (queryParams[key] === null || queryParams[key] === undefined || queryParams[key] === '') {
+                        delete queryParams[key];
+                    }
+                });
+
+                const response = await downloadStockAdjustmentTemplate(queryParams);
+                
+                // Crear enlace de descarga
+                const blob = new Blob([response.data], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                
+                // Generar nombre del archivo
+                const timestamp = new Date().toISOString().slice(0, 10);
+                const warehouseSuffix = params.warehouse_id ? `_almacen_${params.warehouse_id}` : '';
+                link.download = `plantilla_ajustes_stock${warehouseSuffix}_${timestamp}.xlsx`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                this.message = 'Plantilla descargada exitosamente';
+                this.success = true;
+                
+                return { success: true, message: 'Plantilla descargada exitosamente' };
+            } catch (error) {
+                return handleProcessError(error, this);
+            } finally {
+                this.isExcelProcessing = false;
+            }
+        },
+
+        // Importar ajustes desde Excel
+        async importFromExcel(file, options = {}) {
+            this.isExcelProcessing = true;
+            this.clearMessage();
+            this.importResult = null;
+            this.importErrors = [];
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                if (options.globalReason) {
+                    formData.append('global_reason', options.globalReason);
+                }
+                if (options.globalReference) {
+                    formData.append('global_reference_document', options.globalReference);
+                }
+                if (options.skipErrors) {
+                    formData.append('skip_validation_errors', 'true');
+                }
+
+                const response = await importStockAdjustmentsFromExcel(formData);
+                const processed = handleProcessSuccess(response, this);
+
+                if (processed.success) {
+                    this.importResult = processed.data;
+                    
+                    // Si hay errores pero se procesó parcialmente
+                    if (processed.data.errors && processed.data.errors.length > 0) {
+                        this.importErrors = processed.data.errors;
+                        this.message = `Importación completada con ${processed.data.summary.successful_adjustments} ajustes exitosos y ${processed.data.summary.failed_rows} errores`;
+                    } else {
+                        this.message = `Importación exitosa: ${processed.data.summary.successful_adjustments} ajustes procesados`;
+                    }
+                    
+                    this.success = true;
+                    
+                    // Recargar ajustes después de importar
+                    await this.fetchAdjustments();
+                } else {
+                    // Manejar errores de validación completos
+                    if (processed.data && processed.data.errors) {
+                        this.importErrors = processed.data.errors;
+                    }
+                }
+
+                return processed;
+            } catch (error) {
+                return handleProcessError(error, this);
+            } finally {
+                this.isExcelProcessing = false;
+            }
+        },
+
+        // Limpiar resultados de importación
+        clearImportResult() {
+            this.importResult = null;
+            this.importErrors = [];
         }
     }
 });
