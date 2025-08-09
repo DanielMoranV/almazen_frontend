@@ -1,5 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
+import Button from 'primevue/button';
+import Select from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
 
 const props = defineProps({
     totalAdjustments: {
@@ -187,7 +190,7 @@ const getWarehouseLabel = (value) => {
                 <div class="actions-section">
                     <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading"
                         @click="$emit('refresh')" v-tooltip.bottom="'Actualizar ajustes'" :disabled="isLoading" />
-                    <Button icon="pi pi-plus" label="Nuevo" class="new-adjustment-btn-compact"
+                    <Button icon="pi pi-plus" class="new-adjustment-btn-compact"
                         @click="$emit('newAdjustment')" v-tooltip.bottom="'Crear nuevo ajuste'" />
                 </div>
             </div>
@@ -298,12 +301,22 @@ const getWarehouseLabel = (value) => {
     @apply flex items-center gap-3;
 }
 
-/* Botón de refrescar con estilo glassmorphism */
+/* Botón de refrescar con estilo glassmorphism y animación */
 .refresh-btn-compact {
     @apply bg-white/20 border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    min-width: 48px;
-    min-height: 48px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.refresh-btn-compact:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
 .refresh-btn-compact:disabled {
@@ -311,10 +324,22 @@ const getWarehouseLabel = (value) => {
     transform: none !important;
 }
 
-/* Botón de nuevo ajuste */
+/* Botón de nuevo ajuste - circular y más prominente */
 .new-adjustment-btn-compact {
-    @apply bg-white/20 border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40;
+    @apply bg-white/20 border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40 hover:scale-105;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.new-adjustment-btn-compact:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
 }
 
 /* Animación del patrón de fondo */
@@ -343,8 +368,12 @@ const getWarehouseLabel = (value) => {
 
 /* Filtros compactos con mejor contraste */
 .filter-select-compact {
-    @apply bg-white/90 backdrop-blur-sm border-2 border-white/50 text-gray-800 rounded-lg px-3 py-2 min-w-32 transition-all duration-300 font-medium;
+    @apply bg-white/90 backdrop-blur-sm border-2 border-white/50 text-gray-800 text-sm font-medium transition-all duration-300;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    height: 40px;
+    min-width: 120px;
+    border-radius: 10px;
+    padding: 0 12px;
 }
 
 .filter-select-compact:hover {
@@ -357,8 +386,12 @@ const getWarehouseLabel = (value) => {
 
 /* Filtros de fecha compactos */
 .filter-date-compact {
-    @apply bg-white/90 backdrop-blur-sm border-2 border-white/50 text-gray-800 rounded-lg px-3 py-2 min-w-32 transition-all duration-300 font-medium;
+    @apply bg-white/90 backdrop-blur-sm border-2 border-white/50 text-gray-800 text-sm font-medium transition-all duration-300;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    height: 40px;
+    min-width: 140px;
+    border-radius: 10px;
+    padding: 0 12px;
 }
 
 .filter-date-compact:hover {
@@ -371,24 +404,45 @@ const getWarehouseLabel = (value) => {
 
 /* Mejorar contraste en el dropdown */
 :deep(.filter-select-compact .p-dropdown-label) {
-    @apply text-gray-800 font-medium;
+    @apply text-gray-800 text-sm font-medium;
+    line-height: 1.2;
 }
 
 :deep(.filter-select-compact .p-dropdown-trigger) {
     @apply text-gray-600;
+    width: 20px;
+    height: 20px;
 }
 
 /* Placeholder con mejor contraste */
 :deep(.filter-select-compact .p-dropdown-label.p-placeholder) {
-    @apply text-gray-600 font-normal;
+    @apply text-gray-600 text-sm font-normal;
+    line-height: 1.2;
+}
+
+/* Ajustar altura del dropdown interno */
+:deep(.filter-select-compact .p-dropdown) {
+    height: 40px !important;
+    min-height: 40px;
+}
+
+:deep(.filter-select-compact .p-inputtext) {
+    height: 40px !important;
+    padding: 0 12px !important;
+    font-size: 0.875rem !important;
+    line-height: 1.2 !important;
 }
 
 /* Botón limpiar filtros compacto */
 .clear-filters-btn-compact {
-    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40 rounded-lg px-3 py-2 transition-all duration-300;
+    @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40 transition-all duration-300;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    width: 40px;
+    height: 40px;
     min-width: 40px;
     min-height: 40px;
+    border-radius: 10px;
+    padding: 0;
 }
 
 .clear-filters-btn-compact:disabled {
@@ -456,7 +510,9 @@ const getWarehouseLabel = (value) => {
 
     .filter-select-compact,
     .filter-date-compact {
-        @apply min-w-32 text-sm;
+        height: 36px;
+        min-width: 110px;
+        font-size: 0.875rem;
     }
 
     .actions-section {
@@ -499,8 +555,12 @@ const getWarehouseLabel = (value) => {
     }
 
     .clear-filters-btn-compact,
-    .refresh-btn-compact {
-        @apply w-full;
+    .refresh-btn-compact,
+    .new-adjustment-btn-compact {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
     }
 }
 
