@@ -154,8 +154,6 @@ onMounted(async () => {
         showToast(severity, summary, adjustmentsStore.message);
         adjustmentsStore.clearMessage();
     }
-
-    console.log(adjustmentsStore.adjustmentsList);
 });
 
 // Utility function for showing toast messages
@@ -203,7 +201,7 @@ const openNewAdjustmentModal = () => {
     showNewAdjustmentModal.value = true;
 };
 
-const handleAdjustmentCreated = async (adjustmentData) => {
+const handleAdjustmentCreated = async () => {
     // Recargar la lista de ajustes
     await loadAdjustments();
     showToast('success', 'Éxito', 'Ajuste de stock creado correctamente');
