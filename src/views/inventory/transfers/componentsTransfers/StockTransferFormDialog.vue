@@ -260,9 +260,7 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
 </script>
 
 <template>
-    <Dialog v-model:visible="dialogVisible" modal
-        :header="transfer ? 'Editar Transferencia' : 'Nueva Transferencia de Stock'" :style="{ width: '800px' }"
-        :closable="!loading" :draggable="false" class="transfer-dialog">
+    <Dialog v-model:visible="dialogVisible" modal :header="transfer ? 'Editar Transferencia' : 'Nueva Transferencia de Stock'" :style="{ width: '800px' }" :closable="!loading" :draggable="false" class="transfer-dialog">
         <form @submit.prevent="handleSubmit" class="transfer-form">
             <!-- Product Search Section -->
             <div class="form-section">
@@ -274,11 +272,18 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                 <div class="field">
                     <label class="field-label">Buscar Producto *</label>
                     <div class="search-input-group">
-                        <AutoComplete v-model="productSearchQuery" :suggestions="productSuggestions"
+                        <AutoComplete
+                            v-model="productSearchQuery"
+                            :suggestions="productSuggestions"
                             :loading="isSearchingProducts"
-                            placeholder="Buscar por nombre, código, SKU o código de barras" optionLabel="label"
-                            @complete="searchProducts" @item-select="onProductSelect" :dropdown="true"
-                            :forceSelection="false" class="product-search">
+                            placeholder="Buscar por nombre, código, SKU o código de barras"
+                            optionLabel="label"
+                            @complete="searchProducts"
+                            @item-select="onProductSelect"
+                            :dropdown="true"
+                            :forceSelection="false"
+                            class="product-search"
+                        >
                             <template #empty>
                                 <div class="search-empty">
                                     <i class="pi pi-search"></i>
@@ -293,14 +298,11 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                                         <div class="product-name">{{ slotProps.item.productData.name }}</div>
                                         <div class="product-codes">
                                             <span class="product-sku">SKU: {{ slotProps.item.productData.sku }}</span>
-                                            <span v-if="slotProps.item.productData.barcode"
-                                                class="product-barcode">Barcode: {{ slotProps.item.productData.barcode
-                                                }}</span>
+                                            <span v-if="slotProps.item.productData.barcode" class="product-barcode">Barcode: {{ slotProps.item.productData.barcode }}</span>
                                         </div>
                                     </div>
                                     <div class="product-stock-count">
-                                        <Tag :value="`${slotProps.item.productData.stocks.length} stock${slotProps.item.productData.stocks.length !== 1 ? 's' : ''}`"
-                                            severity="info" />
+                                        <Tag :value="`${slotProps.item.productData.stocks.length} stock${slotProps.item.productData.stocks.length !== 1 ? 's' : ''}`" severity="info" />
                                     </div>
                                 </div>
                             </template>
@@ -313,8 +315,7 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                             </template>
                         </AutoComplete>
 
-                        <Button icon="pi pi-times" severity="secondary" @click="clearProductSelection"
-                            v-tooltip.top="'Limpiar selección'" :disabled="!selectedProduct" />
+                        <Button icon="pi pi-times" severity="secondary" @click="clearProductSelection" v-tooltip.top="'Limpiar selección'" :disabled="!selectedProduct" />
                     </div>
                     <small class="field-help">Busque el producto que desea transferir</small>
                 </div>
@@ -332,16 +333,14 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                         <h4 class="product-title">{{ productDetails.name }}</h4>
                         <div class="product-meta">
                             <span class="meta-item">SKU: {{ productDetails.sku || 'N/A' }}</span>
-                            <span v-if="productDetails.barcode" class="meta-item">Barcode: {{ productDetails.barcode
-                                }}</span>
+                            <span v-if="productDetails.barcode" class="meta-item">Barcode: {{ productDetails.barcode }}</span>
                         </div>
                     </div>
 
                     <div class="stocks-section">
                         <h5 class="stocks-title">Stocks Disponibles:</h5>
                         <div v-if="productDetails.stocks && productDetails.stocks.length > 0" class="stocks-grid">
-                            <div v-for="stock in productDetails.stocks" :key="stock.id" class="stock-card"
-                                :class="{ selected: formData.stock_id === stock.id }">
+                            <div v-for="stock in productDetails.stocks" :key="stock.id" class="stock-card" :class="{ selected: formData.stock_id === stock.id }">
                                 <div class="stock-info">
                                     <div class="stock-warehouse">
                                         <i class="pi pi-warehouse"></i>
@@ -356,10 +355,14 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                                         <span>Lote: {{ stock.batch.code }}</span>
                                     </div>
                                 </div>
-                                <Button icon="pi pi-check"
-                                    :severity="formData.stock_id === stock.id ? 'success' : 'secondary'" size="small"
-                                    @click="selectStock(stock)" :disabled="formData.stock_id === stock.id"
-                                    v-tooltip.left="'Seleccionar este stock'" />
+                                <Button
+                                    icon="pi pi-check"
+                                    :severity="formData.stock_id === stock.id ? 'success' : 'secondary'"
+                                    size="small"
+                                    @click="selectStock(stock)"
+                                    :disabled="formData.stock_id === stock.id"
+                                    v-tooltip.left="'Seleccionar este stock'"
+                                />
                             </div>
                         </div>
                         <div v-else class="no-stocks">
@@ -411,10 +414,17 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                             <span class="required-indicator">*</span>
                         </div>
                         <div class="field-card-content">
-                            <Select v-model="formData.to_warehouse_id" :options="filteredWarehouseOptions"
-                                optionLabel="label" optionValue="value" placeholder="Seleccione el almacén destino"
-                                filter filterPlaceholder="Buscar almacén..."
-                                :invalid="!formData.to_warehouse_id" class="w-full">
+                            <Select
+                                v-model="formData.to_warehouse_id"
+                                :options="filteredWarehouseOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Seleccione el almacén destino"
+                                filter
+                                filterPlaceholder="Buscar almacén..."
+                                :invalid="!formData.to_warehouse_id"
+                                class="w-full"
+                            >
                                 <template #value="slotProps">
                                     <div v-if="slotProps.value" class="selected-warehouse">
                                         <i class="pi pi-warehouse text-green-500"></i>
@@ -435,13 +445,8 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                             <span class="required-indicator">*</span>
                         </div>
                         <div class="field-card-content">
-                            <InputNumber v-model="formData.quantity" :min="1" :max="availableStock"
-                                placeholder="Ingrese la cantidad"
-                                :invalid="!formData.quantity || formData.quantity <= 0 || formData.quantity > availableStock"
-                                class="w-full" />
-                            <small class="field-help"> Cantidad a transferir (máximo: {{ availableStock }} unidades
-                                disponibles)
-                            </small>
+                            <InputNumber v-model="formData.quantity" :min="1" :max="availableStock" placeholder="Ingrese la cantidad" :invalid="!formData.quantity || formData.quantity <= 0 || formData.quantity > availableStock" class="w-full" />
+                            <small class="field-help"> Cantidad a transferir (máximo: {{ availableStock }} unidades disponibles) </small>
                         </div>
                     </div>
                 </div>
@@ -454,9 +459,7 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
                         <span class="required-indicator">*</span>
                     </div>
                     <div class="field-card-content">
-                        <Textarea v-model="formData.reason" rows="3"
-                            placeholder="Describa el motivo de la transferencia" :invalid="!formData.reason.trim()"
-                            class="w-full" />
+                        <Textarea v-model="formData.reason" rows="3" placeholder="Describa el motivo de la transferencia" :invalid="!formData.reason.trim()" class="w-full" />
                         <small class="field-help">Describa el motivo de la transferencia</small>
                     </div>
                 </div>
@@ -465,10 +468,8 @@ watch([() => formData.value.to_warehouse_id, () => selectedWarehouse.value], ([t
 
         <template #footer>
             <div class="dialog-footer">
-                <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click="handleCancel"
-                    :disabled="loading" />
-                <Button :label="transfer ? 'Actualizar Transferencia' : 'Crear Transferencia'" icon="pi pi-check"
-                    @click="handleSubmit" :loading="loading" :disabled="!isFormValid" />
+                <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click="handleCancel" :disabled="loading" />
+                <Button :label="transfer ? 'Actualizar Transferencia' : 'Crear Transferencia'" icon="pi pi-check" @click="handleSubmit" :loading="loading" :disabled="!isFormValid" />
             </div>
         </template>
     </Dialog>

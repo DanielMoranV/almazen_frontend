@@ -94,8 +94,8 @@ const formatQuantity = (quantity, type) => {
                                 <div
                                     class="quantity-value"
                                     :class="{
-                                        'positive': adjustmentData.adjustment_type === 'POSITIVO',
-                                        'negative': adjustmentData.adjustment_type === 'NEGATIVO'
+                                        positive: adjustmentData.adjustment_type === 'POSITIVO',
+                                        negative: adjustmentData.adjustment_type === 'NEGATIVO'
                                     }"
                                 >
                                     {{ formatQuantity(adjustmentData.quantity, adjustmentData.adjustment_type) }}
@@ -370,11 +370,11 @@ const formatQuantity = (quantity, type) => {
     .main-grid {
         @apply grid-cols-1;
     }
-    
+
     .header-content {
         @apply flex-col items-start;
     }
-    
+
     .quantity-display {
         @apply text-left;
     }
@@ -384,19 +384,19 @@ const formatQuantity = (quantity, type) => {
     .modal-content {
         padding: 1rem;
     }
-    
+
     .adjustment-header {
         @apply p-4;
     }
-    
+
     .card-content {
         @apply p-4;
     }
-    
+
     .info-grid {
         @apply grid-cols-1;
     }
-    
+
     .quantity-value {
         @apply text-2xl;
     }

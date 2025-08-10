@@ -359,3 +359,78 @@ export const exportInventoryToExcel = async (summaryData, detailData, fileName =
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), finalFileName);
 };
+
+// Función para descargar archivos blob (para endpoints de exportación)
+export const downloadBlobAsFile = (blob, filename) => {
+    saveAs(blob, filename);
+};
+
+// Función para procesar y validar datos de importación de stock inicial
+export const processStockImportData = async (file) => {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(file);
+
+    // Asumimos que la primera hoja contiene los datos de stock
+    const worksheet = workbook.worksheets[0];
+    const rows = [];
+
+    worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > 1) {
+            // Omitir el header
+            const rowValues = [];
+            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                rowValues[colNumber] = cell.value;
+            });
+            rows.push(rowValues);
+        }
+    });
+
+    return rows;
+};
+
+// Función para validar estructura de archivo de importación de stock
+export const validateStockImportStructure = (rows) => {
+    const errors = [];
+
+    if (rows.length === 0) {
+        errors.push('El archivo está vacío');
+        return { isValid: false, errors };
+    }
+
+    // Validar que cada fila tenga los campos requeridos
+    rows.forEach((row, index) => {
+        const rowNumber = index + 2; // +2 porque empezamos desde la fila 2 (después del header)
+
+        // Validar campos requeridos
+        if (!row[1]) {
+            // Producto ID
+            errors.push(`Fila ${rowNumber}: ID del producto es requerido`);
+        }
+
+        if (!row[8]) {
+            // Almacén ID
+            errors.push(`Fila ${rowNumber}: ID del almacén es requerido`);
+        }
+
+        if (!row[11] || row[11] <= 0) {
+            // Cantidad
+            errors.push(`Fila ${rowNumber}: Cantidad debe ser mayor a 0`);
+        }
+
+        if (!row[12] || row[12] <= 0) {
+            // Precio de costo
+            errors.push(`Fila ${rowNumber}: Precio de costo debe ser mayor a 0`);
+        }
+
+        if (!row[13] || row[13] <= 0) {
+            // Precio de venta
+            errors.push(`Fila ${rowNumber}: Precio de venta debe ser mayor a 0`);
+        }
+    });
+
+    return {
+        isValid: errors.length === 0,
+        errors: errors,
+        validRows: rows.length
+    };
+};

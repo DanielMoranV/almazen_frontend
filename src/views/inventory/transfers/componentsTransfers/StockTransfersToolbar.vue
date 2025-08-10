@@ -122,102 +122,82 @@ const exportItems = [
         <!-- Header with summary -->
         <div class="toolbar-header">
             <div class="toolbar-title">
-                <Button 
-                    :icon="filtersCollapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'"
-                    @click="toggleFilters"
-                    text
-                    size="small"
-                    class="toggle-button"
-                    v-tooltip.top="filtersCollapsed ? 'Mostrar filtros' : 'Ocultar filtros'"
-                />
+                <Button :icon="filtersCollapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" @click="toggleFilters" text size="small" class="toggle-button" v-tooltip.top="filtersCollapsed ? 'Mostrar filtros' : 'Ocultar filtros'" />
                 <i class="pi pi-filter"></i>
                 <span>Filtros de Búsqueda</span>
                 <Tag v-if="hasActiveFilters" value="Filtros Activos" severity="info" class="ml-2" />
             </div>
             <div class="toolbar-summary">
-                <span class="text-sm text-gray-600 dark:text-gray-400"> {{ totalTransfers }} transferencia{{
-                    totalTransfers !== 1 ? 's' : '' }} encontrada{{ totalTransfers !== 1 ? 's' : '' }} </span>
+                <span class="text-sm text-gray-600 dark:text-gray-400"> {{ totalTransfers }} transferencia{{ totalTransfers !== 1 ? 's' : '' }} encontrada{{ totalTransfers !== 1 ? 's' : '' }} </span>
             </div>
         </div>
 
         <!-- Filters Grid -->
         <transition name="slide-down">
             <div v-show="!filtersCollapsed" class="filters-grid">
-            <!-- Date Range Filters -->
-            <div class="filter-group">
-                <h4 class="filter-group-title">
-                    <i class="pi pi-calendar"></i>
-                    Rango de Fechas
-                </h4>
-                <div class="filter-row">
-                    <div class="filter-item">
-                        <label>Fecha Desde:</label>
-                        <DatePicker v-model="dateFromModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha"
-                            class="w-full" />
-                    </div>
-                    <div class="filter-item">
-                        <label>Fecha Hasta:</label>
-                        <DatePicker v-model="dateToModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha"
-                            class="w-full" />
+                <!-- Date Range Filters -->
+                <div class="filter-group">
+                    <h4 class="filter-group-title">
+                        <i class="pi pi-calendar"></i>
+                        Rango de Fechas
+                    </h4>
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Fecha Desde:</label>
+                            <DatePicker v-model="dateFromModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha" class="w-full" />
+                        </div>
+                        <div class="filter-item">
+                            <label>Fecha Hasta:</label>
+                            <DatePicker v-model="dateToModel" showIcon dateFormat="dd/mm/yy" placeholder="Seleccionar fecha" class="w-full" />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Warehouse Filters -->
-            <div class="filter-group">
-                <h4 class="filter-group-title">
-                    <i class="pi pi-warehouse"></i>
-                    Almacenes
-                </h4>
-                <div class="filter-row">
-                    <div class="filter-item">
-                        <label>Almacén Origen:</label>
-                        <Select v-model="fromWarehouseModel" :options="warehouseOptions" optionLabel="label"
-                            optionValue="value" placeholder="Seleccionar almacén origen" class="w-full" filter
-                            filterPlaceholder="Buscar almacén..." />
-                    </div>
-                    <div class="filter-item">
-                        <label>Almacén Destino:</label>
-                        <Select v-model="toWarehouseModel" :options="warehouseOptions" optionLabel="label"
-                            optionValue="value" placeholder="Seleccionar almacén destino" class="w-full" filter
-                            filterPlaceholder="Buscar almacén..." />
+                <!-- Warehouse Filters -->
+                <div class="filter-group">
+                    <h4 class="filter-group-title">
+                        <i class="pi pi-warehouse"></i>
+                        Almacenes
+                    </h4>
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Almacén Origen:</label>
+                            <Select v-model="fromWarehouseModel" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Seleccionar almacén origen" class="w-full" filter filterPlaceholder="Buscar almacén..." />
+                        </div>
+                        <div class="filter-item">
+                            <label>Almacén Destino:</label>
+                            <Select v-model="toWarehouseModel" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Seleccionar almacén destino" class="w-full" filter filterPlaceholder="Buscar almacén..." />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Product and Status Filters -->
-            <div class="filter-group">
-                <h4 class="filter-group-title">
-                    <i class="pi pi-search"></i>
-                    Búsqueda y Estado
-                </h4>
-                <div class="filter-row">
-                    <div class="filter-item">
-                        <label>Buscar Producto:</label>
-                        <InputText v-model="productModel" placeholder="Nombre, código o SKU del producto"
-                            class="w-full" />
-                    </div>
-                    <div class="filter-item">
-                        <label>Estado:</label>
-                        <Select v-model="statusModel" :options="statusOptions" optionLabel="label" optionValue="value"
-                            placeholder="Seleccionar estado" class="w-full" />
+                <!-- Product and Status Filters -->
+                <div class="filter-group">
+                    <h4 class="filter-group-title">
+                        <i class="pi pi-search"></i>
+                        Búsqueda y Estado
+                    </h4>
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Buscar Producto:</label>
+                            <InputText v-model="productModel" placeholder="Nombre, código o SKU del producto" class="w-full" />
+                        </div>
+                        <div class="filter-item">
+                            <label>Estado:</label>
+                            <Select v-model="statusModel" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Seleccionar estado" class="w-full" />
+                        </div>
                     </div>
                 </div>
-            </div>
             </div>
         </transition>
 
         <!-- Action Buttons -->
         <div class="toolbar-actions">
             <div class="action-buttons">
-                <Button icon="pi pi-search" label="Buscar" @click="$emit('applyFilters')" class="search-button"
-                    v-tooltip.top="'Aplicar filtros de búsqueda'" />
-                <Button icon="pi pi-refresh" label="Actualizar" @click="$emit('refresh')" :loading="isLoading"
-                    class="refresh-button" v-tooltip.top="'Actualizar lista de transferencias'" />
-                <Button icon="pi pi-filter-slash" label="Limpiar Filtros" outlined @click="$emit('clearFilters')"
-                    :disabled="!hasActiveFilters" class="clear-button" v-tooltip.top="'Limpiar todos los filtros'" />
-                <SplitButton label="Exportar" icon="pi pi-download" :model="exportItems" outlined
-                    :disabled="totalTransfers === 0" class="export-button" v-tooltip.top="'Exportar transferencias'" />
+                <Button icon="pi pi-search" label="Buscar" @click="$emit('applyFilters')" class="search-button" v-tooltip.top="'Aplicar filtros de búsqueda'" />
+                <Button icon="pi pi-refresh" label="Actualizar" @click="$emit('refresh')" :loading="isLoading" class="refresh-button" v-tooltip.top="'Actualizar lista de transferencias'" />
+                <Button icon="pi pi-filter-slash" label="Limpiar Filtros" outlined @click="$emit('clearFilters')" :disabled="!hasActiveFilters" class="clear-button" v-tooltip.top="'Limpiar todos los filtros'" />
+                <SplitButton label="Exportar" icon="pi pi-download" :model="exportItems" outlined :disabled="totalTransfers === 0" class="export-button" v-tooltip.top="'Exportar transferencias'" />
             </div>
         </div>
     </div>

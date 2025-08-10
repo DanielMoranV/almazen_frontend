@@ -40,6 +40,25 @@ export const searchProductsForSale = (params = {}) => {
     return axios.get(`/products/search-sale${queryString ? `?${queryString}` : ''}`);
 };
 
+// Products Mass Import
+export const downloadProductImportTemplate = () => {
+    return axios.get('/products/import-template', {
+        responseType: 'blob'
+    });
+};
+
+export const importProductsFromExcel = (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return axios.post('/products/import-excel', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        },
+        timeout: 300000 // 5 minutes timeout for large files
+    });
+};
+
 // Units
 export const fetchUnits = () => axios.get('/units');
 export const createUnit = (payload) => axios.post('/units', payload);
@@ -270,3 +289,37 @@ export const fetchStockTransfers = (params = {}) => {
 };
 export const createStockTransfer = (payload) => axios.post('/stock-transfers', payload);
 export const restoreStockTransfer = (id) => axios.post(`/stock-transfers/${id}/restore`);
+
+// Stock Export/Import - Initial Stock Management
+export const exportProductsWithoutStock = () => {
+    return axios.get('/stock-export-import/export-products-without-stock', {
+        responseType: 'blob'
+    });
+};
+
+export const downloadStockTemplate = () => {
+    return axios.get('/stock-export-import/download-template', {
+        responseType: 'blob'
+    });
+};
+
+export const importInitialStock = (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return axios.post('/stock-export-import/import-initial-stock', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
+// Public Store API - Sin autenticación
+export const fetchPublicProducts = (warehouseId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/public/warehouses/${warehouseId}/products${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchPublicProduct = (warehouseId, productId) => {
+    return axios.get(`/public/warehouses/${warehouseId}/products/${productId}`);
+};

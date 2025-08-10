@@ -202,25 +202,12 @@ const hasAdjustments = computed(() => props.adjustments && props.adjustments.len
                                         <InputIcon>
                                             <i class="pi pi-search text-white" />
                                         </InputIcon>
-                                        <InputText 
-                                            v-model="localFilters['global'].value" 
-                                            placeholder="Buscar por producto, SKU, razón, documento..." 
-                                            class="search-input" 
-                                            fluid 
-                                        />
+                                        <InputText v-model="localFilters['global'].value" placeholder="Buscar por producto, SKU, razón, documento..." class="search-input" fluid />
                                     </IconField>
                                 </div>
                             </div>
                             <div class="actions-section">
-                                <Button 
-                                    type="button" 
-                                    icon="pi pi-file-excel" 
-                                    label="Exportar" 
-                                    class="export-btn" 
-                                    @click="exportAdjustments()" 
-                                    v-tooltip.top="'Exportar ajustes a Excel'" 
-                                    :disabled="!adjustments.length" 
-                                />
+                                <Button type="button" icon="pi pi-file-excel" label="Exportar" class="export-btn" @click="exportAdjustments()" v-tooltip.top="'Exportar ajustes a Excel'" :disabled="!adjustments.length" />
                             </div>
                         </div>
                     </div>

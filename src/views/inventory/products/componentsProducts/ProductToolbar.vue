@@ -10,7 +10,7 @@ defineProps({
     }
 });
 
-defineEmits(['refresh', 'create']);
+defineEmits(['refresh', 'create', 'open-import']);
 </script>
 
 <template>
@@ -38,6 +38,7 @@ defineEmits(['refresh', 'create']);
                 <div class="actions-section">
                     <div class="action-buttons">
                         <Button icon="pi pi-refresh" class="action-btn refresh-btn" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar lista'" :disabled="isLoading" />
+                        <Button icon="pi pi-file-import" label="Importar" class="action-btn import-btn" @click="$emit('open-import')" v-tooltip.bottom="'Importación masiva de productos'" />
                         <Button icon="pi pi-plus" label="Agregar Producto" class="action-btn create-btn" @click="$emit('create')" v-tooltip.bottom="'Crear nuevo producto'" />
                     </div>
                 </div>
@@ -148,6 +149,13 @@ defineEmits(['refresh', 'create']);
 .refresh-btn:disabled {
     @apply opacity-60 cursor-not-allowed;
     transform: none !important;
+}
+
+/* Botón de importar con estilo emerald */
+.import-btn {
+    @apply bg-gradient-to-r from-emerald-500 to-teal-600 border-2 border-emerald-500 text-white hover:from-emerald-600 hover:to-teal-700 hover:border-emerald-600;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    font-weight: 600;
 }
 
 /* Botón de crear con gradiente llamativo */

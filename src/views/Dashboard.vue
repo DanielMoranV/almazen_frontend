@@ -1,10 +1,13 @@
 <script setup>
 import { useDashboardStore } from '@/stores/dashboardStore';
+import { useWarehousesStore } from '@/stores/warehousesStore';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const dashboardStore = useDashboardStore();
+const warehousesStore = useWarehousesStore();
 const { getDashboardMetrics, getLowStockProducts, getLowStockSummary, getExpiringProducts, getExpiringProductsSummary, isLoadingDashboard, getTotalSalesGrowth, getInventoryHealthScore } = storeToRefs(dashboardStore);
+const { warehousesList } = storeToRefs(warehousesStore);
 
 const refreshInterval = ref(null);
 // Referencias a instancias de Chart para destruirlas al desmontar
@@ -41,6 +44,54 @@ const formatExpirationDate = (dateString) => {
         month: 'short',
         day: 'numeric'
     });
+};
+
+// Estados para la sección de catálogo
+const selectedWarehouse = ref(null);
+const catalogUrl = ref('');
+const showCatalogDialog = ref(false);
+const copySuccess = ref(false);
+
+// Generar URL del catálogo público
+const generateCatalogUrl = (warehouseId) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/store/${warehouseId}`;
+};
+
+// Copiar URL al portapapeles
+const copyToClipboard = async (url) => {
+    try {
+        await navigator.clipboard.writeText(url);
+        copySuccess.value = true;
+        setTimeout(() => {
+            copySuccess.value = false;
+        }, 2000);
+    } catch (err) {
+        // Fallback para navegadores que no soportan clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        copySuccess.value = true;
+        setTimeout(() => {
+            copySuccess.value = false;
+        }, 2000);
+    }
+};
+
+// Abrir diálogo de catálogo
+const openCatalogDialog = (warehouse) => {
+    selectedWarehouse.value = warehouse;
+    catalogUrl.value = generateCatalogUrl(warehouse.id);
+    showCatalogDialog.value = true;
+};
+
+// Abrir catálogo en nueva pestaña
+const openCatalog = (warehouseId) => {
+    const url = generateCatalogUrl(warehouseId);
+    window.open(url, '_blank');
 };
 
 // Configuración de gráficas
@@ -87,6 +138,8 @@ const refreshDashboard = async () => {
 
 onMounted(async () => {
     await refreshDashboard();
+    // Cargar almacenes para la sección de catálogo
+    await warehousesStore.fetchWarehouses();
 
     // Auto-refresh cada 5 minutos
     refreshInterval.value = setInterval(refreshDashboard, 5 * 60 * 1000);
@@ -232,6 +285,67 @@ onUnmounted(() => {
                         </template>
                     </Card>
                 </div>
+
+                <!-- Sección de Catálogo Público -->
+                <Card>
+                    <template #title>
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-indigo-100 rounded-lg">
+                                <i class="pi pi-globe text-indigo-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-900">Catálogo Público</h2>
+                                <p class="text-sm text-gray-600">Comparte tu catálogo con clientes</p>
+                            </div>
+                        </div>
+                    </template>
+                    <template #content>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div
+                                v-for="warehouse in warehousesList"
+                                :key="warehouse.id"
+                                class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-indigo-300"
+                            >
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 mb-1">
+                                            {{ warehouse.name }}
+                                        </h3>
+                                        <p class="text-sm text-gray-600 mb-2" v-if="warehouse.location">
+                                            <i class="pi pi-map-marker mr-1"></i>
+                                            {{ warehouse.location }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-2">
+                                    <Button
+                                        label="Ver Catálogo"
+                                        icon="pi pi-external-link"
+                                        size="small"
+                                        outlined
+                                        @click="openCatalog(warehouse.id)"
+                                        class="flex-1"
+                                    />
+                                    <Button
+                                        icon="pi pi-share-alt"
+                                        size="small"
+                                        severity="info"
+                                        @click="openCatalogDialog(warehouse)"
+                                        v-tooltip.top="'Compartir'"
+                                    />
+                                </div>
+                            </div>
+
+                            <!-- Card para crear nuevo catálogo si no hay almacenes -->
+                            <div v-if="warehousesList.length === 0" class="col-span-full text-center py-8 text-gray-500">
+                                <i class="pi pi-warehouse text-4xl mb-4 text-gray-400"></i>
+                                <p class="text-lg mb-2">No hay almacenes configurados</p>
+                                <p class="text-sm">Crea un almacén para generar catálogos públicos</p>
+                            </div>
+                        </div>
+                    </template>
+                </Card>
 
                 <!-- Alertas de Stock -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -433,6 +547,88 @@ onUnmounted(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Dialog para compartir catálogo -->
+        <Dialog 
+            v-model:visible="showCatalogDialog" 
+            :style="{ width: '32rem' }" 
+            header="Compartir Catálogo" 
+            :modal="true"
+        >
+            <div class="space-y-4">
+                <!-- Información del almacén -->
+                <div v-if="selectedWarehouse" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="p-2 bg-indigo-100 rounded-lg">
+                        <i class="pi pi-warehouse text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">{{ selectedWarehouse.name }}</h3>
+                        <p class="text-sm text-gray-600" v-if="selectedWarehouse.location">
+                            {{ selectedWarehouse.location }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- URL del catálogo -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        URL del catálogo público:
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <InputText 
+                            :value="catalogUrl" 
+                            readonly 
+                            class="flex-1"
+                        />
+                        <Button
+                            :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'"
+                            :severity="copySuccess ? 'success' : 'secondary'"
+                            @click="copyToClipboard(catalogUrl)"
+                            v-tooltip.top="copySuccess ? 'Copiado!' : 'Copiar'"
+                        />
+                    </div>
+                </div>
+
+                <!-- Información adicional -->
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="flex items-start space-x-2">
+                        <i class="pi pi-info-circle text-blue-600 mt-0.5"></i>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-medium mb-1">¿Cómo funciona?</p>
+                            <ul class="list-disc list-inside space-y-1 text-xs">
+                                <li>Este enlace es público, no requiere autenticación</li>
+                                <li>Los clientes pueden ver productos y precios actualizados</li>
+                                <li>Se incluye información de stock y disponibilidad</li>
+                                <li>El catálogo se actualiza automáticamente</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones -->
+                <div class="flex items-center justify-between pt-4">
+                    <Button 
+                        label="Ver Catálogo" 
+                        icon="pi pi-external-link" 
+                        outlined 
+                        @click="openCatalog(selectedWarehouse?.id)"
+                    />
+                    <div class="space-x-2">
+                        <Button 
+                            label="Cerrar" 
+                            text 
+                            @click="showCatalogDialog = false"
+                        />
+                        <Button 
+                            label="Copiar URL" 
+                            :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'"
+                            :severity="copySuccess ? 'success' : 'info'"
+                            @click="copyToClipboard(catalogUrl)"
+                        />
+                    </div>
+                </div>
+            </div>
+        </Dialog>
     </div>
 </template>
 

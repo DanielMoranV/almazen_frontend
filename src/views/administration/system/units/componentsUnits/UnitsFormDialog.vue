@@ -52,12 +52,15 @@ watch(
 </script>
 
 <template>
-    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '500px' }" :header="form.id ? 'Editar Unidad' : 'Nueva Unidad'" :modal="true" :pt="{ header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white', content: 'p-6 bg-white dark:bg-gray-800' }"
-        
+    <Dialog
+        :visible="visible"
+        @update:visible="(val) => emit('update:visible', val)"
+        :style="{ width: '500px' }"
+        :header="form.id ? 'Editar Unidad' : 'Nueva Unidad'"
+        :modal="true"
+        :pt="{ header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white', content: 'p-6 bg-white dark:bg-gray-800' }"
     >
-        >
-        
-    >
+        > >
         <div class="field">
             <label for="name" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Nombre</label>
             <InputText id="name" v-model="form.name" placeholder="Ingrese el nombre de la unidad" :class="{ 'p-invalid': !form.name }" fluid class="dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600" />

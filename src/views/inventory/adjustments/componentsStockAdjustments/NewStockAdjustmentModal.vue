@@ -293,8 +293,7 @@ const submitAdjustment = async () => {
 </script>
 
 <template>
-    <Dialog v-model:visible="isVisible" modal header="Nuevo Ajuste de Stock" :style="{ width: '60rem' }"
-        :breakpoints="{ '1199px': '75vw', '575px': '90vw' }" class="p-fluid">
+    <Dialog v-model:visible="isVisible" modal header="Nuevo Ajuste de Stock" :style="{ width: '60rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }" class="p-fluid">
         <form @submit.prevent="submitAdjustment">
             <div class="grid">
                 <!-- Búsqueda de Producto -->
@@ -305,31 +304,19 @@ const submitAdjustment = async () => {
                             Buscar Producto *
                         </label>
                         <div class="relative">
-                            <InputText id="product-search" v-model="productSearchQuery"
-                                placeholder="Buscar por nombre, SKU o código de barras..." class="w-full p-3"
-                                :class="{ 'p-invalid': !selectedProduct }" :loading="isSearchingProducts" />
-                            <i v-if="isSearchingProducts"
-                                class="pi pi-spin pi-spinner absolute right-3 top-1/2 transform -translate-y-1/2 text-500">
-                            </i>
+                            <InputText id="product-search" v-model="productSearchQuery" placeholder="Buscar por nombre, SKU o código de barras..." class="w-full p-3" :class="{ 'p-invalid': !selectedProduct }" :loading="isSearchingProducts" />
+                            <i v-if="isSearchingProducts" class="pi pi-spin pi-spinner absolute right-3 top-1/2 transform -translate-y-1/2 text-500"> </i>
                         </div>
 
                         <!-- Resultados de búsqueda -->
-                        <div v-if="productSearchResults.length > 0"
-                            class="mt-3 max-h-60 overflow-y-auto border rounded-lg shadow-sm bg-white">
-                            <div v-for="product in productSearchResults" :key="product.id"
-                                @click="selectProduct(product)"
-                                class="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 transition-colors duration-200">
+                        <div v-if="productSearchResults.length > 0" class="mt-3 max-h-60 overflow-y-auto border rounded-lg shadow-sm bg-white">
+                            <div v-for="product in productSearchResults" :key="product.id" @click="selectProduct(product)" class="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 transition-colors duration-200">
                                 <div class="flex justify-between items-start">
                                     <div class="flex-1">
                                         <div class="font-semibold text-gray-900 text-lg">{{ product.name }}</div>
-                                        <div class="text-sm text-gray-600 mt-1"><i class="pi pi-tag mr-1"></i>SKU: {{
-                                            product.sku }} | <i class="pi pi-barcode mr-1"></i>Código: {{
-                                            product.barcode }}</div>
-                                        <div v-if="product.available_stock && product.available_stock.length > 0"
-                                            class="text-xs text-blue-600 mt-2 font-medium">
-                                            <i class="pi pi-box mr-1"></i>Stock disponible: {{
-                                                product.available_stock[0].total_stock ||
-                                            product.available_stock[0].available_quantity || 0 }} unidades
+                                        <div class="text-sm text-gray-600 mt-1"><i class="pi pi-tag mr-1"></i>SKU: {{ product.sku }} | <i class="pi pi-barcode mr-1"></i>Código: {{ product.barcode }}</div>
+                                        <div v-if="product.available_stock && product.available_stock.length > 0" class="text-xs text-blue-600 mt-2 font-medium">
+                                            <i class="pi pi-box mr-1"></i>Stock disponible: {{ product.available_stock[0].total_stock || product.available_stock[0].available_quantity || 0 }} unidades
                                         </div>
                                     </div>
                                     <div class="text-right">
@@ -340,24 +327,26 @@ const submitAdjustment = async () => {
                         </div>
 
                         <!-- Producto seleccionado -->
-                        <div v-if="selectedProduct"
-                            class="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl shadow-sm">
+                        <div v-if="selectedProduct" class="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl shadow-sm">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex items-center">
-                                    <div
-                                        class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-3">
                                         <i class="pi pi-check-circle text-green-600 text-xl"></i>
                                     </div>
                                     <div>
                                         <div class="font-bold text-green-800 text-lg">{{ selectedProduct.name }}</div>
-                                        <div class="text-sm text-green-600"><i class="pi pi-tag mr-1"></i>SKU: {{
-                                            selectedProduct.sku }}</div>
+                                        <div class="text-sm text-green-600"><i class="pi pi-tag mr-1"></i>SKU: {{ selectedProduct.sku }}</div>
                                     </div>
                                 </div>
-                                <Button icon="pi pi-times" class="p-button-text p-button-sm p-button-rounded" @click="
-                                    selectedProduct = null;
-                                formData.stock_id = null;
-                                " v-tooltip.left="'Cambiar producto'" />
+                                <Button
+                                    icon="pi pi-times"
+                                    class="p-button-text p-button-sm p-button-rounded"
+                                    @click="
+                                        selectedProduct = null;
+                                        formData.stock_id = null;
+                                    "
+                                    v-tooltip.left="'Cambiar producto'"
+                                />
                             </div>
 
                             <!-- Detalle por almacén y lotes -->
@@ -366,20 +355,15 @@ const submitAdjustment = async () => {
                                     <i class="pi pi-building mr-2 text-blue-600"></i>
                                     Selecciona el stock a ajustar:
                                 </div>
-                                <div v-for="stock in selectedProduct.available_stock" :key="stock.id"
-                                    class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                <div v-for="stock in selectedProduct.available_stock" :key="stock.id" class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                                     <div class="flex items-center justify-between mb-3">
                                         <div class="flex items-center">
-                                            <div
-                                                class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                                                 <i class="pi pi-building text-blue-600"></i>
                                             </div>
                                             <div>
-                                                <div class="font-bold text-gray-900">{{ stock.warehouse_name ||
-                                                    stock.warehouse?.name }}</div>
-                                                <div class="text-sm text-gray-500"><i class="pi pi-box mr-1"></i>Stock
-                                                    total: {{ stock.total_stock || stock.available_quantity || 0 }}
-                                                    unidades</div>
+                                                <div class="font-bold text-gray-900">{{ stock.warehouse_name || stock.warehouse?.name }}</div>
+                                                <div class="text-sm text-gray-500"><i class="pi pi-box mr-1"></i>Stock total: {{ stock.total_stock || stock.available_quantity || 0 }} unidades</div>
                                             </div>
                                         </div>
                                     </div>
@@ -390,34 +374,34 @@ const submitAdjustment = async () => {
                                             Lotes disponibles ({{ stock.batches.length }}):
                                         </div>
                                         <div class="space-y-2">
-                                            <div v-for="batch in stock.batches" :key="batch.id"
-                                                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200">
+                                            <div v-for="batch in stock.batches" :key="batch.id" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200">
                                                 <div class="flex-1">
                                                     <div class="flex items-center space-x-3">
-                                                        <span class="font-semibold text-gray-900">{{ batch.batch_code
-                                                            }}</span>
-                                                        <span
-                                                            class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                                        <span class="font-semibold text-gray-900">{{ batch.batch_code }}</span>
+                                                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                                                             {{ parseFloat(batch.available_quantity).toFixed(2) }}
                                                             unidades
                                                         </span>
                                                     </div>
-                                                    <div class="text-xs text-gray-500 mt-1"><i
-                                                            class="pi pi-calendar mr-1"></i>Vence: {{
-                                                        batch.expiration_date }}</div>
+                                                    <div class="text-xs text-gray-500 mt-1"><i class="pi pi-calendar mr-1"></i>Vence: {{ batch.expiration_date }}</div>
                                                 </div>
-                                                <Button size="small"
+                                                <Button
+                                                    size="small"
                                                     :label="formData.stock_id === batch.stock_id ? 'Seleccionado' : 'Seleccionar'"
                                                     :class="formData.stock_id === batch.stock_id ? 'p-button-success' : 'p-button-outlined'"
-                                                    @click="selectStockId(batch.stock_id)" class="ml-3" />
+                                                    @click="selectStockId(batch.stock_id)"
+                                                    class="ml-3"
+                                                />
                                             </div>
                                         </div>
                                     </div>
                                     <div v-else class="mt-3">
-                                        <Button size="small"
+                                        <Button
+                                            size="small"
                                             :label="formData.stock_id === stock.id ? 'Seleccionado' : 'Seleccionar'"
                                             :class="formData.stock_id === stock.id ? 'p-button-success' : 'p-button-outlined'"
-                                            @click="selectStockId(stock.id)" />
+                                            @click="selectStockId(stock.id)"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -431,8 +415,7 @@ const submitAdjustment = async () => {
                         <i class="pi pi-sliders-h mr-2 text-orange-600"></i>
                         Tipo de Ajuste *
                     </label>
-                    <Dropdown id="type" v-model="formData.adjustment_type" :options="adjustmentTypes"
-                        option-label="label" option-value="value" class="w-full">
+                    <Dropdown id="type" v-model="formData.adjustment_type" :options="adjustmentTypes" option-label="label" option-value="value" class="w-full">
                         <template #option="{ option }">
                             <div class="flex align-items-center">
                                 <i :class="`pi ${option.icon} mr-3 ${option.class} text-lg`"></i>
@@ -441,10 +424,8 @@ const submitAdjustment = async () => {
                         </template>
                         <template #value="{ value }">
                             <div v-if="value" class="flex align-items-center">
-                                <i
-                                    :class="`pi ${adjustmentTypes.find((t) => t.value === value)?.icon} mr-2 ${adjustmentTypes.find((t) => t.value === value)?.class}`"></i>
-                                <span class="font-medium">{{adjustmentTypes.find((t) => t.value === value)?.label
-                                    }}</span>
+                                <i :class="`pi ${adjustmentTypes.find((t) => t.value === value)?.icon} mr-2 ${adjustmentTypes.find((t) => t.value === value)?.class}`"></i>
+                                <span class="font-medium">{{ adjustmentTypes.find((t) => t.value === value)?.label }}</span>
                             </div>
                         </template>
                     </Dropdown>
@@ -456,14 +437,10 @@ const submitAdjustment = async () => {
                         <i class="pi pi-calculator mr-2 text-green-600"></i>
                         Cantidad *
                     </label>
-                    <InputNumber id="quantity" v-model="formData.quantity" :min="0.01" :step="0.01" mode="decimal"
-                        placeholder="0.00" class="w-full p-3"
-                        :class="{ 'p-invalid': !formData.quantity || formData.quantity <= 0 }" />
-                    <small v-if="formData.adjustment_type === 'NEGATIVO' && selectedStockInfo"
-                        class="text-500 flex items-center mt-2">
+                    <InputNumber id="quantity" v-model="formData.quantity" :min="0.01" :step="0.01" mode="decimal" placeholder="0.00" class="w-full p-3" :class="{ 'p-invalid': !formData.quantity || formData.quantity <= 0 }" />
+                    <small v-if="formData.adjustment_type === 'NEGATIVO' && selectedStockInfo" class="text-500 flex items-center mt-2">
                         <i class="pi pi-exclamation-triangle mr-1 text-orange-500"></i>
-                        Máximo disponible: {{ selectedStockInfo.total_stock || selectedStockInfo.available_quantity || 0
-                        }}
+                        Máximo disponible: {{ selectedStockInfo.total_stock || selectedStockInfo.available_quantity || 0 }}
                     </small>
                 </div>
 
@@ -476,13 +453,10 @@ const submitAdjustment = async () => {
                     <div class="mb-3">
                         <div class="text-sm text-gray-600 mb-2">Razones predefinidas:</div>
                         <div class="flex flex-wrap gap-2">
-                            <Button v-for="reason in reasonOptions" :key="reason" :label="reason" size="small"
-                                class="p-button-outlined p-button-sm" @click="selectPredefinedReason(reason)" />
+                            <Button v-for="reason in reasonOptions" :key="reason" :label="reason" size="small" class="p-button-outlined p-button-sm" @click="selectPredefinedReason(reason)" />
                         </div>
                     </div>
-                    <Textarea id="reason" v-model="formData.reason" rows="3"
-                        placeholder="Describe la razón del ajuste..." class="w-full"
-                        :class="{ 'p-invalid': !formData.reason.trim() }" />
+                    <Textarea id="reason" v-model="formData.reason" rows="3" placeholder="Describe la razón del ajuste..." class="w-full" :class="{ 'p-invalid': !formData.reason.trim() }" />
                 </div>
 
                 <!-- Documento de Referencia -->
@@ -491,8 +465,7 @@ const submitAdjustment = async () => {
                         <i class="pi pi-file mr-2 text-blue-600"></i>
                         Documento de Referencia
                     </label>
-                    <InputText id="reference" v-model="formData.reference_document" placeholder="Ej: INV-2024-001"
-                        class="w-full" />
+                    <InputText id="reference" v-model="formData.reference_document" placeholder="Ej: INV-2024-001" class="w-full" />
                 </div>
 
                 <!-- Notas -->
@@ -501,17 +474,14 @@ const submitAdjustment = async () => {
                         <i class="pi pi-sticky-note mr-2 text-gray-600"></i>
                         Notas Adicionales
                     </label>
-                    <Textarea id="notes" v-model="formData.notes" rows="3" placeholder="Notas adicionales (opcional)..."
-                        class="w-full" />
+                    <Textarea id="notes" v-model="formData.notes" rows="3" placeholder="Notas adicionales (opcional)..." class="w-full" />
                 </div>
             </div>
 
             <!-- Footer con botones -->
             <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-                <Button type="button" label="Cancelar" icon="pi pi-times" class="p-button-outlined"
-                    @click="isVisible = false" />
-                <Button type="submit" label="Crear Ajuste" icon="pi pi-check" class="p-button-success"
-                    :loading="loading" :disabled="!isFormValid" />
+                <Button type="button" label="Cancelar" icon="pi pi-times" class="p-button-outlined" @click="isVisible = false" />
+                <Button type="submit" label="Crear Ajuste" icon="pi pi-check" class="p-button-success" :loading="loading" :disabled="!isFormValid" />
             </div>
         </form>
     </Dialog>

@@ -29,7 +29,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['refresh', 'update:warehouseFilter', 'update:stockStatusFilter', 'clear-filters']);
+const emit = defineEmits(['refresh', 'update:warehouseFilter', 'update:stockStatusFilter', 'clear-filters', 'open-import-export']);
 
 // Estado local para los filtros
 const localWarehouseFilter = ref(props.warehouseFilter);
@@ -135,7 +135,10 @@ const getStatusLabel = (value) => {
 
                 <!-- Sección derecha: Acciones -->
                 <div class="actions-section">
-                    <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar stock'" :disabled="isLoading" />
+                    <div class="action-buttons">
+                        <Button icon="pi pi-file-export" class="import-export-btn action-btn" @click="$emit('open-import-export')" v-tooltip.bottom="'Import/Export Stock'" label="Import/Export" />
+                        <Button icon="pi pi-refresh" class="refresh-btn-compact action-btn" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar stock'" :disabled="isLoading" />
+                    </div>
                 </div>
             </div>
 
@@ -272,6 +275,18 @@ const getStatusLabel = (value) => {
 .print-btn {
     @apply bg-white/20 border-2 border-white/30 text-white hover:bg-white/30 hover:border-white/40;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón de Import/Export con estilo destacado */
+.import-export-btn {
+    @apply bg-emerald-500/90 border-2 border-emerald-400/50 text-white hover:bg-emerald-400 hover:border-emerald-300 font-medium;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.import-export-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
 }
 
 /* Animación del patrón de fondo */

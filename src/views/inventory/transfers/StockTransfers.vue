@@ -319,36 +319,40 @@ const exportTransfers = (format) => {
                         <i class="pi pi-arrow-right-arrow-left"></i>
                         Gestión de Transferencias de Stock
                     </h1>
-                    <p class="page-description">Administra y controla todas las transferencias de stock entre almacenes
-                    </p>
+                    <p class="page-description">Administra y controla todas las transferencias de stock entre almacenes</p>
                 </div>
                 <div class="header-actions">
-                    <Button icon="pi pi-refresh" label="Actualizar" outlined class="refresh-btn" @click="handleRefresh"
-                        :loading="loading" v-tooltip.top="'Actualizar lista de transferencias'" />
-                    <Button icon="pi pi-plus" label="Nueva Transferencia" severity="success" @click="openCreateDialog"
-                        v-tooltip.top="'Crear nueva transferencia de stock'" />
+                    <Button icon="pi pi-refresh" label="Actualizar" outlined class="refresh-btn" @click="handleRefresh" :loading="loading" v-tooltip.top="'Actualizar lista de transferencias'" />
+                    <Button icon="pi pi-plus" label="Nueva Transferencia" severity="success" @click="openCreateDialog" v-tooltip.top="'Crear nueva transferencia de stock'" />
                 </div>
             </div>
         </div>
 
-
         <!-- Toolbar Principal -->
-        <StockTransfersToolbar :total-transfers="totalTransfers" :is-loading="loading"
-            v-model:date-from-filter="dateFromFilter" v-model:date-to-filter="dateToFilter"
-            v-model:from-warehouse-filter="fromWarehouseFilter" v-model:to-warehouse-filter="toWarehouseFilter"
-            v-model:product-filter="productFilter" v-model:status-filter="statusFilter"
-            :warehouse-options="warehouseOptions" :status-options="statusFilterOptions" @refresh="handleRefresh"
-            @clear-filters="clearFilters" @export="exportTransfers" @apply-filters="applyFilters" />
+        <StockTransfersToolbar
+            :total-transfers="totalTransfers"
+            :is-loading="loading"
+            v-model:date-from-filter="dateFromFilter"
+            v-model:date-to-filter="dateToFilter"
+            v-model:from-warehouse-filter="fromWarehouseFilter"
+            v-model:to-warehouse-filter="toWarehouseFilter"
+            v-model:product-filter="productFilter"
+            v-model:status-filter="statusFilter"
+            :warehouse-options="warehouseOptions"
+            :status-options="statusFilterOptions"
+            @refresh="handleRefresh"
+            @clear-filters="clearFilters"
+            @export="exportTransfers"
+            @apply-filters="applyFilters"
+        />
 
         <!-- Tabla de Transferencias -->
         <transition name="slide-up" appear>
-            <StockTransfersTable :transfers="transferItems" :loading="loading" @edit="openEditDialog"
-                @restore="confirmRestoreTransfer" @clear-filters="clearFilters" />
+            <StockTransfersTable :transfers="transferItems" :loading="loading" @edit="openEditDialog" @restore="confirmRestoreTransfer" @clear-filters="clearFilters" />
         </transition>
 
         <!-- Modal de Formulario -->
-        <StockTransferFormDialog v-model:visible="showTransferDialog" :transfer="selectedTransfer"
-            :warehouse-options="warehouseOptions" :loading="loading" @submit="handleTransferSubmit" />
+        <StockTransferFormDialog v-model:visible="showTransferDialog" :transfer="selectedTransfer" :warehouse-options="warehouseOptions" :loading="loading" @submit="handleTransferSubmit" />
     </div>
 </template>
 
@@ -399,7 +403,6 @@ const exportTransfers = (format) => {
 .refresh-btn {
     @apply bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white;
 }
-
 
 /* Animaciones de transición */
 .slide-up-enter-active {

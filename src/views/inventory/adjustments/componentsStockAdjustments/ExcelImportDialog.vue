@@ -48,10 +48,7 @@ const importErrors = computed(() => stockAdjustmentsStore.importErrors);
 const importResult = computed(() => stockAdjustmentsStore.importResult);
 
 const warehouseOptions = computed(() => {
-    return [
-        { label: 'Todos los almacenes', value: null },
-        ...warehousesStore.warehouses.map(w => ({ label: w.name, value: w.id }))
-    ];
+    return [{ label: 'Todos los almacenes', value: null }, ...warehousesStore.warehouses.map((w) => ({ label: w.name, value: w.id }))];
 });
 
 // Métodos
@@ -59,7 +56,7 @@ const handleFileSelect = (event) => {
     const files = event.files || event.target.files;
     if (files && files.length > 0) {
         selectedFile.value = files[0];
-        
+
         // Validar archivo
         if (!validateFile(selectedFile.value)) {
             selectedFile.value = null;
@@ -71,18 +68,18 @@ const validateFile = (file) => {
     // Validar extensión
     const allowedExtensions = ['.xlsx', '.xls'];
     const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-    
+
     if (!allowedExtensions.includes(fileExtension)) {
         alert('Solo se permiten archivos Excel (.xlsx, .xls)');
         return false;
     }
-    
+
     // Validar tamaño (5MB)
     if (file.size > 5 * 1024 * 1024) {
         alert('El archivo no puede superar los 5MB');
         return false;
     }
-    
+
     return true;
 };
 
@@ -138,15 +135,7 @@ const closeDialog = () => {
 </script>
 
 <template>
-    <Dialog
-        v-model:visible="isVisible"
-        modal
-        header="Importar Ajustes desde Excel"
-        :style="{ width: '50rem' }"
-        :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
-        class="excel-import-dialog"
-        @hide="resetForm"
-    >
+    <Dialog v-model:visible="isVisible" modal header="Importar Ajustes desde Excel" :style="{ width: '50rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }" class="excel-import-dialog" @hide="resetForm">
         <div class="import-container">
             <!-- Sección 1: Descargar Plantilla -->
             <div class="section">
@@ -158,32 +147,15 @@ const closeDialog = () => {
                     <div class="grid">
                         <div class="col-12 md:col-6">
                             <label class="field-label">Almacén (opcional)</label>
-                            <Dropdown
-                                v-model="selectedWarehouseForTemplate"
-                                :options="warehouseOptions"
-                                optionLabel="label"
-                                optionValue="value"
-                                placeholder="Todos los almacenes"
-                                class="w-full"
-                            />
+                            <Dropdown v-model="selectedWarehouseForTemplate" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Todos los almacenes" class="w-full" />
                         </div>
                         <div class="col-12 md:col-6 flex align-items-center">
-                            <Checkbox
-                                v-model="includeExpired"
-                                inputId="includeExpired"
-                                binary
-                            />
+                            <Checkbox v-model="includeExpired" inputId="includeExpired" binary />
                             <label for="includeExpired" class="ml-2">Incluir lotes vencidos</label>
                         </div>
                     </div>
                     <div class="mt-3">
-                        <Button
-                            icon="pi pi-download"
-                            label="Descargar Plantilla Excel"
-                            class="template-btn"
-                            @click="downloadTemplate"
-                            :loading="isProcessing"
-                        />
+                        <Button icon="pi pi-download" label="Descargar Plantilla Excel" class="template-btn" @click="downloadTemplate" :loading="isProcessing" />
                     </div>
                     <div class="template-info">
                         <i class="pi pi-info-circle"></i>
@@ -200,15 +172,7 @@ const closeDialog = () => {
                 </div>
                 <div class="section-content">
                     <div class="file-upload-area">
-                        <FileUpload
-                            mode="basic"
-                            accept=".xlsx,.xls"
-                            :maxFileSize="5000000"
-                            :customUpload="true"
-                            @select="handleFileSelect"
-                            chooseLabel="Seleccionar Archivo Excel"
-                            class="file-upload"
-                        />
+                        <FileUpload mode="basic" accept=".xlsx,.xls" :maxFileSize="5000000" :customUpload="true" @select="handleFileSelect" chooseLabel="Seleccionar Archivo Excel" class="file-upload" />
                         <div v-if="selectedFile" class="selected-file">
                             <i class="pi pi-file-excel"></i>
                             <span>{{ selectedFile.name }}</span>
@@ -228,29 +192,15 @@ const closeDialog = () => {
                     <div class="grid">
                         <div class="col-12">
                             <label class="field-label required">Razón de los Ajustes</label>
-                            <InputText
-                                v-model="globalReason"
-                                placeholder="Ej: Conteo físico mensual"
-                                class="w-full"
-                                maxlength="255"
-                            />
+                            <InputText v-model="globalReason" placeholder="Ej: Conteo físico mensual" class="w-full" maxlength="255" />
                         </div>
                         <div class="col-12">
                             <label class="field-label">Documento de Referencia</label>
-                            <InputText
-                                v-model="globalReference"
-                                placeholder="Ej: INV-2024-001"
-                                class="w-full"
-                                maxlength="100"
-                            />
+                            <InputText v-model="globalReference" placeholder="Ej: INV-2024-001" class="w-full" maxlength="100" />
                         </div>
                         <div class="col-12">
                             <div class="flex align-items-center">
-                                <Checkbox
-                                    v-model="skipErrors"
-                                    inputId="skipErrors"
-                                    binary
-                                />
+                                <Checkbox v-model="skipErrors" inputId="skipErrors" binary />
                                 <label for="skipErrors" class="ml-2">Continuar aunque haya errores en algunas filas</label>
                             </div>
                             <small class="text-muted">Si está marcado, se procesarán las filas correctas aunque algunas tengan errores.</small>
@@ -297,9 +247,7 @@ const closeDialog = () => {
                             <div v-for="(error, index) in importErrors.slice(0, 10)" :key="index" class="error-item">
                                 {{ error }}
                             </div>
-                            <div v-if="importErrors.length > 10" class="more-errors">
-                                ... y {{ importErrors.length - 10 }} errores más
-                            </div>
+                            <div v-if="importErrors.length > 10" class="more-errors">... y {{ importErrors.length - 10 }} errores más</div>
                         </div>
                     </div>
                 </Message>
@@ -308,21 +256,8 @@ const closeDialog = () => {
 
         <template #footer>
             <div class="dialog-footer">
-                <Button
-                    label="Cancelar"
-                    icon="pi pi-times"
-                    class="p-button-text"
-                    @click="closeDialog"
-                    :disabled="isProcessing"
-                />
-                <Button
-                    label="Importar Ajustes"
-                    icon="pi pi-check"
-                    class="import-btn"
-                    @click="importFile"
-                    :loading="isProcessing"
-                    :disabled="!selectedFile || !globalReason.trim()"
-                />
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-text" @click="closeDialog" :disabled="isProcessing" />
+                <Button label="Importar Ajustes" icon="pi pi-check" class="import-btn" @click="importFile" :loading="isProcessing" :disabled="!selectedFile || !globalReason.trim()" />
             </div>
         </template>
     </Dialog>
@@ -467,11 +402,11 @@ const closeDialog = () => {
     .summary-stats {
         @apply justify-center;
     }
-    
+
     .dialog-footer {
         @apply flex-col gap-2;
     }
-    
+
     .dialog-footer .p-button {
         @apply w-full;
     }

@@ -149,8 +149,7 @@ const getWarehouseLabel = (value) => {
                             <h1 class="page-title">Ajustes</h1>
                             <p v-if="totalAdjustments > 0" class="subtitle">
                                 {{ totalAdjustments }}
-                                {{ totalAdjustments === 1 ? 'ajuste' : 'ajustes' }} • <span class="text-green-400">+{{
-                                    totalPositive }}</span> •
+                                {{ totalAdjustments === 1 ? 'ajuste' : 'ajustes' }} • <span class="text-green-400">+{{ totalPositive }}</span> •
                                 <span class="text-red-400">-{{ totalNegative }}</span>
                             </p>
                             <p v-else class="subtitle">No hay ajustes disponibles</p>
@@ -162,38 +161,27 @@ const getWarehouseLabel = (value) => {
                 <div class="filters-section-compact">
                     <div class="compact-filters">
                         <!-- Filtro por tipo -->
-                        <Select id="type-filter" v-model="localTypeFilter" :options="typeOptions" optionLabel="label"
-                            optionValue="value" placeholder="Tipo" class="filter-select-compact"
-                            @change="onTypeFilterChange" />
+                        <Select id="type-filter" v-model="localTypeFilter" :options="typeOptions" optionLabel="label" optionValue="value" placeholder="Tipo" class="filter-select-compact" @change="onTypeFilterChange" />
 
                         <!-- Filtro por almacén -->
-                        <Select id="warehouse-filter" v-model="localWarehouseFilter" :options="warehouseOptions"
-                            optionLabel="label" optionValue="value" placeholder="Almacén" class="filter-select-compact"
-                            @change="onWarehouseFilterChange" />
+                        <Select id="warehouse-filter" v-model="localWarehouseFilter" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Almacén" class="filter-select-compact" @change="onWarehouseFilterChange" />
 
                         <!-- Filtro por fecha desde -->
-                        <InputText id="date-from" type="date" v-model="formattedDateFrom" placeholder="Desde"
-                            class="filter-date-compact" />
+                        <InputText id="date-from" type="date" v-model="formattedDateFrom" placeholder="Desde" class="filter-date-compact" />
 
                         <!-- Filtro por fecha hasta -->
-                        <InputText id="date-to" type="date" v-model="formattedDateTo" placeholder="Hasta"
-                            class="filter-date-compact" />
+                        <InputText id="date-to" type="date" v-model="formattedDateTo" placeholder="Hasta" class="filter-date-compact" />
 
                         <!-- Botón para limpiar filtros -->
-                        <Button icon="pi pi-filter-slash" outlined @click="clearFilters"
-                            v-tooltip.bottom="'Limpiar filtros'" class="clear-filters-btn-compact"
-                            :disabled="!hasActiveFilters" />
+                        <Button icon="pi pi-filter-slash" outlined @click="clearFilters" v-tooltip.bottom="'Limpiar filtros'" class="clear-filters-btn-compact" :disabled="!hasActiveFilters" />
                     </div>
                 </div>
 
                 <!-- Sección derecha: Acciones -->
                 <div class="actions-section">
-                    <Button icon="pi pi-file-excel" class="excel-import-btn-compact"
-                        @click="$emit('excelImport')" v-tooltip.bottom="'Importar desde Excel'" />
-                    <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading"
-                        @click="$emit('refresh')" v-tooltip.bottom="'Actualizar ajustes'" :disabled="isLoading" />
-                    <Button icon="pi pi-plus" class="new-adjustment-btn-compact"
-                        @click="$emit('newAdjustment')" v-tooltip.bottom="'Crear nuevo ajuste'" />
+                    <Button icon="pi pi-file-excel" class="excel-import-btn-compact" @click="$emit('excelImport')" v-tooltip.bottom="'Importar desde Excel'" />
+                    <Button icon="pi pi-refresh" class="refresh-btn-compact" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar ajustes'" :disabled="isLoading" />
+                    <Button icon="pi pi-plus" class="new-adjustment-btn-compact" @click="$emit('newAdjustment')" v-tooltip.bottom="'Crear nuevo ajuste'" />
                 </div>
             </div>
 

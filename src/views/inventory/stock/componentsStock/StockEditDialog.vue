@@ -86,7 +86,7 @@ const saveStock = async () => {
                 payload[key] = formData.value[key];
             }
         });
-        
+
         // Asegurarse de que los campos requeridos estén presentes
         if (!payload.actual_quantity) payload.actual_quantity = props.stockData.actual_quantity;
         if (!payload.warehouse_id) payload.warehouse_id = props.stockData.warehouse_id;

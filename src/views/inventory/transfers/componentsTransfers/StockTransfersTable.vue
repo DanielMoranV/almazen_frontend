@@ -149,9 +149,7 @@ const getStatusColor = (status) => {
                 <template #body="{ data }">
                     <div class="date-cell">
                         <div class="date-primary">{{ formatDate(data.transfer_date || data.created_at) }}</div>
-                        <div class="date-secondary" v-if="data.created_at && data.transfer_date !== data.created_at">
-                            Creado: {{ formatDate(data.created_at) }}
-                        </div>
+                        <div class="date-secondary" v-if="data.created_at && data.transfer_date !== data.created_at">Creado: {{ formatDate(data.created_at) }}</div>
                     </div>
                 </template>
             </Column>
@@ -161,7 +159,7 @@ const getStatusColor = (status) => {
                 <template #body="{ data }">
                     <div class="warehouse-cell from-warehouse">
                         <div class="warehouse-icon">
-                            <i class="pi pi-building" style="font-size: 1rem;"></i>
+                            <i class="pi pi-building" style="font-size: 1rem"></i>
                         </div>
                         <div class="warehouse-info">
                             <div class="warehouse-name">
@@ -178,7 +176,7 @@ const getStatusColor = (status) => {
                 <template #body="{ data }">
                     <div class="warehouse-cell to-warehouse">
                         <div class="warehouse-icon">
-                            <i class="pi pi-home" style="font-size: 1rem;"></i>
+                            <i class="pi pi-home" style="font-size: 1rem"></i>
                         </div>
                         <div class="warehouse-info">
                             <div class="warehouse-name">
@@ -195,7 +193,7 @@ const getStatusColor = (status) => {
                 <template #body="{ data }">
                     <div class="product-cell">
                         <div class="product-icon">
-                            <i class="pi pi-shopping-bag" style="font-size: 1rem;"></i>
+                            <i class="pi pi-shopping-bag" style="font-size: 1rem"></i>
                         </div>
                         <div class="product-info">
                             <div class="product-name">
@@ -235,7 +233,7 @@ const getStatusColor = (status) => {
                 <template #body="{ data }">
                     <div class="user-cell">
                         <div class="user-icon">
-                            <i class="pi pi-user" style="font-size: 1rem;"></i>
+                            <i class="pi pi-user" style="font-size: 1rem"></i>
                         </div>
                         <div class="user-info">
                             <div class="user-name">{{ data.user?.name || (data.user_id ? `ID: ${data.user_id}` : 'N/A') }}</div>
@@ -249,7 +247,7 @@ const getStatusColor = (status) => {
             <Column header="Estado" class="status-column">
                 <template #body="{ data }">
                     <div class="status-cell">
-                        <i 
+                        <i
                             :class="getStatusIcon(data.status || 'completed', !!data.restored_at)"
                             :style="{ color: data.restored_at ? '#10b981' : getStatusColor(data.status || 'completed') }"
                             v-tooltip.top="getStatusLabel(data.status || 'completed', !!data.restored_at)"
@@ -275,16 +273,7 @@ const getStatusColor = (status) => {
             <Column header="Acciones" class="actions-column">
                 <template #body="{ data }">
                     <div class="actions-cell">
-                        <Button 
-                            icon="pi pi-eye" 
-                            severity="info" 
-                            size="small" 
-                            @click="$emit('edit', data)" 
-                            v-tooltip.top="`Ver detalles de transferencia #${data.id}`"
-                            class="action-button view-button" 
-                            :disabled="!data.id"
-                            text
-                        />
+                        <Button icon="pi pi-eye" severity="info" size="small" @click="$emit('edit', data)" v-tooltip.top="`Ver detalles de transferencia #${data.id}`" class="action-button view-button" :disabled="!data.id" text />
                         <Button
                             icon="pi pi-refresh"
                             severity="success"

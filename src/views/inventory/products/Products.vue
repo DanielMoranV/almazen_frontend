@@ -4,6 +4,7 @@ import { useProductsStore } from '@/stores/productsStore';
 import ProductsFormDialog from '@/views/inventory/products/componentsProducts/ProductFormDialog.vue';
 import ProductsTable from '@/views/inventory/products/componentsProducts/ProductsTable.vue';
 import ProductToolbar from '@/views/inventory/products/componentsProducts/ProductToolbar.vue';
+import ProductImportDialog from '@/views/inventory/products/componentsProducts/ProductImportDialog.vue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 
@@ -14,6 +15,7 @@ const productsStore = useProductsStore();
 const selectedProduct = ref(null);
 const showProductDialog = ref(false);
 const showDeleteDialog = ref(false);
+const showImportDialog = ref(false);
 const isCreating = ref(false);
 
 // Estados computados del store
@@ -87,6 +89,22 @@ const handleRefresh = async () => {
     showSuccess('Datos actualizados', 'Lista de productos actualizada');
 };
 
+const openImportDialog = () => {
+    showImportDialog.value = true;
+};
+
+const handleProductsImported = async (result) => {
+    // Recargar productos después de la importación exitosa
+    await productsStore.fetchProducts();
+    showSuccess('Importación completada', 'Los productos han sido actualizados');
+};
+
+const handleViewProducts = () => {
+    // Opcional: implementar filtro o navegación específica
+    // Por ahora simplemente actualizar la lista
+    handleRefresh();
+};
+
 // Helpers para manejo de respuestas API
 const handleApiErrors = (store) => {
     if (store.validationErrors && store.validationErrors.length > 0) {
@@ -118,7 +136,7 @@ const showError = (summary, detail) => {
         <ConfirmDialog />
 
         <!-- Toolbar Principal Mejorado -->
-        <ProductToolbar :total-products="totalProducts" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
+        <ProductToolbar :total-products="totalProducts" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" @open-import="openImportDialog" />
 
         <!-- Área Principal de Contenido con Animaciones -->
         <div class="content-wrapper">
@@ -163,6 +181,8 @@ const showError = (summary, detail) => {
 
         <!-- Diálogos -->
         <ProductsFormDialog v-model:visible="showProductDialog" :product="selectedProduct" :loading="isLoading" @submit="handleProductSubmit" />
+
+        <ProductImportDialog v-model:visible="showImportDialog" @products-imported="handleProductsImported" @view-products="handleViewProducts" />
 
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedProduct?.name || ''" @confirm="handleProductDelete" />
     </div>

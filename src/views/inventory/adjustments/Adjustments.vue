@@ -231,24 +231,21 @@ const handleExcelImportCompleted = async (result) => {
     if (result.success) {
         // Recargar la lista de ajustes
         await loadAdjustments();
-        
+
         // Mostrar mensaje de éxito
         if (result.data.summary) {
             const { successful_adjustments, failed_rows } = result.data.summary;
             if (failed_rows > 0) {
-                showToast('warn', 'Importación Parcial', 
-                    `Se procesaron ${successful_adjustments} ajustes exitosamente. ${failed_rows} filas tuvieron errores.`);
+                showToast('warn', 'Importación Parcial', `Se procesaron ${successful_adjustments} ajustes exitosamente. ${failed_rows} filas tuvieron errores.`);
             } else {
-                showToast('success', 'Importación Exitosa', 
-                    `Se procesaron ${successful_adjustments} ajustes correctamente.`);
+                showToast('success', 'Importación Exitosa', `Se procesaron ${successful_adjustments} ajustes correctamente.`);
             }
         }
-        
+
         // Cerrar el modal
         showExcelImportDialog.value = false;
     } else {
-        showToast('error', 'Error de Importación', 
-            result.message || 'Error al importar el archivo Excel');
+        showToast('error', 'Error de Importación', result.message || 'Error al importar el archivo Excel');
     }
 };
 </script>

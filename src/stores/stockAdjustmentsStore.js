@@ -367,20 +367,20 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                 });
 
                 const response = await downloadStockAdjustmentTemplate(queryParams);
-                
+
                 // Crear enlace de descarga
-                const blob = new Blob([response.data], { 
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                const blob = new Blob([response.data], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                
+
                 // Generar nombre del archivo
                 const timestamp = new Date().toISOString().slice(0, 10);
                 const warehouseSuffix = params.warehouse_id ? `_almacen_${params.warehouse_id}` : '';
                 link.download = `plantilla_ajustes_stock${warehouseSuffix}_${timestamp}.xlsx`;
-                
+
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -388,7 +388,7 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
 
                 this.message = 'Plantilla descargada exitosamente';
                 this.success = true;
-                
+
                 return { success: true, message: 'Plantilla descargada exitosamente' };
             } catch (error) {
                 return handleProcessError(error, this);
@@ -407,7 +407,7 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
             try {
                 const formData = new FormData();
                 formData.append('file', file);
-                
+
                 if (options.globalReason) {
                     formData.append('global_reason', options.globalReason);
                 }
@@ -423,7 +423,7 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
 
                 if (processed.success) {
                     this.importResult = processed.data;
-                    
+
                     // Si hay errores pero se procesó parcialmente
                     if (processed.data.errors && processed.data.errors.length > 0) {
                         this.importErrors = processed.data.errors;
@@ -431,9 +431,9 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                     } else {
                         this.message = `Importación exitosa: ${processed.data.summary.successful_adjustments} ajustes procesados`;
                     }
-                    
+
                     this.success = true;
-                    
+
                     // Recargar ajustes después de importar
                     await this.fetchAdjustments();
                 } else {

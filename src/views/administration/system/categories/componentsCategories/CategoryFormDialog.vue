@@ -52,7 +52,13 @@ watch(
 </script>
 
 <template>
-    <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '500px' }" :header="form.id ? 'Editar Categoría' : 'Nueva Categoría'" :modal="true" class="p-fluid"
+    <Dialog
+        :visible="visible"
+        @update:visible="(val) => emit('update:visible', val)"
+        :style="{ width: '500px' }"
+        :header="form.id ? 'Editar Categoría' : 'Nueva Categoría'"
+        :modal="true"
+        class="p-fluid"
         :pt="{
             header: 'bg-gradient-to-r from-purple-600 to-pink-600 text-white',
             content: 'p-6 bg-white dark:bg-gray-800'

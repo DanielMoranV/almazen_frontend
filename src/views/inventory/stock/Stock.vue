@@ -7,6 +7,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import BulkEditDialog from './componentsStock/BulkEditDialog.vue';
 import StockDetailsModal from './componentsStock/StockDetailsModal.vue';
 import StockEditDialog from './componentsStock/StockEditDialog.vue';
+import StockExportImportDialog from './componentsStock/StockExportImportDialog.vue';
 import StockStatistics from './componentsStock/StockStatistics.vue';
 import StockTable from './componentsStock/StockTable.vue';
 import StockToolbar from './componentsStock/StockToolbar.vue';
@@ -22,6 +23,7 @@ const stockStatusFilter = ref(null);
 const showStockEditDialog = ref(false);
 const showBulkEditDialog = ref(false);
 const showDetailsModal = ref(false);
+const showExportImportDialog = ref(false);
 const selectedStockForEdit = ref(null);
 const selectedProductForBulk = ref(null);
 const selectedProductForDetails = ref(null);
@@ -200,6 +202,20 @@ const clearFilters = () => {
     stockStatusFilter.value = null;
     stocksStore.clearFilters();
 };
+
+const openExportImportDialog = () => {
+    showExportImportDialog.value = true;
+};
+
+const handleStockImported = async (result) => {
+    await loadStockItems();
+    toast.add({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: `Stock importado exitosamente. ${result.processed_rows} filas procesadas`,
+        life: 5000
+    });
+};
 </script>
 
 <template>
@@ -217,6 +233,7 @@ const clearFilters = () => {
             :warehouse-options="warehouseOptions"
             @refresh="handleRefresh"
             @clear-filters="clearFilters"
+            @open-import-export="openExportImportDialog"
         />
 
         <!-- Estadísticas -->
@@ -241,6 +258,8 @@ const clearFilters = () => {
         <BulkEditDialog v-model:visible="showBulkEditDialog" :product-data="selectedProductForBulk" @bulk-updated="handleBulkUpdated" />
 
         <StockDetailsModal v-model:visible="showDetailsModal" :product-data="selectedProductForDetails" />
+
+        <StockExportImportDialog v-model:visible="showExportImportDialog" @stock-imported="handleStockImported" />
     </div>
 </template>
 
