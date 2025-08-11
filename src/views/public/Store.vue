@@ -50,7 +50,7 @@ const loadProducts = async () => {
     } catch (error) {
         let errorMessage = 'No se pudieron cargar los productos';
         if (error.message?.includes('404')) {
-            errorMessage = 'Almacén no encontrado';
+            errorMessage = 'Tienda no encontrada';
         } else if (error.message?.includes('500')) {
             errorMessage = 'Error del servidor. Por favor, inténtalo más tarde.';
         }
@@ -105,14 +105,14 @@ const toggleCategoryFilter = (categoryId) => {
 
 // SEO dinámico
 const seoTitle = computed(() => {
-    if (!warehouse.value?.name) return 'Catálogo de Productos';
-    return `${warehouse.value.name} - Catálogo de Productos`;
+    if (!company.value?.name) return 'Catálogo de Productos';
+    return `${company.value.name} - Catálogo de Productos`;
 });
 
 const seoDescription = computed(() => {
     const productCount = totalProducts.value;
-    const warehouseName = warehouse.value?.name || 'nuestra tienda';
-    return `Descubre ${productCount} productos disponibles en ${warehouseName}. Catálogo actualizado con precios, stock y disponibilidad en tiempo real.`;
+    const companyName = company.value?.name || 'nuestra tienda';
+    return `Descubre ${productCount} productos disponibles en ${companyName}. Catálogo actualizado con precios, stock y disponibilidad en tiempo real.`;
 });
 
 // Manejo manual de SEO
@@ -141,7 +141,7 @@ const updateSEO = () => {
     updateMetaTag('meta[property="og:title"]', seoTitle.value);
     updateMetaTag('meta[property="og:description"]', seoDescription.value);
     updateMetaTag('meta[property="og:type"]', 'website');
-    updateMetaTag('meta[property="og:image"]', '/og-store-image.jpg');
+    updateMetaTag('meta[property="og:image"]', company.value?.logo || '/og-store-image.jpg');
     updateMetaTag('meta[name="twitter:card"]', 'summary_large_image');
     updateMetaTag('meta[name="twitter:title"]', seoTitle.value);
     updateMetaTag('meta[name="twitter:description"]', seoDescription.value);
@@ -156,11 +156,11 @@ const updateStructuredData = () => {
     existingScripts.forEach((script) => script.remove());
 
     // Agregar structured data de la tienda
-    if (warehouse.value) {
+    if (company.value && warehouse.value) {
         const storeData = {
             '@context': 'https://schema.org',
             '@type': 'Store',
-            name: warehouse.value.name,
+            name: company.value.name,
             description: seoDescription.value,
             address: warehouse.value.address
                 ? {
@@ -216,7 +216,7 @@ const updateStructuredData = () => {
                         availability: publicStore.getProductStock(product) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                         seller: {
                             '@type': 'Store',
-                            name: warehouse.value?.name
+                            name: company.value?.name
                         }
                     }
                 }
@@ -233,7 +233,7 @@ const updateStructuredData = () => {
 
 // Watchers para SEO
 watch(
-    [warehouse, products, totalProducts],
+    [company, warehouse, products, totalProducts],
     () => {
         updateSEO();
         updateStructuredData();
@@ -260,30 +260,34 @@ onMounted(async () => {
         <header class="store-header">
             <div class="container">
                 <div class="header-content">
+                    <img v-if="company?.logo" :src="company.logo" alt="Logo de la empresa" class="company-logo" />
                     <div class="store-info">
                         <h1 class="store-title">
-                            {{ warehouse?.name || 'Catálogo de Productos' }}
+                            {{ company?.name || 'Catálogo de Productos' }}
                         </h1>
-                        <p class="store-description" v-if="warehouse?.address">📍 {{ warehouse.address }}</p>
+                        <p class="store-description" v-if="warehouse?.address">
+                            <i class="pi pi-map-marker"></i>
+                            {{ warehouse.address }}
+                        </p>
                         <div class="product-count">
                             <i class="pi pi-box"></i>
                             <span>{{ totalProducts }} productos disponibles</span>
                         </div>
                     </div>
                     <div class="header-actions">
-                        <Button icon="pi pi-filter" label="Filtros" text @click="showFilters = !showFilters" class="filter-toggle" />
+                        <Button icon="pi pi-filter" label="Filtros" @click="showFilters = !showFilters" class="filter-toggle" />
                     </div>
                 </div>
             </div>
         </header>
 
-        <div class="container">
+        <main class="container">
             <div class="store-content">
                 <!-- Barra de búsqueda y filtros -->
                 <div class="search-section">
                     <div class="search-bar">
-                        <InputText v-model="searchQuery" placeholder="Buscar productos por nombre, SKU o código..." class="search-input" />
                         <i class="pi pi-search search-icon"></i>
+                        <InputText v-model="searchQuery" placeholder="Buscar productos por nombre, SKU o código..." class="search-input" />
                     </div>
 
                     <!-- Panel de filtros colapsable -->
@@ -310,7 +314,7 @@ onMounted(async () => {
                             </div>
 
                             <!-- Chips de categorías populares -->
-                            <div class="category-chips" v-if="categoryStats.length > 0">
+                            <div class="category-chips" v-if="categoryStats.length > 1">
                                 <label class="filter-label">Categorías populares:</label>
                                 <div class="chips-container">
                                     <Chip 
@@ -330,6 +334,7 @@ onMounted(async () => {
                                     text 
                                     size="small" 
                                     @click="clearFilters"
+                                    icon="pi pi-times"
                                 />
                             </div>
                         </div>
@@ -339,8 +344,8 @@ onMounted(async () => {
                 <!-- Grid de productos -->
                 <div v-if="loading" class="loading-section">
                     <div class="loading-grid">
-                        <div v-for="i in 8" :key="i" class="product-skeleton">
-                            <Skeleton width="100%" height="200px" class="mb-2" />
+                        <div v-for="i in 9" :key="i" class="product-skeleton">
+                            <Skeleton width="100%" height="180px" class="mb-2" />
                             <Skeleton width="80%" height="1.5rem" class="mb-2" />
                             <Skeleton width="60%" height="1rem" class="mb-2" />
                             <Skeleton width="40%" height="1.25rem" />
@@ -352,9 +357,9 @@ onMounted(async () => {
                     <div class="empty-content">
                         <i class="pi pi-inbox empty-icon"></i>
                         <h3>No se encontraron productos</h3>
-                        <p v-if="searchQuery || selectedCategory">Intenta ajustar tus filtros de búsqueda</p>
-                        <p v-else>No hay productos disponibles en este momento</p>
-                        <Button v-if="searchQuery || selectedCategory" label="Limpiar filtros" @click="clearFilters" class="mt-3" />
+                        <p v-if="searchQuery || selectedCategory">Intenta ajustar tus filtros de búsqueda.</p>
+                        <p v-else>Aún no hay productos disponibles en este catálogo.</p>
+                        <Button v-if="searchQuery || selectedCategory" label="Limpiar filtros" @click="clearFilters" class="mt-3" icon="pi pi-times" />
                     </div>
                 </div>
 
@@ -365,7 +370,7 @@ onMounted(async () => {
                             <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
                             <div v-if="publicStore.getProductStock(product) <= 0" class="out-of-stock-badge">Agotado</div>
                             <div v-else-if="publicStore.getProductBatch(product) && publicStore.getProductBatch(product).days_to_expire <= 7" class="expiry-badge">
-                                {{ formatDate(publicStore.getProductBatch(product).expiry_date) }}
+                                Vence pronto
                             </div>
                         </div>
 
@@ -376,18 +381,6 @@ onMounted(async () => {
                             </div>
 
                             <h3 class="product-name">{{ product.name }}</h3>
-
-                            <div class="product-details">
-                                <div class="product-brand" v-if="product.brand">
-                                    <i class="pi pi-tag"></i>
-                                    {{ product.brand }}
-                                </div>
-
-                                <div class="product-sku">
-                                    <i class="pi pi-barcode"></i>
-                                    {{ product.sku }}
-                                </div>
-                            </div>
 
                             <div class="product-description" v-if="product.description">
                                 {{ product.description }}
@@ -412,24 +405,8 @@ onMounted(async () => {
                                     >
                                         <i class="pi pi-box"></i>
                                         <span v-if="publicStore.getProductStock(product) <= 0">Agotado</span>
-                                        <span v-else>{{ publicStore.getProductStock(product) }} disponibles</span>
+                                        <span v-else>{{ publicStore.getProductStock(product) }}</span>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Información de lote si existe -->
-                            <div v-if="publicStore.getProductBatch(product)" class="batch-info">
-                                <div class="batch-details">
-                                    <span class="batch-code">Lote: {{ publicStore.getProductBatch(product).batch_code }}</span>
-                                    <span
-                                        class="expiry-date"
-                                        :class="{
-                                            'expiry-warning': publicStore.getProductBatch(product).days_to_expire <= 7,
-                                            'expiry-danger': publicStore.getProductBatch(product).days_to_expire <= 3
-                                        }"
-                                    >
-                                        Vence: {{ formatDate(publicStore.getProductBatch(product).expiry_date) }}
-                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -448,7 +425,7 @@ onMounted(async () => {
                     />
                 </div>
             </div>
-        </div>
+        </main>
 
         <!-- Footer -->
         <footer class="store-footer">
@@ -480,14 +457,10 @@ onMounted(async () => {
                             </div>
                         </div>
                         <div v-else class="fallback-info">
-                            <p>&copy; 2024 {{ warehouse?.name || 'Tienda' }}. Catálogo de productos en línea.</p>
+                            <p>&copy; 2024 {{ company?.name || 'Tienda' }}. Catálogo de productos en línea.</p>
                         </div>
                     </div>
-                    <div class="footer-links">
-                        <div class="warehouse-info" v-if="warehouse">
-                            <h5 class="warehouse-name">{{ warehouse.name }}</h5>
-                            <p v-if="warehouse.location" class="warehouse-location">{{ warehouse.location }}</p>
-                        </div>
+                    <div class="footer-brand">
                         <span class="powered-by"> Powered by <strong>AlmaZen</strong> </span>
                     </div>
                 </div>
@@ -500,61 +473,83 @@ onMounted(async () => {
 /* === LAYOUT PRINCIPAL === */
 .store-page {
     min-height: 100vh;
-    background: var(--surface-ground);
+    background: var(--surface-50);
     display: flex;
     flex-direction: column;
+    color: var(--text-color);
+}
+
+.dark .store-page {
+    background: var(--surface-900);
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 2rem;
 }
 
 /* === HEADER === */
 .store-header {
-    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-    color: white;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--surface-border);
     padding: 2rem 0;
     margin-bottom: 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.dark .store-header {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 2rem;
+    gap: 1.5rem;
+}
+
+.company-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 0.25rem;
+}
+
+.store-info {
+    flex: 1;
 }
 
 .store-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 700;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.25rem 0;
     line-height: 1.2;
+    color: var(--text-color);
 }
 
 .store-description {
-    font-size: 1.125rem;
-    opacity: 0.9;
-    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: var(--text-color-secondary);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .product-count {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 1rem;
-    opacity: 0.8;
+    font-size: 0.875rem;
+    color: var(--text-color-secondary);
 }
 
 .filter-toggle {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-}
-
-.filter-toggle:hover {
-    background: rgba(255, 255, 255, 0.25);
+    color: var(--primary-color);
 }
 
 /* === BÚSQUEDA Y FILTROS === */
@@ -569,52 +564,58 @@ onMounted(async () => {
 
 .search-input {
     width: 100%;
-    padding: 0.75rem 3rem 0.75rem 1rem;
-    font-size: 1rem;
-    border-radius: 0.5rem;
-    border: 2px solid var(--surface-border);
-    transition: border-color 0.2s ease;
+    padding: 1rem 1rem 1rem 3.5rem;
+    font-size: 1.125rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--surface-border);
+    transition: all 0.2s ease;
+    background: var(--surface-card);
 }
 
 .search-input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+    box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.dark .search-input:focus {
+    box-shadow: 0 0 0 3px var(--primary-900);
 }
 
 .search-icon {
     position: absolute;
-    right: 1rem;
+    left: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-color-secondary);
     pointer-events: none;
+    font-size: 1.25rem;
 }
 
 .filters-panel {
     background: var(--surface-card);
     border: 1px solid var(--surface-border);
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     padding: 1.5rem;
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: center;
 }
 
 .filter-group {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .filter-label {
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-color);
     white-space: nowrap;
 }
 
 .filter-dropdown {
-    min-width: 200px;
+    min-width: 250px;
 }
 
 .filter-actions {
@@ -626,34 +627,34 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--surface-border);
+    width: 100%;
 }
 
 .chips-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .category-chip {
     cursor: pointer;
     transition: all 0.2s ease;
     background: var(--surface-100);
-    color: var(--text-color);
+    color: var(--text-color-secondary);
     border: 1px solid var(--surface-border);
+    font-weight: 500;
 }
 
 .category-chip:hover {
     background: var(--surface-200);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    color: var(--text-color);
 }
 
 .category-chip.selected {
-    background: var(--primary-100);
-    color: var(--primary-600);
-    border-color: var(--primary-300);
+    background: var(--primary-color);
+    color: var(--primary-color-text);
+    border-color: var(--primary-color);
 }
 
 /* === DROPDOWN DE CATEGORÍAS === */
@@ -666,6 +667,7 @@ onMounted(async () => {
 
 .category-name {
     flex: 1;
+    font-weight: 500;
 }
 
 .category-count {
@@ -675,10 +677,6 @@ onMounted(async () => {
 }
 
 /* === LOADING === */
-.loading-section {
-    margin-bottom: 2rem;
-}
-
 .loading-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -687,7 +685,7 @@ onMounted(async () => {
 
 .product-skeleton {
     background: var(--surface-card);
-    border-radius: 0.75rem;
+    border-radius: 1rem;
     padding: 1rem;
     border: 1px solid var(--surface-border);
 }
@@ -703,95 +701,104 @@ onMounted(async () => {
 
 .empty-content {
     text-align: center;
-    max-width: 400px;
+    max-width: 450px;
+    background: var(--surface-card);
+    padding: 3rem;
+    border-radius: 1rem;
+    border: 1px solid var(--surface-border);
 }
 
 .empty-icon {
     font-size: 4rem;
-    color: var(--text-color-secondary);
-    margin-bottom: 1rem;
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
 }
 
 .empty-content h3 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 600;
     color: var(--text-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
 .empty-content p {
     color: var(--text-color-secondary);
-    line-height: 1.5;
-    margin-bottom: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
 }
 
 /* === GRID DE PRODUCTOS === */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
 .product-card {
     background: var(--surface-card);
     border: 1px solid var(--surface-border);
-    border-radius: 0.75rem;
+    border-radius: 1rem;
     overflow: hidden;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     text-decoration: none;
     color: inherit;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.dark .product-card {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .product-card:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transform: translateY(-5px);
+    border-color: var(--primary-200);
+}
+
+.dark .product-card:hover {
+    border-color: var(--primary-700);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .product-image {
     position: relative;
     width: 100%;
-    height: 200px;
+    height: 180px;
     overflow: hidden;
-    background: var(--surface-100);
 }
 
 .product-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
-    background: var(--surface-50);
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .product-card:hover .product-image img {
-    transform: scale(1.05);
+    transform: scale(1.1);
+}
+
+.out-of-stock-badge, .expiry-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(5px);
 }
 
 .out-of-stock-badge {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background: var(--red-500);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    font-weight: 600;
+    background: rgba(239, 68, 68, 0.8); /* red-500 */
 }
 
 .expiry-badge {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background: var(--yellow-500);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    font-weight: 600;
+    background: rgba(245, 158, 11, 0.8); /* amber-500 */
 }
 
 .product-content {
@@ -803,10 +810,10 @@ onMounted(async () => {
 
 .product-category {
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--primary-color);
     text-transform: uppercase;
-    letter-spacing: 0.025em;
+    letter-spacing: 0.05em;
     margin-bottom: 0.5rem;
 }
 
@@ -814,35 +821,22 @@ onMounted(async () => {
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--text-color);
-    margin: 0 0 1rem 0;
-    line-height: 1.3;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+    min-height: 2.8em; /* for 2 lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.product-details {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.product-brand,
-.product-sku {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-color-secondary);
-}
-
 .product-description {
     font-size: 0.875rem;
     color: var(--text-color-secondary);
-    line-height: 1.4;
+    line-height: 1.5;
     margin-bottom: 1rem;
+    flex-grow: 1;
+    min-height: 3em; /* for 2 lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -866,69 +860,51 @@ onMounted(async () => {
 }
 
 .current-price {
-    font-size: 1.375rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: var(--primary-color);
+    color: var(--text-color);
 }
 
 .per-unit {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     color: var(--text-color-secondary);
 }
 
 .stock-badge {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.75rem;
+    gap: 0.35rem;
+    padding: 0.35rem 0.85rem;
     border-radius: 1rem;
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.875rem;
+    font-weight: 600;
 }
 
 .stock-badge.in-stock {
     background: var(--green-100);
-    color: var(--green-700);
+    color: var(--green-800);
+}
+.dark .stock-badge.in-stock {
+    background: var(--green-900);
+    color: var(--green-100);
 }
 
 .stock-badge.low-stock {
     background: var(--yellow-100);
-    color: var(--yellow-700);
+    color: var(--yellow-800);
+}
+.dark .stock-badge.low-stock {
+    background: var(--yellow-900);
+    color: var(--yellow-100);
 }
 
 .stock-badge.out-of-stock {
     background: var(--red-100);
-    color: var(--red-700);
+    color: var(--red-800);
 }
-
-.batch-info {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--surface-border);
-}
-
-.batch-details {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.75rem;
-}
-
-.batch-code {
-    color: var(--text-color-secondary);
-    font-weight: 500;
-}
-
-.expiry-date {
-    font-weight: 500;
-}
-
-.expiry-date.expiry-warning {
-    color: var(--yellow-700);
-}
-
-.expiry-date.expiry-danger {
-    color: var(--red-700);
+.dark .stock-badge.out-of-stock {
+    background: var(--red-900);
+    color: var(--red-100);
 }
 
 /* === PAGINACIÓN === */
@@ -946,9 +922,9 @@ onMounted(async () => {
 /* === FOOTER === */
 .store-footer {
     margin-top: auto;
-    background: var(--surface-section);
+    background: var(--surface-card);
     border-top: 1px solid var(--surface-border);
-    padding: 2rem 0;
+    padding: 2.5rem 0;
 }
 
 .footer-content {
@@ -962,29 +938,17 @@ onMounted(async () => {
     flex: 1;
 }
 
-.footer-info p {
-    margin: 0;
-    color: var(--text-color-secondary);
-}
-
-/* === COMPANY INFO === */
-.company-info {
-    margin-bottom: 1.5rem;
-}
-
 .company-name {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-color);
     margin: 0 0 0.5rem 0;
-    line-height: 1.3;
 }
 
 .company-details {
     font-size: 0.875rem;
     color: var(--text-color-secondary);
-    margin: 0 0 1rem 0;
-    font-weight: 500;
+    margin: 0 0 1.5rem 0;
 }
 
 .company-contact {
@@ -997,66 +961,28 @@ onMounted(async () => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin: 0 0 0.75rem 0;
     color: var(--text-color-secondary);
-    font-size: 0.875rem;
-}
-
-.company-address i {
-    color: var(--primary-color);
     font-size: 0.875rem;
 }
 
 .contact-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .contact-link {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--primary-color);
+    color: var(--text-color-secondary);
     text-decoration: none;
     font-size: 0.875rem;
-    transition: all 0.2s ease;
-    padding: 0.25rem 0;
+    transition: color 0.2s ease;
 }
 
 .contact-link:hover {
-    color: var(--primary-600);
-    text-decoration: underline;
-}
-
-.contact-link i {
-    font-size: 0.875rem;
-    color: currentColor;
-}
-
-/* === WAREHOUSE INFO === */
-.footer-links {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1rem;
-}
-
-.warehouse-info {
-    text-align: right;
-}
-
-.warehouse-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-color);
-    margin: 0 0 0.25rem 0;
-}
-
-.warehouse-location {
-    font-size: 0.875rem;
-    color: var(--text-color-secondary);
-    margin: 0;
+    color: var(--primary-color);
 }
 
 .fallback-info {
@@ -1064,43 +990,50 @@ onMounted(async () => {
     font-size: 0.875rem;
 }
 
+.footer-brand {
+    text-align: right;
+}
+
 .powered-by {
     font-size: 0.875rem;
     color: var(--text-color-secondary);
-    text-align: right;
 }
 
 /* === TRANSICIONES === */
 .slide-down-enter-active,
 .slide-down-leave-active {
-    transition: all 0.3s ease;
+    transition: all 0.3s ease-out;
 }
 
-.slide-down-enter-from {
-    opacity: 0;
-    transform: translateY(-10px);
-}
-
+.slide-down-enter-from,
 .slide-down-leave-to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-15px);
 }
 
 /* === RESPONSIVE === */
+@media (max-width: 992px) {
+    .container {
+        padding: 0 1.5rem;
+    }
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
     .store-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
     }
 
     .header-content {
         flex-direction: column;
-        text-align: center;
+        align-items: flex-start;
         gap: 1rem;
     }
-
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        gap: 1rem;
+    
+    .header-actions {
+        align-self: flex-end;
     }
 
     .filters-panel {
@@ -1124,80 +1057,51 @@ onMounted(async () => {
         text-align: center;
     }
     
-    .category-chips {
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
-    }
-    
-    .chips-container {
-        justify-content: center;
-    }
-
-    .product-footer {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
-    }
-
     .footer-content {
         flex-direction: column;
         text-align: center;
         align-items: center;
-        gap: 1.5rem;
+        gap: 2rem;
     }
     
-    .footer-info {
-        text-align: center;
-    }
-    
-    .company-contact {
+    .footer-info, .company-contact, .contact-links, .footer-brand {
         align-items: center;
-    }
-    
-    .contact-links {
         justify-content: center;
-        gap: 0.75rem;
-    }
-    
-    .footer-links {
-        align-items: center;
-    }
-    
-    .warehouse-info {
-        text-align: center;
-    }
-    
-    .powered-by {
         text-align: center;
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
     .container {
-        padding: 0 0.75rem;
+        padding: 0 1rem;
     }
 
     .store-header {
         padding: 1.5rem 0;
     }
 
-    .store-title {
-        font-size: 1.75rem;
-    }
-
     .products-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+    }
+    
+    .product-card {
+        border-radius: 0.75rem;
     }
 
     .product-content {
         padding: 1rem;
     }
-}
-
-/* === DARK MODE === */
-@media (prefers-color-scheme: dark) {
-    .product-card:hover {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    
+    .search-input {
+        font-size: 1rem;
+        padding-left: 3rem;
+    }
+    
+    .search-icon {
+        font-size: 1rem;
+        left: 1rem;
     }
 }
 </style>
+
