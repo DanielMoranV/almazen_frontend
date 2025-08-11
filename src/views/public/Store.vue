@@ -43,6 +43,7 @@ const perPage = computed(() => publicStore.perPage);
 const formatPrice = (price) => publicStore.formatPrice(price);
 const formatDate = (dateString) => publicStore.formatDate(dateString);
 
+
 // Función para cargar productos usando el store
 const loadProducts = async () => {
     try {
@@ -271,7 +272,12 @@ onMounted(async () => {
                         </p>
                         <div class="product-count">
                             <i class="pi pi-box"></i>
-                            <span>{{ totalProducts }} productos disponibles</span>
+                            <span v-if="searchQuery || selectedCategory">
+                                {{ products.length }} productos encontrados
+                            </span>
+                            <span v-else>
+                                {{ totalProducts }} productos disponibles
+                            </span>
                         </div>
                     </div>
                     <div class="header-actions">
@@ -549,7 +555,19 @@ onMounted(async () => {
 }
 
 .filter-toggle {
-    color: var(--primary-color);
+    background: var(--primary-color);
+    color: white !important;
+    border: none;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.filter-toggle:hover {
+    background: var(--primary-600);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
 }
 
 /* === BÚSQUEDA Y FILTROS === */

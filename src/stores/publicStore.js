@@ -146,10 +146,9 @@ export const usePublicStore = defineStore('publicStore', {
                 const response = await fetchPublicProducts(warehouseId, params);
                 const data = response.data;
 
-                console.log('Fetched public products:', response);
 
                 this.products = data.data || [];
-                this.totalProducts = data.total || 0;
+                this.totalProducts = data.total || data.data?.length || 0;
                 this.totalPages = Math.ceil(this.totalProducts / this.perPage);
                 this.currentPage = data.current_page || 1;
                 this.lastPage = data.last_page || null;
