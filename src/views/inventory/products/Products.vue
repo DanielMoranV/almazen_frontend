@@ -2,9 +2,10 @@
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useProductsStore } from '@/stores/productsStore';
 import ProductsFormDialog from '@/views/inventory/products/componentsProducts/ProductFormDialog.vue';
+import ProductImageModal from '@/views/inventory/products/componentsProducts/ProductImageModal.vue';
+import ProductImportDialog from '@/views/inventory/products/componentsProducts/ProductImportDialog.vue';
 import ProductsTable from '@/views/inventory/products/componentsProducts/ProductsTable.vue';
 import ProductToolbar from '@/views/inventory/products/componentsProducts/ProductToolbar.vue';
-import ProductImportDialog from '@/views/inventory/products/componentsProducts/ProductImportDialog.vue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 
@@ -16,6 +17,7 @@ const selectedProduct = ref(null);
 const showProductDialog = ref(false);
 const showDeleteDialog = ref(false);
 const showImportDialog = ref(false);
+const showImageModal = ref(false);
 const isCreating = ref(false);
 
 // Estados computados del store
@@ -26,6 +28,7 @@ const hasProducts = computed(() => productsStore.productsList.length > 0);
 // Inicialización
 onMounted(async () => {
     await loadProducts();
+    console.log(productsStore.productsList);
 });
 
 // Gestión de carga inicial
@@ -52,6 +55,11 @@ const openEditDialog = (product) => {
 const openDeleteDialog = (product) => {
     selectedProduct.value = product;
     showDeleteDialog.value = true;
+};
+
+const openImageModal = (product) => {
+    selectedProduct.value = product;
+    showImageModal.value = true;
 };
 
 const handleProductSubmit = async (productData) => {
@@ -97,6 +105,15 @@ const handleProductsImported = async (result) => {
     // Recargar productos después de la importación exitosa
     await productsStore.fetchProducts();
     showSuccess('Importación completada', 'Los productos han sido actualizados');
+};
+
+const handleImageUpdated = async (data) => {
+    // La imagen se actualiza automáticamente en el store
+    showSuccess('Imagen actualizada', `La imagen de "${data.product.name}" se ha actualizado correctamente`);
+    showImageModal.value = false;
+
+    // Opcional: recargar productos para asegurar consistencia
+    // await productsStore.fetchProducts();
 };
 
 const handleViewProducts = () => {
@@ -164,7 +181,7 @@ const showError = (summary, detail) => {
             <!-- Tabla de Productos con Animaciones -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasProducts" class="table-container">
-                    <ProductsTable :products="productsStore.productsList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
+                    <ProductsTable :products="productsStore.productsList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" @upload-image="openImageModal" />
                 </div>
             </transition>
 
@@ -183,6 +200,8 @@ const showError = (summary, detail) => {
         <ProductsFormDialog v-model:visible="showProductDialog" :product="selectedProduct" :loading="isLoading" @submit="handleProductSubmit" />
 
         <ProductImportDialog v-model:visible="showImportDialog" @products-imported="handleProductsImported" @view-products="handleViewProducts" />
+
+        <ProductImageModal v-model:visible="showImageModal" :product="selectedProduct" @image-updated="handleImageUpdated" />
 
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedProduct?.name || ''" @confirm="handleProductDelete" />
     </div>

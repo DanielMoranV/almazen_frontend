@@ -40,6 +40,18 @@ export const searchProductsForSale = (params = {}) => {
     return axios.get(`/products/search-sale${queryString ? `?${queryString}` : ''}`);
 };
 
+// Product Image Upload
+export const uploadProductImage = (productId, imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    return axios.post(`/products/${productId}/upload-image`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
 // Products Mass Import
 export const downloadProductImportTemplate = () => {
     return axios.get('/products/import-template', {

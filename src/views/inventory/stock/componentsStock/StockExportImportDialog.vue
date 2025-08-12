@@ -6,7 +6,7 @@ import { computed, nextTick, ref, watch } from 'vue';
 
 export default {
     name: 'StockExportImportDialog',
-    emits: ['update:visible', 'stock-imported'],
+    emits: ['update:visible', 'stock-imported', 'refresh-data'],
     props: {
         visible: {
             type: Boolean,
@@ -167,6 +167,8 @@ export default {
                 if (stockExportImportStore.success) {
                     showToast('success', 'Importación exitosa', stockExportImportStore.message);
                     emit('stock-imported', result);
+                    // Emitir evento adicional para recargar datos
+                    emit('refresh-data');
                     close();
                 } else {
                     throw new Error(stockExportImportStore.error);

@@ -21,7 +21,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete', 'upload-image']);
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -295,9 +295,18 @@ const handleImageError = (event) => {
                 </div>
             </template>
         </Column>
-        <Column :exportable="false" header="Acciones" style="min-width: 6rem; max-width: 8rem">
+        <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
+                    <Button 
+                        icon="pi pi-image" 
+                        class="p-button-rounded p-button-warning" 
+                        size="small" 
+                        rounded 
+                        text 
+                        v-tooltip.top="slotProps.data.image_url ? 'Cambiar imagen' : 'Subir imagen'"
+                        @click="$emit('upload-image', slotProps.data)" 
+                    />
                     <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Editar'" @click="$emit('edit', slotProps.data)" />
                     <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text v-tooltip.top="'Eliminar'" @click="$emit('delete', slotProps.data)" />
                 </div>
@@ -452,7 +461,11 @@ const handleImageError = (event) => {
     @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800;
 }
 
-/* Botones de acción (Editar y Eliminar) */
+/* Botones de acción (Imagen, Editar y Eliminar) */
+:deep(.green-theme .p-button.p-button-warning) {
+    @apply bg-yellow-600 hover:bg-yellow-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
+}
+
 :deep(.green-theme .p-button.p-button-info) {
     @apply bg-green-600 hover:bg-green-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
 }

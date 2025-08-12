@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, ref, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
 import { usePublicStore } from '@/stores/publicStore';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 const route = useRoute();
 const toast = useToast();
@@ -42,7 +42,6 @@ const perPage = computed(() => publicStore.perPage);
 // Usar las utilidades del store
 const formatPrice = (price) => publicStore.formatPrice(price);
 const formatDate = (dateString) => publicStore.formatDate(dateString);
-
 
 // Función para cargar productos usando el store
 const loadProducts = async () => {
@@ -247,6 +246,8 @@ onMounted(async () => {
     // Inicializar store y cargar productos
     await publicStore.initializeStore(warehouseId.value);
 
+    console.log('Productos cargados:', products.value);
+
     // Actualizar SEO después de cargar los datos
     updateSEO();
     updateStructuredData();
@@ -272,12 +273,8 @@ onMounted(async () => {
                         </p>
                         <div class="product-count">
                             <i class="pi pi-box"></i>
-                            <span v-if="searchQuery || selectedCategory">
-                                {{ products.length }} productos encontrados
-                            </span>
-                            <span v-else>
-                                {{ totalProducts }} productos disponibles
-                            </span>
+                            <span v-if="searchQuery || selectedCategory"> {{ products.length }} productos encontrados </span>
+                            <span v-else> {{ totalProducts }} productos disponibles </span>
                         </div>
                     </div>
                     <div class="header-actions">
@@ -301,15 +298,7 @@ onMounted(async () => {
                         <div v-if="showFilters" class="filters-panel">
                             <div class="filter-group">
                                 <label class="filter-label">Categoría:</label>
-                                <Dropdown 
-                                    v-model="selectedCategory" 
-                                    :options="categoryStats" 
-                                    optionLabel="name" 
-                                    optionValue="id"
-                                    placeholder="Todas las categorías"
-                                    showClear
-                                    class="filter-dropdown"
-                                >
+                                <Dropdown v-model="selectedCategory" :options="categoryStats" optionLabel="name" optionValue="id" placeholder="Todas las categorías" showClear class="filter-dropdown">
                                     <template #option="slotProps">
                                         <div class="category-option">
                                             <span class="category-name">{{ slotProps.option.name }}</span>
@@ -323,11 +312,11 @@ onMounted(async () => {
                             <div class="category-chips" v-if="categoryStats.length > 1">
                                 <label class="filter-label">Categorías populares:</label>
                                 <div class="chips-container">
-                                    <Chip 
-                                        v-for="category in categoryStats.slice(0, 6)" 
+                                    <Chip
+                                        v-for="category in categoryStats.slice(0, 6)"
                                         :key="category.id"
                                         :label="`${category.name} (${category.productCount})`"
-                                        :class="{ 'selected': selectedCategory === category.id }"
+                                        :class="{ selected: selectedCategory === category.id }"
                                         @click="toggleCategoryFilter(category.id)"
                                         class="category-chip"
                                     />
@@ -335,13 +324,7 @@ onMounted(async () => {
                             </div>
 
                             <div class="filter-actions">
-                                <Button 
-                                    label="Limpiar filtros" 
-                                    text 
-                                    size="small" 
-                                    @click="clearFilters"
-                                    icon="pi pi-times"
-                                />
+                                <Button label="Limpiar filtros" text size="small" @click="clearFilters" icon="pi pi-times" />
                             </div>
                         </div>
                     </transition>
@@ -375,9 +358,7 @@ onMounted(async () => {
                         <div class="product-image">
                             <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
                             <div v-if="publicStore.getProductStock(product) <= 0" class="out-of-stock-badge">Agotado</div>
-                            <div v-else-if="publicStore.getProductBatch(product) && publicStore.getProductBatch(product).days_to_expire <= 7" class="expiry-badge">
-                                Vence pronto
-                            </div>
+                            <div v-else-if="publicStore.getProductBatch(product) && publicStore.getProductBatch(product).days_to_expire <= 7" class="expiry-badge">Vence pronto</div>
                         </div>
 
                         <!-- Contenido del producto -->
@@ -504,11 +485,11 @@ onMounted(async () => {
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .dark .store-header {
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .header-content {
@@ -763,22 +744,22 @@ onMounted(async () => {
     flex-direction: column;
     text-decoration: none;
     color: inherit;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .dark .product-card {
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .product-card:hover {
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     transform: translateY(-5px);
     border-color: var(--primary-200);
 }
 
 .dark .product-card:hover {
     border-color: var(--primary-700);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .product-image {
@@ -791,15 +772,22 @@ onMounted(async () => {
 .product-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
+    background-color: var(--surface-50);
     transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.dark .product-image img {
+    background-color: var(--surface-800);
 }
 
 .product-card:hover .product-image img {
     transform: scale(1.1);
 }
 
-.out-of-stock-badge, .expiry-badge {
+.out-of-stock-badge,
+.expiry-badge {
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -1049,7 +1037,7 @@ onMounted(async () => {
         align-items: flex-start;
         gap: 1rem;
     }
-    
+
     .header-actions {
         align-self: flex-end;
     }
@@ -1074,15 +1062,18 @@ onMounted(async () => {
         margin-left: 0;
         text-align: center;
     }
-    
+
     .footer-content {
         flex-direction: column;
         text-align: center;
         align-items: center;
         gap: 2rem;
     }
-    
-    .footer-info, .company-contact, .contact-links, .footer-brand {
+
+    .footer-info,
+    .company-contact,
+    .contact-links,
+    .footer-brand {
         align-items: center;
         justify-content: center;
         text-align: center;
@@ -1102,7 +1093,7 @@ onMounted(async () => {
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
         gap: 1rem;
     }
-    
+
     .product-card {
         border-radius: 0.75rem;
     }
@@ -1110,16 +1101,15 @@ onMounted(async () => {
     .product-content {
         padding: 1rem;
     }
-    
+
     .search-input {
         font-size: 1rem;
         padding-left: 3rem;
     }
-    
+
     .search-icon {
         font-size: 1rem;
         left: 1rem;
     }
 }
 </style>
-

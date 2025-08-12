@@ -1,4 +1,4 @@
-import { createProduct, deleteProduct, fetchProducts, searchProductsForSale, updateProduct } from '@/api';
+import { createProduct, deleteProduct, fetchProducts, searchProductsForSale, updateProduct, uploadProductImage } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
 
@@ -127,6 +127,27 @@ export const useProductsStore = defineStore('productsStore', {
                 }
             } catch (error) {
                 handleProcessError(error, this);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        
+        async uploadProductImage(productId, imageFile) {
+            console.log('uploadProductImage called with:', { productId, imageFile });
+            this.isLoading = true;
+            try {
+                const res = await uploadProductImage(productId, imageFile);
+                const processed = handleProcessSuccess(res, this);
+                if (processed.success) {
+                    // Actualizar el producto en la lista con la nueva imagen
+                    this.products = this.products.map((product) => 
+                        product.id === productId ? processed.data.product : product
+                    );
+                    return processed.data;
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
             } finally {
                 this.isLoading = false;
             }

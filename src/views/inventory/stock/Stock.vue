@@ -216,6 +216,10 @@ const handleStockImported = async (result) => {
         life: 5000
     });
 };
+
+const handleRefreshData = async () => {
+    await loadStockItems();
+};
 </script>
 
 <template>
@@ -259,7 +263,7 @@ const handleStockImported = async (result) => {
 
         <StockDetailsModal v-model:visible="showDetailsModal" :product-data="selectedProductForDetails" />
 
-        <StockExportImportDialog v-model:visible="showExportImportDialog" @stock-imported="handleStockImported" />
+        <StockExportImportDialog v-model:visible="showExportImportDialog" @stock-imported="handleStockImported" @refresh-data="handleRefreshData" />
     </div>
 </template>
 
