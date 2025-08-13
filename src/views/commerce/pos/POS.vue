@@ -812,6 +812,7 @@ const validateSelectedPaymentMethods = async () => {
                     if (freshCreditInfo) {
                         customerCreditInfo = { ...selectedCustomer.value, ...freshCreditInfo };
                     }
+                    // Si freshCreditInfo es null, usar datos locales del cliente
                 } catch (error) {
                     console.warn('No se pudo obtener información actualizada de crédito, usando datos del cliente');
                 }

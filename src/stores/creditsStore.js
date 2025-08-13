@@ -4,7 +4,14 @@ import {
     getCustomerCredit,
     createCreditPayment,
     getCustomerCreditSummary,
+    getCustomerCreditFullSummary,
     getCustomerPendingCredits,
+    updateCustomerCredit,
+    cancelCustomerCredit,
+    fetchCreditPayments,
+    getCreditPayment,
+    cancelCreditPayment,
+    previewCreditPaymentDistribution,
     fetchCreditMetrics,
     fetchCreditsTrend,
     fetchTopCustomersDebt,
@@ -223,6 +230,7 @@ export const useCreditsStore = defineStore('creditsStore', {
         // Obtener resumen de crédito de un cliente
         async fetchCustomerCreditSummary(customerId) {
             try {
+                // Intentar primero el endpoint principal
                 const response = await getCustomerCreditSummary(customerId);
                 const processed = handleProcessSuccess(response, this);
                 
@@ -232,16 +240,23 @@ export const useCreditsStore = defineStore('creditsStore', {
                     throw new Error(processed.message);
                 }
             } catch (error) {
-                // Retornar datos básicos en caso de error
-                return {
-                    credit_enabled: false,
-                    credit_limit: 0,
-                    credit_days: 30,
-                    total_debt: 0,
-                    available_credit: 0,
-                    pending_credits: [],
-                    recent_payments: []
-                };
+                // Si falla, intentar el endpoint alternativo
+                try {
+                    console.log('Intentando endpoint alternativo credit-summary...');
+                    const response = await getCustomerCreditFullSummary(customerId);
+                    const processed = handleProcessSuccess(response, this);
+                    
+                    if (processed.success) {
+                        return processed.data;
+                    } else {
+                        throw new Error(processed.message);
+                    }
+                } catch (alternativeError) {
+                    console.warn('Ningún endpoint de credit-summary disponible:', alternativeError.message);
+                    // Retornar null para indicar que no se pudieron obtener datos actualizados
+                    // El componente debería usar los datos locales del cliente
+                    return null;
+                }
             }
         },
 
@@ -462,6 +477,118 @@ export const useCreditsStore = defineStore('creditsStore', {
                 { range: '61-90', amount: 8000 },
                 { range: '90+', amount: 5000 }
             ];
+        },
+
+        // Actualizar crédito (fecha vencimiento, notas)
+        async updateCredit(creditId, payload) {
+            try {
+                const response = await updateCustomerCredit(creditId, payload);
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success) {
+                    // Actualizar en la lista local si existe
+                    const index = this.creditsList.findIndex(credit => credit.id === creditId);
+                    if (index !== -1) {
+                        this.creditsList[index] = { ...this.creditsList[index], ...processed.data };
+                    }
+                    return processed;
+                } else {
+                    throw new Error(processed.message);
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
+            }
+        },
+
+        // Anular crédito
+        async cancelCredit(creditId) {
+            try {
+                const response = await cancelCustomerCredit(creditId);
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success) {
+                    // Actualizar el estado en la lista local
+                    const index = this.creditsList.findIndex(credit => credit.id === creditId);
+                    if (index !== -1) {
+                        this.creditsList[index].status = 'ANULADO';
+                    }
+                    return processed;
+                } else {
+                    throw new Error(processed.message);
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
+            }
+        },
+
+        // Vista previa de distribución de pago
+        async previewPaymentDistribution(payload) {
+            try {
+                const response = await previewCreditPaymentDistribution(payload);
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success) {
+                    return processed.data;
+                } else {
+                    throw new Error(processed.message);
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
+            }
+        },
+
+        // Obtener lista de pagos
+        async fetchPayments(params = {}) {
+            try {
+                const response = await fetchCreditPayments(params);
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success) {
+                    return processed.data;
+                } else {
+                    throw new Error(processed.message);
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
+            }
+        },
+
+        // Obtener detalle de pago
+        async fetchPaymentDetail(paymentId) {
+            try {
+                const response = await getCreditPayment(paymentId);
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success) {
+                    return processed.data;
+                } else {
+                    throw new Error(processed.message);
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
+            }
+        },
+
+        // Anular pago
+        async cancelPayment(paymentId) {
+            try {
+                const response = await cancelCreditPayment(paymentId);
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success) {
+                    return processed;
+                } else {
+                    throw new Error(processed.message);
+                }
+            } catch (error) {
+                handleProcessError(error, this);
+                throw error;
+            }
         },
 
         // Limpiar errores

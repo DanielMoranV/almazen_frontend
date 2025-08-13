@@ -340,6 +340,25 @@ export const getCustomerCreditSummary = (customerId) => axios.get(`/customers/${
 
 export const getCustomerPendingCredits = (customerId) => axios.get(`/customers/${customerId}/pending-credits`);
 
+// Customer Credits Management
+export const updateCustomerCredit = (id, payload) => axios.put(`/customer-credits/${id}`, payload);
+
+export const cancelCustomerCredit = (id) => axios.delete(`/customer-credits/${id}`);
+
+export const getCustomerCreditFullSummary = (customerId) => axios.get(`/customer-credits/customer/${customerId}/summary`);
+
+// Credit Payments Management
+export const fetchCreditPayments = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/credit-payments${queryString ? `?${queryString}` : ''}`);
+};
+
+export const getCreditPayment = (id) => axios.get(`/credit-payments/${id}`);
+
+export const cancelCreditPayment = (id) => axios.put(`/credit-payments/${id}/cancel`);
+
+export const previewCreditPaymentDistribution = (payload) => axios.post('/credit-payments/preview-distribution', payload);
+
 // Credit Dashboard
 export const fetchCreditMetrics = (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
