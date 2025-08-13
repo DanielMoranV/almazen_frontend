@@ -14,8 +14,8 @@ import Textarea from 'primevue/textarea';
 import { useToast } from 'primevue/usetoast';
 import { computed, reactive, ref, watch } from 'vue';
 
-import { useCreditsStore } from '@/stores/creditsStore';
 import { fetchPaymentMethods } from '@/api';
+import { useCreditsStore } from '@/stores/creditsStore';
 
 const props = defineProps({
     visible: { type: Boolean, default: false },
@@ -32,12 +32,12 @@ const creditsStore = useCreditsStore();
 // Estado del formulario
 const payment = reactive({
     customer_id: null,
-    total_payment_amount: 0,
+    payment_amount: 0,
     payment_method_id: null,
     payment_date: new Date(),
     reference_number: '',
     notes: '',
-    distribution_mode: 'automatic' // 'automatic' o 'manual'
+    distribution_mode: 'fifo' // 'fifo' o 'manual'
 });
 
 // Estado de carga
@@ -83,28 +83,28 @@ const initializeManualDistribution = () => {
         credit_id: credit.id,
         credit_info: credit,
         allocated_amount: 0,
-        previous_balance: credit.remaining_amount,
-        new_balance: credit.remaining_amount
+        previous_balance: toNumber(credit.amounts?.remaining_amount),
+        new_balance: toNumber(credit.amounts?.remaining_amount)
     }));
 };
 
 // Calcular distribución automática FIFO
 const automaticDistribution = computed(() => {
     const distribution = [];
-    let remainingAmount = payment.total_payment_amount;
+    let remainingAmount = payment.payment_amount;
 
     for (const credit of customerCredits.value) {
         if (remainingAmount <= 0) break;
 
-        const allocatedAmount = Math.min(remainingAmount, credit.remaining_amount);
+        const allocatedAmount = Math.min(remainingAmount, toNumber(credit.amounts?.remaining_amount));
 
         if (allocatedAmount > 0) {
             distribution.push({
                 credit_id: credit.id,
                 credit_info: credit,
                 allocated_amount: allocatedAmount,
-                previous_balance: credit.remaining_amount,
-                new_balance: credit.remaining_amount - allocatedAmount
+                previous_balance: toNumber(credit.amounts?.remaining_amount),
+                new_balance: toNumber(credit.amounts?.remaining_amount) - allocatedAmount
             });
 
             remainingAmount -= allocatedAmount;
@@ -114,9 +114,9 @@ const automaticDistribution = computed(() => {
     return distribution;
 });
 
-// Distribución actual (automática o manual)
+// Distribución actual (fifo o manual)
 const currentDistribution = computed(() => {
-    return payment.distribution_mode === 'automatic' ? automaticDistribution.value : manualDistribution.value;
+    return payment.distribution_mode === 'fifo' ? automaticDistribution.value : manualDistribution.value;
 });
 
 // Total distribuido
@@ -126,7 +126,7 @@ const totalDistributed = computed(() => {
 
 // Validaciones
 const isValidPayment = computed(() => {
-    return payment.total_payment_amount > 0 && payment.payment_method_id && payment.payment_date && Math.abs(totalDistributed.value - payment.total_payment_amount) < 0.01;
+    return payment.payment_amount > 0 && payment.payment_method_id && payment.payment_date && Math.abs(totalDistributed.value - payment.payment_amount) < 0.01;
 });
 
 // Formateo de moneda
@@ -147,6 +147,20 @@ const formatDate = (date) => {
     });
 };
 
+// Convertir string a número
+const toNumber = (value) => {
+    if (value === null || value === undefined || value === '') return 0;
+    const num = parseFloat(value);
+    return isNaN(num) ? 0 : num;
+};
+
+// Convertir fecha a formato YYYY-MM-DD
+const formatDateForAPI = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+
 // Actualizar distribución manual
 const updateManualAllocation = (index, amount) => {
     manualDistribution.value[index].allocated_amount = amount || 0;
@@ -156,12 +170,12 @@ const updateManualAllocation = (index, amount) => {
 // Resetear formulario
 const resetForm = () => {
     payment.customer_id = props.credit?.customer?.id || null;
-    payment.total_payment_amount = props.credit?.remaining_amount || 0;
+    payment.payment_amount = toNumber(props.credit?.amounts?.remaining_amount);
     payment.payment_method_id = null;
     payment.payment_date = new Date();
     payment.reference_number = '';
     payment.notes = '';
-    payment.distribution_mode = 'automatic';
+    payment.distribution_mode = 'fifo';
 
     if (payment.customer_id) {
         loadCustomerCredits(payment.customer_id);
@@ -190,14 +204,15 @@ const submitPayment = async () => {
     try {
         const paymentData = {
             ...payment,
-            credit_allocations: currentDistribution.value.map((item) => ({
+            payment_date: formatDateForAPI(payment.payment_date),
+            manual_allocations: currentDistribution.value.map((item) => ({
                 credit_id: item.credit_id,
                 amount: item.allocated_amount
             }))
         };
 
         await creditsStore.processPayment(paymentData);
-        
+
         emit('success');
         toast.add({
             severity: 'success',
@@ -252,7 +267,7 @@ watch(
                         <div class="credit-summary">
                             <div class="credit-amount">
                                 <span class="label">Saldo pendiente:</span>
-                                <span class="amount pending">{{ formatCurrency(credit.remaining_amount) }}</span>
+                                <span class="amount pending">{{ formatCurrency(credit.amounts?.remaining_amount) }}</span>
                             </div>
                         </div>
                     </div>
@@ -264,7 +279,7 @@ watch(
                 <!-- Monto del pago -->
                 <div class="form-field md:col-span-2">
                     <label class="field-label">Monto del Pago *</label>
-                    <InputNumber v-model="payment.total_payment_amount" mode="currency" currency="PEN" :min="0.01" :max="99999.99" placeholder="0.00" class="form-input" />
+                    <InputNumber v-model="payment.payment_amount" mode="currency" currency="PEN" :min="0.01" :max="99999.99" placeholder="0.00" class="form-input" />
                 </div>
 
                 <!-- Método de pago -->
@@ -304,8 +319,8 @@ watch(
                     <!-- Selector de modo -->
                     <div class="distribution-mode">
                         <div class="mode-option">
-                            <RadioButton id="automatic" v-model="payment.distribution_mode" value="automatic" />
-                            <label for="automatic" class="mode-label">
+                            <RadioButton id="fifo" v-model="payment.distribution_mode" value="fifo" />
+                            <label for="fifo" class="mode-label">
                                 <span class="mode-title">Automático (FIFO)</span>
                                 <span class="mode-description">Se aplicará a los créditos más antiguos primero</span>
                             </label>
@@ -328,7 +343,7 @@ watch(
                                 <template #body="{ data }">
                                     <div class="sale-info">
                                         <div class="sale-number"># {{ data.credit_info.sale?.document_number }}</div>
-                                        <div class="sale-date">{{ formatDate(data.credit_info.credit_date) }}</div>
+                                        <div class="sale-date">{{ formatDate(data.credit_info.dates?.credit_date) }}</div>
                                     </div>
                                 </template>
                             </Column>
@@ -368,18 +383,18 @@ watch(
                         <div class="distribution-summary">
                             <div class="summary-row">
                                 <span class="summary-label">Total a Pagar:</span>
-                                <span class="summary-value">{{ formatCurrency(payment.total_payment_amount) }}</span>
+                                <span class="summary-value">{{ formatCurrency(payment.payment_amount) }}</span>
                             </div>
                             <div class="summary-row">
                                 <span class="summary-label">Total Distribuido:</span>
-                                <span class="summary-value" :class="{ 'text-red-600': totalDistributed !== payment.total_payment_amount }">
+                                <span class="summary-value" :class="{ 'text-red-600': totalDistributed !== payment.payment_amount }">
                                     {{ formatCurrency(totalDistributed) }}
                                 </span>
                             </div>
-                            <div v-if="Math.abs(totalDistributed - payment.total_payment_amount) > 0.01" class="summary-row error">
+                            <div v-if="Math.abs(totalDistributed - payment.payment_amount) > 0.01" class="summary-row error">
                                 <span class="summary-label">Diferencia:</span>
                                 <span class="summary-value text-red-600">
-                                    {{ formatCurrency(payment.total_payment_amount - totalDistributed) }}
+                                    {{ formatCurrency(payment.payment_amount - totalDistributed) }}
                                 </span>
                             </div>
                         </div>

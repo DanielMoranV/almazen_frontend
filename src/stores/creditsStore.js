@@ -38,15 +38,15 @@ export const useCreditsStore = defineStore('creditsStore', {
         
         // Dashboard data
         dashboardMetrics: {
-            totalCredits: 0,
-            totalAmount: 0,
-            totalPaid: 0,
-            totalPending: 0,
-            overdueCredits: 0,
-            overdueAmount: 0,
-            averagePaymentDays: 0,
-            paymentsToday: 0,
-            paymentsThisMonth: 0
+            total_credits: 0,
+            total_debt: 0,
+            overdue_credits: 0,
+            overdue_debt: 0,
+            payments_this_month: 0,
+            customers_with_debt: 0,
+            average_overdue_days: 0,
+            recovery_rate: 0,
+            overdue_percentage: 0
         },
         creditsTrend: [],
         topCustomersDebt: [],
@@ -435,15 +435,15 @@ export const useCreditsStore = defineStore('creditsStore', {
 
         loadMockDashboardData() {
             this.dashboardMetrics = {
-                totalCredits: 45,
-                totalAmount: 125000,
-                totalPaid: 85000,
-                totalPending: 40000,
-                overdueCredits: 8,
-                overdueAmount: 15000,
-                averagePaymentDays: 28,
-                paymentsToday: 5,
-                paymentsThisMonth: 32
+                total_credits: 45,
+                total_debt: 125000,
+                overdue_credits: 8,
+                overdue_debt: 15000,
+                payments_this_month: 32000,
+                customers_with_debt: 25,
+                average_overdue_days: 28.5,
+                recovery_rate: 68.5,
+                overdue_percentage: 17.8
             };
 
             this.creditsTrend = [

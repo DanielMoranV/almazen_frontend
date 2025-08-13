@@ -9,7 +9,7 @@ const props = defineProps({
     credits: { type: Array, default: () => [] },
     loading: { type: Boolean, default: false },
     pagination: { type: Object, required: true },
-    selection: { type: Array, default: () => [] }
+    selection: { type: Object, default: null }
 });
 
 const emit = defineEmits(['update:selection', 'page-change', 'row-select', 'payment-request']);
@@ -34,19 +34,26 @@ const formatCurrency = (amount) => {
 
 // Obtener clase del badge según el estado
 const getStatusSeverity = (status) => {
+    const statusCode = typeof status === 'object' ? status.code : status;
     const severityMap = {
         PENDIENTE: 'info',
         PAGADO: 'success',
         VENCIDO: 'danger',
         ANULADO: 'secondary'
     };
-    return severityMap[status] || 'info';
+    return severityMap[statusCode] || 'info';
 };
 
 // Calcular días de mora
 const getDaysOverdue = (credit) => {
-    if (!credit.is_overdue || !credit.due_date) return 0;
-    const dueDate = new Date(credit.due_date);
+    if (!credit.overdue_info?.is_overdue) return 0;
+    // Usar los días calculados por el backend si están disponibles
+    if (credit.overdue_info.days_overdue !== undefined) {
+        return credit.overdue_info.days_overdue;
+    }
+    // Fallback: calcular manualmente si no viene del backend
+    if (!credit.dates?.due_date) return 0;
+    const dueDate = new Date(credit.dates.due_date);
     const today = new Date();
     const diffTime = today - dueDate;
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -78,7 +85,7 @@ const onPaymentClick = (credit) => {
             filterDisplay="row"
             :globalFilterFields="['customer.name', 'sale.document_number', 'seller.name']"
             class="credits-table"
-            :rowClass="(data) => (data.is_overdue ? 'overdue-row' : '')"
+            :rowClass="(data) => (data.overdue_info?.is_overdue ? 'overdue-row' : '')"
             selectionMode="single"
             @row-dblclick="onRowSelect"
             responsiveLayout="scroll"
@@ -98,7 +105,7 @@ const onPaymentClick = (credit) => {
                 <template #body="{ data }">
                     <div class="sale-info">
                         <div class="font-semibold"># {{ data.sale?.document_number || 'N/A' }}</div>
-                        <div class="text-xs text-gray-500">{{ formatDate(data.sale?.date) }}</div>
+                        <div class="text-xs text-gray-500">{{ formatDate(data.sale?.sale_date) }}</div>
                     </div>
                 </template>
             </Column>
@@ -113,15 +120,15 @@ const onPaymentClick = (credit) => {
             <!-- Fecha de crédito -->
             <Column field="credit_date" header="Fecha Crédito" :sortable="true" class="min-w-32">
                 <template #body="{ data }">
-                    {{ formatDate(data.credit_date) }}
+                    {{ formatDate(data.dates?.credit_date) }}
                 </template>
             </Column>
 
             <!-- Fecha de vencimiento -->
             <Column field="due_date" header="Vencimiento" :sortable="true" class="min-w-32">
                 <template #body="{ data }">
-                    <div :class="{ 'text-red-600 font-semibold': data.is_overdue }">
-                        {{ formatDate(data.due_date) }}
+                    <div :class="{ 'text-red-600 font-semibold': data.overdue_info?.is_overdue }">
+                        {{ formatDate(data.dates?.due_date) }}
                     </div>
                 </template>
             </Column>
@@ -130,7 +137,7 @@ const onPaymentClick = (credit) => {
             <Column field="total_amount" header="Monto Total" :sortable="true" class="min-w-32">
                 <template #body="{ data }">
                     <div class="amount-cell">
-                        {{ formatCurrency(data.total_amount) }}
+                        {{ formatCurrency(data.amounts?.total_amount) }}
                     </div>
                 </template>
             </Column>
@@ -139,7 +146,7 @@ const onPaymentClick = (credit) => {
             <Column field="paid_amount" header="Pagado" :sortable="true" class="min-w-32">
                 <template #body="{ data }">
                     <div class="amount-cell text-green-600">
-                        {{ formatCurrency(data.paid_amount) }}
+                        {{ formatCurrency(data.amounts?.paid_amount) }}
                     </div>
                 </template>
             </Column>
@@ -147,8 +154,8 @@ const onPaymentClick = (credit) => {
             <!-- Saldo pendiente -->
             <Column field="remaining_amount" header="Saldo" :sortable="true" class="min-w-32">
                 <template #body="{ data }">
-                    <div class="amount-cell font-semibold" :class="{ 'text-red-600': data.remaining_amount > 0 }">
-                        {{ formatCurrency(data.remaining_amount) }}
+                    <div class="amount-cell font-semibold" :class="{ 'text-red-600': data.amounts?.remaining_amount > 0 }">
+                        {{ formatCurrency(data.amounts?.remaining_amount) }}
                     </div>
                 </template>
             </Column>
@@ -157,8 +164,8 @@ const onPaymentClick = (credit) => {
             <Column field="status" header="Estado" :sortable="true" class="min-w-28">
                 <template #body="{ data }">
                     <div class="status-cell">
-                        <Badge :value="data.status_display || data.status" :severity="getStatusSeverity(data.status)" class="status-badge" />
-                        <div v-if="data.is_overdue" class="overdue-info">
+                        <Badge :value="typeof data.status === 'object' ? data.status.display : (data.status_display || data.status)" :severity="getStatusSeverity(typeof data.status === 'object' ? data.status.code : data.status)" class="status-badge" />
+                        <div v-if="data.overdue_info?.is_overdue" class="overdue-info">
                             <span class="text-xs text-red-600 font-semibold"> {{ getDaysOverdue(data) }} días mora </span>
                         </div>
                     </div>
@@ -169,7 +176,7 @@ const onPaymentClick = (credit) => {
             <Column header="Acciones" class="min-w-32">
                 <template #body="{ data }">
                     <div class="actions-cell">
-                        <Button v-if="data.status === 'PENDIENTE' || data.status === 'VENCIDO'" icon="pi pi-dollar" label="Pagar" size="small" class="p-button-success p-button-sm" @click.stop="onPaymentClick(data)" />
+                        <Button v-if="data.status?.code === 'PENDIENTE' || data.status?.code === 'VENCIDO'" icon="pi pi-dollar" label="Pagar" size="small" class="p-button-success p-button-sm" @click.stop="onPaymentClick(data)" />
                         <Button icon="pi pi-eye" size="small" class="p-button-info p-button-outlined p-button-sm ml-2" @click.stop="onRowSelect({ data })" />
                     </div>
                 </template>

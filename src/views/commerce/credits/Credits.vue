@@ -19,7 +19,7 @@ const confirm = useConfirm();
 const creditsStore = useCreditsStore();
 
 // Estado reactivo
-const selectedCredits = ref([]);
+const selectedCredits = ref(null);
 const showPaymentDialog = ref(false);
 const showDetailDialog = ref(false);
 
@@ -184,7 +184,7 @@ onMounted(() => {
                 <CreditsToolbar :filters="creditsStore.currentFilters" :loading="loading" @filter-change="onFilterChange" @refresh="loadCredits" />
 
                 <!-- Tabla de créditos -->
-                <CreditsTable :credits="credits" :loading="loading" :pagination="pagination" v-model:selection="selectedCredits" @page-change="onPageChange" @row-select="onRowSelect" @payment-request="onPaymentRequest" />
+                <CreditsTable :credits="credits" :loading="loading" :pagination="pagination" :selection="selectedCredits" @update:selection="selectedCredits = $event" @page-change="onPageChange" @row-select="onRowSelect" @payment-request="onPaymentRequest" />
             </template>
         </Card>
 

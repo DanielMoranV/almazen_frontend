@@ -1,7 +1,6 @@
-<script setup>
+'''<script setup>
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
-import Calendar from 'primevue/calendar';
 import Card from 'primevue/card';
 import Chart from 'primevue/chart';
 import Column from 'primevue/column';
@@ -16,9 +15,6 @@ const toast = useToast();
 
 // Store
 const creditsStore = useCreditsStore();
-
-// Estado reactivo
-const dateRange = ref([new Date(new Date().setDate(1)), new Date()]); // Mes actual por defecto
 
 // Computadas del store
 const loading = computed(() => creditsStore.isLoadingDashboard);
@@ -47,12 +43,13 @@ const chartOptions = {
 
 // Gráfico de tendencia de créditos
 const creditsTrendData = computed(() => {
+    const trend = Array.isArray(creditsTrend.value) ? creditsTrend.value : [];
     return {
-        labels: creditsTrend.value.map((item) => item.month),
+        labels: trend.map((item) => item.month_name || item.month),
         datasets: [
             {
                 label: 'Créditos Otorgados',
-                data: creditsTrend.value.map((item) => item.credits_granted),
+                data: trend.map((item) => item.credits_created || 0),
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 borderColor: 'rgb(59, 130, 246)',
                 borderWidth: 2,
@@ -61,7 +58,7 @@ const creditsTrendData = computed(() => {
             },
             {
                 label: 'Pagos Recibidos',
-                data: creditsTrend.value.map((item) => item.payments_received),
+                data: trend.map((item) => item.payments_received || 0),
                 backgroundColor: 'rgba(34, 197, 94, 0.1)',
                 borderColor: 'rgb(34, 197, 94)',
                 borderWidth: 2,
@@ -72,115 +69,60 @@ const creditsTrendData = computed(() => {
     };
 });
 
+const hasCreditsTrendData = computed(() => {
+    return creditsTrendData.value.datasets.some(ds => ds.data.length > 0);
+});
+
+
 // Gráfico de análisis de antigüedad
 const agingData = computed(() => {
+    // El backend puede devolver aging como array directo o dentro de data.aging
+    let aging = [];
+    if (Array.isArray(agingAnalysis.value)) {
+        aging = agingAnalysis.value;
+    } else if (agingAnalysis.value?.aging && Array.isArray(agingAnalysis.value.aging)) {
+        aging = agingAnalysis.value.aging;
+    }
+    
     return {
-        labels: ['0-30 días', '31-60 días', '61-90 días', '90+ días'],
+        labels: aging.map((item) => item.range || ''),
         datasets: [
             {
                 label: 'Monto (S/)',
-                data: agingAnalysis.value.map((item) => item.amount),
-                backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(251, 191, 36, 0.8)', 'rgba(249, 115, 22, 0.8)', 'rgba(239, 68, 68, 0.8)'],
+                data: aging.map((item) => item.total_amount || 0),
+                backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(251, 191, 36, 0.8)', 'rgba(249, 115, 22, 0.8)', 'rgba(239, 68, 68, 0.8)', 'rgba(156, 163, 175, 0.8)'],
                 borderWidth: 1
             }
         ]
     };
 });
 
-// Datos de ejemplo para desarrollo
+const hasAgingData = computed(() => {
+    return agingData.value.datasets[0].data.length > 0;
+});
+
+// Cargar datos de ejemplo en el store para desarrollo
 const loadMockData = () => {
-    // Métricas de ejemplo
-    metrics.value = {
-        totalCredits: 45,
-        totalAmount: 125000,
-        totalPaid: 85000,
-        totalPending: 40000,
-        overdueCredits: 8,
-        overdueAmount: 15000,
-        averagePaymentDays: 28,
-        paymentsToday: 5,
-        paymentsThisMonth: 32
-    };
-
-    // Tendencia de créditos de ejemplo
-    creditsTrend.value = [
-        { month: 'Ene', credits_granted: 120000, payments_received: 95000 },
-        { month: 'Feb', credits_granted: 135000, payments_received: 110000 },
-        { month: 'Mar', credits_granted: 110000, payments_received: 125000 },
-        { month: 'Abr', credits_granted: 145000, payments_received: 105000 },
-        { month: 'May', credits_granted: 125000, payments_received: 140000 },
-        { month: 'Jun', credits_granted: 130000, payments_received: 120000 }
-    ];
-
-    // Clientes con mayor deuda de ejemplo
-    topCustomersDebt.value = [
-        { customer_name: 'Comercial ABC S.A.C.', customer_document: '20123456789', total_debt: 8500, overdue_count: 2 },
-        { customer_name: 'Distribuidora XYZ', customer_document: '20987654321', total_debt: 6200, overdue_count: 1 },
-        { customer_name: 'Empresa DEF Ltda.', customer_document: '20456789123', total_debt: 4800, overdue_count: 0 },
-        { customer_name: 'Negocios GHI E.I.R.L.', customer_document: '20654321987', total_debt: 3200, overdue_count: 1 },
-        { customer_name: 'Corporación JKL', customer_document: '20789123456', total_debt: 2800, overdue_count: 0 }
-    ];
-
-    // Créditos próximos a vencer de ejemplo
-    upcomingCredits.value = [
-        { customer_name: 'Cliente A', sale_number: 'V-001234', due_date: '2024-01-25', remaining_amount: 1500 },
-        { customer_name: 'Cliente B', sale_number: 'V-001235', due_date: '2024-01-27', remaining_amount: 2200 },
-        { customer_name: 'Cliente C', sale_number: 'V-001236', due_date: '2024-01-30', remaining_amount: 800 },
-        { customer_name: 'Cliente D', sale_number: 'V-001237', due_date: '2024-02-02', remaining_amount: 3200 },
-        { customer_name: 'Cliente E', sale_number: 'V-001238', due_date: '2024-02-05', remaining_amount: 1200 }
-    ];
-
-    // Historial de pagos recientes de ejemplo
-    paymentHistory.value = [
-        { payment_date: '2024-01-20', customer_name: 'Cliente F', amount: 1200, payment_method: 'Efectivo', credits_count: 1 },
-        { payment_date: '2024-01-20', customer_name: 'Cliente G', amount: 800, payment_method: 'Transferencia', credits_count: 2 },
-        { payment_date: '2024-01-19', customer_name: 'Cliente H', amount: 2500, payment_method: 'Efectivo', credits_count: 1 },
-        { payment_date: '2024-01-19', customer_name: 'Cliente I', amount: 600, payment_method: 'Tarjeta', credits_count: 1 },
-        { payment_date: '2024-01-18', customer_name: 'Cliente J', amount: 1800, payment_method: 'Transferencia', credits_count: 3 }
-    ];
-
-    // Análisis de antigüedad de ejemplo
-    agingAnalysis.value = [
-        { range: '0-30', amount: 25000 },
-        { range: '31-60', amount: 12000 },
-        { range: '61-90', amount: 8000 },
-        { range: '90+', amount: 5000 }
-    ];
+    creditsStore.loadMockDashboardData();
 };
 
 // Cargar datos del dashboard
 const loadDashboardData = async () => {
     try {
-        const [startDate, endDate] = dateRange.value;
-        const params = {
-            start_date: startDate.toISOString().split('T')[0],
-            end_date: endDate.toISOString().split('T')[0]
-        };
-
-        console.log('Cargando datos de dashboard con parámetros:', params);
-        await creditsStore.fetchDashboardData(params);
-        
+        await creditsStore.fetchDashboardData();
         console.log('Dashboard cargado exitosamente desde API');
-
     } catch (error) {
         console.warn('Error loading dashboard data:', error);
         
-        // Solo mostrar toast de error si no se cargaron datos mock
-        if (creditsStore.dashboardMetrics.totalCredits === 0 && creditsStore.creditsTrend.length === 0) {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'No se pudieron cargar los datos del dashboard',
-                life: 4000
-            });
-        } else {
-            toast.add({
-                severity: 'info',
-                summary: 'Modo Demo',
-                detail: 'Mostrando datos de ejemplo',
-                life: 4000
-            });
-        }
+        // Cargar datos de ejemplo para desarrollo
+        loadMockData();
+        
+        toast.add({
+            severity: 'info',
+            summary: 'Modo Demo',
+            detail: 'Mostrando datos de ejemplo debido a error en API',
+            life: 4000
+        });
     }
 };
 
@@ -209,14 +151,6 @@ const getSeverity = (daysUntilDue) => {
     return 'info'; // Normal
 };
 
-// Calcular días hasta vencimiento
-const getDaysUntilDue = (dueDate) => {
-    const today = new Date();
-    const due = new Date(dueDate);
-    const diffTime = due - today;
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-};
-
 onMounted(() => {
     loadDashboardData();
 });
@@ -235,10 +169,6 @@ onMounted(() => {
                     <p class="page-subtitle">Análisis y métricas de gestión de créditos</p>
                 </div>
                 <div class="header-actions">
-                    <div class="date-filter">
-                        <label class="filter-label">Período:</label>
-                        <Calendar v-model="dateRange" selectionMode="range" :showIcon="true" dateFormat="dd/mm/yy" placeholder="Seleccionar período" @date-select="loadDashboardData" />
-                    </div>
                     <Button icon="pi pi-refresh" label="Actualizar" @click="loadDashboardData" :loading="loading" class="p-button-outlined" />
                 </div>
             </div>
@@ -253,7 +183,7 @@ onMounted(() => {
                             <i class="pi pi-list"></i>
                         </div>
                         <div class="metric-info">
-                            <h3 class="metric-value">{{ metrics.totalCredits.toLocaleString() }}</h3>
+                            <h3 class="metric-value">{{ (metrics.total_credits || 0).toLocaleString() }}</h3>
                             <p class="metric-label">Total Créditos</p>
                         </div>
                     </div>
@@ -267,8 +197,8 @@ onMounted(() => {
                             <i class="pi pi-money-bill"></i>
                         </div>
                         <div class="metric-info">
-                            <h3 class="metric-value">{{ formatCurrency(metrics.totalAmount) }}</h3>
-                            <p class="metric-label">Monto Total</p>
+                            <h3 class="metric-value">{{ formatCurrency(metrics.total_debt || 0) }}</h3>
+                            <p class="metric-label">Deuda Total</p>
                         </div>
                     </div>
                 </template>
@@ -281,8 +211,8 @@ onMounted(() => {
                             <i class="pi pi-clock"></i>
                         </div>
                         <div class="metric-info">
-                            <h3 class="metric-value">{{ formatCurrency(metrics.totalPending) }}</h3>
-                            <p class="metric-label">Pendiente</p>
+                            <h3 class="metric-value">{{ formatCurrency(metrics.payments_this_month || 0) }}</h3>
+                            <p class="metric-label">Pagos del Mes</p>
                         </div>
                     </div>
                 </template>
@@ -295,9 +225,9 @@ onMounted(() => {
                             <i class="pi pi-exclamation-triangle"></i>
                         </div>
                         <div class="metric-info">
-                            <h3 class="metric-value">{{ metrics.overdueCredits }}</h3>
+                            <h3 class="metric-value">{{ metrics.overdue_credits || 0 }}</h3>
                             <p class="metric-label">Vencidos</p>
-                            <p class="metric-sublabel">{{ formatCurrency(metrics.overdueAmount) }}</p>
+                            <p class="metric-sublabel">{{ formatCurrency(metrics.overdue_debt || 0) }}</p>
                         </div>
                     </div>
                 </template>
@@ -310,8 +240,8 @@ onMounted(() => {
                             <i class="pi pi-calendar"></i>
                         </div>
                         <div class="metric-info">
-                            <h3 class="metric-value">{{ metrics.averagePaymentDays }}</h3>
-                            <p class="metric-label">Días Promedio Pago</p>
+                            <h3 class="metric-value">{{ Math.round(metrics.average_overdue_days || 0) }}</h3>
+                            <p class="metric-label">Promedio Días Mora</p>
                         </div>
                     </div>
                 </template>
@@ -324,9 +254,9 @@ onMounted(() => {
                             <i class="pi pi-check-circle"></i>
                         </div>
                         <div class="metric-info">
-                            <h3 class="metric-value">{{ metrics.paymentsToday }}</h3>
-                            <p class="metric-label">Pagos Hoy</p>
-                            <p class="metric-sublabel">{{ metrics.paymentsThisMonth }} este mes</p>
+                            <h3 class="metric-value">{{ Math.round(metrics.recovery_rate || 0) }}%</h3>
+                            <p class="metric-label">Tasa Recuperación</p>
+                            <p class="metric-sublabel">{{ metrics.customers_with_debt || 0 }} clientes</p>
                         </div>
                     </div>
                 </template>
@@ -343,7 +273,12 @@ onMounted(() => {
                     </div>
                 </template>
                 <template #content>
-                    <Chart type="line" :data="creditsTrendData" :options="chartOptions" style="height: 300px" />
+                    <div v-if="hasCreditsTrendData" class="relative h-[300px]">
+                        <Chart type="line" :data="creditsTrendData" :options="chartOptions" style="height: 300px" />
+                    </div>
+                    <div v-else class="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
+                        No hay datos de tendencia para mostrar.
+                    </div>
                 </template>
             </Card>
 
@@ -355,7 +290,12 @@ onMounted(() => {
                     </div>
                 </template>
                 <template #content>
-                    <Chart type="doughnut" :data="agingData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 300px" />
+                    <div v-if="hasAgingData" class="relative h-[300px]">
+                        <Chart type="doughnut" :data="agingData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 300px" />
+                    </div>
+                    <div v-else class="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
+                        No hay datos para el análisis de antigüedad.
+                    </div>
                 </template>
             </Card>
         </div>
@@ -372,11 +312,12 @@ onMounted(() => {
                 </template>
                 <template #content>
                     <DataTable :value="topCustomersDebt" class="dashboard-table">
-                        <Column field="customer_name" header="Cliente">
+                        <template #empty> No hay clientes con deuda para mostrar. </template>
+                        <Column field="name" header="Cliente">
                             <template #body="{ data }">
                                 <div class="customer-info">
-                                    <div class="customer-name">{{ data.customer_name }}</div>
-                                    <div class="customer-document">{{ data.customer_document }}</div>
+                                    <div class="customer-name">{{ data.name }}</div>
+                                    <div class="customer-document">{{ data.email || data.phone || '' }}</div>
                                 </div>
                             </template>
                         </Column>
@@ -387,9 +328,9 @@ onMounted(() => {
                                 </span>
                             </template>
                         </Column>
-                        <Column field="overdue_count" header="Vencidos">
+                        <Column field="overdue_credits_count" header="Vencidos">
                             <template #body="{ data }">
-                                <Badge :value="data.overdue_count" :severity="data.overdue_count > 0 ? 'danger' : 'success'" />
+                                <Badge :value="data.overdue_credits_count" :severity="data.overdue_credits_count > 0 ? 'danger' : 'success'" />
                             </template>
                         </Column>
                     </DataTable>
@@ -406,11 +347,12 @@ onMounted(() => {
                 </template>
                 <template #content>
                     <DataTable :value="upcomingCredits" class="dashboard-table">
-                        <Column field="customer_name" header="Cliente">
+                        <template #empty> No hay créditos próximos a vencer. </template>
+                        <Column field="customer.name" header="Cliente">
                             <template #body="{ data }">
                                 <div class="customer-info">
-                                    <div class="customer-name">{{ data.customer_name }}</div>
-                                    <div class="sale-number"># {{ data.sale_number }}</div>
+                                    <div class="customer-name">{{ data.customer?.name }}</div>
+                                    <div class="sale-number"># {{ data.sale_document }}</div>
                                 </div>
                             </template>
                         </Column>
@@ -418,7 +360,7 @@ onMounted(() => {
                             <template #body="{ data }">
                                 <div class="due-date">
                                     <div>{{ formatDate(data.due_date) }}</div>
-                                    <Badge :value="`${getDaysUntilDue(data.due_date)} días`" :severity="getSeverity(getDaysUntilDue(data.due_date))" size="small" />
+                                    <Badge :value="`${data.days_until_due} días`" :severity="getSeverity(data.days_until_due)" size="small" />
                                 </div>
                             </template>
                         </Column>
@@ -441,16 +383,21 @@ onMounted(() => {
                 </template>
                 <template #content>
                     <DataTable :value="paymentHistory" class="dashboard-table">
+                        <template #empty> No se han registrado pagos recientes. </template>
                         <Column field="payment_date" header="Fecha">
                             <template #body="{ data }">
                                 {{ formatDate(data.payment_date) }}
                             </template>
                         </Column>
-                        <Column field="customer_name" header="Cliente" />
-                        <Column field="amount" header="Monto">
+                        <Column field="customer.name" header="Cliente">
+                            <template #body="{ data }">
+                                {{ data.customer?.name }}
+                            </template>
+                        </Column>
+                        <Column field="total_payment_amount" header="Monto">
                             <template #body="{ data }">
                                 <span class="font-bold text-green-600">
-                                    {{ formatCurrency(data.amount) }}
+                                    {{ formatCurrency(data.total_payment_amount) }}
                                 </span>
                             </template>
                         </Column>
@@ -631,6 +578,10 @@ onMounted(() => {
     @apply border-gray-200 dark:border-gray-700 py-3;
 }
 
+:deep(.dashboard-table .p-datatable-emptymessage) {
+    @apply text-center p-4 text-gray-500 dark:text-gray-400;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
     .metrics-grid {
@@ -664,3 +615,4 @@ onMounted(() => {
     }
 }
 </style>
+''

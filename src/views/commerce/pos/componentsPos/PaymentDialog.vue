@@ -1,5 +1,5 @@
 <script setup>
-import { defineEmits, defineProps, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, ref, watch } from 'vue';
 
 const props = defineProps({
     showMultiplePaymentDialog: Boolean,
@@ -135,11 +135,19 @@ const getAvailableCredit = () => {
 
 // Verificar si el cliente puede usar crédito
 const canUseCredit = () => {
-    return props.selectedCustomer && 
-           props.selectedCustomer.credit_enabled && 
-           !props.selectedCustomer.has_overdue_credits &&
-           getAvailableCredit() > 0;
+    return props.selectedCustomer && props.selectedCustomer.credit_enabled && !props.selectedCustomer.has_overdue_credits && getAvailableCredit() > 0;
 };
+
+const filteredPaymentMethods = computed(() => {
+    if (!props.availablePaymentMethods) {
+        return [];
+    }
+    // Excluir permanentemente "Crédito de la casa"
+    const methods = props.availablePaymentMethods.filter((method) => method.name !== 'Crédito de la casa');
+
+    // Aplicar la lógica existente para otros tipos de crédito
+    return methods.filter((method) => !isCreditMethod(method.id) || canUseCredit());
+});
 
 const updatePaymentMethod = (index, field, value) => {
     const newPaymentMethods = [...props.selectedPaymentMethods];
@@ -208,15 +216,11 @@ const updatePaymentMethod = (index, field, value) => {
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="pi pi-credit-card text-purple-600"></i>
-                        <span v-if="selectedCustomer.credit_enabled" class="text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                            Crédito Habilitado
-                        </span>
-                        <span v-else class="text-sm px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
-                            Sin Crédito
-                        </span>
+                        <span v-if="selectedCustomer.credit_enabled" class="text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full"> Crédito Habilitado </span>
+                        <span v-else class="text-sm px-2 py-1 bg-gray-100 text-gray-600 rounded-full"> Sin Crédito </span>
                     </div>
                 </div>
-                
+
                 <div v-if="selectedCustomer.credit_enabled" class="grid grid-cols-3 gap-4 text-sm">
                     <div class="text-center">
                         <div class="text-gray-600">Límite</div>
@@ -233,7 +237,7 @@ const updatePaymentMethod = (index, field, value) => {
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Advertencias -->
                 <div v-if="selectedCustomer.has_overdue_credits" class="mt-3 p-2 bg-red-100 text-red-800 rounded-lg text-sm flex items-center gap-2">
                     <i class="pi pi-exclamation-triangle"></i>
@@ -268,9 +272,7 @@ const updatePaymentMethod = (index, field, value) => {
                                         <Select
                                             :modelValue="payment.method_id"
                                             @update:modelValue="updatePaymentMethod(index, 'method_id', $event)"
-                                            :options="props.availablePaymentMethods.filter(method => 
-                                                !isCreditMethod(method.id) || canUseCredit()
-                                            )"
+                                            :options="filteredPaymentMethods"
                                             option-label="name"
                                             option-value="id"
                                             placeholder="Seleccionar método..."
@@ -306,9 +308,7 @@ const updatePaymentMethod = (index, field, value) => {
                                     <div>
                                         <label class="block text-sm font-bold text-gray-700 mb-2">
                                             Monto
-                                            <span v-if="isCreditMethod(payment.method_id)" class="text-xs text-purple-600">
-                                                (Máx: {{ formatCurrency(Math.min(getAvailableCredit(), getRemainingAmount())) }})
-                                            </span>
+                                            <span v-if="isCreditMethod(payment.method_id)" class="text-xs text-purple-600"> (Máx: {{ formatCurrency(Math.min(getAvailableCredit(), getRemainingAmount())) }}) </span>
                                         </label>
                                         <div class="p-inputgroup">
                                             <span class="p-inputgroup-addon">S/</span>
@@ -327,8 +327,7 @@ const updatePaymentMethod = (index, field, value) => {
                                             />
                                         </div>
                                         <!-- Advertencia si excede crédito -->
-                                        <div v-if="isCreditMethod(payment.method_id) && payment.amount > getAvailableCredit()" 
-                                             class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                        <div v-if="isCreditMethod(payment.method_id) && payment.amount > getAvailableCredit()" class="mt-1 text-xs text-red-600 flex items-center gap-1">
                                             <i class="pi pi-exclamation-triangle"></i>
                                             <span>Excede crédito disponible</span>
                                         </div>
@@ -467,3 +466,4 @@ const updatePaymentMethod = (index, field, value) => {
         </div>
     </Dialog>
 </template>
+
