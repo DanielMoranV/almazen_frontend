@@ -2,6 +2,7 @@
 import { createCustomer, searchCustomers } from '@/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useCashSessionsStore } from '@/stores/cashSessionsStore';
+import { useCreditsStore } from '@/stores/creditsStore';
 import { usePaymentMethodsStore } from '@/stores/paymentMethodsStore';
 import { useProductsStore } from '@/stores/productsStore';
 import { useSalesStore } from '@/stores/salesStore';
@@ -37,6 +38,7 @@ const warehousesStore = useWarehousesStore();
 const salesStore = useSalesStore();
 const paymentMethodsStore = usePaymentMethodsStore();
 const cashSessionsStore = useCashSessionsStore();
+const creditsStore = useCreditsStore();
 
 // Loading states
 const loading = ref(false);
@@ -540,7 +542,7 @@ const processPayment = async () => {
     }
 
     // Validar métodos de pago
-    const paymentValidation = validateSelectedPaymentMethods();
+    const paymentValidation = await validateSelectedPaymentMethods();
     if (!paymentValidation.valid) {
         showToast('paymentError', {
             severity: 'error',
@@ -747,7 +749,7 @@ const getTotalPaymentAmount = () => {
     return selectedPaymentMethods.value.reduce((sum, pm) => sum + parseFloat(pm.amount || 0), 0);
 };
 
-const validateSelectedPaymentMethods = () => {
+const validateSelectedPaymentMethods = async () => {
     // Verificar sesión activa antes de cualquier otra validación
     if (requiresCashSession.value && !hasActiveSession.value) {
         return { valid: false, message: 'Debe tener una sesión de caja activa' };
@@ -791,6 +793,50 @@ const validateSelectedPaymentMethods = () => {
                     valid: false,
                     message: `Método de pago ${i + 1}: ${validation.message}`
                 };
+            }
+
+            // Validación específica para crédito de la casa
+            if (method.type === 'CREDIT' || method.name.toLowerCase().includes('crédito')) {
+                if (!selectedCustomer.value) {
+                    return {
+                        valid: false,
+                        message: 'Debe seleccionar un cliente para ventas al crédito'
+                    };
+                }
+
+                // Obtener información actualizada de crédito del cliente
+                let customerCreditInfo = selectedCustomer.value;
+                try {
+                    // Intentar obtener información actualizada de crédito
+                    const freshCreditInfo = await creditsStore.fetchCustomerCreditSummary(selectedCustomer.value.id);
+                    if (freshCreditInfo) {
+                        customerCreditInfo = { ...selectedCustomer.value, ...freshCreditInfo };
+                    }
+                } catch (error) {
+                    console.warn('No se pudo obtener información actualizada de crédito, usando datos del cliente');
+                }
+
+                if (!customerCreditInfo.credit_enabled) {
+                    return {
+                        valid: false,
+                        message: 'El cliente no tiene crédito habilitado'
+                    };
+                }
+
+                const availableCredit = (customerCreditInfo.credit_limit || 0) - (customerCreditInfo.total_debt || 0);
+                if (pm.amount > availableCredit) {
+                    return {
+                        valid: false,
+                        message: `Cliente excede límite de crédito. Disponible: S/ ${availableCredit.toFixed(2)} de S/ ${(customerCreditInfo.credit_limit || 0).toFixed(2)}`
+                    };
+                }
+
+                if (customerCreditInfo.has_overdue_credits) {
+                    return {
+                        valid: false,
+                        message: 'El cliente tiene deudas vencidas. No se puede otorgar más crédito.'
+                    };
+                }
             }
         }
     }
@@ -921,6 +967,7 @@ const openMultiplePaymentDialog = () => {
             :availableVoucherTypes="availableVoucherTypes"
             v-model:paymentStatus="paymentStatus"
             :loading="loading"
+            :selectedCustomer="selectedCustomer"
             @process-payment="processPayment"
             :printVoucher="printVoucher"
         />

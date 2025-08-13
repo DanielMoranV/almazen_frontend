@@ -109,6 +109,25 @@ const model = ref([
                 positions: ['Developer', 'Administrador', 'Compras']
             },
             {
+                label: 'Créditos',
+                icon: 'pi pi-credit-card',
+                items: [
+                    {
+                        label: 'Gestión de Créditos',
+                        icon: 'pi pi-list',
+                        to: '/commerce/credits',
+                        positions: ['Developer', 'Administrador', 'Ventas']
+                    },
+                    {
+                        label: 'Dashboard de Créditos',
+                        icon: 'pi pi-chart-line',
+                        to: '/commerce/credits/dashboard',
+                        positions: ['Developer', 'Administrador', 'Ventas']
+                    }
+                ],
+                positions: ['Developer', 'Administrador', 'Ventas']
+            },
+            {
                 label: 'Socios Comerciales',
                 icon: 'pi pi-users',
                 items: [

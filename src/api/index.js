@@ -326,6 +326,51 @@ export const importInitialStock = (file) => {
     });
 };
 
+// Customer Credits
+export const fetchCustomerCredits = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/customer-credits${queryString ? `?${queryString}` : ''}`);
+};
+
+export const getCustomerCredit = (id) => axios.get(`/customer-credits/${id}`);
+
+export const createCreditPayment = (payload) => axios.post('/credit-payments', payload);
+
+export const getCustomerCreditSummary = (customerId) => axios.get(`/customers/${customerId}/credit-summary`);
+
+export const getCustomerPendingCredits = (customerId) => axios.get(`/customers/${customerId}/pending-credits`);
+
+// Credit Dashboard
+export const fetchCreditMetrics = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/dashboard/credit-metrics${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchCreditsTrend = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/dashboard/credits-trend${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchTopCustomersDebt = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/dashboard/top-customers-debt${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchUpcomingCredits = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/dashboard/upcoming-credits${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchRecentPayments = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/dashboard/recent-payments${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchAgingAnalysis = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/dashboard/aging-analysis${queryString ? `?${queryString}` : ''}`);
+};
+
 // Public Store API - Sin autenticación
 export const fetchPublicProducts = (warehouseId, params = {}) => {
     const queryString = new URLSearchParams(params).toString();

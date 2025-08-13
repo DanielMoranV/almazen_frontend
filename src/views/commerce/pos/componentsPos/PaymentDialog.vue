@@ -9,7 +9,8 @@ const props = defineProps({
     voucherType: String,
     availableVoucherTypes: Array,
     paymentStatus: String,
-    loading: Boolean
+    loading: Boolean,
+    selectedCustomer: Object
 });
 
 const emit = defineEmits(['update:showMultiplePaymentDialog', 'update:selectedPaymentMethods', 'update:voucherType', 'update:paymentStatus', 'process-payment']);
@@ -120,6 +121,26 @@ const removePaymentMethod = (index) => {
     emit('update:selectedPaymentMethods', newPaymentMethods);
 };
 
+// Verificar si un método es de crédito
+const isCreditMethod = (methodId) => {
+    const method = props.availablePaymentMethods.find((pm) => pm.id === methodId);
+    return method && (method.type === 'CREDIT' || method.name.toLowerCase().includes('crédito'));
+};
+
+// Calcular crédito disponible
+const getAvailableCredit = () => {
+    if (!props.selectedCustomer) return 0;
+    return (props.selectedCustomer.credit_limit || 0) - (props.selectedCustomer.total_debt || 0);
+};
+
+// Verificar si el cliente puede usar crédito
+const canUseCredit = () => {
+    return props.selectedCustomer && 
+           props.selectedCustomer.credit_enabled && 
+           !props.selectedCustomer.has_overdue_credits &&
+           getAvailableCredit() > 0;
+};
+
 const updatePaymentMethod = (index, field, value) => {
     const newPaymentMethods = [...props.selectedPaymentMethods];
     const paymentMethod = newPaymentMethods[index];
@@ -133,6 +154,14 @@ const updatePaymentMethod = (index, field, value) => {
 
             if (!method.requires_reference) {
                 paymentMethod.reference = '';
+            }
+
+            // Si es método de crédito, ajustar el monto máximo al crédito disponible
+            if (isCreditMethod(method.id)) {
+                const availableCredit = getAvailableCredit();
+                if (paymentMethod.amount > availableCredit) {
+                    paymentMethod.amount = Math.min(availableCredit, getRemainingAmount());
+                }
             }
         }
     } else {
@@ -170,6 +199,48 @@ const updatePaymentMethod = (index, field, value) => {
                 </div>
             </div>
 
+            <!-- Información de crédito del cliente -->
+            <div v-if="selectedCustomer" class="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border-2 border-purple-200">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-user text-purple-600"></i>
+                        <span class="font-bold text-gray-800">{{ selectedCustomer.name }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-credit-card text-purple-600"></i>
+                        <span v-if="selectedCustomer.credit_enabled" class="text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                            Crédito Habilitado
+                        </span>
+                        <span v-else class="text-sm px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                            Sin Crédito
+                        </span>
+                    </div>
+                </div>
+                
+                <div v-if="selectedCustomer.credit_enabled" class="grid grid-cols-3 gap-4 text-sm">
+                    <div class="text-center">
+                        <div class="text-gray-600">Límite</div>
+                        <div class="font-bold text-blue-600">{{ formatCurrency(selectedCustomer.credit_limit || 0) }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-gray-600">Deuda Actual</div>
+                        <div class="font-bold text-orange-600">{{ formatCurrency(selectedCustomer.total_debt || 0) }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-gray-600">Disponible</div>
+                        <div class="font-bold" :class="getAvailableCredit() > 0 ? 'text-green-600' : 'text-red-600'">
+                            {{ formatCurrency(getAvailableCredit()) }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advertencias -->
+                <div v-if="selectedCustomer.has_overdue_credits" class="mt-3 p-2 bg-red-100 text-red-800 rounded-lg text-sm flex items-center gap-2">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span>Cliente tiene deudas vencidas</span>
+                </div>
+            </div>
+
             <!-- Payment Methods Configuration -->
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
@@ -197,7 +268,9 @@ const updatePaymentMethod = (index, field, value) => {
                                         <Select
                                             :modelValue="payment.method_id"
                                             @update:modelValue="updatePaymentMethod(index, 'method_id', $event)"
-                                            :options="props.availablePaymentMethods"
+                                            :options="props.availablePaymentMethods.filter(method => 
+                                                !isCreditMethod(method.id) || canUseCredit()
+                                            )"
                                             option-label="name"
                                             option-value="id"
                                             placeholder="Seleccionar método..."
@@ -231,14 +304,19 @@ const updatePaymentMethod = (index, field, value) => {
 
                                     <!-- Amount -->
                                     <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Monto</label>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                                            Monto
+                                            <span v-if="isCreditMethod(payment.method_id)" class="text-xs text-purple-600">
+                                                (Máx: {{ formatCurrency(Math.min(getAvailableCredit(), getRemainingAmount())) }})
+                                            </span>
+                                        </label>
                                         <div class="p-inputgroup">
                                             <span class="p-inputgroup-addon">S/</span>
                                             <InputNumber
                                                 :modelValue="payment.amount"
                                                 @update:modelValue="updatePaymentMethod(index, 'amount', $event)"
                                                 :min="0"
-                                                :max="props.cartTotal"
+                                                :max="isCreditMethod(payment.method_id) ? Math.min(getAvailableCredit(), props.cartTotal) : props.cartTotal"
                                                 mode="decimal"
                                                 :minFractionDigits="2"
                                                 :maxFractionDigits="2"
@@ -247,6 +325,12 @@ const updatePaymentMethod = (index, field, value) => {
                                                     input: 'py-2 px-3 text-sm border-l-0'
                                                 }"
                                             />
+                                        </div>
+                                        <!-- Advertencia si excede crédito -->
+                                        <div v-if="isCreditMethod(payment.method_id) && payment.amount > getAvailableCredit()" 
+                                             class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                                            <i class="pi pi-exclamation-triangle"></i>
+                                            <span>Excede crédito disponible</span>
                                         </div>
                                     </div>
 

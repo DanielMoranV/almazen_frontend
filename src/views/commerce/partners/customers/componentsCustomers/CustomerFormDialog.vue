@@ -5,6 +5,8 @@ import Dialog from 'primevue/dialog';
 import Select from 'primevue/select';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
+import InputNumber from 'primevue/inputnumber';
+import ToggleSwitch from 'primevue/toggleswitch';
 import { computed, reactive, watch } from 'vue';
 
 const props = defineProps({
@@ -23,7 +25,10 @@ const localCustomer = reactive({
     address: '',
     identity_document: '',
     identity_document_type: 'dni',
-    is_active: true
+    is_active: true,
+    credit_enabled: false,
+    credit_limit: 0,
+    credit_days: 30
 });
 
 watch(
@@ -39,7 +44,10 @@ watch(
                 address: '',
                 identity_document: '',
                 identity_document_type: 'dni',
-                is_active: true
+                is_active: true,
+                credit_enabled: false,
+                credit_limit: 0,
+                credit_days: 30
             }
         );
     },
@@ -143,6 +151,76 @@ const submit = () => emit('submit', { ...localCustomer });
                     </label>
                 </div>
             </div>
+
+            <!-- Configuración de crédito -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-credit-card"></i>
+                        Gestión de Créditos
+                    </h3>
+                </div>
+                
+                <!-- Toggle para habilitar crédito -->
+                <div class="field-checkbox">
+                    <ToggleSwitch id="credit_enabled" v-model="localCustomer.credit_enabled" />
+                    <label for="credit_enabled" class="checkbox-label">
+                        <span class="label-text">Habilitar Crédito</span>
+                        <span class="label-description">Permite que este cliente realice compras al crédito</span>
+                    </label>
+                </div>
+
+                <!-- Campos de crédito (solo si está habilitado) -->
+                <div v-if="localCustomer.credit_enabled" class="credit-fields mt-4 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Límite de crédito -->
+                        <div class="field">
+                            <label for="credit_limit" class="field-label">Límite de Crédito (S/) *</label>
+                            <InputNumber 
+                                id="credit_limit" 
+                                v-model="localCustomer.credit_limit" 
+                                mode="currency" 
+                                currency="PEN" 
+                                :minFractionDigits="2"
+                                :maxFractionDigits="2"
+                                :min="0" 
+                                :max="999999.99"
+                                placeholder="0.00" 
+                                class="form-input" 
+                            />
+                        </div>
+                        
+                        <!-- Días de crédito -->
+                        <div class="field">
+                            <label for="credit_days" class="field-label">Días de Crédito *</label>
+                            <InputNumber 
+                                id="credit_days" 
+                                v-model="localCustomer.credit_days" 
+                                :min="0" 
+                                :max="365"
+                                placeholder="30" 
+                                class="form-input"
+                                suffix=" días"
+                            />
+                        </div>
+                    </div>
+                    
+                    <!-- Advertencia si hay deudas pendientes al desactivar -->
+                    <div v-if="localCustomer.id && localCustomer.total_debt > 0" class="credit-warning">
+                        <div class="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <i class="pi pi-exclamation-triangle text-yellow-600"></i>
+                            <div>
+                                <p class="text-sm font-medium text-yellow-800">
+                                    Advertencia: Este cliente tiene deudas pendientes
+                                </p>
+                                <p class="text-xs text-yellow-700">
+                                    Deuda actual: S/ {{ localCustomer.total_debt?.toFixed(2) || '0.00' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Footer -->
@@ -244,15 +322,40 @@ const submit = () => emit('submit', { ...localCustomer });
 /* Estilos base para componentes de entrada de PrimeVue */
 :deep(.p-inputtext),
 :deep(.p-select),
-:deep(.p-textarea) {
+:deep(.p-textarea),
+:deep(.p-inputnumber-input) {
     @apply border-2 rounded-xl font-medium transition-all border-gray-300 dark:border-gray-600;
 }
 
 /* Estado de foco para componentes de entrada */
 :deep(.p-inputtext:focus),
 :deep(.p-select:not(.p-disabled).p-focus),
-:deep(.p-textarea:focus) {
+:deep(.p-textarea:focus),
+:deep(.p-inputnumber:not(.p-disabled).p-inputnumber-focused .p-inputnumber-input) {
     @apply border-purple-500 ring-2 ring-purple-500/20;
+}
+
+/* Estilos para campos de crédito */
+.credit-fields {
+    @apply p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-700;
+}
+
+.credit-warning {
+    @apply mt-4;
+}
+
+/* Toggle switch personalizado */
+:deep(.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider) {
+    @apply bg-green-500;
+}
+
+:deep(.p-toggleswitch:not(.p-disabled):hover .p-toggleswitch-slider) {
+    @apply border-purple-400;
+}
+
+/* InputNumber styling */
+:deep(.p-inputnumber) {
+    @apply w-full;
 }
 
 /* Pie de página del diálogo y botones */

@@ -71,6 +71,20 @@ const router = createRouter({
                     meta: { positions: ['Developer', 'Administrador', 'Compras'] }
                 },
 
+                // Commerce - Créditos
+                {
+                    path: '/commerce/credits',
+                    name: 'credits',
+                    component: () => import('@/views/commerce/credits/Credits.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
+                },
+                {
+                    path: '/commerce/credits/dashboard',
+                    name: 'creditsDashboard',
+                    component: () => import('@/views/commerce/credits/CreditsDashboard.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
+                },
+
                 // Commerce - Compras
                 {
                     path: '/commerce/purchases/orders',
