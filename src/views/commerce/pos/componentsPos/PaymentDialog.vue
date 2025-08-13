@@ -466,4 +466,3 @@ const updatePaymentMethod = (index, field, value) => {
         </div>
     </Dialog>
 </template>
-
