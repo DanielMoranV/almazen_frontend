@@ -74,15 +74,44 @@ export const useProductImportStore = defineStore('productImport', () => {
 
             const response = await importProductsFromExcel(file);
 
+            // DEBUG: Log completo de la respuesta para diagnosticar
+            console.log('🔍 Respuesta completa del backend:', response);
+            console.log('🔍 response.data:', response.data);
+            console.log('🔍 response.data.data:', response.data.data);
+
             // Manejar estructura de respuesta del backend
             const responseData = response.data.data || response.data;
             importResults.value = responseData;
 
-            // Extraer información del resultado
-            const totalProcessed = responseData.total_processed || 0;
-            const successfulImports = responseData.successful_imports || 0;
-            const failedImports = responseData.failed_imports || 0;
-            const duplicatesSkipped = responseData.duplicates_skipped || 0;
+            console.log('🔍 responseData procesado:', responseData);
+
+            // Extraer información del resultado con múltiples variantes de nombres
+            const totalProcessed = responseData.total_processed || 
+                                  responseData.total_rows || 
+                                  responseData.total || 
+                                  responseData.count || 0;
+            
+            const successfulImports = responseData.successful_imports || 
+                                     responseData.created_count || 
+                                     responseData.created || 
+                                     responseData.success_count || 
+                                     responseData.imported || 0;
+            
+            const failedImports = responseData.failed_imports || 
+                                 responseData.failed_count || 
+                                 responseData.errors_count || 
+                                 responseData.failed || 0;
+            
+            const duplicatesSkipped = responseData.duplicates_skipped || 
+                                     responseData.duplicates || 
+                                     responseData.skipped || 0;
+
+            console.log('🔍 Estadísticas extraídas:', {
+                totalProcessed,
+                successfulImports,
+                failedImports,
+                duplicatesSkipped
+            });
 
             // Construir mensaje de éxito detallado
             let successMessage = `Importación completada: ${totalProcessed} productos procesados`;
