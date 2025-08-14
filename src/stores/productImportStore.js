@@ -91,18 +91,21 @@ export const useProductImportStore = defineStore('productImport', () => {
                                   responseData.total || 
                                   responseData.count || 0;
             
-            const successfulImports = responseData.successful_imports || 
+            const successfulImports = responseData.successful_count ||    // ✅ Campo correcto del backend
+                                     responseData.successful_imports || 
                                      responseData.created_count || 
                                      responseData.created || 
                                      responseData.success_count || 
                                      responseData.imported || 0;
             
-            const failedImports = responseData.failed_imports || 
+            const failedImports = responseData.error_count ||             // ✅ Campo correcto del backend
+                                 responseData.failed_imports || 
                                  responseData.failed_count || 
                                  responseData.errors_count || 
                                  responseData.failed || 0;
             
-            const duplicatesSkipped = responseData.duplicates_skipped || 
+            const duplicatesSkipped = responseData.skipped_count ||       // ✅ Campo correcto del backend
+                                     responseData.duplicates_skipped || 
                                      responseData.duplicates || 
                                      responseData.skipped || 0;
 
