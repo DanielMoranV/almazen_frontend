@@ -252,12 +252,12 @@ watch(company, () => {
 // Función para verificar si una URL es válida y accesible
 const isValidImageUrl = (url) => {
     if (!url || typeof url !== 'string') return false;
-    
+
     // Verificar si es una URL de placeholder que sabemos que puede fallar
     if (url.includes('via.placeholder.com') || url.includes('placeholder')) {
         return false;
     }
-    
+
     try {
         new URL(url);
         return true;
@@ -286,14 +286,7 @@ onMounted(async () => {
             <div class="container">
                 <div class="header-content">
                     <div class="logo-section">
-                        <img 
-                            v-if="company?.logo && isValidImageUrl(company.logo) && !logoError" 
-                            :src="company.logo" 
-                            alt="Logo de la empresa" 
-                            class="company-logo"
-                            @error="logoError = true"
-                            @load="logoError = false"
-                        />
+                        <img v-if="company?.logo && isValidImageUrl(company.logo) && !logoError" :src="company.logo" alt="Logo de la empresa" class="company-logo" @error="logoError = true" @load="logoError = false" />
                         <div v-else class="default-logo">
                             <i class="pi pi-shopping-bag"></i>
                         </div>
