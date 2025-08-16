@@ -1,6 +1,6 @@
 <script setup>
 import { useAuthStore } from '@/stores/authStore';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 
 // Estructura del menú reorganizada y mejorada
@@ -12,13 +12,13 @@ const model = ref([
                 label: 'Dashboard',
                 icon: 'pi pi-home',
                 to: '/dashboard',
-                positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
+                positions: ['Developer', 'Administrador', 'Vendedor', 'Logística', 'Auxiliar']
             },
             {
                 label: 'Reportes',
                 icon: 'pi pi-chart-line',
                 to: '/reports',
-                positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística']
+                positions: ['Developer', 'Administrador']
             }
         ]
     },
@@ -33,16 +33,16 @@ const model = ref([
                         label: 'POS',
                         icon: 'pi pi-desktop',
                         to: '/commerce/pos',
-                        positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
+                        positions: ['Developer', 'Administrador', 'Vendedor', 'Auxiliar']
                     },
                     {
                         label: 'Sesiones',
                         icon: 'pi pi-clock',
                         to: '/commerce/pos/sessions',
-                        positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
+                        positions: ['Developer', 'Administrador', 'Vendedor']
                     }
                 ],
-                positions: ['Developer', 'Administrador', 'Ventas', 'Cajero']
+                positions: ['Developer', 'Administrador', 'Vendedor', 'Auxiliar']
             },
             {
                 label: 'Cajas',
@@ -52,14 +52,14 @@ const model = ref([
                         label: 'Movimientos de Caja',
                         icon: 'pi pi-wallet',
                         to: '/commerce/cash/movements',
-                        positions: ['Developer', 'Administrador']
+                        positions: ['Developer', 'Administrador', 'Vendedor']
                     },
 
                     {
                         label: 'Métodos de Pago',
                         icon: 'pi pi-credit-card',
                         to: '/commerce/cash/payment-methods',
-                        positions: ['Developer', 'Administrador']
+                        positions: ['Developer', 'Administrador', 'Vendedor']
                     },
                     {
                         label: 'Cajas Registradoras',
@@ -68,7 +68,7 @@ const model = ref([
                         positions: ['Developer', 'Administrador']
                     }
                 ],
-                positions: ['Developer', 'Administrador']
+                positions: ['Developer', 'Administrador', 'Vendedor']
             },
             {
                 label: 'Ventas',
@@ -78,7 +78,7 @@ const model = ref([
                         label: 'Gestión de Ventas',
                         icon: 'pi pi-shopping-cart',
                         to: '/commerce/sales',
-                        positions: ['Developer', 'Administrador', 'Ventas']
+                        positions: ['Developer', 'Administrador', 'Vendedor']
                     }
                     // {
                     //     label: 'Facturas',
@@ -93,7 +93,7 @@ const model = ref([
                     //     positions: ['Developer', 'Administrador', 'Ventas']
                     // }
                 ],
-                positions: ['Developer', 'Administrador', 'Ventas']
+                positions: ['Developer', 'Administrador', 'Vendedor']
             },
             {
                 label: 'Compras',
@@ -103,10 +103,10 @@ const model = ref([
                         label: 'Órdenes',
                         icon: 'pi pi-shopping-cart',
                         to: '/commerce/purchases/orders',
-                        positions: ['Developer', 'Administrador', 'Compras']
+                        positions: ['Developer', 'Administrador', 'Logística']
                     }
                 ],
-                positions: ['Developer', 'Administrador', 'Compras']
+                positions: ['Developer', 'Administrador', 'Logística']
             },
             {
                 label: 'Créditos',
@@ -116,16 +116,16 @@ const model = ref([
                         label: 'Gestión de Créditos',
                         icon: 'pi pi-list',
                         to: '/commerce/credits',
-                        positions: ['Developer', 'Administrador', 'Ventas']
+                        positions: ['Developer', 'Administrador', 'Vendedor']
                     },
                     {
                         label: 'Dashboard de Créditos',
                         icon: 'pi pi-chart-line',
                         to: '/commerce/credits/dashboard',
-                        positions: ['Developer', 'Administrador', 'Ventas']
+                        positions: ['Developer', 'Administrador', 'Vendedor']
                     }
                 ],
-                positions: ['Developer', 'Administrador', 'Ventas']
+                positions: ['Developer', 'Administrador', 'Vendedor']
             },
             {
                 label: 'Socios Comerciales',
@@ -135,19 +135,19 @@ const model = ref([
                         label: 'Proveedores',
                         icon: 'pi pi-truck',
                         to: '/commerce/partners/providers',
-                        positions: ['Developer', 'Administrador', 'Compras']
+                        positions: ['Developer', 'Administrador', 'Logística']
                     },
                     {
                         label: 'Clientes',
                         icon: 'pi pi-users',
                         to: '/commerce/partners/customers',
-                        positions: ['Developer', 'Administrador', 'Ventas']
+                        positions: ['Developer', 'Administrador', 'Vendedor', 'Auxiliar']
                     }
                 ],
-                positions: ['Developer', 'Administrador', 'Ventas', 'Compras']
+                positions: ['Developer', 'Administrador', 'Vendedor', 'Logística', 'Auxiliar']
             }
         ],
-        positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Cajero']
+        positions: ['Developer', 'Administrador', 'Vendedor', 'Logística', 'Auxiliar']
     },
     {
         label: 'Inventario',
@@ -156,13 +156,13 @@ const model = ref([
                 label: 'Productos',
                 icon: 'pi pi-tags',
                 to: '/inventory/products',
-                positions: ['Developer', 'Administrador', 'Logística', 'Compras']
+                positions: ['Developer', 'Administrador', 'Gerente', 'Almacenista', 'Comprador']
             },
             {
                 label: 'Stock Actual',
                 icon: 'pi pi-list',
                 to: '/inventory/stock',
-                positions: ['Developer', 'Administrador', 'Logística', 'Ventas']
+                positions: ['Developer', 'Administrador', 'Vendedor', 'Logística', 'Auxiliar']
             },
             {
                 label: 'Movimientos Stock',
@@ -246,10 +246,10 @@ const model = ref([
                         label: 'Perfil',
                         icon: 'pi pi-user',
                         to: '/administration/users/profile',
-                        positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
+                        positions: ['Developer', 'Administrador', 'Vendedor', 'Logística', 'Auxiliar']
                     }
                 ],
-                positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
+                positions: ['Developer', 'Administrador', 'Vendedor', 'Logística', 'Auxiliar']
             },
             {
                 label: 'Sistema',
@@ -280,7 +280,7 @@ const model = ref([
                 label: 'Guía de Inicio',
                 icon: 'pi pi-question-circle',
                 to: '/onboarding-guide',
-                positions: ['Developer', 'Administrador', 'Ventas', 'Compras', 'Logística', 'Cajero']
+                positions: ['Developer', 'Administrador', 'Vendedor', 'Logística', 'Auxiliar']
             }
         ]
     }
@@ -288,6 +288,54 @@ const model = ref([
 
 const authStore = useAuthStore();
 const currentPosition = computed(() => authStore.currentUser?.position || '');
+
+// Estado de búsqueda
+const searchTerm = ref('');
+const searchResults = ref([]);
+
+// Función para buscar en items anidados
+const searchInItems = (items, term) => {
+    const results = [];
+
+    const searchRecursive = (itemsList, parentPath = []) => {
+        itemsList.forEach((item) => {
+            const currentPath = [...parentPath, item.label];
+
+            // Verificar si el item actual coincide con la búsqueda
+            if (item.label.toLowerCase().includes(term.toLowerCase())) {
+                results.push({
+                    ...item,
+                    searchPath: currentPath.join(' > '),
+                    matchedText: item.label
+                });
+            }
+
+            // Buscar en sub-items si existen
+            if (item.items && item.items.length > 0) {
+                searchRecursive(item.items, currentPath);
+            }
+        });
+    };
+
+    searchRecursive(items);
+    return results;
+};
+
+// Función para limpiar búsqueda
+const clearSearch = () => {
+    searchTerm.value = '';
+    searchResults.value = [];
+};
+
+// Watcher para búsqueda en tiempo real
+watch(searchTerm, (newTerm) => {
+    if (newTerm.trim().length >= 2) {
+        const allAccessibleItems = filteredModel.value.flatMap((section) => section.items);
+        searchResults.value = searchInItems(allAccessibleItems, newTerm);
+    } else {
+        searchResults.value = [];
+    }
+});
 
 // Filtrar elementos según la posición del usuario
 const filteredModel = computed(() => {
@@ -315,23 +363,134 @@ const filteredModel = computed(() => {
         }))
         .filter((section) => section.items && section.items.length > 0); // Eliminar secciones sin elementos
 });
+
+// Computed para mostrar menú o resultados de búsqueda
+const displayModel = computed(() => {
+    if (searchResults.value.length > 0) {
+        return [
+            {
+                label: `Resultados de búsqueda (${searchResults.value.length})`,
+                items: searchResults.value.map((result) => ({
+                    ...result,
+                    searchHighlight: true
+                }))
+            }
+        ];
+    }
+    return filteredModel.value;
+});
 </script>
 
 <template>
-    <ul class="layout-menu">
-        <template v-for="(item, i) in filteredModel" :key="item.label">
-            <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
-            <li v-if="item.separator" class="menu-separator"></li>
-        </template>
-    </ul>
+    <div class="menu-container">
+        <!-- Campo de búsqueda -->
+        <div class="menu-search-container">
+            <IconField>
+                <InputIcon>
+                    <i class="pi pi-search" />
+                </InputIcon>
+                <InputText v-model="searchTerm" placeholder="Buscar en el menú..." class="menu-search-input" @keyup.escape="clearSearch" />
+            </IconField>
+            <button v-if="searchTerm" @click="clearSearch" class="menu-search-clear" type="button">
+                <i class="pi pi-times"></i>
+            </button>
+        </div>
+
+        <!-- Menú -->
+        <ul class="layout-menu">
+            <template v-for="(item, i) in displayModel" :key="item.label">
+                <app-menu-item v-if="!item.separator" :item="item" :index="i" :search-highlight="item.searchHighlight"></app-menu-item>
+                <li v-if="item.separator" class="menu-separator"></li>
+            </template>
+        </ul>
+
+        <!-- Mensaje cuando no hay resultados -->
+        <div v-if="searchTerm && searchResults.length === 0" class="no-results">
+            <i class="pi pi-search"></i>
+            <span>No se encontraron resultados para "{{ searchTerm }}"</span>
+        </div>
+    </div>
 </template>
 
 <style lang="scss" scoped>
-.layout-menu {
-    .menu-separator {
-        height: 1px;
-        background: var(--surface-border);
-        margin: 0.5rem 0;
+.menu-container {
+    .menu-search-container {
+        position: relative;
+        padding: 1rem;
+        border-bottom: 1px solid var(--surface-border);
+
+        .p-input-icon-left {
+            width: 100%;
+
+            i {
+                color: var(--text-color-secondary);
+            }
+        }
+
+        .menu-search-input {
+            width: 100%;
+            padding: 0.5rem 2.5rem 0.5rem 2rem;
+            border: 1px solid var(--surface-border);
+            border-radius: 6px;
+            background: var(--surface-ground);
+            color: var(--text-color);
+            font-size: 0.875rem;
+
+            &:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.2);
+            }
+
+            &::placeholder {
+                color: var(--text-color-secondary);
+            }
+        }
+
+        .menu-search-clear {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-color-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 50%;
+
+            &:hover {
+                background: var(--surface-hover);
+                color: var(--text-color);
+            }
+        }
+    }
+
+    .layout-menu {
+        .menu-separator {
+            height: 1px;
+            background: var(--surface-border);
+            margin: 0.5rem 0;
+        }
+    }
+
+    .no-results {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        color: var(--text-color-secondary);
+        text-align: center;
+
+        i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        span {
+            font-size: 0.875rem;
+        }
     }
 }
 </style>

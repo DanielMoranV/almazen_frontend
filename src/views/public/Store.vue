@@ -10,8 +10,11 @@ const publicStore = usePublicStore();
 
 // Filtros locales no del store
 const showFilters = ref(false);
+// Control de errores de carga de logo
+const logoError = ref(false);
 
 // Estados computados
+const companyId = computed(() => route.params.companyId);
 const warehouseId = computed(() => route.params.warehouseId);
 
 // Computed properties que acceden al store
@@ -173,10 +176,10 @@ const updateStructuredData = () => {
                 name: 'Catálogo de Productos',
                 numberOfItems: totalProducts.value
             },
-            url: `${window.location.origin}/store/${warehouseId.value}`,
+            url: `${window.location.origin}/store/${companyId.value}/${warehouseId.value}`,
             potentialAction: {
                 '@type': 'SearchAction',
-                target: `${window.location.origin}/store/${warehouseId.value}?search={search_term_string}`,
+                target: `${window.location.origin}/store/${companyId.value}/${warehouseId.value}?search={search_term_string}`,
                 'query-input': 'required name=search_term_string'
             }
         };
@@ -241,12 +244,32 @@ watch(
     { flush: 'post' }
 );
 
+// Resetear error de logo cuando cambie la empresa
+watch(company, () => {
+    logoError.value = false;
+});
+
+// Función para verificar si una URL es válida y accesible
+const isValidImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    
+    // Verificar si es una URL de placeholder que sabemos que puede fallar
+    if (url.includes('via.placeholder.com') || url.includes('placeholder')) {
+        return false;
+    }
+    
+    try {
+        new URL(url);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
 // Inicialización
 onMounted(async () => {
     // Inicializar store y cargar productos
-    await publicStore.initializeStore(warehouseId.value);
-
-    console.log('Productos cargados:', products.value);
+    await publicStore.initializeStore(warehouseId.value, companyId.value);
 
     // Actualizar SEO después de cargar los datos
     updateSEO();
@@ -262,7 +285,19 @@ onMounted(async () => {
         <header class="store-header">
             <div class="container">
                 <div class="header-content">
-                    <img v-if="company?.logo" :src="company.logo" alt="Logo de la empresa" class="company-logo" />
+                    <div class="logo-section">
+                        <img 
+                            v-if="company?.logo && isValidImageUrl(company.logo) && !logoError" 
+                            :src="company.logo" 
+                            alt="Logo de la empresa" 
+                            class="company-logo"
+                            @error="logoError = true"
+                            @load="logoError = false"
+                        />
+                        <div v-else class="default-logo">
+                            <i class="pi pi-shopping-bag"></i>
+                        </div>
+                    </div>
                     <div class="store-info">
                         <h1 class="store-title">
                             {{ company?.name || 'Catálogo de Productos' }}
@@ -353,7 +388,7 @@ onMounted(async () => {
                 </div>
 
                 <div v-else class="products-grid">
-                    <router-link v-for="product in products" :key="product.id" :to="{ name: 'publicProductDetail', params: { warehouseId: warehouseId, productId: product.id } }" class="product-card">
+                    <router-link v-for="product in products" :key="product.id" :to="{ name: 'publicProductDetail', params: { companyId: companyId, warehouseId: warehouseId, productId: product.id } }" class="product-card">
                         <!-- Imagen del producto -->
                         <div class="product-image">
                             <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
@@ -499,11 +534,40 @@ onMounted(async () => {
     gap: 1.5rem;
 }
 
+.logo-section {
+    display: flex;
+    align-items: center;
+    margin-right: 1.5rem;
+}
+
 .company-logo {
     height: 50px;
     width: auto;
     object-fit: contain;
     border-radius: 0.25rem;
+}
+
+.default-logo {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-500, #10b981), var(--primary-600, #059669));
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb, 16, 185, 129), 0.3);
+    transition: transform 0.2s ease;
+}
+
+.default-logo:hover {
+    transform: scale(1.05);
+}
+
+.dark .default-logo {
+    background: linear-gradient(135deg, var(--primary-400), var(--primary-500));
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.4);
 }
 
 .store-info {
@@ -1036,6 +1100,11 @@ onMounted(async () => {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
+    }
+
+    .logo-section {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
     }
 
     .header-actions {

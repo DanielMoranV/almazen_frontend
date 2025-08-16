@@ -284,13 +284,13 @@ const router = createRouter({
             meta: { public: true } // Ruta pública
         },
         {
-            path: '/store/:warehouseId',
+            path: '/store/:companyId/:warehouseId',
             name: 'publicStore',
             component: () => import('@/views/public/Store.vue'),
             meta: { public: true } // Ruta pública
         },
         {
-            path: '/store/:warehouseId/product/:productId',
+            path: '/store/:companyId/:warehouseId/product/:productId',
             name: 'publicProductDetail',
             component: () => import('@/views/public/ProductDetail.vue'),
             meta: { public: true } // Ruta pública

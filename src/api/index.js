@@ -396,6 +396,7 @@ export const fetchPublicProducts = (warehouseId, params = {}) => {
     return axios.get(`/public/warehouses/${warehouseId}/products${queryString ? `?${queryString}` : ''}`);
 };
 
-export const fetchPublicProduct = (warehouseId, productId) => {
-    return axios.get(`/public/warehouses/${warehouseId}/products/${productId}`);
+export const fetchPublicProduct = (warehouseId, productId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/public/warehouses/${warehouseId}/products/${productId}${queryString ? `?${queryString}` : ''}`);
 };

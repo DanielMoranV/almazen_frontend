@@ -1,13 +1,16 @@
 <script setup>
 import { useDashboardStore } from '@/stores/dashboardStore';
 import { useWarehousesStore } from '@/stores/warehousesStore';
+import { useAuthStore } from '@/stores/authStore';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const dashboardStore = useDashboardStore();
 const warehousesStore = useWarehousesStore();
+const authStore = useAuthStore();
 const { getDashboardMetrics, getLowStockProducts, getLowStockSummary, getExpiringProducts, getExpiringProductsSummary, isLoadingDashboard, getTotalSalesGrowth, getInventoryHealthScore } = storeToRefs(dashboardStore);
 const { warehousesList } = storeToRefs(warehousesStore);
+const { currentUser } = storeToRefs(authStore);
 
 const refreshInterval = ref(null);
 // Referencias a instancias de Chart para destruirlas al desmontar
@@ -55,7 +58,14 @@ const copySuccess = ref(false);
 // Generar URL del catálogo público
 const generateCatalogUrl = (warehouseId) => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/store/${warehouseId}`;
+    const companyId = currentUser.value?.company_id;
+    
+    if (!companyId) {
+        console.error('No se encontró el ID de la empresa del usuario');
+        return '#';
+    }
+    
+    return `${baseUrl}/store/${companyId}/${warehouseId}`;
 };
 
 // Copiar URL al portapapeles

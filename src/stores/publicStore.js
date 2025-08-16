@@ -124,10 +124,22 @@ export const usePublicStore = defineStore('publicStore', {
             this.error = null;
 
             try {
-                const params = {
-                    page: options.page || this.currentPage,
-                    per_page: options.perPage || this.perPage
-                };
+                const params = {};
+
+                // Obtener company_id desde options (viene de la URL)
+                const companyId = options.companyId;
+
+                if (!companyId) {
+                    throw new Error('ID de empresa requerido para cargar los productos.');
+                }
+
+                params.company_id = companyId;
+
+                // Solo agregar paginación si se especifica explícitamente
+                if (options.usePagination && (options.page || this.currentPage > 1)) {
+                    params.page = options.page || this.currentPage;
+                    params.per_page = options.perPage || this.perPage;
+                }
 
                 // Aplicar filtros
                 if (this.searchQuery.trim()) {
@@ -145,7 +157,6 @@ export const usePublicStore = defineStore('publicStore', {
 
                 const response = await fetchPublicProducts(warehouseId, params);
                 const data = response.data;
-
 
                 this.products = data.data || [];
                 this.totalProducts = data.total || data.data?.length || 0;
@@ -210,7 +221,7 @@ export const usePublicStore = defineStore('publicStore', {
         },
 
         // Buscar producto específico por ID
-        async findProductById(warehouseId, productId) {
+        async findProductById(warehouseId, productId, companyId) {
             try {
                 // Primero intentar encontrar el producto en los datos ya cargados
                 const existingProduct = this.products.find((p) => p.id == productId);
@@ -218,8 +229,12 @@ export const usePublicStore = defineStore('publicStore', {
                     return existingProduct;
                 }
 
+                if (!companyId) {
+                    throw new Error('ID de empresa requerido para buscar el producto.');
+                }
+
                 // Usar el endpoint específico para obtener un producto individual
-                const response = await fetchPublicProduct(warehouseId, productId);
+                const response = await fetchPublicProduct(warehouseId, productId, { company_id: companyId });
                 const data = response.data;
 
                 if (data.data && data.data.data) {
@@ -299,9 +314,14 @@ export const usePublicStore = defineStore('publicStore', {
         },
 
         // Inicializar tienda pública
-        async initializeStore(warehouseId) {
+        async initializeStore(warehouseId, companyId) {
             this.reset();
-            await this.loadPublicProducts(warehouseId);
+            
+            if (!companyId) {
+                throw new Error('ID de empresa requerido para acceder al catálogo.');
+            }
+            
+            await this.loadPublicProducts(warehouseId, { companyId });
         },
 
         // Utilidades
@@ -389,12 +409,23 @@ export const usePublicStore = defineStore('publicStore', {
 
         // Búsqueda optimizada según el tipo detectado
         async intelligentSearch(warehouseId, query, options = {}) {
+            const companyId = options.companyId;
+
+            if (!companyId) {
+                throw new Error('ID de empresa requerido para realizar la búsqueda.');
+            }
+
             const searchType = this.detectSearchType(query);
             const params = {
-                search: query.trim(),
-                per_page: options.perPage || 20,
-                page: options.page || 1
+                company_id: companyId,
+                search: query.trim()
             };
+
+            // Solo agregar paginación si se especifica
+            if (options.usePagination) {
+                params.per_page = options.perPage || 20;
+                params.page = options.page || 1;
+            }
 
             // Si detectamos que es un código de barras, usar búsqueda exacta
             // que según la documentación tiene máxima prioridad

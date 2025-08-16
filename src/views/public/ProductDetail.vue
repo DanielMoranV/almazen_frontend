@@ -14,6 +14,7 @@ const product = ref(null);
 const loading = ref(false);
 
 // Estados computados
+const companyId = computed(() => route.params.companyId);
 const warehouseId = computed(() => route.params.warehouseId);
 const productId = computed(() => route.params.productId);
 
@@ -25,7 +26,7 @@ const formatDate = (dateString) => publicStore.formatDate(dateString);
 const fetchProduct = async () => {
     loading.value = true;
     try {
-        const foundProduct = await publicStore.findProductById(warehouseId.value, productId.value);
+        const foundProduct = await publicStore.findProductById(warehouseId.value, productId.value, companyId.value);
 
         if (foundProduct) {
             product.value = foundProduct;
