@@ -3,18 +3,44 @@ import { ref } from 'vue';
 
 const sections = ref([
     {
+        title: 'Introducción - Roles del Sistema',
+        icon: 'pi pi-users',
+        features: [
+            {
+                name: 'Administrador',
+                icon: 'pi pi-shield',
+                description: 'Acceso completo al sistema. Gestiona usuarios, configuración empresarial, sistema de cajas y todas las funcionalidades administrativas. Es el único rol que puede gestionar la configuración del sistema.'
+            },
+            {
+                name: 'Vendedor',
+                icon: 'pi pi-shopping-cart',
+                description: 'Rol unificado para ventas y caja. Acceso a POS, gestión de ventas, créditos, movimientos de caja, métodos de pago y consulta de clientes. Puede consultar stock pero no modificarlo.'
+            },
+            {
+                name: 'Logística',
+                icon: 'pi pi-truck',
+                description: 'Responsable del inventario completo. Gestiona productos, stock, ajustes, transferencias, almacenes, compras y proveedores. No tiene acceso a ventas ni POS.'
+            },
+            {
+                name: 'Auxiliar',
+                icon: 'pi pi-user',
+                description: 'Rol de apoyo con acceso básico. Puede usar el POS, consultar stock y gestionar clientes básicos. Ideal para personal nuevo o apoyo temporal.'
+            }
+        ]
+    },
+    {
         title: 'Panel Principal',
         icon: 'pi pi-home',
         features: [
             {
-                name: 'Dashboard',
+                name: 'Dashboard Inteligente',
                 icon: 'pi pi-chart-line',
-                description: 'Visualiza métricas clave de tu negocio en tiempo real. Monitorea ventas, compras, valor de inventario y recibe alertas importantes sobre stock bajo o productos por vencer.'
+                description: 'Dashboard en tiempo real con métricas clave: ventas diarias/mensuales, valor total del inventario, productos activos/agotados, alertas de stock mínimo, productos próximos a vencer y gráficos de tendencias.'
             },
             {
-                name: 'Reportes',
+                name: 'Reportes Avanzados',
                 icon: 'pi pi-file-excel',
-                description: 'Genera y descarga reportes detallados sobre ventas, inventario, finanzas y más para tomar decisiones informadas.'
+                description: 'Sistema completo de reportes con exportación a Excel. Incluye reportes de ventas, inventario, movimientos de caja, créditos por cobrar y análisis de rotación de productos.'
             }
         ]
     },
@@ -23,24 +49,34 @@ const sections = ref([
         icon: 'pi pi-shopping-cart',
         features: [
             {
-                name: 'Punto de Venta (POS)',
+                name: 'POS - Punto de Venta Avanzado',
                 icon: 'pi pi-desktop',
-                description: 'Realiza ventas rápidas y eficientes. Busca productos, gestiona el carrito y procesa pagos de forma integrada. Requiere una sesión de caja activa.'
+                description: 'Sistema POS completo con búsqueda inteligente por nombre, SKU o código de barras. Carrito dinámico, gestión de clientes en tiempo real, múltiples métodos de pago, selección de lotes/vencimientos y generación automática de comprobantes. Requiere sesión de caja activa.'
             },
             {
-                name: 'Gestión de Caja',
+                name: 'Sistema de Caja Inteligente',
                 icon: 'pi pi-wallet',
-                description: 'Controla las cajas registradoras, métodos de pago y todos los movimientos de efectivo, como ingresos, egresos y depósitos.'
+                description: 'Control completo de sesiones de caja con apertura/cierre de turnos, seguimiento de efectivo inicial/final, registro automático de movimientos, manejo de diferencias y soporte para múltiples cajas registradoras.'
             },
             {
-                name: 'Ventas y Compras',
+                name: 'Gestión de Ventas',
                 icon: 'pi pi-shopping-bag',
-                description: 'Administra el ciclo completo de ventas y compras. Registra órdenes, gestiona facturas y cotizaciones.'
+                description: 'Administración completa de ventas con filtros avanzados, estados de venta (Pagado/Pendiente/Anulado), comprobantes electrónicos (Ticket/Boleta/Factura) e historial detallado de transacciones.'
+            },
+            {
+                name: 'Sistema de Créditos',
+                icon: 'pi pi-credit-card',
+                description: 'Gestión avanzada de créditos con dashboard especializado, control de límites por cliente, alertas de vencimiento, análisis de antigüedad de saldos, historial de pagos y reportes de cobranza.'
+            },
+            {
+                name: 'Gestión de Compras',
+                icon: 'pi pi-truck',
+                description: 'Sistema completo de órdenes de compra con gestión de lotes, bonificaciones, control de recepciones, timeline de órdenes e impresión de documentos. Incluye estadísticas detalladas de compras.'
             },
             {
                 name: 'Socios Comerciales',
                 icon: 'pi pi-users',
-                description: 'Gestiona tu base de datos de clientes y proveedores. Mantén la información de contacto y el historial de transacciones.'
+                description: 'CRUD completo de clientes y proveedores con historial de transacciones, gestión de documentos de identidad, límites de crédito personalizados y estados de cuenta detallados.'
             }
         ]
     },
@@ -49,24 +85,34 @@ const sections = ref([
         icon: 'pi pi-box',
         features: [
             {
-                name: 'Productos',
+                name: 'Gestión de Productos',
                 icon: 'pi pi-tags',
-                description: 'Administra tu catálogo completo. Crea, edita y organiza todos tus productos, incluyendo detalles como SKU, precios y control de lotes.'
+                description: 'Catálogo completo con importación masiva desde Excel, gestión de SKU/códigos de barras, categorización avanzada, múltiples precios por producto, control de imágenes, unidades de medida y estados de productos.'
             },
             {
-                name: 'Control de Stock',
+                name: 'Control de Stock Avanzado',
                 icon: 'pi pi-list',
-                description: 'Consulta el stock actual de tus productos en todos los almacenes. Visualiza cantidades disponibles, costos y precios de venta.'
+                description: 'Vista unificada de stock por almacén con EXPORTACIÓN E IMPORTACIÓN MASIVA desde Excel, edición masiva, filtros avanzados por categoría/estado/almacén, alertas de stock mínimo y gestión de lotes/vencimientos.'
             },
             {
                 name: 'Movimientos de Stock',
                 icon: 'pi pi-history',
-                description: 'Rastrea cada movimiento de inventario, ya sea por ventas, compras, ajustes o transferencias entre almacenes.'
+                description: 'Historial completo con tipos: Entrada/Salida/Ajuste/Transferencia. Incluye trazabilidad por lote, reportes de movimientos y estadísticas de rotación de productos.'
             },
             {
-                name: 'Almacenes',
+                name: 'Ajustes de Inventario',
+                icon: 'pi pi-sliders-h',
+                description: 'Sistema de ajustes manuales con importación desde Excel, justificaciones obligatorias, reportes de diferencias y sistema de aprobaciones para mayor control.'
+            },
+            {
+                name: 'Transferencias entre Almacenes',
+                icon: 'pi pi-arrow-right-arrow-left',
+                description: 'Sistema completo de transferencias con estados de seguimiento, confirmación de recepciones, historial detallado y control de inventario en tránsito.'
+            },
+            {
+                name: 'Gestión Multi-Almacén',
                 icon: 'pi pi-building',
-                description: 'Configura y gestiona múltiples almacenes o bodegas para organizar tu inventario de manera eficiente.'
+                description: 'Soporte para múltiples almacenes por empresa con configuración de ubicaciones, estados individuales, capacidades y restricciones personalizables.'
             }
         ]
     },
@@ -75,19 +121,66 @@ const sections = ref([
         icon: 'pi pi-cog',
         features: [
             {
-                name: 'Gestión de Empresa',
+                name: 'Configuración Empresarial',
                 icon: 'pi pi-sitemap',
-                description: 'Configura los datos de tu empresa, incluyendo flujos de trabajo como el proceso de compras (estándar o simplificado).'
+                description: 'Gestión completa de datos empresariales con configuración de flujos de trabajo personalizables: proceso de compras (Estándar/Simplificado), requerimiento de sesión de caja, integración con SUNAT y configuración de comprobantes electrónicos.'
             },
             {
-                name: 'Gestión de Usuarios',
+                name: 'Sistema de Usuarios y Permisos',
                 icon: 'pi pi-users',
-                description: 'Administra los usuarios del sistema, asigna roles y permisos. Cada usuario puede también gestionar su propio perfil.'
+                description: 'Control granular de acceso con 4 roles optimizados: Administrador, Vendedor, Logística y Auxiliar. Gestión de perfiles personalizables, control de sesiones con JWT y refresh automático.'
             },
             {
                 name: 'Configuración del Sistema',
                 icon: 'pi pi-sliders-h',
-                description: 'Define parámetros globales del sistema, como categorías de productos y unidades de medida.'
+                description: 'Parámetros globales del sistema incluyendo gestión de categorías de productos, unidades de medida estándar y configuraciones adaptables por empresa.'
+            }
+        ]
+    },
+    {
+        title: 'Funcionalidades Especiales',
+        icon: 'pi pi-star',
+        features: [
+            {
+                name: 'Catálogo Público',
+                icon: 'pi pi-globe',
+                description: 'Tienda en línea pública sin autenticación, SEO optimizado con Schema.org, búsqueda inteligente, filtros por categoría, diseño responsive y URLs personalizables por almacén (/store/{warehouseId}).'
+            },
+            {
+                name: 'Importación/Exportación Masiva',
+                icon: 'pi pi-file-excel',
+                description: 'Herramientas avanzadas para carga masiva: importación de productos desde Excel, export/import de inventarios completos, carga masiva de ajustes y templates predefinidos para facilitar el proceso.'
+            },
+            {
+                name: 'Sistema de Lotes Avanzado',
+                icon: 'pi pi-calendar',
+                description: 'Gestión completa de fechas de vencimiento con alertas automáticas de productos próximos a vencer, selección de lotes en POS, trazabilidad completa y control FIFO/FEFO.'
+            },
+            {
+                name: 'Configuraciones Flexibles',
+                icon: 'pi pi-wrench',
+                description: 'Sistema multi-empresa (tenancy), multi-almacén, flujos de trabajo adaptables, métodos de pago personalizables y configuración de procesos simplificados vs estándar según las necesidades del negocio.'
+            }
+        ]
+    },
+    {
+        title: 'Flujos de Trabajo Principales',
+        icon: 'pi pi-sitemap',
+        features: [
+            {
+                name: 'Flujo de Ventas Rápidas (POS)',
+                icon: 'pi pi-shopping-cart',
+                description: '1. Abrir sesión de caja → 2. Buscar productos (código de barras/nombre/SKU) → 3. Agregar al carrito con selección de lotes → 4. Seleccionar/crear cliente → 5. Procesar pago (múltiples métodos) → 6. Generar comprobante automático'
+            },
+            {
+                name: 'Flujo de Gestión de Inventario',
+                icon: 'pi pi-box',
+                description: '1. Importar productos masivamente desde Excel → 2. Configurar stock inicial por almacén → 3. Gestionar lotes y fechas de vencimiento → 4. Realizar ajustes cuando sea necesario → 5. Transferir entre almacenes → 6. Monitorear alertas automáticas'
+            },
+            {
+                name: 'Flujo de Análisis de Negocio',
+                icon: 'pi pi-chart-line',
+                description: '1. Consultar dashboard con métricas en tiempo real → 2. Generar reportes de ventas y rotación → 3. Analizar créditos y estrategias de cobranza → 4. Revisar sesiones de caja y movimientos → 5. Exportar datos para análisis externos'
             }
         ]
     }
@@ -98,8 +191,14 @@ const sections = ref([
     <div class="onboarding-guide-page">
         <div class="guide-header">
             <i class="pi pi-question-circle guide-icon"></i>
-            <h1 class="guide-title">Guía de Funcionalidades de AlmaZen</h1>
-            <p class="guide-subtitle">Descubre todo lo que puedes hacer en el sistema.</p>
+            <h1 class="guide-title">Guía Completa del Sistema AlmaZen</h1>
+            <p class="guide-subtitle">Manual completo de funcionalidades, roles y flujos de trabajo</p>
+            <div class="guide-badges">
+                <span class="badge badge-primary">4 Roles Optimizados</span>
+                <span class="badge badge-success">Sistema Multi-Almacén</span>
+                <span class="badge badge-info">Importación Masiva</span>
+                <span class="badge badge-warning">POS Avanzado</span>
+            </div>
         </div>
 
         <div class="guide-content">
@@ -146,7 +245,31 @@ const sections = ref([
 }
 
 .guide-subtitle {
-    @apply text-lg text-gray-600 dark:text-gray-400 mt-2;
+    @apply text-lg text-gray-600 dark:text-gray-400 mt-2 mb-4;
+}
+
+.guide-badges {
+    @apply flex flex-wrap justify-center gap-2 mt-4;
+}
+
+.badge {
+    @apply px-3 py-1 rounded-full text-sm font-semibold;
+}
+
+.badge-primary {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200;
+}
+
+.badge-success {
+    @apply bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200;
+}
+
+.badge-info {
+    @apply bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200;
+}
+
+.badge-warning {
+    @apply bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200;
 }
 
 .guide-content {
