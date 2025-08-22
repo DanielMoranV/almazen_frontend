@@ -10,12 +10,12 @@ import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
-import Message from 'primevue/message';
 import Menu from 'primevue/menu';
+import Message from 'primevue/message';
 import ProgressSpinner from 'primevue/progressspinner';
 import Toast from 'primevue/toast';
-import QuoteFormDialog from './componentsQuotes/QuoteFormDialog.vue';
 import QuoteDetailDialog from './componentsQuotes/QuoteDetailDialog.vue';
+import QuoteFormDialog from './componentsQuotes/QuoteFormDialog.vue';
 
 const toast = useToast();
 const router = useRouter();
@@ -458,7 +458,7 @@ const getRowClass = () => {
 // Función para obtener items del menú contextual basado en el estado de la cotización
 const getMenuItems = (quote) => {
     const items = [];
-    
+
     // Opción de editar solo para cotizaciones pendientes
     if (quote.status === 'PENDIENTE') {
         items.push({
@@ -467,34 +467,34 @@ const getMenuItems = (quote) => {
             command: () => editQuoteFromMenu(quote),
             class: 'text-blue-600'
         });
-        
+
         items.push({ separator: true });
     }
-    
+
     // Siempre mostrar opciones de descarga
     items.push({
         label: 'Descargar PDF',
         icon: 'pi pi-file-pdf',
         command: () => downloadPdfFromMenu(quote)
     });
-    
+
     items.push({
         label: 'Descargar Excel',
         icon: 'pi pi-file-excel',
         command: () => downloadExcelFromMenu(quote)
     });
-    
+
     // Mostrar opciones de estado solo para cotizaciones pendientes
     if (quote.status === 'PENDIENTE') {
         items.push({ separator: true });
-        
+
         items.push({
             label: 'Aprobar',
             icon: 'pi pi-check',
             command: () => approveQuoteFromMenu(quote),
             class: 'text-green-600'
         });
-        
+
         items.push({
             label: 'Rechazar',
             icon: 'pi pi-times',
@@ -502,7 +502,7 @@ const getMenuItems = (quote) => {
             class: 'text-red-600'
         });
     }
-    
+
     return items;
 };
 
@@ -689,7 +689,7 @@ const editQuoteFromMenu = async (quote) => {
 const handleQuoteUpdated = async (updatedQuote) => {
     // Recargar la lista de cotizaciones cuando se actualiza una cotización desde el modal
     await loadQuotes();
-    
+
     toast.add({
         severity: 'info',
         summary: 'Actualizado',
@@ -752,9 +752,7 @@ const handleQuoteSubmit = async (quoteData) => {
             toast.add({
                 severity: 'success',
                 summary: 'Éxito',
-                detail: selectedQuote.value 
-                    ? 'Cotización actualizada exitosamente' 
-                    : 'Cotización creada exitosamente',
+                detail: selectedQuote.value ? 'Cotización actualizada exitosamente' : 'Cotización creada exitosamente',
                 life: 3000
             });
 
@@ -1123,29 +1121,12 @@ const handleQuoteSubmit = async (quoteData) => {
                             <div class="table-cell col-actions">
                                 <div class="action-buttons">
                                     <Button icon="pi pi-eye" class="action-btn view-btn" @click.stop="viewQuoteDetails(quote)" v-tooltip="'Ver detalles'" />
-                                    <Button 
-                                        v-if="quote.status === 'PENDIENTE'" 
-                                        icon="pi pi-pencil" 
-                                        class="action-btn edit-btn" 
-                                        @click="editQuote(quote, $event)" 
-                                        v-tooltip="'Editar'" 
-                                    />
-                                    <Button 
-                                        v-else 
-                                        icon="pi pi-pencil" 
-                                        class="action-btn edit-btn disabled" 
-                                        disabled 
-                                        v-tooltip="'Solo se pueden editar cotizaciones pendientes'" 
-                                    />
+                                    <Button v-if="quote.status === 'PENDIENTE'" icon="pi pi-pencil" class="action-btn edit-btn" @click="editQuote(quote, $event)" v-tooltip="'Editar'" />
+                                    <Button v-else icon="pi pi-pencil" class="action-btn edit-btn disabled" disabled v-tooltip="'Solo se pueden editar cotizaciones pendientes'" />
                                     <Button icon="pi pi-ellipsis-v" class="action-btn more-btn" @click.stop="toggleMenu($event, quote)" v-tooltip="'Más opciones'" />
-                                    
+
                                     <!-- Menú contextual -->
-                                    <Menu 
-                                        :ref="(el) => setMenuRef(el, quote.id)"
-                                        :model="menuItems[quote.id] || []"
-                                        popup
-                                        class="quote-context-menu"
-                                    />
+                                    <Menu :ref="(el) => setMenuRef(el, quote.id)" :model="menuItems[quote.id] || []" popup class="quote-context-menu" />
                                 </div>
                             </div>
                         </div>
@@ -1155,21 +1136,20 @@ const handleQuoteSubmit = async (quoteData) => {
         </transition>
 
         <!-- Dialog de nueva/editar cotización -->
-        <QuoteFormDialog 
-            v-model:visible="showQuoteDialog" 
-            :quote="selectedQuote" 
-            :loading="loading" 
-            @submit="handleQuoteSubmit" 
-            @update:visible="(val) => { if (!val) selectedQuote = null; }"
+        <QuoteFormDialog
+            v-model:visible="showQuoteDialog"
+            :quote="selectedQuote"
+            :loading="loading"
+            @submit="handleQuoteSubmit"
+            @update:visible="
+                (val) => {
+                    if (!val) selectedQuote = null;
+                }
+            "
         />
 
         <!-- Dialog de detalles de cotización -->
-        <QuoteDetailDialog 
-            v-model:visible="showQuoteDetailDialog" 
-            :quote-id="selectedQuoteId" 
-            @quote-updated="handleQuoteUpdated"
-            @edit-quote="handleEditQuote" 
-        />
+        <QuoteDetailDialog v-model:visible="showQuoteDetailDialog" :quote-id="selectedQuoteId" @quote-updated="handleQuoteUpdated" @edit-quote="handleEditQuote" />
 
         <!-- Confirmación de acciones -->
         <ConfirmDialog />
