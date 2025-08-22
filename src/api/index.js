@@ -400,3 +400,38 @@ export const fetchPublicProduct = (warehouseId, productId, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return axios.get(`/public/warehouses/${warehouseId}/products/${productId}${queryString ? `?${queryString}` : ''}`);
 };
+
+// Quotes - Sistema de Cotizaciones
+export const fetchQuotes = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/quotes${queryString ? `?${queryString}` : ''}`);
+};
+
+export const getQuote = (id) => axios.get(`/quotes/${id}`);
+
+export const createQuote = (payload) => axios.post('/quotes', payload);
+
+export const updateQuote = (payload, id) => axios.put(`/quotes/${id}`, payload);
+
+export const deleteQuote = (id) => axios.delete(`/quotes/${id}`);
+
+export const approveQuote = (id) => axios.patch(`/quotes/${id}/approve`);
+
+export const rejectQuote = (id, payload = {}) => axios.patch(`/quotes/${id}/reject`, payload);
+
+export const downloadQuotePdf = (id) => {
+    return axios.get(`/quotes/${id}/download-pdf`, {
+        responseType: 'blob'
+    });
+};
+
+export const downloadQuoteExcel = (id) => {
+    return axios.get(`/quotes/${id}/download-excel`, {
+        responseType: 'blob'
+    });
+};
+
+export const fetchQuoteStatistics = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/quotes-statistics${queryString ? `?${queryString}` : ''}`);
+};

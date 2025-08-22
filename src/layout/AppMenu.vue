@@ -79,17 +79,36 @@ const model = ref([
                         icon: 'pi pi-shopping-cart',
                         to: '/commerce/sales',
                         positions: ['Developer', 'Administrador', 'Vendedor']
+                    },
+                    {
+                        label: 'Cotizaciones',
+                        icon: 'pi pi-file-edit',
+                        items: [
+                            {
+                                label: 'Listado',
+                                icon: 'pi pi-list',
+                                to: '/commerce/sales/quotes',
+                                positions: ['Developer', 'Administrador', 'Vendedor']
+                            },
+                            {
+                                label: 'Nueva Cotización',
+                                icon: 'pi pi-plus',
+                                to: '/commerce/sales/quotes/create',
+                                positions: ['Developer', 'Administrador', 'Vendedor']
+                            },
+                            {
+                                label: 'Dashboard',
+                                icon: 'pi pi-chart-line',
+                                to: '/commerce/sales/quotes/dashboard',
+                                positions: ['Developer', 'Administrador', 'Vendedor']
+                            }
+                        ],
+                        positions: ['Developer', 'Administrador', 'Vendedor']
                     }
                     // {
                     //     label: 'Facturas',
                     //     icon: 'pi pi-file-pdf',
                     //     to: '/commerce/sales/invoices',
-                    //     positions: ['Developer', 'Administrador', 'Ventas']
-                    // },
-                    // {
-                    //     label: 'Cotizaciones',
-                    //     icon: 'pi pi-file-edit',
-                    //     to: '/commerce/sales/quotes',
                     //     positions: ['Developer', 'Administrador', 'Ventas']
                     // }
                 ],
