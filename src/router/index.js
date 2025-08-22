@@ -63,12 +63,6 @@ const router = createRouter({
                     meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
                 {
-                    path: '/commerce/sales/quotes/:id',
-                    name: 'quote-detail',
-                    component: () => import('@/views/commerce/sales/quotes/QuoteDetail.vue'),
-                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
-                },
-                {
                     path: '/commerce/sales/quotes/:id/edit',
                     name: 'quote-edit',
                     component: () => import('@/views/commerce/sales/quotes/QuoteEdit.vue'),
