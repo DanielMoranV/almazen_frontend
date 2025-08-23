@@ -35,8 +35,11 @@ instance.interceptors.response.use(
     async function (error) {
         const originalRequest = error.config;
 
-        // Auto-refresh en 401 si no es retry y no es endpoint de auth
-        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
+        // Auto-refresh en 401 si no es retry y no es endpoint de auth (excepto login)
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+        const isLoginEndpoint = originalRequest.url?.includes('/auth/login');
+        
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
 
             try {
@@ -75,10 +78,20 @@ instance.interceptors.response.use(
 
         // Mensajes amigables según código de estado
         if (error.response) {
-            console.log(error.response);
+            console.log('Error Response:', error.response);
+            console.log('Error URL:', originalRequest.url);
+            console.log('Error Data:', backendData);
             switch (error.response.status) {
                 case 401:
-                    errResponse.message = 'Credenciales incorrectas. Por favor, inténtelo nuevamente.';
+                    // Usar mensaje del backend si está disponible, sino usar mensajes por defecto
+                    if (!backendData?.message) {
+                        if (originalRequest.url?.includes('/auth/login')) {
+                            errResponse.message = 'DNI o contraseña incorrectos. Por favor, verifique sus datos.';
+                        } else {
+                            errResponse.message = 'Sesión expirada. Por favor, inicie sesión nuevamente.';
+                        }
+                    }
+                    // Si backendData.message existe, ya se asignó arriba en la línea 65
                     break;
                 case 403:
                     errResponse.message = 'Usuario deshabilitado o no registrado.';

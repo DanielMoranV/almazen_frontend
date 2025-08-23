@@ -10,7 +10,8 @@ export function processResponse(response) {
             validationErrors = response.details.errors;
         } else if (Array.isArray(response.details)) {
             validationErrors = response.details;
-        } else if (response.details.error_message) {
+        } else if (response.details.error_message && !response.message) {
+            // Solo usar error_message si no hay un message ya definido
             validationErrors = [response.details.error_message];
             response.message = response.details.error_message;
         }

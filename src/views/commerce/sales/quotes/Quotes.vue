@@ -4,7 +4,6 @@ import { useQuotesStore } from '@/stores/quotesStore';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
@@ -18,14 +17,12 @@ import QuoteDetailDialog from './componentsQuotes/QuoteDetailDialog.vue';
 import QuoteFormDialog from './componentsQuotes/QuoteFormDialog.vue';
 
 const toast = useToast();
-const router = useRouter();
 const confirm = useConfirm();
 const quotesStore = useQuotesStore();
 const customersStore = useCustomersStore();
 
 const searchQuery = ref('');
 const statusFilter = ref('');
-const showFilters = ref(false);
 const dateFrom = ref('');
 const dateTo = ref('');
 const customerFilter = ref(null);
@@ -53,7 +50,6 @@ const menuItems = ref({});
 // Computed properties para acceder a los datos del store
 const quotes = computed(() => quotesStore.quotesList);
 const loading = computed(() => quotesStore.isLoadingQuotes);
-const quickMetrics = computed(() => quotesStore.quickMetrics);
 const customerOptions = computed(() => [{ id: null, name: 'Todos los clientes' }, ...(customersStore.customersList || [])]);
 
 // Estadísticas computadas
@@ -154,144 +150,9 @@ const filteredQuotes = computed(() => {
     return quotes.value || [];
 });
 
-const viewQuote = (quoteId) => {
-    router.push(`/commerce/sales/quotes/${quoteId}`);
-};
-
 const viewQuoteDetails = (quote) => {
     selectedQuoteId.value = quote.id;
     showQuoteDetailDialog.value = true;
-};
-
-const approveQuote = async (quote, event) => {
-    event.stopPropagation();
-
-    if (!quotesStore.canApproveQuote(quote)) {
-        toast.add({
-            severity: 'warn',
-            summary: 'Advertencia',
-            detail: 'Esta cotización no se puede aprobar',
-            life: 3000
-        });
-        return;
-    }
-
-    confirm.require({
-        message: '¿Está seguro de aprobar esta cotización? Se creará una venta automáticamente y se descontará el stock.',
-        header: 'Confirmar Aprobación',
-        icon: 'pi pi-check',
-        accept: async () => {
-            try {
-                const result = await quotesStore.approveQuote(quote.id);
-                if (result.success) {
-                    toast.add({
-                        severity: 'success',
-                        summary: 'Éxito',
-                        detail: result.message || 'Cotización aprobada exitosamente',
-                        life: 3000
-                    });
-                }
-            } catch (error) {
-                console.error('Error approving quote:', error);
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: quotesStore.message || 'Error al aprobar la cotización',
-                    life: 3000
-                });
-            }
-        }
-    });
-};
-
-const rejectQuote = async (quote, event) => {
-    event.stopPropagation();
-
-    if (quote.status !== 'PENDIENTE') {
-        toast.add({
-            severity: 'warn',
-            summary: 'Advertencia',
-            detail: 'Solo se pueden rechazar cotizaciones pendientes',
-            life: 3000
-        });
-        return;
-    }
-
-    confirm.require({
-        message: '¿Está seguro de rechazar esta cotización?',
-        header: 'Confirmar Rechazo',
-        icon: 'pi pi-times',
-        acceptClass: 'p-button-danger',
-        accept: async () => {
-            try {
-                const result = await quotesStore.rejectQuote(quote.id);
-                if (result.success) {
-                    toast.add({
-                        severity: 'success',
-                        summary: 'Éxito',
-                        detail: result.message || 'Cotización rechazada exitosamente',
-                        life: 3000
-                    });
-                }
-            } catch (error) {
-                console.error('Error rejecting quote:', error);
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: quotesStore.message || 'Error al rechazar la cotización',
-                    life: 3000
-                });
-            }
-        }
-    });
-};
-
-const downloadPdf = async (quote, event) => {
-    event.stopPropagation();
-
-    try {
-        const result = await quotesStore.downloadPdf(quote.id);
-        if (result.success) {
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: result.message,
-                life: 3000
-            });
-        }
-    } catch (error) {
-        console.error('Error downloading PDF:', error);
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al descargar el PDF',
-            life: 3000
-        });
-    }
-};
-
-const downloadExcel = async (quote, event) => {
-    event.stopPropagation();
-
-    try {
-        const result = await quotesStore.downloadExcel(quote.id);
-        if (result.success) {
-            toast.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: result.message,
-                life: 3000
-            });
-        }
-    } catch (error) {
-        console.error('Error downloading Excel:', error);
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al descargar el Excel',
-            life: 3000
-        });
-    }
 };
 
 const editQuote = async (quote, event) => {
@@ -340,63 +201,6 @@ const editQuote = async (quote, event) => {
     }
 };
 
-const deleteQuote = async (quote, event) => {
-    event.stopPropagation();
-
-    if (quote.status !== 'PENDIENTE') {
-        toast.add({
-            severity: 'warn',
-            summary: 'Advertencia',
-            detail: 'Solo se pueden eliminar cotizaciones pendientes',
-            life: 3000
-        });
-        return;
-    }
-
-    confirm.require({
-        message: '¿Está seguro de eliminar esta cotización? Esta acción no se puede deshacer.',
-        header: 'Confirmar Eliminación',
-        icon: 'pi pi-trash',
-        acceptClass: 'p-button-danger',
-        accept: async () => {
-            try {
-                const result = await quotesStore.removeQuote(quote.id);
-                if (result.success) {
-                    toast.add({
-                        severity: 'success',
-                        summary: 'Éxito',
-                        detail: result.message || 'Cotización eliminada exitosamente',
-                        life: 3000
-                    });
-                }
-            } catch (error) {
-                console.error('Error deleting quote:', error);
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: quotesStore.message || 'Error al eliminar la cotización',
-                    life: 3000
-                });
-            }
-        }
-    });
-};
-
-const getStatusClass = (status) => {
-    switch (status) {
-        case 'PENDIENTE':
-            return 'bg-yellow-100 text-yellow-700';
-        case 'APROBADO':
-            return 'bg-green-100 text-green-700';
-        case 'RECHAZADO':
-            return 'bg-red-100 text-red-700';
-        case 'VENCIDO':
-            return 'bg-gray-100 text-gray-700';
-        default:
-            return 'bg-gray-100 text-gray-700';
-    }
-};
-
 const getStatusLabel = (status) => {
     switch (status) {
         case 'PENDIENTE':
@@ -429,30 +233,6 @@ const formatDate = (dateString) => {
     } catch {
         return '-';
     }
-};
-
-const isExpiringSoon = (validUntil) => {
-    return false; // Temporalmente deshabilitado para evitar bucles
-};
-
-const getStatusSeverity = (status) => {
-    switch (status) {
-        case 'PENDIENTE':
-            return 'warning';
-        case 'APROBADO':
-            return 'success';
-        case 'RECHAZADO':
-            return 'danger';
-        case 'VENCIDO':
-            return 'secondary';
-        default:
-            return 'secondary';
-    }
-};
-
-// Función simplificada para evitar bucles de reactividad
-const getRowClass = () => {
-    return 'cursor-pointer hover:bg-gray-50';
 };
 
 // Función para obtener items del menú contextual basado en el estado de la cotización
@@ -686,7 +466,7 @@ const editQuoteFromMenu = async (quote) => {
     }
 };
 
-const handleQuoteUpdated = async (updatedQuote) => {
+const handleQuoteUpdated = async () => {
     // Recargar la lista de cotizaciones cuando se actualiza una cotización desde el modal
     await loadQuotes();
 
