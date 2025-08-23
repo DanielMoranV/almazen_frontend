@@ -6,7 +6,7 @@ import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Checkbox from 'primevue/checkbox';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import ProgressBar from 'primevue/progressbar';
 import Message from 'primevue/message';
 import { useStockAdjustmentsStore } from '@/stores/stockAdjustmentsStore';
@@ -147,7 +147,7 @@ const closeDialog = () => {
                     <div class="grid">
                         <div class="col-12 md:col-6">
                             <label class="field-label">Almacén (opcional)</label>
-                            <Dropdown v-model="selectedWarehouseForTemplate" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Todos los almacenes" class="w-full" />
+                            <Select v-model="selectedWarehouseForTemplate" :options="warehouseOptions" optionLabel="label" optionValue="value" placeholder="Todos los almacenes" class="w-full" />
                         </div>
                         <div class="col-12 md:col-6 flex align-items-center">
                             <Checkbox v-model="includeExpired" inputId="includeExpired" binary />

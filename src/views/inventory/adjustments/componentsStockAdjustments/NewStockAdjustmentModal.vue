@@ -3,9 +3,9 @@ import { useProductsStore } from '@/stores/productsStore';
 import { useStockAdjustmentsStore } from '@/stores/stockAdjustmentsStore';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
 import Textarea from 'primevue/textarea';
 import { useToast } from 'primevue/usetoast';
 import { computed, ref, watch } from 'vue';
@@ -106,7 +106,7 @@ const selectedStockInfo = computed(() => {
 
 // Validaciones
 const isFormValid = computed(() => {
-    return selectedProduct.value && formData.value.quantity && formData.value.quantity > 0 && formData.value.reason.trim();
+    return selectedProduct.value && formData.value.stock_id && formData.value.quantity && formData.value.quantity > 0 && formData.value.reason.trim();
 });
 
 // Búsqueda de productos con debounce
@@ -180,28 +180,8 @@ const resetForm = () => {
 const selectProduct = (product) => {
     selectedProduct.value = product;
 
-    // Debug: Verificar estructura de datos del producto
-    console.log('Producto seleccionado:', product);
-    console.log('Available stock:', product.available_stock);
-
-    if (product.available_stock && product.available_stock.length > 0) {
-        product.available_stock.forEach((stock, index) => {
-            console.log(`Stock ${index}:`, stock);
-            if (stock.batches && stock.batches.length > 0) {
-                console.log(`Lotes del stock ${index}:`, stock.batches);
-                stock.batches.forEach((batch, batchIndex) => {
-                    console.log(`Lote ${batchIndex}:`, batch);
-                    console.log(`Cantidad del lote ${batchIndex}:`, batch.quantity, batch.available_quantity, batch.stock_quantity);
-                });
-            }
-        });
-    }
-
-    // Obtener el stock_id del primer stock disponible
-    const stockInfo = product.available_stock?.[0];
-    if (stockInfo) {
-        formData.value.stock_id = stockInfo.stock_id || stockInfo.id;
-    }
+    // No seleccionar automáticamente, el usuario debe elegir manualmente
+    formData.value.stock_id = null;
 
     // Limpiar búsqueda
     productSearchQuery.value = '';
@@ -398,9 +378,9 @@ const submitAdjustment = async () => {
                                     <div v-else class="mt-3">
                                         <Button
                                             size="small"
-                                            :label="formData.stock_id === stock.id ? 'Seleccionado' : 'Seleccionar'"
-                                            :class="formData.stock_id === stock.id ? 'p-button-success' : 'p-button-outlined'"
-                                            @click="selectStockId(stock.id)"
+                                            :label="formData.stock_id === stock.stock_id ? 'Seleccionado' : 'Seleccionar'"
+                                            :class="formData.stock_id === stock.stock_id ? 'p-button-success' : 'p-button-outlined'"
+                                            @click="selectStockId(stock.stock_id)"
                                         />
                                     </div>
                                 </div>
@@ -415,7 +395,7 @@ const submitAdjustment = async () => {
                         <i class="pi pi-sliders-h mr-2 text-orange-600"></i>
                         Tipo de Ajuste *
                     </label>
-                    <Dropdown id="type" v-model="formData.adjustment_type" :options="adjustmentTypes" option-label="label" option-value="value" class="w-full">
+                    <Select id="type" v-model="formData.adjustment_type" :options="adjustmentTypes" option-label="label" option-value="value" class="w-full">
                         <template #option="{ option }">
                             <div class="flex align-items-center">
                                 <i :class="`pi ${option.icon} mr-3 ${option.class} text-lg`"></i>
@@ -428,7 +408,7 @@ const submitAdjustment = async () => {
                                 <span class="font-medium">{{ adjustmentTypes.find((t) => t.value === value)?.label }}</span>
                             </div>
                         </template>
-                    </Dropdown>
+                    </Select>
                 </div>
 
                 <!-- Cantidad -->

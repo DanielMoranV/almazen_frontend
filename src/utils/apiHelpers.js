@@ -7,9 +7,7 @@ import { processResponse } from '@/composables/useApiResponse';
  */
 export function handleProcessError(error, store) {
     const processed = processResponse(error);
-    
-    console.log('handleProcessError - processed:', processed);
-    
+
     // Usar el mensaje ya procesado del interceptor
     store.message = processed.message || processed.details?.error_message || 'Ha ocurrido un error.';
     store.validationErrors = processed.validationErrors || [];

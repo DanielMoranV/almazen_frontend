@@ -75,10 +75,9 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                 );
             }
 
-            // Filtrar por tipo de ajuste (mapear POSITIVO/NEGATIVO a ENTRADA/SALIDA)
+            // Filtrar por tipo de movimiento
             if (state.filters.type) {
-                const movementType = state.filters.type === 'POSITIVO' ? 'ENTRADA' : 'SALIDA';
-                result = result.filter((adjustment) => adjustment.movement_type === movementType);
+                result = result.filter((adjustment) => adjustment.movement_type === state.filters.type);
             }
 
             // Filtrar por almacén
@@ -126,7 +125,7 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                     // Parámetros de búsqueda
                     product_id: params.product_id,
                     warehouse_id: this.filters.warehouse || params.warehouse_id,
-                    movement_type: this.filters.type ? (this.filters.type === 'POSITIVO' ? 'ENTRADA' : 'SALIDA') : params.movement_type,
+                    movement_type: this.filters.type || params.movement_type,
                     user_id: params.user_id,
                     date_from: this.filters.dateFrom || params.date_from,
                     date_to: this.filters.dateTo || params.date_to,
@@ -153,7 +152,7 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                         adjustmentsData = processed.data;
                     } else if (processed.data && processed.data.data) {
                         // Respuesta paginada según especificación API
-                        adjustmentsData = processed.data.data || [];
+                        adjustmentsData = processed.data.data;
                         this.pagination = {
                             current_page: processed.data.current_page || 1,
                             per_page: processed.data.per_page || 25,
@@ -162,7 +161,6 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                         };
                     }
 
-                    // Mapear campos anidados para compatibilidad con componentes
                     this.adjustments = adjustmentsData.map((adjustment) => ({
                         ...adjustment,
                         product_name: adjustment.stock?.product?.name,
@@ -170,7 +168,9 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                         warehouse_name: adjustment.stock?.warehouse?.name,
                         warehouse_id: adjustment.stock?.warehouse?.id,
                         batch_code: adjustment.stock?.batch?.code,
-                        user_name: adjustment.user?.name
+                        user_name: adjustment.user?.name,
+                        // Mapear movement_type a adjustment_type para compatibilidad con el modal
+                        adjustment_type: adjustment.movement_type === 'ENTRADA' ? 'POSITIVO' : 'NEGATIVO'
                     }));
 
                     this.updateStatistics();
@@ -223,7 +223,17 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    this.selectedAdjustment = processed.data;
+                    this.selectedAdjustment = {
+                        ...processed.data,
+                        product_name: processed.data.stock?.product?.name,
+                        product_sku: processed.data.stock?.product?.sku,
+                        warehouse_name: processed.data.stock?.warehouse?.name,
+                        warehouse_id: processed.data.stock?.warehouse?.id,
+                        batch_code: processed.data.stock?.batch?.code,
+                        user_name: processed.data.user?.name,
+                        // Mapear movement_type a adjustment_type para compatibilidad con el modal
+                        adjustment_type: processed.data.movement_type === 'ENTRADA' ? 'POSITIVO' : 'NEGATIVO'
+                    };
                 }
 
                 return processed;
@@ -293,8 +303,8 @@ export const useStockAdjustmentsStore = defineStore('stockAdjustmentsStore', {
         updateStatistics() {
             this.statistics = {
                 totalAdjustments: this.adjustments.length,
-                totalPositive: this.adjustments.filter((a) => a.adjustment_type === 'POSITIVO').length,
-                totalNegative: this.adjustments.filter((a) => a.adjustment_type === 'NEGATIVO').length,
+                totalPositive: this.adjustments.filter((a) => a.movement_type === 'ENTRADA').length,
+                totalNegative: this.adjustments.filter((a) => a.movement_type === 'SALIDA').length,
                 totalQuantityAdjusted: this.adjustments.reduce((total, adjustment) => {
                     return total + parseFloat(adjustment.quantity || 0);
                 }, 0)

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import Button from 'primevue/button';
-import Select from 'primevue/dropdown';
+import Select from 'primevue/select';
 import InputText from 'primevue/inputtext';
 
 const props = defineProps({

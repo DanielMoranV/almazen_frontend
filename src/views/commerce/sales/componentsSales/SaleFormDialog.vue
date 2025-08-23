@@ -200,7 +200,7 @@ const handleCancel = () => {
                     <!-- Fecha de venta -->
                     <div class="field">
                         <label for="sale_date" class="field-label">Fecha de Venta *</label>
-                        <Calendar id="sale_date" v-model="form.sale_date" dateFormat="yy-mm-dd" :class="{ 'p-invalid': submitted && !form.sale_date }" class="form-input" />
+                        <DatePicker id="sale_date" v-model="form.sale_date" dateFormat="yy-mm-dd" :class="{ 'p-invalid': submitted && !form.sale_date }" class="form-input" />
                         <small class="p-error" v-if="submitted && !form.sale_date">La fecha es requerida.</small>
                     </div>
 

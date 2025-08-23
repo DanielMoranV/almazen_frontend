@@ -120,12 +120,12 @@ const hasActiveFilters = computed(() => {
 
                 <div class="filter-group">
                     <label class="filter-label">Fecha Desde</label>
-                    <Calendar v-model="localFilters.date_from" dateFormat="yy-mm-dd" placeholder="Fecha inicio" class="filter-input" showIcon showButtonBar />
+                    <DatePicker v-model="localFilters.date_from" dateFormat="yy-mm-dd" placeholder="Fecha inicio" class="filter-input" showIcon showButtonBar />
                 </div>
 
                 <div class="filter-group">
                     <label class="filter-label">Fecha Hasta</label>
-                    <Calendar v-model="localFilters.date_to" dateFormat="yy-mm-dd" placeholder="Fecha fin" class="filter-input" showIcon showButtonBar />
+                    <DatePicker v-model="localFilters.date_to" dateFormat="yy-mm-dd" placeholder="Fecha fin" class="filter-input" showIcon showButtonBar />
                 </div>
             </div>
 

@@ -1,5 +1,4 @@
 export function handleError(error, fallbackMessage = 'Ocurrió un error') {
-    console.log(error);
 
     // Redirección si no autorizado
     if (error?.status_code === 401) {

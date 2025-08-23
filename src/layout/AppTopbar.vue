@@ -41,7 +41,6 @@ const logout = async () => {
 onMounted(async () => {
     await authStore.me();
     if (!authStore.isAuthenticated) {
-        console.log('no autenticado');
         router.push('/login');
     }
 });

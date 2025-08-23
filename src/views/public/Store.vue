@@ -326,14 +326,14 @@ onMounted(async () => {
                         <div v-if="showFilters" class="filters-panel">
                             <div class="filter-group">
                                 <label class="filter-label">Categoría:</label>
-                                <Dropdown v-model="selectedCategory" :options="categoryStats" optionLabel="name" optionValue="id" placeholder="Todas las categorías" showClear class="filter-dropdown">
+                                <Select v-model="selectedCategory" :options="categoryStats" optionLabel="name" optionValue="id" placeholder="Todas las categorías" showClear class="filter-dropdown">
                                     <template #option="slotProps">
                                         <div class="category-option">
                                             <span class="category-name">{{ slotProps.option.name }}</span>
                                             <span class="category-count">({{ slotProps.option.productCount }})</span>
                                         </div>
                                     </template>
-                                </Dropdown>
+                                </Select>
                             </div>
 
                             <!-- Chips de categorías populares -->

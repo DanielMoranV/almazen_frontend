@@ -1,41 +1,40 @@
-import { defineStore } from 'pinia';
-import { 
-    fetchCustomerCredits,
-    getCustomerCredit,
-    createCreditPayment,
-    getCustomerCreditSummary,
-    getCustomerCreditFullSummary,
-    getCustomerPendingCredits,
-    updateCustomerCredit,
-    cancelCustomerCredit,
-    fetchCreditPayments,
-    getCreditPayment,
+import {
     cancelCreditPayment,
-    previewCreditPaymentDistribution,
+    cancelCustomerCredit,
+    createCreditPayment,
+    fetchAgingAnalysis,
     fetchCreditMetrics,
+    fetchCreditPayments,
     fetchCreditsTrend,
+    fetchCustomerCredits,
+    fetchRecentPayments,
     fetchTopCustomersDebt,
     fetchUpcomingCredits,
-    fetchRecentPayments,
-    fetchAgingAnalysis
+    getCreditPayment,
+    getCustomerCredit,
+    getCustomerCreditSummary,
+    getCustomerPendingCredits,
+    previewCreditPaymentDistribution,
+    updateCustomerCredit
 } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
+import { defineStore } from 'pinia';
 
 export const useCreditsStore = defineStore('creditsStore', {
     state: () => ({
         // Lista de créditos
         creditsList: [],
         creditsTotal: 0,
-        
+
         // Crédito seleccionado
         selectedCredit: null,
-        
+
         // Estados de carga
         isLoadingCredits: false,
         isLoadingCredit: false,
         isProcessingPayment: false,
         isLoadingDashboard: false,
-        
+
         // Dashboard data
         dashboardMetrics: {
             total_credits: 0,
@@ -53,21 +52,21 @@ export const useCreditsStore = defineStore('creditsStore', {
         upcomingCredits: [],
         recentPayments: [],
         agingAnalysis: [],
-        
+
         // Filtros y paginación
         currentFilters: {},
         currentPagination: {
             page: 1,
             size: 20
         },
-        
+
         // Error states
         errors: {
             credits: null,
             dashboard: null,
             payment: null
         },
-        
+
         // Common store states
         message: '',
         success: false,
@@ -78,39 +77,40 @@ export const useCreditsStore = defineStore('creditsStore', {
         // Obtener créditos filtrados por estado
         creditsByStatus: (state) => (status) => {
             const credits = Array.isArray(state.creditsList) ? state.creditsList : [];
-            return credits.filter(credit => credit.status === status);
+            return credits.filter((credit) => credit.status === status);
         },
-        
+
         // Obtener créditos vencidos
         overdueCredits: (state) => {
             const credits = Array.isArray(state.creditsList) ? state.creditsList : [];
-            return credits.filter(credit => credit.is_overdue);
+            return credits.filter((credit) => credit.is_overdue);
         },
-        
+
         // Obtener créditos pendientes
         pendingCredits: (state) => {
             const credits = Array.isArray(state.creditsList) ? state.creditsList : [];
-            return credits.filter(credit => credit.status === 'PENDIENTE');
+            return credits.filter((credit) => credit.status === 'PENDIENTE');
         },
-        
+
         // Calcular totales de la página actual
         currentPageTotals: (state) => {
             const credits = Array.isArray(state.creditsList) ? state.creditsList : [];
-            const totals = credits.reduce((acc, credit) => {
-                acc.totalAmount += credit.total_amount || 0;
-                acc.totalPaid += credit.paid_amount || 0;
-                acc.totalPending += credit.remaining_amount || 0;
-                return acc;
-            }, { totalAmount: 0, totalPaid: 0, totalPending: 0 });
-            
+            const totals = credits.reduce(
+                (acc, credit) => {
+                    acc.totalAmount += credit.total_amount || 0;
+                    acc.totalPaid += credit.paid_amount || 0;
+                    acc.totalPending += credit.remaining_amount || 0;
+                    return acc;
+                },
+                { totalAmount: 0, totalPaid: 0, totalPending: 0 }
+            );
+
             return totals;
         },
-        
+
         // Verificar si hay datos del dashboard
         hasDashboardData: (state) => {
-            return state.dashboardMetrics.totalCredits > 0 || 
-                   state.creditsTrend.length > 0 ||
-                   state.topCustomersDebt.length > 0;
+            return state.dashboardMetrics.totalCredits > 0 || state.creditsTrend.length > 0 || state.topCustomersDebt.length > 0;
         }
     },
 
@@ -119,7 +119,7 @@ export const useCreditsStore = defineStore('creditsStore', {
         async fetchCredits(params = {}) {
             this.isLoadingCredits = true;
             this.errors.credits = null;
-            
+
             try {
                 const mergedParams = {
                     ...this.currentFilters,
@@ -127,23 +127,20 @@ export const useCreditsStore = defineStore('creditsStore', {
                     size: this.currentPagination.size,
                     ...params
                 };
-                
-                console.log('Fetching credits with params:', mergedParams);
-                console.log('API URL:', import.meta.env.VITE_API_URL);
+
                 const response = await fetchCustomerCredits(mergedParams);
-                console.log('Credits API response:', response);
-                
+
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     // Asegurar que creditsList siempre sea un array
                     const dataResults = processed.data.results || processed.data || [];
                     this.creditsList = Array.isArray(dataResults) ? dataResults : [];
                     this.creditsTotal = processed.data.count || processed.data.total || this.creditsList.length;
-                    
+
                     // Actualizar filtros y paginación actuales
                     this.currentFilters = { ...this.currentFilters, ...params };
-                    
+
                     return processed;
                 } else {
                     this.errors.credits = processed.message;
@@ -152,9 +149,9 @@ export const useCreditsStore = defineStore('creditsStore', {
             } catch (error) {
                 handleProcessError(error, this);
                 this.errors.credits = this.message;
-                
+
                 console.warn('Error cargando créditos desde API:', error);
-                
+
                 // En caso de error, cargar datos de ejemplo solo si es error de red
                 if (process.env.NODE_ENV === 'development' && (error.message?.includes('conexión') || error.status === 0)) {
                     console.info('Cargando datos de ejemplo debido a error de conexión');
@@ -164,7 +161,7 @@ export const useCreditsStore = defineStore('creditsStore', {
                     this.creditsList = [];
                     this.creditsTotal = 0;
                 }
-                
+
                 throw error;
             } finally {
                 this.isLoadingCredits = false;
@@ -174,11 +171,11 @@ export const useCreditsStore = defineStore('creditsStore', {
         // Obtener detalle de un crédito específico
         async fetchCreditDetail(creditId) {
             this.isLoadingCredit = true;
-            
+
             try {
                 const response = await getCustomerCredit(creditId);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     this.selectedCredit = processed.data;
                     return processed;
@@ -187,9 +184,9 @@ export const useCreditsStore = defineStore('creditsStore', {
                 }
             } catch (error) {
                 handleProcessError(error, this);
-                
+
                 // En caso de error, buscar en la lista local
-                const localCredit = this.creditsList.find(c => c.id === creditId);
+                const localCredit = this.creditsList.find((c) => c.id === creditId);
                 if (localCredit) {
                     this.selectedCredit = localCredit;
                 } else {
@@ -204,15 +201,15 @@ export const useCreditsStore = defineStore('creditsStore', {
         async processPayment(paymentData) {
             this.isProcessingPayment = true;
             this.errors.payment = null;
-            
+
             try {
                 const response = await createCreditPayment(paymentData);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     // Actualizar la lista de créditos localmente
                     await this.fetchCredits({ ...this.currentFilters });
-                    
+
                     return processed;
                 } else {
                     this.errors.payment = processed.message;
@@ -230,33 +227,22 @@ export const useCreditsStore = defineStore('creditsStore', {
         // Obtener resumen de crédito de un cliente
         async fetchCustomerCreditSummary(customerId) {
             try {
-                // Intentar primero el endpoint principal
+                // Endpoint funcional confirmado: /customers/{customerId}/credit-summary
                 const response = await getCustomerCreditSummary(customerId);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     return processed.data;
                 } else {
                     throw new Error(processed.message);
                 }
             } catch (error) {
-                // Si falla, intentar el endpoint alternativo
-                try {
-                    console.log('Intentando endpoint alternativo credit-summary...');
-                    const response = await getCustomerCreditFullSummary(customerId);
-                    const processed = handleProcessSuccess(response, this);
-                    
-                    if (processed.success) {
-                        return processed.data;
-                    } else {
-                        throw new Error(processed.message);
-                    }
-                } catch (alternativeError) {
-                    console.warn('Ningún endpoint de credit-summary disponible:', alternativeError.message);
-                    // Retornar null para indicar que no se pudieron obtener datos actualizados
-                    // El componente debería usar los datos locales del cliente
-                    return null;
-                }
+                handleProcessError(error, this);
+                console.warn('Error obteniendo resumen de crédito del cliente:', error.message);
+
+                // Retornar null para indicar que no se pudieron obtener datos actualizados
+                // El componente debería usar los datos locales del cliente
+                return null;
             }
         },
 
@@ -265,7 +251,7 @@ export const useCreditsStore = defineStore('creditsStore', {
             try {
                 const response = await getCustomerPendingCredits(customerId);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     return processed.data.results || processed.data || [];
                 } else {
@@ -280,16 +266,9 @@ export const useCreditsStore = defineStore('creditsStore', {
         async fetchDashboardData(params = {}) {
             this.isLoadingDashboard = true;
             this.errors.dashboard = null;
-            
+
             try {
-                const [
-                    metricsResponse,
-                    trendResponse,
-                    customersResponse,
-                    upcomingResponse,
-                    paymentsResponse,
-                    agingResponse
-                ] = await Promise.all([
+                const [metricsResponse, trendResponse, customersResponse, upcomingResponse, paymentsResponse, agingResponse] = await Promise.all([
                     fetchCreditMetrics(params),
                     fetchCreditsTrend(params),
                     fetchTopCustomersDebt(params),
@@ -321,9 +300,9 @@ export const useCreditsStore = defineStore('creditsStore', {
             } catch (error) {
                 handleProcessError(error, this);
                 this.errors.dashboard = this.message;
-                
+
                 console.warn('Error cargando dashboard desde API:', error);
-                
+
                 // En desarrollo, cargar datos de ejemplo solo si es error de red
                 if (process.env.NODE_ENV === 'development' && (error.message?.includes('conexión') || error.status === 0)) {
                     console.info('Cargando datos de ejemplo de dashboard debido a error de conexión');
@@ -347,7 +326,7 @@ export const useCreditsStore = defineStore('creditsStore', {
                     this.recentPayments = [];
                     this.agingAnalysis = [];
                 }
-                
+
                 throw error;
             } finally {
                 this.isLoadingDashboard = false;
@@ -484,10 +463,10 @@ export const useCreditsStore = defineStore('creditsStore', {
             try {
                 const response = await updateCustomerCredit(creditId, payload);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     // Actualizar en la lista local si existe
-                    const index = this.creditsList.findIndex(credit => credit.id === creditId);
+                    const index = this.creditsList.findIndex((credit) => credit.id === creditId);
                     if (index !== -1) {
                         this.creditsList[index] = { ...this.creditsList[index], ...processed.data };
                     }
@@ -506,10 +485,10 @@ export const useCreditsStore = defineStore('creditsStore', {
             try {
                 const response = await cancelCustomerCredit(creditId);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     // Actualizar el estado en la lista local
-                    const index = this.creditsList.findIndex(credit => credit.id === creditId);
+                    const index = this.creditsList.findIndex((credit) => credit.id === creditId);
                     if (index !== -1) {
                         this.creditsList[index].status = 'ANULADO';
                     }
@@ -528,7 +507,7 @@ export const useCreditsStore = defineStore('creditsStore', {
             try {
                 const response = await previewCreditPaymentDistribution(payload);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     return processed.data;
                 } else {
@@ -545,7 +524,7 @@ export const useCreditsStore = defineStore('creditsStore', {
             try {
                 const response = await fetchCreditPayments(params);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     return processed.data;
                 } else {
@@ -562,7 +541,7 @@ export const useCreditsStore = defineStore('creditsStore', {
             try {
                 const response = await getCreditPayment(paymentId);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     return processed.data;
                 } else {
@@ -579,7 +558,7 @@ export const useCreditsStore = defineStore('creditsStore', {
             try {
                 const response = await cancelCreditPayment(paymentId);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     return processed;
                 } else {

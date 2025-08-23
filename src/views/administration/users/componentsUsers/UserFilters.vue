@@ -51,7 +51,7 @@ const clearFilters = () => {
 
             <div class="field">
                 <label for="filter-position">Cargo</label>
-                <Dropdown
+                <Select
                     id="filter-position"
                     v-model="filters.position"
                     :options="[

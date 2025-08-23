@@ -103,21 +103,20 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
             return result;
         },
 
-        // Totales por tipo - usando múltiples variantes para mayor compatibilidad
         totalEntries() {
-            return this.filteredMovements.filter((m) => m.movement_type === 'ENTRADA' || m.movement_type === 'entry' || m.type === 'ENTRADA' || m.type === 'entry').length;
+            return this.filteredMovements.filter((m) => m.movement_type === 'ENTRADA').length;
         },
 
         totalExits() {
-            return this.filteredMovements.filter((m) => m.movement_type === 'SALIDA' || m.movement_type === 'exit' || m.type === 'SALIDA' || m.type === 'exit').length;
+            return this.filteredMovements.filter((m) => m.movement_type === 'SALIDA').length;
         },
 
         totalAdjustments() {
-            return this.filteredMovements.filter((m) => m.movement_type === 'AJUSTE' || m.movement_type === 'adjustment' || m.type === 'AJUSTE' || m.type === 'adjustment').length;
+            return this.filteredMovements.filter((m) => m.movement_type === 'AJUSTE').length;
         },
 
         totalTransfers() {
-            return this.filteredMovements.filter((m) => m.movement_type === 'TRANSFERENCIA' || m.movement_type === 'transfer' || m.type === 'TRANSFERENCIA' || m.type === 'transfer').length;
+            return this.filteredMovements.filter((m) => m.movement_type === 'TRANSFERENCIA').length;
         }
     },
 
@@ -156,7 +155,6 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
                     if (processed.data && Array.isArray(processed.data)) {
                         movementsData = processed.data;
                     } else if (processed.data && processed.data.data) {
-                        // Respuesta paginada
                         movementsData = processed.data.data || [];
                         this.pagination = {
                             current_page: processed.data.current_page || 1,
@@ -166,11 +164,8 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
                         };
                     }
 
-                    // Mapear campos anidados para compatibilidad con componentes
                     this.movements = movementsData.map((movement) => ({
                         ...movement,
-                        id: movement.id, // Asegurar que el ID esté disponible
-                        type: movement.movement_type,
                         product_name: movement.product?.name,
                         product_sku: movement.product?.sku,
                         product_barcode: movement.product?.barcode,
@@ -256,14 +251,13 @@ export const useStockMovementsStore = defineStore('stockMovementsStore', {
             }
         },
 
-        // Actualizar estadísticas - usando la misma lógica que los getters
         updateStatistics() {
             this.statistics = {
                 totalMovements: this.movements.length,
-                totalEntries: this.movements.filter((m) => m.movement_type === 'ENTRADA' || m.movement_type === 'entry' || m.type === 'ENTRADA' || m.type === 'entry').length,
-                totalExits: this.movements.filter((m) => m.movement_type === 'SALIDA' || m.movement_type === 'exit' || m.type === 'SALIDA' || m.type === 'exit').length,
-                totalAdjustments: this.movements.filter((m) => m.movement_type === 'AJUSTE' || m.movement_type === 'adjustment' || m.type === 'AJUSTE' || m.type === 'adjustment').length,
-                totalTransfers: this.movements.filter((m) => m.movement_type === 'TRANSFERENCIA' || m.movement_type === 'transfer' || m.type === 'TRANSFERENCIA' || m.type === 'transfer').length
+                totalEntries: this.movements.filter((m) => m.movement_type === 'ENTRADA').length,
+                totalExits: this.movements.filter((m) => m.movement_type === 'SALIDA').length,
+                totalAdjustments: this.movements.filter((m) => m.movement_type === 'AJUSTE').length,
+                totalTransfers: this.movements.filter((m) => m.movement_type === 'TRANSFERENCIA').length
             };
         },
 

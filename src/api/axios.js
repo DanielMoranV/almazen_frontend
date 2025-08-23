@@ -38,7 +38,7 @@ instance.interceptors.response.use(
         // Auto-refresh en 401 si no es retry y no es endpoint de auth (excepto login)
         const isAuthEndpoint = originalRequest.url?.includes('/auth/');
         const isLoginEndpoint = originalRequest.url?.includes('/auth/login');
-        
+
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
 
@@ -78,9 +78,6 @@ instance.interceptors.response.use(
 
         // Mensajes amigables según código de estado
         if (error.response) {
-            console.log('Error Response:', error.response);
-            console.log('Error URL:', originalRequest.url);
-            console.log('Error Data:', backendData);
             switch (error.response.status) {
                 case 401:
                     // Usar mensaje del backend si está disponible, sino usar mensajes por defecto

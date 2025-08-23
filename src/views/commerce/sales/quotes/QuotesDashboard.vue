@@ -179,9 +179,9 @@ const donutOptions = {
                         <!-- Filtros de fecha -->
                         <div class="flex gap-2 align-items-center">
                             <label class="text-sm">Desde:</label>
-                            <Calendar v-model="dateFrom" dateFormat="yy-mm-dd" @date-select="onDateFilterChange" class="w-auto" />
+                            <DatePicker v-model="dateFrom" dateFormat="yy-mm-dd" @date-select="onDateFilterChange" class="w-auto" />
                             <label class="text-sm">Hasta:</label>
-                            <Calendar v-model="dateTo" dateFormat="yy-mm-dd" @date-select="onDateFilterChange" class="w-auto" />
+                            <DatePicker v-model="dateTo" dateFormat="yy-mm-dd" @date-select="onDateFilterChange" class="w-auto" />
                         </div>
 
                         <Button icon="pi pi-refresh" label="Actualizar" @click="refresh" :loading="refreshing" outlined />

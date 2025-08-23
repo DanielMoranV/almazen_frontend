@@ -80,7 +80,6 @@ const refresh = () => {
 // Exportar a Excel
 const exportToExcel = () => {
     // Implementar exportación
-    console.log('Exportar a Excel');
 };
 
 // Contador de filtros activos

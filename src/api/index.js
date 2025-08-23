@@ -345,8 +345,6 @@ export const updateCustomerCredit = (id, payload) => axios.put(`/customer-credit
 
 export const cancelCustomerCredit = (id) => axios.delete(`/customer-credits/${id}`);
 
-export const getCustomerCreditFullSummary = (customerId) => axios.get(`/customer-credits/customer/${customerId}/summary`);
-
 // Credit Payments Management
 export const fetchCreditPayments = (params = {}) => {
     const queryString = new URLSearchParams(params).toString();

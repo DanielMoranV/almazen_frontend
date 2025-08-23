@@ -133,7 +133,6 @@ export const useProductsStore = defineStore('productsStore', {
         },
         
         async uploadProductImage(productId, imageFile) {
-            console.log('uploadProductImage called with:', { productId, imageFile });
             this.isLoading = true;
             try {
                 const res = await uploadProductImage(productId, imageFile);

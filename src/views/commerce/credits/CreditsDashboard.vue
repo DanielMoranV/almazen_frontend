@@ -1,4 +1,5 @@
-'''<script setup>
+'''
+<script setup>
 import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -7,7 +8,7 @@ import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 
 import { useCreditsStore } from '@/stores/creditsStore';
 
@@ -70,9 +71,8 @@ const creditsTrendData = computed(() => {
 });
 
 const hasCreditsTrendData = computed(() => {
-    return creditsTrendData.value.datasets.some(ds => ds.data.length > 0);
+    return creditsTrendData.value.datasets.some((ds) => ds.data.length > 0);
 });
-
 
 // Gráfico de análisis de antigüedad
 const agingData = computed(() => {
@@ -83,7 +83,7 @@ const agingData = computed(() => {
     } else if (agingAnalysis.value?.aging && Array.isArray(agingAnalysis.value.aging)) {
         aging = agingAnalysis.value.aging;
     }
-    
+
     return {
         labels: aging.map((item) => item.range || ''),
         datasets: [
@@ -110,13 +110,12 @@ const loadMockData = () => {
 const loadDashboardData = async () => {
     try {
         await creditsStore.fetchDashboardData();
-        console.log('Dashboard cargado exitosamente desde API');
     } catch (error) {
         console.warn('Error loading dashboard data:', error);
-        
+
         // Cargar datos de ejemplo para desarrollo
         loadMockData();
-        
+
         toast.add({
             severity: 'info',
             summary: 'Modo Demo',
@@ -276,9 +275,7 @@ onMounted(() => {
                     <div v-if="hasCreditsTrendData" class="relative h-[300px]">
                         <Chart type="line" :data="creditsTrendData" :options="chartOptions" style="height: 300px" />
                     </div>
-                    <div v-else class="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
-                        No hay datos de tendencia para mostrar.
-                    </div>
+                    <div v-else class="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">No hay datos de tendencia para mostrar.</div>
                 </template>
             </Card>
 
@@ -293,9 +290,7 @@ onMounted(() => {
                     <div v-if="hasAgingData" class="relative h-[300px]">
                         <Chart type="doughnut" :data="agingData" :options="{ responsive: true, maintainAspectRatio: false }" style="height: 300px" />
                     </div>
-                    <div v-else class="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
-                        No hay datos para el análisis de antigüedad.
-                    </div>
+                    <div v-else class="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">No hay datos para el análisis de antigüedad.</div>
                 </template>
             </Card>
         </div>

@@ -51,9 +51,6 @@ const handleLogin = async () => {
             router.push('/dashboard');
         }, 1000);
     } else {
-        console.log('Login failed - authStore.message:', authStore.message);
-        console.log('Login failed - authStore.validationErrors:', authStore.validationErrors);
-        
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
             authStore.validationErrors.forEach((err) => {
                 toast.add({

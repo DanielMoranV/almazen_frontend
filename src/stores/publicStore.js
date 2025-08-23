@@ -429,13 +429,6 @@ export const usePublicStore = defineStore('publicStore', {
 
             // Si detectamos que es un código de barras, usar búsqueda exacta
             // que según la documentación tiene máxima prioridad
-            if (searchType === 'barcode') {
-                console.log('Búsqueda por código de barras detectada:', query);
-            } else if (searchType === 'sku') {
-                console.log('Búsqueda por SKU detectada:', query);
-            } else {
-                console.log('Búsqueda por texto detectada:', query);
-            }
 
             try {
                 const response = await fetchPublicProducts(warehouseId, params);

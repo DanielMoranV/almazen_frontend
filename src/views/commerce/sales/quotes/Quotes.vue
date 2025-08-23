@@ -7,11 +7,11 @@ import { computed, onMounted, ref } from 'vue';
 
 import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
-import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Menu from 'primevue/menu';
 import Message from 'primevue/message';
 import ProgressSpinner from 'primevue/progressspinner';
+import Select from 'primevue/select';
 import Toast from 'primevue/toast';
 import QuoteDetailDialog from './componentsQuotes/QuoteDetailDialog.vue';
 import QuoteFormDialog from './componentsQuotes/QuoteFormDialog.vue';
@@ -181,8 +181,6 @@ const editQuote = async (quote, event) => {
         const result = await quotesStore.getQuote(quote.id);
         if (result.success) {
             const fullQuote = result.data;
-            console.log('Full quote with details:', fullQuote);
-            console.log('Quote details:', fullQuote.details);
 
             // Abrir el modal con la cotización completa
             selectedQuote.value = fullQuote;
@@ -447,8 +445,6 @@ const editQuoteFromMenu = async (quote) => {
         const result = await quotesStore.getQuote(quote.id);
         if (result.success) {
             const fullQuote = result.data;
-            console.log('Full quote from menu:', fullQuote);
-
             // Abrir el modal con la cotización completa
             selectedQuote.value = fullQuote;
             showQuoteDialog.value = true;
@@ -498,7 +494,6 @@ const handleEditQuote = async (quote) => {
         const result = await quotesStore.getQuote(quote.id);
         if (result.success) {
             const fullQuote = result.data;
-            console.log('Full quote from handleEditQuote:', fullQuote);
 
             // Abrir el modal con la cotización completa
             selectedQuote.value = fullQuote;
@@ -638,7 +633,7 @@ const handleQuoteSubmit = async (quoteData) => {
 
                             <!-- Estado mejorado -->
                             <div class="filter-wrapper">
-                                <Dropdown
+                                <Select
                                     v-model="statusFilter"
                                     :options="statusOptions"
                                     optionLabel="label"
@@ -654,7 +649,7 @@ const handleQuoteSubmit = async (quoteData) => {
 
                             <!-- Cliente mejorado -->
                             <div class="filter-wrapper">
-                                <Dropdown
+                                <Select
                                     v-model="customerFilter"
                                     :options="customerOptions"
                                     optionLabel="name"

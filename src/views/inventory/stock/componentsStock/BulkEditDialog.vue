@@ -212,20 +212,20 @@ watch([scope, selectedWarehouse, selectedBatch], () => {
 
                 <div>
                     <label class="block text-sm font-medium mb-2">Seleccionar Alcance</label>
-                    <Dropdown v-model="scope" :options="scopeOptions" option-label="label" option-value="value" placeholder="Seleccione el alcance" class="w-full" />
+                    <Select v-model="scope" :options="scopeOptions" option-label="label" option-value="value" placeholder="Seleccione el alcance" class="w-full" />
                 </div>
 
                 <div v-if="scope === 'warehouse'" class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Almacén</label>
-                        <Dropdown v-model="selectedWarehouse" :options="warehouseOptions" option-label="label" option-value="value" placeholder="Seleccione un almacén" class="w-full" />
+                        <Select v-model="selectedWarehouse" :options="warehouseOptions" option-label="label" option-value="value" placeholder="Seleccione un almacén" class="w-full" />
                     </div>
                 </div>
 
                 <div v-if="scope === 'batch'" class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-2">Lote</label>
-                        <Dropdown v-model="selectedBatch" :options="batchOptions" option-label="label" option-value="value" placeholder="Seleccione un lote" class="w-full" />
+                        <Select v-model="selectedBatch" :options="batchOptions" option-label="label" option-value="value" placeholder="Seleccione un lote" class="w-full" />
                     </div>
                 </div>
             </div>

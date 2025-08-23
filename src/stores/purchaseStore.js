@@ -55,8 +55,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await searchPurchaseOrdersAdvanced(params);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    // Manejar tanto estructura con purchases como estructura directa
-                    this.purchaseOrders = processed.data.purchases || processed.data;
+                    this.purchaseOrders = processed.data.purchases;
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -152,8 +151,9 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await approvePurchaseOrder(id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    // Recargar la lista completa para mantener sincronización
-                    await this.fetchPurchaseOrders();
+                    this.purchaseOrders = this.purchaseOrders.map((order) => 
+                        order.id === id ? { ...order, status: 'APPROVED' } : order
+                    );
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -168,8 +168,9 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await receivePurchaseOrder(id, batchData);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    // Recargar la lista completa para mantener sincronización
-                    await this.fetchPurchaseOrders();
+                    this.purchaseOrders = this.purchaseOrders.map((order) => 
+                        order.id === id ? { ...order, status: 'RECEIVED' } : order
+                    );
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -184,8 +185,9 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await cancelPurchaseOrder(id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    // Recargar la lista completa para mantener sincronización
-                    await this.fetchPurchaseOrders();
+                    this.purchaseOrders = this.purchaseOrders.map((order) => 
+                        order.id === id ? { ...order, status: 'CANCELLED' } : order
+                    );
                 }
             } catch (error) {
                 handleProcessError(error, this);

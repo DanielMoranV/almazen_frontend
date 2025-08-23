@@ -1,14 +1,14 @@
 <script setup>
 import { useCustomersStore } from '@/stores/customersStore';
 import { useProductsStore } from '@/stores/productsStore';
-import { useQuotesStore } from '@/stores/quotesStore';
+
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const toast = useToast();
 const submitted = ref(false);
 const customersStore = useCustomersStore();
-const quotesStore = useQuotesStore();
+
 const productsStore = useProductsStore();
 
 const props = defineProps({
@@ -39,7 +39,6 @@ const form = ref({
 // Detalles de la cotización
 const details = ref([]);
 const showProductDialog = ref(false);
-const selectedStockForAdd = ref(null);
 
 // Búsqueda de productos
 const productSearchQuery = ref('');
@@ -185,23 +184,6 @@ watch(productSearchQuery, (newQuery) => {
 const selectProductForAdd = (product) => {
     // Seleccionar el producto para mostrar opciones de stock
     selectedProduct.value = product;
-    
-    // Debug: Verificar estructura de datos del producto
-    console.log('Producto seleccionado:', product);
-    console.log('Available stock:', product.available_stock);
-
-    if (product.available_stock && product.available_stock.length > 0) {
-        product.available_stock.forEach((stock, index) => {
-            console.log(`Stock ${index}:`, stock);
-            if (stock.batches && stock.batches.length > 0) {
-                console.log(`Lotes del stock ${index}:`, stock.batches);
-                stock.batches.forEach((batch, batchIndex) => {
-                    console.log(`Lote ${batchIndex}:`, batch);
-                    console.log(`Cantidad del lote ${batchIndex}:`, batch.quantity, batch.available_quantity, batch.stock_quantity);
-                });
-            }
-        });
-    }
 
     // Verificar si hay stock disponible
     if (!product.available_stock || product.available_stock.length === 0) {
@@ -514,7 +496,7 @@ const formatCurrency = (value) => {
                             <i class="pi pi-user field-icon"></i>
                             Cliente *
                         </label>
-                        <Dropdown
+                        <Select
                             id="customer_id"
                             v-model="form.customer_id"
                             :options="customersStore.customersList"
@@ -535,7 +517,7 @@ const formatCurrency = (value) => {
                             <i class="pi pi-calendar field-icon"></i>
                             Fecha Cotización *
                         </label>
-                        <Calendar id="quote_date" v-model="form.quote_date" dateFormat="dd/mm/yy" :class="{ 'p-invalid': submitted && !form.quote_date }" class="form-input enhanced compact" showIcon />
+                        <DatePicker id="quote_date" v-model="form.quote_date" dateFormat="dd/mm/yy" :class="{ 'p-invalid': submitted && !form.quote_date }" class="form-input enhanced compact" showIcon />
                         <small class="p-error" v-if="submitted && !form.quote_date">Fecha requerida</small>
                     </div>
 
@@ -544,7 +526,7 @@ const formatCurrency = (value) => {
                             <i class="pi pi-clock field-icon"></i>
                             Válido Hasta *
                         </label>
-                        <Calendar
+                        <DatePicker
                             id="valid_until"
                             v-model="form.valid_until"
                             dateFormat="dd/mm/yy"
@@ -804,17 +786,10 @@ const formatCurrency = (value) => {
                     </div>
                     <div>
                         <div class="font-bold text-green-800 text-lg">{{ selectedProduct.name }}</div>
-                        <div class="text-sm text-green-600">
-                            <i class="pi pi-tag mr-1"></i>SKU: {{ selectedProduct.sku }}
-                        </div>
+                        <div class="text-sm text-green-600"><i class="pi pi-tag mr-1"></i>SKU: {{ selectedProduct.sku }}</div>
                     </div>
                 </div>
-                <Button
-                    icon="pi pi-times"
-                    class="p-button-text p-button-sm p-button-rounded"
-                    @click="cancelProductSelection"
-                    v-tooltip.left="'Cambiar producto'"
-                />
+                <Button icon="pi pi-times" class="p-button-text p-button-sm p-button-rounded" @click="cancelProductSelection" v-tooltip.left="'Cambiar producto'" />
             </div>
 
             <div class="stock-options-section">
@@ -822,7 +797,7 @@ const formatCurrency = (value) => {
                     <i class="pi pi-building mr-2 text-blue-600"></i>
                     Selecciona el stock específico:
                 </div>
-                
+
                 <div v-for="stock in selectedProduct.available_stock" :key="stock.id" class="stock-option-card">
                     <div class="stock-header">
                         <div class="warehouse-info">
@@ -831,9 +806,7 @@ const formatCurrency = (value) => {
                             </div>
                             <div>
                                 <div class="font-bold text-gray-900">{{ stock.warehouse_name || stock.warehouse?.name }}</div>
-                                <div class="text-sm text-gray-500">
-                                    <i class="pi pi-box mr-1"></i>Stock total: {{ stock.total_stock || stock.available_quantity || 0 }} unidades
-                                </div>
+                                <div class="text-sm text-gray-500"><i class="pi pi-box mr-1"></i>Stock total: {{ stock.total_stock || stock.available_quantity || 0 }} unidades</div>
                             </div>
                         </div>
                     </div>
@@ -849,13 +822,9 @@ const formatCurrency = (value) => {
                                 <div class="batch-info">
                                     <div class="batch-details">
                                         <span class="batch-code">{{ batch.batch_code }}</span>
-                                        <span class="batch-quantity">
-                                            {{ parseFloat(batch.available_quantity).toFixed(2) }} unidades
-                                        </span>
+                                        <span class="batch-quantity"> {{ parseFloat(batch.available_quantity).toFixed(2) }} unidades </span>
                                     </div>
-                                    <div class="batch-meta">
-                                        <i class="pi pi-calendar mr-1"></i>Vence: {{ batch.expiration_date }}
-                                    </div>
+                                    <div class="batch-meta"><i class="pi pi-calendar mr-1"></i>Vence: {{ batch.expiration_date }}</div>
                                 </div>
                                 <Button
                                     size="small"
@@ -866,34 +835,18 @@ const formatCurrency = (value) => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Stock sin lotes -->
                     <div v-else class="single-stock-section">
-                        <Button
-                            size="small"
-                            :label="selectedStockId === stock.id ? 'Seleccionado' : 'Seleccionar'"
-                            :class="selectedStockId === stock.id ? 'p-button-success' : 'p-button-outlined'"
-                            @click="selectStockId(stock.id)"
-                        />
+                        <Button size="small" :label="selectedStockId === stock.id ? 'Seleccionado' : 'Seleccionar'" :class="selectedStockId === stock.id ? 'p-button-success' : 'p-button-outlined'" @click="selectStockId(stock.id)" />
                     </div>
                 </div>
             </div>
 
             <!-- Botones de confirmación -->
             <div class="stock-selection-actions">
-                <Button
-                    label="Cancelar"
-                    icon="pi pi-times"
-                    class="p-button-outlined"
-                    @click="cancelProductSelection"
-                />
-                <Button
-                    label="Agregar Producto"
-                    icon="pi pi-check"
-                    class="p-button-success"
-                    @click="confirmAddProduct"
-                    :disabled="!selectedStockId"
-                />
+                <Button label="Cancelar" icon="pi pi-times" class="p-button-outlined" @click="cancelProductSelection" />
+                <Button label="Agregar Producto" icon="pi pi-check" class="p-button-success" @click="confirmAddProduct" :disabled="!selectedStockId" />
             </div>
         </div>
 
@@ -1663,19 +1616,19 @@ const formatCurrency = (value) => {
     .stock-option-card {
         @apply p-3;
     }
-    
+
     .batch-card {
         @apply flex-col items-start gap-3 p-2;
     }
-    
+
     .batch-details {
         @apply flex-col items-start space-x-0 space-y-1;
     }
-    
+
     .stock-selection-actions {
         @apply flex-col gap-2;
     }
-    
+
     .stock-selection-actions .p-button {
         @apply w-full;
     }

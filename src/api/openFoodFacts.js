@@ -1,6 +1,6 @@
-import axios from 'axios';
-import { useUnitsStore } from '@/stores/unitsStore';
 import { useCategoriesStore } from '@/stores/categoriesStore';
+import { useUnitsStore } from '@/stores/unitsStore';
+import axios from 'axios';
 
 /**
  * Genera información básica del producto
@@ -44,7 +44,7 @@ const generateBasicProductInfo = async (productData) => {
 export const fetchProductByBarcode = async (barcode) => {
     try {
         const response = await axios.get(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-        console.log(response.data);
+
         if (response.data.status === 1) {
             const product = response.data.product;
 
@@ -76,6 +76,5 @@ export const fetchProductByBarcode = async (barcode) => {
 
 // Placeholder si en el futuro quieres implementar guardado de nuevas categorías
 export const saveSuggestedCategories = async (suggestedCategories) => {
-    console.log('No hay IA activa, no se procesan sugerencias:', suggestedCategories);
     return [];
 };

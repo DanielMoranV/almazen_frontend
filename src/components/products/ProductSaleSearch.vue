@@ -165,7 +165,7 @@ onMounted(async () => {
                 <!-- Selector de almacén -->
                 <div class="warehouse-field" v-if="showWarehouseFilter">
                     <label for="warehouse-select" class="search-label"> Filtrar por almacén </label>
-                    <Dropdown
+                    <Select
                         id="warehouse-select"
                         v-model="selectedWarehouse"
                         :options="warehouses"

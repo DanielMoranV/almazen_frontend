@@ -24,12 +24,6 @@ const products = computed(() => productsStore.productsList);
 const filterProductsBy = (value, option) => {
     if (!value) return true;
 
-    // Depurar la estructura del objeto producto (solo para el primer producto)
-    if (!window._debuggedProduct) {
-        console.log('Estructura del objeto producto:', option);
-        window._debuggedProduct = true;
-    }
-
     const searchValue = value.toString().toLowerCase().trim();
 
     // Buscar coincidencias en nombre, barcode y SKU
@@ -99,23 +93,25 @@ const debounceTimer = ref(null);
 
 const filteredProducts = computed(() => {
     if (!searchQuery.value) return [];
-    
+
     const query = searchQuery.value.toLowerCase().trim();
-    return products.value.filter(product => {
-        const nameMatch = product.name?.toLowerCase().includes(query);
-        const barcodeMatch = product.barcode?.toLowerCase().includes(query);
-        const codeMatch = product.code?.toLowerCase().includes(query);
-        const skuMatch = product.sku?.toLowerCase().includes(query);
-        
-        return nameMatch || barcodeMatch || codeMatch || skuMatch;
-    }).slice(0, 20); // Limit to 20 results for performance
+    return products.value
+        .filter((product) => {
+            const nameMatch = product.name?.toLowerCase().includes(query);
+            const barcodeMatch = product.barcode?.toLowerCase().includes(query);
+            const codeMatch = product.code?.toLowerCase().includes(query);
+            const skuMatch = product.sku?.toLowerCase().includes(query);
+
+            return nameMatch || barcodeMatch || codeMatch || skuMatch;
+        })
+        .slice(0, 20); // Limit to 20 results for performance
 });
 
 const searchProducts = () => {
     if (debounceTimer.value) {
         clearTimeout(debounceTimer.value);
     }
-    
+
     debounceTimer.value = setTimeout(() => {
         searchLoading.value = true;
         // Simulate search delay
@@ -135,22 +131,24 @@ watch(searchQuery, () => {
 });
 
 // Watcher para calcular precio unitario cuando cambia el total manualmente
-watch(() => form.value.details.map(d => d.total_amount), (newTotals, oldTotals) => {
-    if (!newTotals || !oldTotals || isCalculatingFromTotal.value) return;
-    
-    newTotals.forEach((newTotal, index) => {
-        const oldTotal = oldTotals[index];
-        const detail = form.value.details[index];
-        
-        if (oldTotal !== undefined && newTotal !== oldTotal && newTotal && detail) {
-            console.log(`Total cambió de ${oldTotal} a ${newTotal} para el producto ${index}`);
-            // Usar setTimeout para evitar conflictos con otros watchers
-            setTimeout(() => {
-                calculateUnitPriceFromTotal(detail);
-            }, 50);
-        }
-    });
-});
+watch(
+    () => form.value.details.map((d) => d.total_amount),
+    (newTotals, oldTotals) => {
+        if (!newTotals || !oldTotals || isCalculatingFromTotal.value) return;
+
+        newTotals.forEach((newTotal, index) => {
+            const oldTotal = oldTotals[index];
+            const detail = form.value.details[index];
+
+            if (oldTotal !== undefined && newTotal !== oldTotal && newTotal && detail) {
+                // Usar setTimeout para evitar conflictos con otros watchers
+                setTimeout(() => {
+                    calculateUnitPriceFromTotal(detail);
+                }, 50);
+            }
+        });
+    }
+);
 
 const openProductSearch = () => {
     showProductSearchDialog.value = true;
@@ -174,13 +172,13 @@ const confirmAddProduct = () => {
             discount_amount: 0,
             _product: selectedProductForAdd.value // Store product info for display
         };
-        
+
         form.value.details.push(newDetail);
         showProductSearchDialog.value = false;
         const productName = selectedProductForAdd.value.name;
         selectedProductForAdd.value = null;
         searchQuery.value = '';
-        
+
         toast.add({
             severity: 'success',
             summary: 'Producto Agregado',
@@ -191,53 +189,46 @@ const confirmAddProduct = () => {
 };
 
 const getProductName = (productId) => {
-    const product = products.value.find(p => p.id === productId);
+    const product = products.value.find((p) => p.id === productId);
     return product ? product.name : 'Producto no encontrado';
 };
 
 const getProductCode = (productId) => {
-    const product = products.value.find(p => p.id === productId);
-    return product ? (product.barcode || product.code || product.sku) : '';
+    const product = products.value.find((p) => p.id === productId);
+    return product ? product.barcode || product.code || product.sku : '';
 };
 
 // Variable para evitar bucles de cálculo
 const isCalculatingFromTotal = ref(false);
 
 const calculateUnitPriceFromTotal = (detail) => {
-    console.log('Calculando precio unitario desde total:', detail);
-    
     if (isCalculatingFromTotal.value) {
-        console.log('Ya estamos calculando, evitando bucle');
         return;
     }
-    
+
     if (detail.total_amount && detail.quantity && detail.quantity > 0) {
         isCalculatingFromTotal.value = true;
-        
+
         // Calcular precio unitario basado en el total
         // Total = (cantidad * precio_unitario) - descuento
         // Precio_unitario = (total + descuento) / cantidad
         const totalWithDiscount = Number(detail.total_amount) + (Number(detail.discount_amount) || 0);
         const newUnitPrice = totalWithDiscount / Number(detail.quantity);
-        
+
         detail.unit_price = +newUnitPrice.toFixed(2);
-        
-        console.log('Nuevo precio unitario calculado:', detail.unit_price);
-        
+
         toast.add({
             severity: 'info',
             summary: 'Precio Recalculado',
             detail: `Precio unitario actualizado a S/ ${detail.unit_price}`,
             life: 2000
         });
-        
+
         // Resetear flag después de un breve delay
         setTimeout(() => {
             isCalculatingFromTotal.value = false;
         }, 200);
     } else {
-        console.log('No se puede calcular: total_amount =', detail.total_amount, 'quantity =', detail.quantity);
-        
         if (!detail.quantity || detail.quantity <= 0) {
             toast.add({
                 severity: 'warn',
@@ -321,7 +312,7 @@ watch(
         if (isCalculatingFromTotal.value) {
             return;
         }
-        
+
         let totalGeneral = 0;
         let totalDescuentos = 0;
         form.value.details.forEach((detail) => {
@@ -521,13 +512,7 @@ watch(
                             </p>
                         </div>
                     </div>
-                    <Button 
-                        label="Buscar Producto" 
-                        icon="pi pi-search" 
-                        @click="openProductSearch()" 
-                        :disabled="loading"
-                        class="px-4 py-2 bg-blue-500 hover:bg-blue-600 border-0 transition-all duration-200"
-                    />
+                    <Button label="Buscar Producto" icon="pi pi-search" @click="openProductSearch()" :disabled="loading" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 border-0 transition-all duration-200" />
                 </div>
 
                 <!-- Estado vacío -->
@@ -537,10 +522,10 @@ watch(
                     </div>
                     <h4 class="text-xl font-semibold mb-3 text-gray-900">¡Comienza agregando productos!</h4>
                     <p class="text-gray-500 mb-6 max-w-md mx-auto">Busca y selecciona los productos que necesitas para tu orden de compra</p>
-                    <Button 
-                        label="Buscar Productos" 
-                        icon="pi pi-search" 
-                        @click="openProductSearch()" 
+                    <Button
+                        label="Buscar Productos"
+                        icon="pi pi-search"
+                        @click="openProductSearch()"
                         :disabled="loading"
                         class="px-6 py-3 text-lg bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 border-0 transition-all duration-200 shadow-lg"
                     />
@@ -549,11 +534,7 @@ watch(
                 <!-- Lista de productos -->
                 <div v-else class="space-y-4">
                     <TransitionGroup name="product-card" tag="div" class="space-y-4">
-                        <div 
-                            v-for="(detail, index) in form.details" 
-                            :key="index"
-                            class="bg-white rounded-xl p-6 border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-sm group"
-                        >
+                        <div v-for="(detail, index) in form.details" :key="index" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-sm group">
                             <div class="space-y-4">
                                 <!-- Información del Producto -->
                                 <div class="flex items-center justify-between">
@@ -561,22 +542,11 @@ watch(
                                         <h4 class="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors text-lg">
                                             {{ getProductName(detail.product_id) }}
                                         </h4>
-                                        <p class="text-sm text-gray-500 mt-1" v-if="getProductCode(detail.product_id)">
-                                            📦 {{ getProductCode(detail.product_id) }}
-                                        </p>
+                                        <p class="text-sm text-gray-500 mt-1" v-if="getProductCode(detail.product_id)">📦 {{ getProductCode(detail.product_id) }}</p>
                                     </div>
-                                    
+
                                     <!-- Acción de eliminar -->
-                                    <Button 
-                                        icon="pi pi-trash" 
-                                        severity="danger" 
-                                        text 
-                                        rounded 
-                                        size="small" 
-                                        @click="removeDetail(index)" 
-                                        v-tooltip.top="'Eliminar producto'"
-                                        class="opacity-60 hover:opacity-100 transition-opacity ml-4"
-                                    />
+                                    <Button icon="pi pi-trash" severity="danger" text rounded size="small" @click="removeDetail(index)" v-tooltip.top="'Eliminar producto'" class="opacity-60 hover:opacity-100 transition-opacity ml-4" />
                                 </div>
 
                                 <!-- Campos de entrada organizados en grid más espacioso -->
@@ -588,21 +558,19 @@ watch(
                                             Cantidad
                                             <span class="text-xs text-red-500 font-normal ml-1">*</span>
                                         </label>
-                                        <InputNumber 
-                                            v-model="detail.quantity" 
-                                            :min="1" 
-                                            :step="1" 
-                                            placeholder="1" 
-                                            class="w-full" 
+                                        <InputNumber
+                                            v-model="detail.quantity"
+                                            :min="1"
+                                            :step="1"
+                                            placeholder="1"
+                                            class="w-full"
                                             :inputClass="'text-center font-medium text-lg'"
                                             :showButtons="true"
                                             buttonLayout="horizontal"
                                             :incrementButtonClass="'bg-blue-50 text-blue-600 hover:bg-blue-100'"
                                             :decrementButtonClass="'bg-gray-50 text-gray-600 hover:bg-gray-100'"
                                         />
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            📝 Necesaria para calcular precio unitario
-                                        </p>
+                                        <p class="text-xs text-gray-500 mt-1">📝 Necesaria para calcular precio unitario</p>
                                     </div>
 
                                     <!-- Precio Unitario -->
@@ -612,18 +580,8 @@ watch(
                                             Precio Unitario
                                             <span class="text-xs text-gray-500 font-normal ml-1">(auto-calc)</span>
                                         </label>
-                                        <InputNumber 
-                                            v-model="detail.unit_price" 
-                                            mode="currency" 
-                                            currency="PEN" 
-                                            locale="es-PE" 
-                                            placeholder="0.00" 
-                                            class="w-full"
-                                            :inputClass="'text-lg'"
-                                        />
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            🔄 Se calcula automáticamente desde el total
-                                        </p>
+                                        <InputNumber v-model="detail.unit_price" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="w-full" :inputClass="'text-lg'" />
+                                        <p class="text-xs text-gray-500 mt-1">🔄 Se calcula automáticamente desde el total</p>
                                     </div>
 
                                     <!-- Descuento -->
@@ -632,15 +590,7 @@ watch(
                                             <i class="pi pi-minus-circle text-gray-500 mr-1"></i>
                                             Descuento
                                         </label>
-                                        <InputNumber 
-                                            v-model="detail.discount_amount" 
-                                            mode="currency" 
-                                            currency="PEN" 
-                                            locale="es-PE" 
-                                            placeholder="0.00" 
-                                            class="w-full"
-                                            :inputClass="'text-lg'"
-                                        />
+                                        <InputNumber v-model="detail.discount_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="w-full" :inputClass="'text-lg'" />
                                     </div>
 
                                     <!-- Total -->
@@ -650,18 +600,8 @@ watch(
                                             Total
                                             <span class="text-xs text-gray-500 font-normal ml-1">(editable)</span>
                                         </label>
-                                        <InputNumber 
-                                            v-model="detail.total_amount" 
-                                            mode="currency" 
-                                            currency="PEN" 
-                                            locale="es-PE" 
-                                            placeholder="0.00" 
-                                            class="w-full"
-                                            :inputClass="'text-lg font-bold text-green-700'"
-                                        />
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            💡 Al cambiar el total se recalcula el precio unitario
-                                        </p>
+                                        <InputNumber v-model="detail.total_amount" mode="currency" currency="PEN" locale="es-PE" placeholder="0.00" class="w-full" :inputClass="'text-lg font-bold text-green-700'" />
+                                        <p class="text-xs text-gray-500 mt-1">💡 Al cambiar el total se recalcula el precio unitario</p>
                                     </div>
                                 </div>
                             </div>
@@ -671,23 +611,16 @@ watch(
 
                 <!-- Agregar más productos -->
                 <div v-if="form.details.length > 0" class="text-center pt-4 border-t border-gray-200">
-                    <Button 
-                        label="Agregar Otro Producto" 
-                        icon="pi pi-plus" 
-                        @click="openProductSearch()" 
-                        :disabled="loading"
-                        outlined
-                        class="px-6 py-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
-                    />
+                    <Button label="Agregar Otro Producto" icon="pi pi-plus" @click="openProductSearch()" :disabled="loading" outlined class="px-6 py-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200" />
                 </div>
             </div>
 
             <!-- Product Search Dialog -->
-            <Dialog 
-                v-model:visible="showProductSearchDialog" 
-                :style="{ width: '90vw', maxWidth: '800px', maxHeight: '80vh' }" 
-                header="🔍 Buscar y Seleccionar Producto" 
-                :modal="true" 
+            <Dialog
+                v-model:visible="showProductSearchDialog"
+                :style="{ width: '90vw', maxWidth: '800px', maxHeight: '80vh' }"
+                header="🔍 Buscar y Seleccionar Producto"
+                :modal="true"
                 class="product-search-dialog"
                 :draggable="false"
                 :resizable="false"
@@ -698,9 +631,9 @@ watch(
                         <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                             <i class="pi pi-search text-gray-400"></i>
                         </div>
-                        <InputText 
-                            v-model="searchQuery" 
-                            placeholder="Buscar por nombre, código de barras, código o SKU..." 
+                        <InputText
+                            v-model="searchQuery"
+                            placeholder="Buscar por nombre, código de barras, código o SKU..."
                             class="w-full pl-10 pr-4 py-3 text-lg border-2 border-gray-200 focus:border-blue-500 rounded-xl"
                             :class="{ 'border-blue-300': searchQuery }"
                         />
@@ -740,18 +673,13 @@ watch(
                             <h3 class="font-semibold text-gray-900">Resultados de búsqueda</h3>
                             <Badge :value="filteredProducts.length" severity="info" />
                         </div>
-                        
+
                         <div class="max-h-96 overflow-y-auto space-y-3 pr-2">
-                            <div 
-                                v-for="product in filteredProducts" 
+                            <div
+                                v-for="product in filteredProducts"
                                 :key="product.id"
                                 @click="selectProductForAdd(product)"
-                                :class="[
-                                    'border-2 rounded-xl p-4 cursor-pointer transition-all duration-200',
-                                    selectedProductForAdd?.id === product.id 
-                                        ? 'border-blue-500 bg-blue-50' 
-                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                ]"
+                                :class="['border-2 rounded-xl p-4 cursor-pointer transition-all duration-200', selectedProductForAdd?.id === product.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50']"
                             >
                                 <div class="flex items-center justify-between">
                                     <div class="flex-1">
@@ -780,20 +708,8 @@ watch(
                             {{ selectedProductForAdd ? `Seleccionado: ${selectedProductForAdd.name}` : 'Selecciona un producto para continuar' }}
                         </div>
                         <div class="flex gap-3">
-                            <Button 
-                                label="Cancelar" 
-                                icon="pi pi-times" 
-                                text 
-                                severity="secondary" 
-                                @click="showProductSearchDialog = false" 
-                            />
-                            <Button 
-                                label="Agregar Producto" 
-                                icon="pi pi-plus" 
-                                @click="confirmAddProduct()" 
-                                :disabled="!selectedProductForAdd"
-                                class="bg-blue-500 hover:bg-blue-600 border-0"
-                            />
+                            <Button label="Cancelar" icon="pi pi-times" text severity="secondary" @click="showProductSearchDialog = false" />
+                            <Button label="Agregar Producto" icon="pi pi-plus" @click="confirmAddProduct()" :disabled="!selectedProductForAdd" class="bg-blue-500 hover:bg-blue-600 border-0" />
                         </div>
                     </div>
                 </template>
