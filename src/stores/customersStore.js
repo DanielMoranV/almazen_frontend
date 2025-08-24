@@ -1,6 +1,6 @@
+import { createCustomer, deleteCustomer, fetchCustomers, getCustomer, lookupDocument, updateCustomer } from '@/api';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
-import { fetchCustomers, createCustomer, updateCustomer, deleteCustomer, getCustomer } from '@/api';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useCustomersStore = defineStore('customersStore', {
     state: () => ({
@@ -9,13 +9,23 @@ export const useCustomersStore = defineStore('customersStore', {
         isLoading: false,
         success: false,
         message: '',
-        validationErrors: []
+        validationErrors: [],
+        // Document lookup state
+        documentData: null,
+        isLoadingDocument: false,
+        documentLookupSuccess: false,
+        documentLookupMessage: '',
+        documentLookupErrors: []
     }),
 
     getters: {
         customersList: (state) => state.customers,
         totalCustomers: (state) => state.customers.length,
-        isLoadingCustomers: (state) => state.isLoading
+        isLoadingCustomers: (state) => state.isLoading,
+        // Document lookup getters
+        isLoadingDocumentLookup: (state) => state.isLoadingDocument,
+        documentLookupData: (state) => state.documentData,
+        hasDocumentData: (state) => state.documentData !== null
     },
 
     actions: {
@@ -94,11 +104,46 @@ export const useCustomersStore = defineStore('customersStore', {
             }
         },
 
+        // Document lookup actions
+        async lookupDocumentData(payload) {
+            this._resetDocumentLookupState();
+            try {
+                const res = await lookupDocument(payload);
+                const processed = handleProcessSuccess(res, this);
+                console.log(processed);
+                if (processed.success) {
+                    this.documentData = processed.data;
+                    this.documentLookupSuccess = true;
+                    this.documentLookupMessage = processed.message || 'Datos obtenidos exitosamente';
+                }
+            } catch (err) {
+                this.documentLookupSuccess = false;
+                this.documentLookupMessage = err.response?.data?.message || 'Error al consultar documento';
+                this.documentLookupErrors = err.response?.data?.errors || [];
+            } finally {
+                this.isLoadingDocument = false;
+            }
+        },
+
+        clearDocumentData() {
+            this.documentData = null;
+            this.documentLookupSuccess = false;
+            this.documentLookupMessage = '';
+            this.documentLookupErrors = [];
+        },
+
         _resetState() {
             this.isLoading = true;
             this.success = false;
             this.message = '';
             this.validationErrors = [];
+        },
+
+        _resetDocumentLookupState() {
+            this.isLoadingDocument = true;
+            this.documentLookupSuccess = false;
+            this.documentLookupMessage = '';
+            this.documentLookupErrors = [];
         }
     }
 });

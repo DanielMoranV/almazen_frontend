@@ -24,7 +24,7 @@ export const updateCompany = (payload, id) => axios.put(`/companies/${id}`, payl
 export const uploadCompanyLogo = (companyId, logoFile) => {
     const formData = new FormData();
     formData.append('logo', logoFile);
-    
+
     return axios.post(`/companies/${companyId}/upload-logo`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
@@ -56,7 +56,7 @@ export const searchProductsForSale = (params = {}) => {
 export const uploadProductImage = (productId, imageFile) => {
     const formData = new FormData();
     formData.append('image', imageFile);
-    
+
     return axios.post(`/products/${productId}/upload-image`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
@@ -197,6 +197,9 @@ export const createCustomer = (payload) => axios.post('/customers', payload);
 export const updateCustomer = (payload, id) => axios.put(`/customers/${id}`, payload);
 export const deleteCustomer = (id) => axios.delete(`/customers/${id}`);
 export const searchCustomers = (q) => axios.get(`/customers/search?q=${encodeURIComponent(q)}`);
+
+// Document Lookup - Búsqueda por DNI/RUC
+export const lookupDocument = (payload) => axios.post('/document/lookup', payload);
 
 // Sales
 export const fetchSales = (params = {}) => {

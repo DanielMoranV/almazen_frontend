@@ -8,6 +8,8 @@ import Textarea from 'primevue/textarea';
 import InputNumber from 'primevue/inputnumber';
 import ToggleSwitch from 'primevue/toggleswitch';
 import { computed, reactive, watch } from 'vue';
+import { useCustomersStore } from '@/stores/customersStore';
+import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     visible: { type: Boolean, default: false },
@@ -17,14 +19,18 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'submit']);
 
+const customersStore = useCustomersStore();
+const toast = useToast();
+
 const localCustomer = reactive({
     id: null,
     name: '',
+    commercial_name: '',
     email: '',
     phone: '',
-    address: '',
     identity_document: '',
     identity_document_type: 'dni',
+    address: '',
     is_active: true,
     credit_enabled: false,
     credit_limit: 0,
@@ -39,11 +45,12 @@ watch(
             val ?? {
                 id: null,
                 name: '',
+                commercial_name: '',
                 email: '',
                 phone: '',
-                address: '',
                 identity_document: '',
                 identity_document_type: 'dni',
+                address: '',
                 is_active: true,
                 credit_enabled: false,
                 credit_limit: 0,
@@ -57,23 +64,154 @@ watch(
 const docTypes = [
     { label: 'DNI', value: 'dni' },
     { label: 'RUC', value: 'ruc' },
+    { label: 'Carné de Extranjería', value: 'ce' },
     { label: 'Pasaporte', value: 'passport' },
+    { label: 'PTP', value: 'ptp' },
     { label: 'Otro', value: 'other' }
 ];
 
 const dialogTitle = computed(() => (localCustomer.id ? 'Editar Cliente' : 'Nuevo Cliente'));
 const submitLabel = computed(() => (localCustomer.id ? 'Actualizar' : 'Guardar'));
 
-const close = () => emit('update:visible', false);
+// Determinar si es RUC para mostrar campos específicos
+const isRuc = computed(() => localCustomer.identity_document_type === 'ruc');
+const isDni = computed(() => localCustomer.identity_document_type === 'dni');
 
-const submit = () => emit('submit', { ...localCustomer });
+// Estados para búsqueda de documentos
+const isLoadingDocumentData = computed(() => customersStore.isLoadingDocumentLookup);
+const canLookupDocument = computed(() => {
+    const doc = localCustomer.identity_document?.trim();
+    const type = localCustomer.identity_document_type;
+    
+    if (!doc || !type) return false;
+    
+    if (type === 'dni') return /^\d{8}$/.test(doc);
+    if (type === 'ruc') return /^\d{11}$/.test(doc);
+    
+    return false;
+});
+
+// Validaciones para documentos
+const validateDocument = (document, type) => {
+    if (!document) return true; // Documento opcional
+    
+    switch (type) {
+        case 'dni':
+            return /^\d{8}$/.test(document);
+        case 'ruc':
+            return /^\d{11}$/.test(document);
+        case 'ce':
+            return /^\d{9}$/.test(document);
+        case 'passport':
+            return /^[A-Za-z0-9]{6,12}$/.test(document);
+        default:
+            return document.length >= 6;
+    }
+};
+
+// Validación básica del formulario
+const validateForm = () => {
+    const errors = [];
+    
+    if (!localCustomer.name?.trim()) {
+        errors.push('El nombre es obligatorio');
+    }
+    
+    if (localCustomer.identity_document?.trim() && !validateDocument(localCustomer.identity_document, localCustomer.identity_document_type)) {
+        const docType = docTypes.find(dt => dt.value === localCustomer.identity_document_type)?.label || localCustomer.identity_document_type;
+        errors.push(`El formato del ${docType} no es válido`);
+    }
+    
+    if (localCustomer.credit_enabled) {
+        if (!localCustomer.credit_limit || localCustomer.credit_limit <= 0) {
+            errors.push('El límite de crédito debe ser mayor a 0');
+        }
+        if (!localCustomer.credit_days || localCustomer.credit_days <= 0) {
+            errors.push('Los días de crédito deben ser mayor a 0');
+        }
+    }
+    
+    return errors;
+};
+
+// Búsqueda automática de datos por documento
+const lookupDocumentData = async () => {
+    if (!canLookupDocument.value) return;
+    
+    const payload = {
+        document: localCustomer.identity_document.trim(),
+        type: localCustomer.identity_document_type
+    };
+    
+    await customersStore.lookupDocumentData(payload);
+    
+    if (customersStore.documentLookupSuccess) {
+        mapDocumentDataToCustomer(customersStore.documentLookupData);
+        toast.add({
+            severity: 'success',
+            summary: 'Datos encontrados',
+            detail: customersStore.documentLookupMessage,
+            life: 3000
+        });
+    } else {
+        toast.add({
+            severity: 'error',
+            summary: 'Error en búsqueda',
+            detail: customersStore.documentLookupMessage,
+            life: 4000
+        });
+    }
+};
+
+// Mapear datos de la API a los campos del cliente
+const mapDocumentDataToCustomer = (data) => {
+    if (!data) return;
+    
+    customersStore.clearDocumentData();
+    
+    if (localCustomer.identity_document_type === 'dni') {
+        // Mapeo para DNI (RENIEC)
+        localCustomer.name = data.nombre_completo || '';
+        localCustomer.address = data.direccion || '';
+    } else if (localCustomer.identity_document_type === 'ruc') {
+        // Mapeo para RUC (SUNAT) - usando los campos reales de la respuesta
+        localCustomer.name = data.razon_social || '';
+        localCustomer.commercial_name = data.nombre_comercial || '';
+        localCustomer.address = data.direccion_completa || data.direccion || '';
+    }
+};
+
+const close = () => {
+    customersStore.clearDocumentData();
+    emit('update:visible', false);
+};
+
+const submit = () => {
+    const errors = validateForm();
+    
+    if (errors.length > 0) {
+        // En una aplicación real, mostrarías estos errores al usuario
+        console.warn('Errores de validación:', errors);
+        return;
+    }
+    
+    // Limpiar campos opcionales vacíos
+    const customerData = { ...localCustomer };
+    Object.keys(customerData).forEach(key => {
+        if (customerData[key] === '' || customerData[key] === null) {
+            delete customerData[key];
+        }
+    });
+    
+    emit('submit', customerData);
+};
 </script>
 
 <template>
     <Dialog
         :visible="visible"
         @update:visible="$emit('update:visible', $event)"
-        :style="{ width: '550px', maxWidth: '95vw' }"
+        :style="{ width: '650px', maxWidth: '95vw' }"
         :header="localCustomer.id ? '✏️ Editar Cliente' : '👤➕ Nuevo Cliente'"
         :modal="true"
         class="p-fluid customer-dialog"
@@ -81,6 +219,52 @@ const submit = () => emit('submit', { ...localCustomer });
         :dismissableMask="false"
     >
         <div class="form-content">
+            <!-- Información de contacto y documentación -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-id-card"></i>
+                        Información de Documentación
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Tipo Documento -->
+                    <div class="field">
+                        <label for="identity_document_type" class="field-label">Tipo Documento</label>
+                        <Select id="identity_document_type" v-model="localCustomer.identity_document_type" :options="docTypes" optionLabel="label" optionValue="value" placeholder="Seleccione tipo" class="form-select" autofocus />
+                    </div>
+                    <!-- Documento -->
+                    <div class="field">
+                        <label for="identity_document" class="field-label">Nro. Documento</label>
+                        <div class="flex gap-2">
+                            <InputText 
+                                id="identity_document" 
+                                v-model.trim="localCustomer.identity_document" 
+                                :placeholder="isRuc ? '20123456789' : '12345678'" 
+                                class="form-input flex-1" 
+                            />
+                            <Button 
+                                :loading="isLoadingDocumentData"
+                                :disabled="!canLookupDocument"
+                                icon="pi pi-search" 
+                                class="p-button-info lookup-btn"
+                                @click="lookupDocumentData"
+                                v-tooltip.top="'Buscar datos automáticamente'"
+                                type="button"
+                            />
+                        </div>
+                        <small v-if="canLookupDocument && !isLoadingDocumentData" class="lookup-hint">
+                            💡 Haz clic en buscar para obtener datos automáticamente
+                        </small>
+                    </div>
+                    <!-- Dirección -->
+                    <div class="field col-span-2">
+                        <label for="address" class="field-label">Dirección</label>
+                        <Textarea id="address" v-model.trim="localCustomer.address" rows="3" placeholder="Dirección completa" class="form-input" />
+                    </div>
+                </div>
+            </div>
+
             <!-- Información personal -->
             <div class="form-section">
                 <div class="section-header">
@@ -92,8 +276,25 @@ const submit = () => emit('submit', { ...localCustomer });
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Nombre -->
                     <div class="field col-span-2">
-                        <label for="name" class="field-label">Nombre completo *</label>
-                        <InputText id="name" v-model.trim="localCustomer.name" placeholder="Ingrese el nombre completo" class="form-input" autofocus />
+                        <label for="name" class="field-label">
+                            {{ isRuc ? 'Razón Social *' : 'Nombre completo *' }}
+                        </label>
+                        <InputText 
+                            id="name" 
+                            v-model.trim="localCustomer.name" 
+                            :placeholder="isRuc ? 'Ingrese la razón social' : 'Ingrese el nombre completo'" 
+                            class="form-input"
+                        />
+                    </div>
+                    <!-- Nombre comercial (oculto para DNI) -->
+                    <div v-if="!isDni" class="field col-span-2">
+                        <label for="commercial_name" class="field-label">Nombre Comercial</label>
+                        <InputText 
+                            id="commercial_name" 
+                            v-model.trim="localCustomer.commercial_name" 
+                            placeholder="Nombre comercial o como se le conoce" 
+                            class="form-input" 
+                        />
                     </div>
                     <!-- Email -->
                     <div class="field">
@@ -104,33 +305,6 @@ const submit = () => emit('submit', { ...localCustomer });
                     <div class="field">
                         <label for="phone" class="field-label">Teléfono</label>
                         <InputText id="phone" v-model.trim="localCustomer.phone" placeholder="987654321" class="form-input" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- Información de contacto y documentación -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-id-card"></i>
-                        Información de Documentación
-                    </h3>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Dirección -->
-                    <div class="field col-span-2">
-                        <label for="address" class="field-label">Dirección</label>
-                        <Textarea id="address" v-model.trim="localCustomer.address" rows="3" placeholder="Ingrese la dirección completa" class="form-input" />
-                    </div>
-                    <!-- Documento -->
-                    <div class="field">
-                        <label for="identity_document" class="field-label">Nro. Documento</label>
-                        <InputText id="identity_document" v-model.trim="localCustomer.identity_document" placeholder="12345678" class="form-input" />
-                    </div>
-                    <!-- Tipo Documento -->
-                    <div class="field">
-                        <label for="identity_document_type" class="field-label">Tipo Documento</label>
-                        <Select id="identity_document_type" v-model="localCustomer.identity_document_type" :options="docTypes" optionLabel="label" optionValue="value" placeholder="Seleccione tipo" class="form-select" />
                     </div>
                 </div>
             </div>
@@ -356,6 +530,24 @@ const submit = () => emit('submit', { ...localCustomer });
 /* InputNumber styling */
 :deep(.p-inputnumber) {
     @apply w-full;
+}
+
+/* Lookup button styling */
+.lookup-btn {
+    @apply px-3 py-2 rounded-xl font-bold transition-all duration-300 min-w-fit;
+}
+
+.lookup-btn:not(:disabled) {
+    @apply bg-blue-600 hover:bg-blue-700 border-blue-600 hover:border-blue-700;
+}
+
+.lookup-btn:disabled {
+    @apply opacity-50 cursor-not-allowed bg-gray-400 border-gray-400;
+}
+
+/* Lookup hint styling */
+.lookup-hint {
+    @apply text-blue-600 dark:text-blue-400 font-medium mt-1 text-xs;
 }
 
 /* Pie de página del diálogo y botones */

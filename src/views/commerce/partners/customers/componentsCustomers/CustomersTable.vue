@@ -34,6 +34,14 @@ const initFilters = () => ({
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
     },
+    commercial_name: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.STARTS_WITH }]
+    },
+    address: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }]
+    },
     is_active: {
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }]
@@ -52,10 +60,14 @@ watch(
 const exportCustomers = async () => {
     const columns = [
         { header: 'Nombre', key: 'name', width: 30 },
+        { header: 'Nombre Comercial', key: 'commercial_name', width: 25 },
         { header: 'Documento', key: 'identity_document', width: 20 },
         { header: 'Tipo Documento', key: 'identity_document_type', width: 15 },
         { header: 'Teléfono', key: 'phone', width: 15 },
         { header: 'Email', key: 'email', width: 30 },
+        { header: 'Dirección', key: 'address', width: 40 },
+        { header: 'Crédito Habilitado', key: 'credit_enabled', width: 15 },
+        { header: 'Límite Crédito', key: 'credit_limit', width: 15 },
         { header: 'Activo', key: 'is_active', width: 10 }
     ];
     await exportToExcel(columns, customers, 'Clientes', 'Clientes');
@@ -74,7 +86,7 @@ const exportCustomers = async () => {
         dataKey="id"
         :filters="localFilters"
         v-model:filters="localFilters"
-        :globalFilterFields="['name', 'identity_document', 'email', 'phone']"
+        :globalFilterFields="['name', 'commercial_name', 'identity_document', 'email', 'phone', 'address']"
         :paginator="true"
         :rows="15"
         :rowsPerPageOptions="[10, 15, 25, 50, 100]"
@@ -92,7 +104,7 @@ const exportCustomers = async () => {
                                 <InputIcon>
                                     <i class="pi pi-search text-white" />
                                 </InputIcon>
-                                <InputText v-model="localFilters.global.value" placeholder="Buscar por nombre, email, documento, teléfono..." class="search-input" fluid />
+                                <InputText v-model="localFilters.global.value" placeholder="Buscar por nombre, documento, email, teléfono, dirección..." class="search-input" fluid />
                             </IconField>
                         </div>
                     </div>
@@ -157,6 +169,22 @@ const exportCustomers = async () => {
                 <div class="phone-container">
                     <i class="pi pi-phone"></i>
                     <span>{{ data.phone || '-' }}</span>
+                </div>
+            </template>
+        </Column>
+        <Column field="commercial_name" header="Nombre Comercial" sortable style="min-width: 10rem; max-width: 15rem">
+            <template #body="{ data }">
+                <div class="commercial-name">
+                    <i class="pi pi-briefcase"></i>
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ data.commercial_name || '-' }}</span>
+                </div>
+            </template>
+        </Column>
+        <Column field="address" header="Dirección" sortable style="min-width: 12rem; max-width: 20rem">
+            <template #body="{ data }">
+                <div class="address-container">
+                    <i class="pi pi-map-marker"></i>
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ data.address || '-' }}</span>
                 </div>
             </template>
         </Column>
@@ -354,6 +382,22 @@ const exportCustomers = async () => {
 
 .email-text {
     @apply text-sm text-gray-700 dark:text-gray-300;
+}
+
+.commercial-name {
+    @apply flex items-center gap-2;
+}
+
+.commercial-name i {
+    @apply text-indigo-600 dark:text-indigo-400;
+}
+
+.address-container {
+    @apply flex items-start gap-2;
+}
+
+.address-container i {
+    @apply text-red-600 dark:text-red-400 mt-1;
 }
 
 .position-tag {

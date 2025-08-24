@@ -1,5 +1,7 @@
 <script setup>
-import { defineEmits, defineProps, ref, watch } from 'vue';
+import { defineEmits, defineProps, ref, watch, computed } from 'vue';
+import { useCustomersStore } from '@/stores/customersStore';
+import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
     showCustomerDialog: Boolean,
@@ -12,6 +14,9 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:showCustomerDialog', 'update:showCreateCustomerDialog', 'update:customerSearch', 'update:newCustomer', 'search-customers', 'select-customer', 'create-quick-customer']);
+
+const customersStore = useCustomersStore();
+const toast = useToast();
 
 // Initialize internal refs with parent prop values
 const internalCustomerSearch = ref(props.customerSearch || '');
@@ -56,6 +61,86 @@ watch(
     },
     { deep: true }
 );
+
+// Validación de DNI/RUC
+const isDni = (text) => /^\d{8}$/.test(text?.trim());
+const isRuc = (text) => /^\d{11}$/.test(text?.trim());
+
+const canLookupDocument = computed(() => {
+    const search = internalCustomerSearch.value?.trim();
+    return isDni(search) || isRuc(search);
+});
+
+const getDocumentType = (text) => {
+    if (isDni(text)) return 'dni';
+    if (isRuc(text)) return 'ruc';
+    return null;
+};
+
+// Estado de búsqueda automática
+const isLoadingDocumentData = computed(() => customersStore.isLoadingDocumentLookup);
+
+// Búsqueda automática de documento
+const lookupDocumentData = async (document, type) => {
+    const payload = { document: document.trim(), type };
+    
+    await customersStore.lookupDocumentData(payload);
+    
+    if (customersStore.documentLookupSuccess) {
+        mapDocumentDataToNewCustomer(customersStore.documentLookupData, type);
+        toast.add({
+            severity: 'success',
+            summary: 'Datos encontrados',
+            detail: customersStore.documentLookupMessage,
+            life: 3000
+        });
+    } else {
+        toast.add({
+            severity: 'warn',
+            summary: 'No se encontraron datos',
+            detail: customersStore.documentLookupMessage || 'No se pudo obtener información del documento',
+            life: 4000
+        });
+    }
+};
+
+// Mapear datos de la API a los campos del nuevo cliente
+const mapDocumentDataToNewCustomer = (data, documentType) => {
+    if (!data) return;
+    
+    if (documentType === 'dni') {
+        // Mapeo para DNI (RENIEC)
+        internalNewCustomer.value.name = data.nombre_completo || '';
+        internalNewCustomer.value.identity_document_type = 'dni';
+    } else if (documentType === 'ruc') {
+        // Mapeo para RUC (SUNAT)
+        internalNewCustomer.value.name = data.razon_social || '';
+        internalNewCustomer.value.identity_document_type = 'ruc';
+    }
+    
+    customersStore.clearDocumentData();
+};
+
+// Función para crear cliente con búsqueda automática
+const createClientWithLookup = async () => {
+    const search = internalCustomerSearch.value?.trim();
+    const documentType = getDocumentType(search);
+    
+    if (documentType) {
+        // Si es un documento válido, buscar datos automáticamente
+        internalNewCustomer.value.identity_document = search;
+        internalNewCustomer.value.identity_document_type = documentType;
+        
+        await lookupDocumentData(search, documentType);
+    } else {
+        // Si no es un documento válido, usar el texto como nombre
+        internalNewCustomer.value.name = search;
+    }
+    
+    // Abrir el diálogo de crear cliente
+    emit('update:showCreateCustomerDialog', true);
+    emit('update:showCustomerDialog', false);
+};
 </script>
 
 <template>
@@ -122,7 +207,11 @@ watch(
                 </AutoComplete>
                 <div class="flex items-center mt-2 text-xs text-gray-600">
                     <i class="pi pi-info-circle mr-1 text-purple-500"></i>
-                    Escriba al menos 2 caracteres para buscar
+                    <span v-if="!canLookupDocument">Escriba al menos 2 caracteres para buscar</span>
+                    <span v-else class="text-blue-600 font-medium">
+                        <i class="pi pi-search mr-1"></i>
+                        {{ isDni(internalCustomerSearch) ? 'DNI detectado' : 'RUC detectado' }} - Se puede buscar automáticamente
+                    </span>
                 </div>
             </div>
 
@@ -130,14 +219,12 @@ watch(
             <div class="border-t border-gray-200 pt-6">
                 <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:justify-between items-center">
                     <Button
-                        @click="
-                            $emit('update:showCreateCustomerDialog', true);
-                            $emit('update:showCustomerDialog', false);
-                        "
-                        label="Crear Nuevo Cliente"
-                        icon="pi pi-plus"
-                        severity="success"
-                        outlined
+                        @click="createClientWithLookup"
+                        :label="canLookupDocument ? (isDni(internalCustomerSearch) ? 'Crear Cliente con DNI' : 'Crear Cliente con RUC') : 'Crear Nuevo Cliente'"
+                        :icon="canLookupDocument ? 'pi pi-search' : 'pi pi-plus'"
+                        :severity="canLookupDocument ? 'info' : 'success'"
+                        :outlined="!canLookupDocument"
+                        :loading="isLoadingDocumentData"
                         class="font-semibold touch-manipulation py-2 px-3 w-full sm:w-auto"
                     />
 
@@ -192,7 +279,25 @@ watch(
                 </div>
                 <div class="sm:col-span-2">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Número de documento</label>
-                    <InputText v-model="internalNewCustomer.identity_document" placeholder="Número de documento" class="w-full py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" />
+                    <div class="flex gap-2">
+                        <InputText 
+                            v-model="internalNewCustomer.identity_document" 
+                            placeholder="Número de documento" 
+                            class="flex-1 py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" 
+                        />
+                        <Button 
+                            v-if="isDni(internalNewCustomer.identity_document) || isRuc(internalNewCustomer.identity_document)"
+                            @click="lookupDocumentData(internalNewCustomer.identity_document, getDocumentType(internalNewCustomer.identity_document))"
+                            icon="pi pi-search"
+                            :loading="isLoadingDocumentData"
+                            severity="info"
+                            class="px-3"
+                            v-tooltip.top="'Buscar datos automáticamente'"
+                        />
+                    </div>
+                    <small v-if="isDni(internalNewCustomer.identity_document) || isRuc(internalNewCustomer.identity_document)" class="text-blue-600 text-xs mt-1 block">
+                        💡 Haz clic en el botón de búsqueda para llenar automáticamente
+                    </small>
                 </div>
             </div>
 
