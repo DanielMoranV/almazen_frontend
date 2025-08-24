@@ -177,6 +177,49 @@ const updatePaymentMethod = (index, field, value) => {
     }
     emit('update:selectedPaymentMethods', newPaymentMethods);
 };
+
+// Validaciones para cliente anónimo
+const isAnonymousCustomer = computed(() => {
+    return props.selectedCustomer && (props.selectedCustomer.name === 'Cliente Anónimo' || props.selectedCustomer.id === 'anonymous');
+});
+
+const anonymousCustomerValidation = computed(() => {
+    if (!isAnonymousCustomer.value) {
+        return { isValid: true, message: '', severity: '' };
+    }
+
+    const voucherType = props.voucherType;
+    const total = props.cartTotal;
+
+    // Nunca permitido para facturas
+    if (voucherType === 'factura') {
+        return {
+            isValid: false,
+            message: 'Cliente anónimo no puede usar facturas. Debe seleccionar un cliente con RUC.',
+            severity: 'error'
+        };
+    }
+
+    // Para boletas, solo permitido si es menor a S/700
+    if (voucherType === 'boleta' && total >= 700) {
+        return {
+            isValid: false,
+            message: `Cliente anónimo solo puede usar boletas menores a S/700. Total actual: ${formatCurrency(total)}`,
+            severity: 'error'
+        };
+    }
+
+    // Para tickets y boletas menores a S/700, está permitido
+    if (voucherType === 'ticket' || (voucherType === 'boleta' && total < 700)) {
+        return {
+            isValid: true,
+            message: `Cliente anónimo permitido para ${voucherType}${voucherType === 'boleta' ? ' menor a S/700' : ''}`,
+            severity: 'success'
+        };
+    }
+
+    return { isValid: true, message: '', severity: '' };
+});
 </script>
 
 <template>
@@ -213,6 +256,10 @@ const updatePaymentMethod = (index, field, value) => {
                     <div class="flex items-center gap-2">
                         <i class="pi pi-user text-purple-600"></i>
                         <span class="font-bold text-gray-800">{{ selectedCustomer.name }}</span>
+                        <span v-if="isAnonymousCustomer" class="text-xs px-2 py-1 bg-orange-100 text-orange-800 rounded-full">
+                            <i class="pi pi-user-minus mr-1"></i>
+                            Anónimo
+                        </span>
                     </div>
                     <div class="flex items-center gap-2">
                         <i class="pi pi-credit-card text-purple-600"></i>
@@ -242,6 +289,43 @@ const updatePaymentMethod = (index, field, value) => {
                 <div v-if="selectedCustomer.has_overdue_credits" class="mt-3 p-2 bg-red-100 text-red-800 rounded-lg text-sm flex items-center gap-2">
                     <i class="pi pi-exclamation-triangle"></i>
                     <span>Cliente tiene deudas vencidas</span>
+                </div>
+            </div>
+
+            <!-- Validaciones para cliente anónimo -->
+            <div v-if="isAnonymousCustomer && anonymousCustomerValidation.message" class="p-4 rounded-xl border-2" :class="{
+                'bg-red-50 border-red-200': anonymousCustomerValidation.severity === 'error',
+                'bg-green-50 border-green-200': anonymousCustomerValidation.severity === 'success'
+            }">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="{
+                        'bg-red-500': anonymousCustomerValidation.severity === 'error',
+                        'bg-green-500': anonymousCustomerValidation.severity === 'success'
+                    }">
+                        <i :class="{
+                            'pi pi-exclamation-triangle text-white': anonymousCustomerValidation.severity === 'error',
+                            'pi pi-check-circle text-white': anonymousCustomerValidation.severity === 'success'
+                        }"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold" :class="{
+                            'text-red-800': anonymousCustomerValidation.severity === 'error',
+                            'text-green-800': anonymousCustomerValidation.severity === 'success'
+                        }">
+                            {{ anonymousCustomerValidation.severity === 'error' ? 'Restricción de Cliente Anónimo' : 'Cliente Anónimo Válido' }}
+                        </h4>
+                        <p class="text-sm" :class="{
+                            'text-red-700': anonymousCustomerValidation.severity === 'error',
+                            'text-green-700': anonymousCustomerValidation.severity === 'success'
+                        }">
+                            {{ anonymousCustomerValidation.message }}
+                        </p>
+                    </div>
+                </div>
+                
+                <div v-if="anonymousCustomerValidation.severity === 'error'" class="mt-3 text-xs bg-red-100 p-2 rounded-lg" :class="'text-red-800'">
+                    <i class="pi pi-info-circle mr-1"></i>
+                    <strong>Recuerda:</strong> Cliente anónimo solo para tickets o boletas menores a S/700
                 </div>
             </div>
 
@@ -460,7 +544,7 @@ const updatePaymentMethod = (index, field, value) => {
                     severity="success"
                     class="flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold touch-manipulation"
                     :loading="props.loading"
-                    :disabled="getRemainingAmount() !== 0 || props.selectedPaymentMethods.length === 0"
+                    :disabled="getRemainingAmount() !== 0 || props.selectedPaymentMethods.length === 0 || !anonymousCustomerValidation.isValid"
                 />
             </div>
         </div>

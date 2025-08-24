@@ -985,6 +985,8 @@ const openMultiplePaymentDialog = () => {
             :isSearchingCustomers="isSearchingCustomers"
             v-model:newCustomer="newCustomer"
             :loading="loading"
+            :voucherType="voucherType"
+            :cartTotal="cartTotal"
             @search-customers="searchCustomersDebounced"
             @select-customer="selectCustomer"
             @create-quick-customer="createQuickCustomer"

@@ -2,6 +2,8 @@
 import { defineEmits, defineProps, ref, watch, computed } from 'vue';
 import { useCustomersStore } from '@/stores/customersStore';
 import { useToast } from 'primevue/usetoast';
+import { searchCustomers } from '@/api';
+import cache from '@/utils/cache.js';
 
 const props = defineProps({
     showCustomerDialog: Boolean,
@@ -10,7 +12,9 @@ const props = defineProps({
     customerResults: Array,
     isSearchingCustomers: Boolean,
     newCustomer: Object,
-    loading: Boolean
+    loading: Boolean,
+    voucherType: String,
+    cartTotal: Number
 });
 
 const emit = defineEmits(['update:showCustomerDialog', 'update:showCreateCustomerDialog', 'update:customerSearch', 'update:newCustomer', 'search-customers', 'select-customer', 'create-quick-customer']);
@@ -141,6 +145,54 @@ const createClientWithLookup = async () => {
     emit('update:showCreateCustomerDialog', true);
     emit('update:showCustomerDialog', false);
 };
+
+// Constante para el cache del cliente anónimo
+const ANONYMOUS_CUSTOMER_CACHE_KEY = 'pos_anonymous_customer';
+
+// Función para seleccionar cliente anónimo
+const selectAnonymousCustomer = async () => {
+    try {
+        // Primero verificar si tenemos datos en cache
+        let anonymousCustomer = cache.getItem(ANONYMOUS_CUSTOMER_CACHE_KEY);
+        
+        if (anonymousCustomer) {
+            // Si existe en cache, usar directamente
+            emit('select-customer', anonymousCustomer);
+            return;
+        }
+        
+        // Si no existe en cache, hacer consulta al backend
+        const response = await searchCustomers('Cliente Anónimo');
+        const customers = response.data || [];
+        
+        anonymousCustomer = customers.find(customer => 
+            customer.name.toLowerCase().includes('cliente anónimo') || 
+            customer.name.toLowerCase().includes('anonimo')
+        );
+        
+        if (anonymousCustomer) {
+            // Guardar en cache para futuras consultas
+            cache.setItem(ANONYMOUS_CUSTOMER_CACHE_KEY, anonymousCustomer);
+            emit('select-customer', anonymousCustomer);
+        } else {
+            // Si no se encuentra, mostrar un mensaje de error
+            toast.add({
+                severity: 'error',
+                summary: 'Cliente no encontrado',
+                detail: 'No se pudo encontrar el cliente anónimo. Verifique que existe en el sistema.',
+                life: 4000
+            });
+        }
+    } catch (error) {
+        console.error('Error searching anonymous customer:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al buscar cliente anónimo',
+            life: 4000
+        });
+    }
+};
 </script>
 
 <template>
@@ -217,6 +269,32 @@ const createClientWithLookup = async () => {
 
             <!-- Quick Actions -->
             <div class="border-t border-gray-200 pt-6">
+                <!-- Cliente Anónimo -->
+                <div class="mb-4 p-4 bg-orange-50 border-2 border-orange-200 rounded-xl">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
+                                <i class="pi pi-user-minus text-white"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Cliente Anónimo</h4>
+                                <p class="text-sm text-gray-600">Para clientes que no quieren dar sus datos</p>
+                            </div>
+                        </div>
+                        <Button
+                            @click="selectAnonymousCustomer"
+                            label="Seleccionar"
+                            icon="pi pi-check"
+                            severity="warning"
+                            class="font-semibold touch-manipulation py-2 px-3"
+                        />
+                    </div>
+                    <div class="mt-3 text-xs text-orange-700 bg-orange-100 p-2 rounded-lg">
+                        <i class="pi pi-info-circle mr-1"></i>
+                        <strong>Restricciones:</strong> Solo para tickets o boletas menores a S/700
+                    </div>
+                </div>
+
                 <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:justify-between items-center">
                     <Button
                         @click="createClientWithLookup"
