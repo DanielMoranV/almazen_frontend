@@ -4,6 +4,10 @@ import { FilterMatchMode, FilterOperator } from '@primevue/core/api';
 import Button from 'primevue/button';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
+import ProgressSpinner from 'primevue/progressspinner';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
@@ -17,7 +21,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'delete', 'upload-logo']);
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -75,6 +79,7 @@ const exportCompanies = async () => {
 
     await exportToExcel(columns, props.companies, 'Empresas', 'Empresas');
 };
+
 </script>
 
 <template>
@@ -193,9 +198,18 @@ const exportCompanies = async () => {
                 </div>
             </template>
         </Column>
-        <Column :exportable="false" header="Acciones" style="min-width: 6rem; max-width: 8rem">
+        <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
+                    <Button 
+                        icon="pi pi-upload" 
+                        class="p-button-rounded p-button-warning" 
+                        size="small" 
+                        rounded 
+                        text 
+                        v-tooltip.top="slotProps.data.logo ? 'Cambiar logo' : 'Subir logo'"
+                        @click="$emit('upload-logo', slotProps.data)" 
+                    />
                     <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Editar'" @click="$emit('edit', slotProps.data)" />
                     <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text v-tooltip.top="'Eliminar'" @click="$emit('delete', slotProps.data)" />
                 </div>
@@ -480,5 +494,10 @@ const exportCompanies = async () => {
     .export-btn {
         @apply py-2.5 text-sm;
     }
+}
+
+/* Botón de subir logo */
+:deep(.green-theme .p-button.p-button-warning) {
+    @apply bg-yellow-600 hover:bg-yellow-700 border-none text-white font-bold rounded-xl w-10 h-10 transition-colors;
 }
 </style>

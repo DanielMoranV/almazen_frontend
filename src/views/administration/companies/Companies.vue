@@ -1,11 +1,16 @@
 <script setup>
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useCompaniesStore } from '@/stores/companiesStore';
-import CompaniesTable from './componentsCompanies/CompaniesTable.vue';
-import CompanyFormDialog from './componentsCompanies/CompanyFormDialog.vue';
-import CompanyToolbar from './componentsCompanies/CompanyToolbar.vue';
+import Button from 'primevue/button';
+import ConfirmDialog from 'primevue/confirmdialog';
+import ProgressSpinner from 'primevue/progressspinner';
+import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+import CompaniesTable from './componentsCompanies/CompaniesTable.vue';
+import CompanyFormDialog from './componentsCompanies/CompanyFormDialog.vue';
+import CompanyLogoModal from './componentsCompanies/CompanyLogoModal.vue';
+import CompanyToolbar from './componentsCompanies/CompanyToolbar.vue';
 
 const toast = useToast();
 const companiesStore = useCompaniesStore();
@@ -14,6 +19,7 @@ const companiesStore = useCompaniesStore();
 const selectedCompany = ref(null);
 const showCompanyDialog = ref(false);
 const showDeleteDialog = ref(false);
+const showLogoModal = ref(false);
 const isCreating = ref(false);
 
 // Estados computados del store
@@ -50,6 +56,11 @@ const openEditDialog = (company) => {
 const openDeleteDialog = (company) => {
     selectedCompany.value = company;
     showDeleteDialog.value = true;
+};
+
+const openLogoModal = (company) => {
+    selectedCompany.value = company;
+    showLogoModal.value = true;
 };
 
 const handleCompanySubmit = async (companyData) => {
@@ -110,6 +121,17 @@ const showSuccess = (summary, detail) => {
 const showError = (summary, detail) => {
     toast.add({ severity: 'error', summary, detail, life: 4000 });
 };
+
+// Manejador para cuando se actualiza un logo
+const handleLogoUpdated = (data) => {
+    // Actualizar la empresa en el store localmente
+    const companyIndex = companiesStore.companiesList.findIndex(c => c.id === data.companyId);
+    if (companyIndex !== -1) {
+        companiesStore.companiesList[companyIndex].logo = data.logoUrl;
+    }
+    
+    showLogoModal.value = false;
+};
 </script>
 <template>
     <div class="companies-page">
@@ -141,7 +163,13 @@ const showError = (summary, detail) => {
             <!-- Tabla de Empresas con Animaciones -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasCompanies" class="table-container">
-                    <CompaniesTable :companies="companiesStore.companiesList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" />
+                    <CompaniesTable 
+                        :companies="companiesStore.companiesList" 
+                        :loading="isLoading" 
+                        @edit="openEditDialog" 
+                        @delete="openDeleteDialog"
+                        @upload-logo="openLogoModal"
+                    />
                 </div>
             </transition>
 
@@ -158,6 +186,8 @@ const showError = (summary, detail) => {
 
         <!-- Diálogos -->
         <CompanyFormDialog v-model:visible="showCompanyDialog" :company="selectedCompany" :loading="isLoading" @submit="handleCompanySubmit" />
+
+        <CompanyLogoModal v-model:visible="showLogoModal" :company="selectedCompany" @logo-updated="handleLogoUpdated" />
 
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedCompany?.company_name || ''" @confirm="handleCompanyDelete" />
     </div>

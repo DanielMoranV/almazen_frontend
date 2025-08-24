@@ -19,6 +19,18 @@ export const fetchCompanies = () => axios.get('/companies');
 export const createCompany = (payload) => axios.post('/companies', payload);
 export const deleteCompany = (id) => axios.delete(`/companies/${id}`);
 export const updateCompany = (payload, id) => axios.put(`/companies/${id}`, payload);
+
+// Company Logo Upload
+export const uploadCompanyLogo = (companyId, logoFile) => {
+    const formData = new FormData();
+    formData.append('logo', logoFile);
+    
+    return axios.post(`/companies/${companyId}/upload-logo`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
 // Company Configuration
 export const getCompanyConfig = () => axios.get('/company-config');
 export const previewWorkflowChange = (targetWorkflow) => axios.post('/company-config/preview-workflow-change', { target_workflow: targetWorkflow });

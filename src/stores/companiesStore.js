@@ -54,6 +54,7 @@ export const useCompaniesStore = defineStore('companiesStore', {
             try {
                 const res = await fetchCompanies();
                 const processed = handleProcessSuccess(res, this);
+                console.log('fetchCompanies - processed:', processed);
                 if (processed.success) {
                     this.companies = Array.isArray(processed.data) ? processed.data.map(normalizeCompany) : [];
                     this.success = true;
