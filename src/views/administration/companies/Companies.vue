@@ -1,6 +1,7 @@
 <script setup>
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
 import { useCompaniesStore } from '@/stores/companiesStore';
+import { useAuthStore } from '@/stores/authStore';
 import Button from 'primevue/button';
 import ConfirmDialog from 'primevue/confirmdialog';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -14,6 +15,7 @@ import CompanyToolbar from './componentsCompanies/CompanyToolbar.vue';
 
 const toast = useToast();
 const companiesStore = useCompaniesStore();
+const authStore = useAuthStore();
 
 // Estados locales
 const selectedCompany = ref(null);
@@ -26,6 +28,7 @@ const isCreating = ref(false);
 const totalCompanies = computed(() => companiesStore.companiesList.length);
 const isLoading = computed(() => companiesStore.isLoadingCompanies);
 const hasCompanies = computed(() => companiesStore.companiesList.length > 0);
+const canCreateCompany = computed(() => authStore.currentUser?.position === 'Developer');
 
 // Inicialización
 onMounted(async () => {
@@ -152,8 +155,8 @@ const handleLogoUpdated = (data) => {
                             <i class="pi pi-building"></i>
                         </div>
                         <h3 class="empty-title">Aún no tienes empresas</h3>
-                        <p class="empty-description">Crea tu primera empresa para empezar a gestionar tu directorio empresarial.</p>
-                        <div class="empty-actions">
+                        <p class="empty-description">No hay empresas registradas en el sistema.</p>
+                        <div v-if="canCreateCompany" class="empty-actions">
                             <Button icon="pi pi-plus" label="Agregar Empresa" class="primary-action-btn" @click="openCreateDialog" />
                         </div>
                     </div>

@@ -140,61 +140,78 @@ const exportCompanies = async () => {
             </div>
         </template>
 
-        <Column field="company_name" header="Nombre" sortable style="min-width: 12rem; max-width: 15rem" />
-        <Column field="address" header="Dirección" sortable style="min-width: 12rem; max-width: 18rem">
+        <!-- Columna Principal: Logo + Información de la empresa -->
+        <Column field="company_info" header="Empresa" style="min-width: 18rem; max-width: 22rem">
             <template #body="{ data }">
-                <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" :title="data.address">
-                    {{ data.address || '-' }}
-                </div>
-            </template>
-        </Column>
-        <Column field="phone" header="Teléfono" sortable style="min-width: 8rem; max-width: 10rem">
-            <template #body="{ data }">
-                <div class="phone-tag">
-                    <i class="pi pi-phone"></i>
-                    <span>{{ data.phone || '-' }}</span>
-                </div>
-            </template>
-        </Column>
-        <Column field="email" header="Email" sortable style="min-width: 10rem; max-width: 12rem">
-            <template #body="{ data }">
-                <div class="email-tag">
-                    <i class="pi pi-envelope"></i>
-                    <span>{{ data.email || '-' }}</span>
-                </div>
-            </template>
-        </Column>
-        <Column field="website" header="Web" sortable style="min-width: 10rem; max-width: 12rem">
-            <template #body="{ data }">
-                <div v-if="data.website" class="website-tag">
-                    <i class="pi pi-globe"></i>
-                    <a :href="data.website" target="_blank" class="text-blue-600 hover:text-blue-800">{{ data.website }}</a>
-                </div>
-                <span v-else class="text-gray-400">-</span>
-            </template>
-        </Column>
-        <Column field="logo" header="Logo" style="min-width: 4rem; max-width: 5rem">
-            <template #body="{ data }">
-                <div class="flex justify-center">
-                    <img v-if="data.logo" :src="data.logo" alt="Logo de la empresa" class="w-12 h-12 object-cover rounded border" @error="$event.target.style.display = 'none'" />
-                    <div v-else class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                        <i class="pi pi-image text-gray-400"></i>
+                <div class="company-info-cell">
+                    <div class="company-logo-container">
+                        <img v-if="data.logo" :src="data.logo" alt="Logo" class="company-logo" @error="$event.target.style.display = 'none'" />
+                        <div v-else class="company-logo-placeholder">
+                            <i class="pi pi-building"></i>
+                        </div>
+                    </div>
+                    <div class="company-details">
+                        <h4 class="company-name">{{ data.company_name }}</h4>
+                        <p class="company-description" :title="data.description">
+                            {{ data.description || 'Sin descripción' }}
+                        </p>
+                        <div class="company-status">
+                            <span v-if="data.is_active" class="status-badge active">
+                                <i class="pi pi-check-circle"></i> Activa
+                            </span>
+                            <span v-else class="status-badge inactive">
+                                <i class="pi pi-times-circle"></i> Inactiva
+                            </span>
+                        </div>
                     </div>
                 </div>
             </template>
         </Column>
-        <Column field="description" header="Descripción" sortable style="min-width: 12rem; max-width: 18rem">
+
+        <!-- Columna de Contacto: Email + Teléfono agrupados -->
+        <Column field="contact_info" header="Contacto" style="min-width: 14rem; max-width: 16rem">
             <template #body="{ data }">
-                <div class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2" :title="data.description">
-                    {{ data.description || '-' }}
+                <div class="contact-info-cell">
+                    <div v-if="data.email" class="contact-item">
+                        <div class="contact-tag email">
+                            <i class="pi pi-envelope"></i>
+                            <span>{{ data.email }}</span>
+                        </div>
+                    </div>
+                    <div v-if="data.phone" class="contact-item">
+                        <div class="contact-tag phone">
+                            <i class="pi pi-phone"></i>
+                            <span>{{ data.phone }}</span>
+                        </div>
+                    </div>
+                    <div v-if="data.website" class="contact-item">
+                        <div class="contact-tag website">
+                            <i class="pi pi-globe"></i>
+                            <a :href="data.website" target="_blank" class="website-link">
+                                Sitio web
+                            </a>
+                        </div>
+                    </div>
+                    <div v-if="!data.email && !data.phone && !data.website" class="no-contact">
+                        <i class="pi pi-info-circle"></i>
+                        <span>Sin información</span>
+                    </div>
                 </div>
             </template>
         </Column>
-        <Column field="is_active" header="Act." sortable style="min-width: 4rem; max-width: 5rem">
+
+        <!-- Columna de Dirección optimizada -->
+        <Column field="address" header="Dirección" sortable style="min-width: 14rem; max-width: 18rem">
             <template #body="{ data }">
-                <div class="flex justify-center">
-                    <i class="pi pi-check-circle text-green-500 text-2xl" v-if="data.is_active" />
-                    <i class="pi pi-times-circle text-red-500 text-2xl" v-else />
+                <div class="address-cell">
+                    <div v-if="data.address" class="address-content" :title="data.address">
+                        <i class="pi pi-map-marker address-icon"></i>
+                        <span class="address-text">{{ data.address }}</span>
+                    </div>
+                    <div v-else class="no-address">
+                        <i class="pi pi-map-marker"></i>
+                        <span>Sin dirección</span>
+                    </div>
                 </div>
             </template>
         </Column>
@@ -403,29 +420,125 @@ const exportCompanies = async () => {
     @apply border-green-600 font-medium rounded-xl;
 }
 
-/* Etiquetas de información */
-.phone-tag {
-    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700;
+/* Estilos para la nueva estructura de datos */
+
+/* Celda de información de la empresa */
+.company-info-cell {
+    @apply flex items-start gap-3 py-2;
 }
 
-.phone-tag i {
-    @apply text-blue-600 dark:text-blue-400;
+.company-logo-container {
+    @apply flex-shrink-0;
 }
 
-.email-tag {
-    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-700;
+.company-logo {
+    @apply w-14 h-14 object-contain rounded-xl border-2 border-gray-200 dark:border-gray-600 shadow-sm;
 }
 
-.email-tag i {
+.company-logo-placeholder {
+    @apply w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-600 flex items-center justify-center;
+}
+
+.company-logo-placeholder i {
+    @apply text-gray-400 text-lg;
+}
+
+.company-details {
+    @apply flex-1 min-w-0;
+}
+
+.company-name {
+    @apply font-bold text-gray-900 dark:text-gray-100 text-base mb-1 truncate;
+}
+
+.company-description {
+    @apply text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 leading-relaxed;
+}
+
+.company-status {
+    @apply flex items-center;
+}
+
+.status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
+}
+
+.status-badge.active {
+    @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-700;
+}
+
+.status-badge.inactive {
+    @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-700;
+}
+
+.status-badge i {
+    @apply text-xs;
+}
+
+/* Celda de información de contacto */
+.contact-info-cell {
+    @apply flex flex-col gap-2 py-2;
+}
+
+.contact-item {
+    @apply flex items-center;
+}
+
+.contact-tag {
+    @apply flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium;
+}
+
+.contact-tag.email {
+    @apply bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-700;
+}
+
+.contact-tag.email i {
     @apply text-purple-600 dark:text-purple-400;
 }
 
-.website-tag {
-    @apply flex items-center gap-2 px-3 py-1 rounded-xl text-sm font-semibold bg-orange-50 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-700;
+.contact-tag.phone {
+    @apply bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700;
 }
 
-.website-tag i {
+.contact-tag.phone i {
+    @apply text-blue-600 dark:text-blue-400;
+}
+
+.contact-tag.website {
+    @apply bg-orange-50 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-700;
+}
+
+.contact-tag.website i {
     @apply text-orange-600 dark:text-orange-400;
+}
+
+.website-link {
+    @apply hover:underline font-medium;
+}
+
+.no-contact {
+    @apply flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600;
+}
+
+/* Celda de dirección */
+.address-cell {
+    @apply py-2;
+}
+
+.address-content {
+    @apply flex items-start gap-2 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600;
+}
+
+.address-icon {
+    @apply text-gray-500 dark:text-gray-400 text-sm mt-0.5 flex-shrink-0;
+}
+
+.address-text {
+    @apply text-sm text-gray-700 dark:text-gray-300 line-clamp-2 leading-relaxed;
+}
+
+.no-address {
+    @apply flex items-center gap-2 p-2.5 rounded-lg text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600;
 }
 
 /* Mensaje de tabla vacía */
@@ -473,12 +586,47 @@ const exportCompanies = async () => {
 
     :deep(.green-theme .p-datatable-thead > tr > th),
     :deep(.green-theme .p-datatable-tbody > tr > td) {
-        @apply text-xs py-3 px-2;
+        @apply text-xs py-2 px-2;
     }
 
     .empty-table-state,
     .loading-table-state {
         @apply py-12 px-4;
+    }
+
+    /* Ajustes para la nueva estructura en mobile */
+    .company-info-cell {
+        @apply flex-col items-start gap-2;
+    }
+
+    .company-logo-container {
+        @apply self-center;
+    }
+
+    .company-logo,
+    .company-logo-placeholder {
+        @apply w-10 h-10;
+    }
+
+    .company-name {
+        @apply text-sm;
+    }
+
+    .company-description {
+        @apply text-xs;
+    }
+
+    .contact-info-cell {
+        @apply gap-1;
+    }
+
+    .contact-tag {
+        @apply px-2 py-1 text-xs;
+    }
+
+    .address-content,
+    .no-address {
+        @apply p-2 text-xs;
     }
 }
 

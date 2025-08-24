@@ -1,4 +1,9 @@
 <script setup>
+import { computed } from 'vue';
+import { useAuthStore } from '@/stores/authStore';
+
+const authStore = useAuthStore();
+
 defineProps({
     totalCompanies: {
         type: Number,
@@ -11,6 +16,10 @@ defineProps({
 });
 
 defineEmits(['refresh', 'create']);
+
+const canCreateCompany = computed(() => {
+    return authStore.currentUser?.position === 'Developer';
+});
 </script>
 
 <template>
@@ -38,7 +47,7 @@ defineEmits(['refresh', 'create']);
                 <div class="actions-section">
                     <div class="action-buttons">
                         <Button icon="pi pi-refresh" class="action-btn refresh-btn" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar lista'" :disabled="isLoading" />
-                        <Button icon="pi pi-plus" label="Agregar Empresa" class="action-btn create-btn" @click="$emit('create')" v-tooltip.bottom="'Crear nueva empresa'" />
+                        <Button v-if="canCreateCompany" icon="pi pi-plus" label="Agregar Empresa" class="action-btn create-btn" @click="$emit('create')" v-tooltip.bottom="'Crear nueva empresa'" />
                     </div>
                 </div>
             </div>
