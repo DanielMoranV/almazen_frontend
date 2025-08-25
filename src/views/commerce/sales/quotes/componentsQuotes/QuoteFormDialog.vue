@@ -58,7 +58,7 @@ const selectedStockInfo = computed(() => {
     // Buscar el stock específico seleccionado
     for (const stock of selectedProduct.value.available_stock || []) {
         // Si el stock_id coincide con el stock general
-        if (stock.id === selectedStockId.value) {
+        if (stock.stock_id === selectedStockId.value) {
             return stock;
         }
         // Si el stock_id coincide con un lote específico
@@ -69,6 +69,7 @@ const selectedStockInfo = computed(() => {
             }
         }
     }
+
     return null;
 });
 
@@ -198,16 +199,16 @@ const selectProductForAdd = (product) => {
 
     // Si solo hay un stock sin lotes, seleccionarlo automáticamente
     const firstStock = product.available_stock[0];
+
     if (product.available_stock.length === 1 && (!firstStock.batches || firstStock.batches.length === 0)) {
-        selectStockId(firstStock.id);
+        selectStockId(firstStock.stock_id);
         return;
     }
 
-    // Obtener el stock_id del primer stock disponible por defecto
-    const stockInfo = product.available_stock[0];
-    if (stockInfo) {
-        selectedStockId.value = stockInfo.stock_id || stockInfo.id;
-    }
+    // Para múltiples almacenes, no auto-seleccionar nada
+    // El usuario debe elegir manualmente el almacén específico
+
+    selectedStockId.value = null;
 
     // Limpiar búsqueda pero no cerrar el diálogo - mostrar opciones de stock
     productSearchQuery.value = '';
@@ -224,6 +225,7 @@ const selectProductForAdd = (product) => {
 // Función para seleccionar un stock_id específico
 const selectStockId = (stockId) => {
     selectedStockId.value = stockId;
+
     toast.add({
         severity: 'success',
         summary: 'Stock seleccionado',
@@ -838,7 +840,7 @@ const formatCurrency = (value) => {
 
                     <!-- Stock sin lotes -->
                     <div v-else class="single-stock-section">
-                        <Button size="small" :label="selectedStockId === stock.id ? 'Seleccionado' : 'Seleccionar'" :class="selectedStockId === stock.id ? 'p-button-success' : 'p-button-outlined'" @click="selectStockId(stock.id)" />
+                        <Button size="small" :label="selectedStockId === stock.stock_id ? 'Seleccionado' : 'Seleccionar'" :class="selectedStockId === stock.stock_id ? 'p-button-success' : 'p-button-outlined'" @click="selectStockId(stock.stock_id)" />
                     </div>
                 </div>
             </div>
