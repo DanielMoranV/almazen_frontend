@@ -1,5 +1,5 @@
 {
-    "name": "csr-seguros",
+    "name": "almazen",
     "version": "4.1.0",
     "scripts": {
         "dev": "vite",
