@@ -164,7 +164,7 @@ const onPaymentClick = (credit) => {
             <Column field="status" header="Estado" :sortable="true" class="min-w-28">
                 <template #body="{ data }">
                     <div class="status-cell">
-                        <Badge :value="typeof data.status === 'object' ? data.status.display : (data.status_display || data.status)" :severity="getStatusSeverity(typeof data.status === 'object' ? data.status.code : data.status)" class="status-badge" />
+                        <Badge :value="typeof data.status === 'object' ? data.status.display : data.status_display || data.status" :severity="getStatusSeverity(typeof data.status === 'object' ? data.status.code : data.status)" class="status-badge" />
                         <div v-if="data.overdue_info?.is_overdue" class="overdue-info">
                             <span class="text-xs text-red-600 font-semibold"> {{ getDaysOverdue(data) }} días mora </span>
                         </div>

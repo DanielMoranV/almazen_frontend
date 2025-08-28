@@ -316,11 +316,11 @@ export const usePublicStore = defineStore('publicStore', {
         // Inicializar tienda pública
         async initializeStore(warehouseId, companyId) {
             this.reset();
-            
+
             if (!companyId) {
                 throw new Error('ID de empresa requerido para acceder al catálogo.');
             }
-            
+
             await this.loadPublicProducts(warehouseId, { companyId });
         },
 

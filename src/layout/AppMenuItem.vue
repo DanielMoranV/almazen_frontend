@@ -74,7 +74,7 @@ function checkActiveRoute(item) {
 // Función para resaltar el texto de búsqueda
 function highlightSearchText(text, searchTerm) {
     if (!searchTerm || !props.searchHighlight) return text;
-    
+
     const regex = new RegExp(`(${searchTerm})`, 'gi');
     return text.replace(regex, '<mark class="search-highlight">$1</mark>');
 }
@@ -110,7 +110,7 @@ function highlightSearchText(text, searchTerm) {
 <style lang="scss" scoped>
 .search-result-item {
     position: relative;
-    
+
     .search-path {
         display: block;
         color: var(--text-color-secondary);

@@ -59,12 +59,12 @@ const copySuccess = ref(false);
 const generateCatalogUrl = (warehouseId) => {
     const baseUrl = window.location.origin;
     const companyId = currentUser.value?.company_id;
-    
+
     if (!companyId) {
         console.error('No se encontró el ID de la empresa del usuario');
         return '#';
     }
-    
+
     return `${baseUrl}/store/${companyId}/${warehouseId}`;
 };
 
@@ -311,11 +311,7 @@ onUnmounted(() => {
                     </template>
                     <template #content>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div
-                                v-for="warehouse in warehousesList"
-                                :key="warehouse.id"
-                                class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-indigo-300"
-                            >
+                            <div v-for="warehouse in warehousesList" :key="warehouse.id" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-indigo-300">
                                 <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
                                         <h3 class="font-semibold text-gray-900 mb-1">
@@ -329,21 +325,8 @@ onUnmounted(() => {
                                 </div>
 
                                 <div class="flex items-center space-x-2">
-                                    <Button
-                                        label="Ver Catálogo"
-                                        icon="pi pi-external-link"
-                                        size="small"
-                                        outlined
-                                        @click="openCatalog(warehouse.id)"
-                                        class="flex-1"
-                                    />
-                                    <Button
-                                        icon="pi pi-share-alt"
-                                        size="small"
-                                        severity="info"
-                                        @click="openCatalogDialog(warehouse)"
-                                        v-tooltip.top="'Compartir'"
-                                    />
+                                    <Button label="Ver Catálogo" icon="pi pi-external-link" size="small" outlined @click="openCatalog(warehouse.id)" class="flex-1" />
+                                    <Button icon="pi pi-share-alt" size="small" severity="info" @click="openCatalogDialog(warehouse)" v-tooltip.top="'Compartir'" />
                                 </div>
                             </div>
 
@@ -559,12 +542,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Dialog para compartir catálogo -->
-        <Dialog 
-            v-model:visible="showCatalogDialog" 
-            :style="{ width: '32rem' }" 
-            header="Compartir Catálogo" 
-            :modal="true"
-        >
+        <Dialog v-model:visible="showCatalogDialog" :style="{ width: '32rem' }" header="Compartir Catálogo" :modal="true">
             <div class="space-y-4">
                 <!-- Información del almacén -->
                 <div v-if="selectedWarehouse" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
@@ -581,21 +559,10 @@ onUnmounted(() => {
 
                 <!-- URL del catálogo -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        URL del catálogo público:
-                    </label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"> URL del catálogo público: </label>
                     <div class="flex items-center space-x-2">
-                        <InputText 
-                            :value="catalogUrl" 
-                            readonly 
-                            class="flex-1"
-                        />
-                        <Button
-                            :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'"
-                            :severity="copySuccess ? 'success' : 'secondary'"
-                            @click="copyToClipboard(catalogUrl)"
-                            v-tooltip.top="copySuccess ? 'Copiado!' : 'Copiar'"
-                        />
+                        <InputText :value="catalogUrl" readonly class="flex-1" />
+                        <Button :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'" :severity="copySuccess ? 'success' : 'secondary'" @click="copyToClipboard(catalogUrl)" v-tooltip.top="copySuccess ? 'Copiado!' : 'Copiar'" />
                     </div>
                 </div>
 
@@ -617,24 +584,10 @@ onUnmounted(() => {
 
                 <!-- Acciones -->
                 <div class="flex items-center justify-between pt-4">
-                    <Button 
-                        label="Ver Catálogo" 
-                        icon="pi pi-external-link" 
-                        outlined 
-                        @click="openCatalog(selectedWarehouse?.id)"
-                    />
+                    <Button label="Ver Catálogo" icon="pi pi-external-link" outlined @click="openCatalog(selectedWarehouse?.id)" />
                     <div class="space-x-2">
-                        <Button 
-                            label="Cerrar" 
-                            text 
-                            @click="showCatalogDialog = false"
-                        />
-                        <Button 
-                            label="Copiar URL" 
-                            :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'"
-                            :severity="copySuccess ? 'success' : 'info'"
-                            @click="copyToClipboard(catalogUrl)"
-                        />
+                        <Button label="Cerrar" text @click="showCatalogDialog = false" />
+                        <Button label="Copiar URL" :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'" :severity="copySuccess ? 'success' : 'info'" @click="copyToClipboard(catalogUrl)" />
                     </div>
                 </div>
             </div>

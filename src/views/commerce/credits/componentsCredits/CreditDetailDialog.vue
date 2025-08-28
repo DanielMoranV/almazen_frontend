@@ -137,7 +137,7 @@ const paymentHistory = computed(() => {
                                 <i class="pi pi-credit-card text-purple-600"></i>
                                 <div class="flex items-center gap-2">
                                     <h4>Crédito</h4>
-                                    <Badge :value="typeof credit.status === 'object' ? credit.status.display : (credit.status_display || credit.status)" :severity="getStatusSeverity(credit.status)" class="text-xs" />
+                                    <Badge :value="typeof credit.status === 'object' ? credit.status.display : credit.status_display || credit.status" :severity="getStatusSeverity(credit.status)" class="text-xs" />
                                 </div>
                             </div>
                             <div class="compact-info">
@@ -367,7 +367,7 @@ const paymentHistory = computed(() => {
     .additional-info {
         @apply grid-cols-1;
     }
-    
+
     .payment-display {
         @apply flex-col items-start gap-1;
     }
@@ -377,11 +377,11 @@ const paymentHistory = computed(() => {
     .section-header {
         @apply flex-col items-start gap-1;
     }
-    
+
     .info-item {
         @apply flex-col items-start gap-1;
     }
-    
+
     .financial-row {
         @apply flex-col items-start gap-1;
     }

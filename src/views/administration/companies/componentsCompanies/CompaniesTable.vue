@@ -79,7 +79,6 @@ const exportCompanies = async () => {
 
     await exportToExcel(columns, props.companies, 'Empresas', 'Empresas');
 };
-
 </script>
 
 <template>
@@ -156,12 +155,8 @@ const exportCompanies = async () => {
                             {{ data.description || 'Sin descripción' }}
                         </p>
                         <div class="company-status">
-                            <span v-if="data.is_active" class="status-badge active">
-                                <i class="pi pi-check-circle"></i> Activa
-                            </span>
-                            <span v-else class="status-badge inactive">
-                                <i class="pi pi-times-circle"></i> Inactiva
-                            </span>
+                            <span v-if="data.is_active" class="status-badge active"> <i class="pi pi-check-circle"></i> Activa </span>
+                            <span v-else class="status-badge inactive"> <i class="pi pi-times-circle"></i> Inactiva </span>
                         </div>
                     </div>
                 </div>
@@ -187,9 +182,7 @@ const exportCompanies = async () => {
                     <div v-if="data.website" class="contact-item">
                         <div class="contact-tag website">
                             <i class="pi pi-globe"></i>
-                            <a :href="data.website" target="_blank" class="website-link">
-                                Sitio web
-                            </a>
+                            <a :href="data.website" target="_blank" class="website-link"> Sitio web </a>
                         </div>
                     </div>
                     <div v-if="!data.email && !data.phone && !data.website" class="no-contact">
@@ -218,15 +211,7 @@ const exportCompanies = async () => {
         <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
-                    <Button 
-                        icon="pi pi-upload" 
-                        class="p-button-rounded p-button-warning" 
-                        size="small" 
-                        rounded 
-                        text 
-                        v-tooltip.top="slotProps.data.logo ? 'Cambiar logo' : 'Subir logo'"
-                        @click="$emit('upload-logo', slotProps.data)" 
-                    />
+                    <Button icon="pi pi-upload" class="p-button-rounded p-button-warning" size="small" rounded text v-tooltip.top="slotProps.data.logo ? 'Cambiar logo' : 'Subir logo'" @click="$emit('upload-logo', slotProps.data)" />
                     <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Editar'" @click="$emit('edit', slotProps.data)" />
                     <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text v-tooltip.top="'Eliminar'" @click="$emit('delete', slotProps.data)" />
                 </div>

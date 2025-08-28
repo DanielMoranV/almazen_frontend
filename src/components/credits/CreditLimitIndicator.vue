@@ -50,9 +50,9 @@ const progressColor = computed(() => {
 // Configuración de altura según el tamaño
 const height = computed(() => {
     const heightMap = {
-        'small': '8px',
-        'normal': '12px',
-        'large': '16px'
+        small: '8px',
+        normal: '12px',
+        large: '16px'
     };
     return heightMap[props.size] || heightMap.normal;
 });
@@ -88,23 +88,12 @@ const formatCurrency = (amount) => {
 
         <!-- Barra de progreso -->
         <div class="progress-container">
-            <ProgressBar 
-                :value="usedPercentage" 
-                :show-value="showPercentage"
-                :style="{ height: height }"
-                :class="[
-                    'credit-progress',
-                    `credit-progress-${progressColor}`,
-                    `credit-progress-${size}`
-                ]"
-            />
+            <ProgressBar :value="usedPercentage" :show-value="showPercentage" :style="{ height: height }" :class="['credit-progress', `credit-progress-${progressColor}`, `credit-progress-${size}`]" />
         </div>
 
         <!-- Información adicional -->
         <div v-if="showPercentage" class="percentage-info">
-            <span class="percentage-text" :class="progressColor + '-text'">
-                {{ usedPercentage.toFixed(1) }}% utilizado
-            </span>
+            <span class="percentage-text" :class="progressColor + '-text'"> {{ usedPercentage.toFixed(1) }}% utilizado </span>
             <span v-if="usedPercentage >= 90" class="warning-text">
                 <i class="pi pi-exclamation-triangle"></i>
                 Límite casi agotado
@@ -221,7 +210,7 @@ const formatCurrency = (amount) => {
     .labels-container {
         @apply flex-col space-y-1;
     }
-    
+
     .label-item {
         @apply flex-row justify-between;
     }

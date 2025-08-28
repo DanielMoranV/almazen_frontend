@@ -268,11 +268,14 @@ onMounted(() => {
                             </div>
 
                             <!-- Card de stock -->
-                            <div class="info-card stock-card" :class="{
-                                'out-of-stock': publicStore.getProductStock(product) <= 0,
-                                'low-stock': publicStore.getProductStock(product) > 0 && publicStore.getProductStock(product) <= 5,
-                                'in-stock': publicStore.getProductStock(product) > 5
-                            }">
+                            <div
+                                class="info-card stock-card"
+                                :class="{
+                                    'out-of-stock': publicStore.getProductStock(product) <= 0,
+                                    'low-stock': publicStore.getProductStock(product) > 0 && publicStore.getProductStock(product) <= 5,
+                                    'in-stock': publicStore.getProductStock(product) > 5
+                                }"
+                            >
                                 <div class="card-header">
                                     <i class="pi pi-box"></i>
                                     <span>Stock</span>
@@ -310,10 +313,14 @@ onMounted(() => {
                             <div class="batch-details">
                                 <div class="batch-item">
                                     <span>Vence: {{ formatDate(publicStore.getProductBatch(product).expiry_date) }}</span>
-                                    <span class="days-left" :class="{
-                                        'warning': publicStore.getProductBatch(product).days_to_expire <= 7,
-                                        'danger': publicStore.getProductBatch(product).days_to_expire <= 3
-                                    }">{{ publicStore.getProductBatch(product).days_to_expire }} días</span>
+                                    <span
+                                        class="days-left"
+                                        :class="{
+                                            warning: publicStore.getProductBatch(product).days_to_expire <= 7,
+                                            danger: publicStore.getProductBatch(product).days_to_expire <= 3
+                                        }"
+                                        >{{ publicStore.getProductBatch(product).days_to_expire }} días</span
+                                    >
                                 </div>
                             </div>
                         </div>

@@ -87,9 +87,9 @@ const isLoadingDocumentData = computed(() => customersStore.isLoadingDocumentLoo
 // Búsqueda automática de documento
 const lookupDocumentData = async (document, type) => {
     const payload = { document: document.trim(), type };
-    
+
     await customersStore.lookupDocumentData(payload);
-    
+
     if (customersStore.documentLookupSuccess) {
         mapDocumentDataToNewCustomer(customersStore.documentLookupData, type);
         toast.add({
@@ -111,7 +111,7 @@ const lookupDocumentData = async (document, type) => {
 // Mapear datos de la API a los campos del nuevo cliente
 const mapDocumentDataToNewCustomer = (data, documentType) => {
     if (!data) return;
-    
+
     if (documentType === 'dni') {
         // Mapeo para DNI (RENIEC)
         internalNewCustomer.value.name = data.nombre_completo || '';
@@ -121,7 +121,7 @@ const mapDocumentDataToNewCustomer = (data, documentType) => {
         internalNewCustomer.value.name = data.razon_social || '';
         internalNewCustomer.value.identity_document_type = 'ruc';
     }
-    
+
     customersStore.clearDocumentData();
 };
 
@@ -129,18 +129,18 @@ const mapDocumentDataToNewCustomer = (data, documentType) => {
 const createClientWithLookup = async () => {
     const search = internalCustomerSearch.value?.trim();
     const documentType = getDocumentType(search);
-    
+
     if (documentType) {
         // Si es un documento válido, buscar datos automáticamente
         internalNewCustomer.value.identity_document = search;
         internalNewCustomer.value.identity_document_type = documentType;
-        
+
         await lookupDocumentData(search, documentType);
     } else {
         // Si no es un documento válido, usar el texto como nombre
         internalNewCustomer.value.name = search;
     }
-    
+
     // Abrir el diálogo de crear cliente
     emit('update:showCreateCustomerDialog', true);
     emit('update:showCustomerDialog', false);
@@ -154,22 +154,19 @@ const selectAnonymousCustomer = async () => {
     try {
         // Primero verificar si tenemos datos en cache
         let anonymousCustomer = cache.getItem(ANONYMOUS_CUSTOMER_CACHE_KEY);
-        
+
         if (anonymousCustomer) {
             // Si existe en cache, usar directamente
             emit('select-customer', anonymousCustomer);
             return;
         }
-        
+
         // Si no existe en cache, hacer consulta al backend
         const response = await searchCustomers('Cliente Anónimo');
         const customers = response.data || [];
-        
-        anonymousCustomer = customers.find(customer => 
-            customer.name.toLowerCase().includes('cliente anónimo') || 
-            customer.name.toLowerCase().includes('anonimo')
-        );
-        
+
+        anonymousCustomer = customers.find((customer) => customer.name.toLowerCase().includes('cliente anónimo') || customer.name.toLowerCase().includes('anonimo'));
+
         if (anonymousCustomer) {
             // Guardar en cache para futuras consultas
             cache.setItem(ANONYMOUS_CUSTOMER_CACHE_KEY, anonymousCustomer);
@@ -281,13 +278,7 @@ const selectAnonymousCustomer = async () => {
                                 <p class="text-sm text-gray-600">Para clientes que no quieren dar sus datos</p>
                             </div>
                         </div>
-                        <Button
-                            @click="selectAnonymousCustomer"
-                            label="Seleccionar"
-                            icon="pi pi-check"
-                            severity="warning"
-                            class="font-semibold touch-manipulation py-2 px-3"
-                        />
+                        <Button @click="selectAnonymousCustomer" label="Seleccionar" icon="pi pi-check" severity="warning" class="font-semibold touch-manipulation py-2 px-3" />
                     </div>
                     <div class="mt-3 text-xs text-orange-700 bg-orange-100 p-2 rounded-lg">
                         <i class="pi pi-info-circle mr-1"></i>
@@ -358,12 +349,8 @@ const selectAnonymousCustomer = async () => {
                 <div class="sm:col-span-2">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Número de documento</label>
                     <div class="flex gap-2">
-                        <InputText 
-                            v-model="internalNewCustomer.identity_document" 
-                            placeholder="Número de documento" 
-                            class="flex-1 py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" 
-                        />
-                        <Button 
+                        <InputText v-model="internalNewCustomer.identity_document" placeholder="Número de documento" class="flex-1 py-2 sm:py-3 px-3 sm:px-4 border-2 border-gray-200 focus:border-green-500 rounded-xl touch-manipulation" />
+                        <Button
                             v-if="isDni(internalNewCustomer.identity_document) || isRuc(internalNewCustomer.identity_document)"
                             @click="lookupDocumentData(internalNewCustomer.identity_document, getDocumentType(internalNewCustomer.identity_document))"
                             icon="pi pi-search"
@@ -373,9 +360,7 @@ const selectAnonymousCustomer = async () => {
                             v-tooltip.top="'Buscar datos automáticamente'"
                         />
                     </div>
-                    <small v-if="isDni(internalNewCustomer.identity_document) || isRuc(internalNewCustomer.identity_document)" class="text-blue-600 text-xs mt-1 block">
-                        💡 Haz clic en el botón de búsqueda para llenar automáticamente
-                    </small>
+                    <small v-if="isDni(internalNewCustomer.identity_document) || isRuc(internalNewCustomer.identity_document)" class="text-blue-600 text-xs mt-1 block"> 💡 Haz clic en el botón de búsqueda para llenar automáticamente </small>
                 </div>
             </div>
 

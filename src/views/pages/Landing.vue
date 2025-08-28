@@ -278,7 +278,7 @@ export default {
                 <h2 class="workflows-title">Flujos de Trabajo</h2>
                 <p class="workflows-subtitle">Procesos optimizados para operaciones diarias eficientes</p>
             </div>
-            
+
             <div class="workflows-grid">
                 <div class="workflow-card" v-for="(workflow, index) in workflows" :key="index">
                     <h3 class="workflow-title">{{ workflow.title }}</h3>
@@ -1051,7 +1051,6 @@ export default {
     transform: scale(1.05) translateY(-2px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
-
 
 .demo-credentials {
     background: rgba(255, 255, 255, 0.1);

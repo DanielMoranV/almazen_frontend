@@ -60,10 +60,10 @@ export const creditUtils = {
      */
     getStatusSeverity: (status) => {
         const severityMap = {
-            'PENDIENTE': 'info',
-            'PAGADO': 'success',
-            'VENCIDO': 'danger',
-            'ANULADO': 'secondary'
+            PENDIENTE: 'info',
+            PAGADO: 'success',
+            VENCIDO: 'danger',
+            ANULADO: 'secondary'
         };
         return severityMap[status] || 'info';
     },
@@ -86,19 +86,16 @@ export const creditUtils = {
             return { valid: false, message: 'Cliente tiene deudas vencidas' };
         }
 
-        const availableCredit = creditUtils.calculateAvailableCredit(
-            customer.credit_limit, 
-            customer.total_debt
-        );
+        const availableCredit = creditUtils.calculateAvailableCredit(customer.credit_limit, customer.total_debt);
 
         if (availableCredit <= 0) {
             return { valid: false, message: 'Cliente ha agotado su límite de crédito' };
         }
 
-        return { 
-            valid: true, 
-            availableCredit, 
-            message: `Crédito disponible: ${creditUtils.formatCurrency(availableCredit)}` 
+        return {
+            valid: true,
+            availableCredit,
+            message: `Crédito disponible: ${creditUtils.formatCurrency(availableCredit)}`
         };
     },
 
@@ -157,11 +154,11 @@ export const creditConstants = {
     // Configuraciones por defecto
     DEFAULT_CREDIT_DAYS: 30,
     DEFAULT_CREDIT_LIMIT: 0,
-    
+
     // Límites del sistema
     MAX_CREDIT_LIMIT: 999999.99,
     MAX_CREDIT_DAYS: 365,
-    
+
     // Colores para componentes
     STATUS_COLORS: {
         PENDIENTE: 'blue',

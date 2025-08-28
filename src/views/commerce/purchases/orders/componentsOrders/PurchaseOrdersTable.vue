@@ -371,7 +371,7 @@ const getStatusIcon = (status) => {
                 <span v-else class="text-gray-400 italic">Sin comprobante</span>
             </template>
         </Column>
-        
+
         <Column field="voucher_url" header="Voucher" style="width: 120px">
             <template #body="slotProps">
                 <div class="voucher-column">
@@ -382,25 +382,11 @@ const getStatusIcon = (status) => {
                                 <span class="file-type">PDF</span>
                             </div>
                             <div v-else class="image-indicator">
-                                <img 
-                                    :src="slotProps.data.voucher_url" 
-                                    alt="Voucher" 
-                                    class="voucher-thumbnail"
-                                    @error="handleVoucherError"
-                                />
+                                <img :src="slotProps.data.voucher_url" alt="Voucher" class="voucher-thumbnail" @error="handleVoucherError" />
                                 <span class="file-type">IMG</span>
                             </div>
                         </div>
-                        <Button 
-                            icon="pi pi-eye" 
-                            text 
-                            rounded 
-                            size="small" 
-                            severity="info"
-                            @click.stop="openVoucherViewer(slotProps.data.voucher_url)"
-                            v-tooltip.top="'Ver voucher'"
-                            class="view-voucher-btn"
-                        />
+                        <Button icon="pi pi-eye" text rounded size="small" severity="info" @click.stop="openVoucherViewer(slotProps.data.voucher_url)" v-tooltip.top="'Ver voucher'" class="view-voucher-btn" />
                     </div>
                     <span v-else class="no-voucher">
                         <i class="pi pi-file-o text-gray-400"></i>
@@ -476,14 +462,14 @@ const getStatusIcon = (status) => {
                     <div class="primary-actions">
                         <Button icon="pi pi-eye" severity="help" text rounded size="small" @click.stop="openItemsDialog(slotProps.data)" v-tooltip.top="'Ver detalles de la orden'" class="action-btn view-btn" />
                         <Button icon="pi pi-print" severity="info" text rounded size="small" @click.stop="printOrder(slotProps.data)" v-tooltip.top="'Imprimir orden de compra'" class="action-btn print-btn" />
-                        <Button 
-                            icon="pi pi-upload" 
-                            severity="secondary" 
-                            text 
-                            rounded 
-                            size="small" 
-                            @click.stop="emit('upload-voucher', slotProps.data)" 
-                            v-tooltip.top="slotProps.data.voucher_url ? 'Cambiar comprobante' : 'Subir comprobante'" 
+                        <Button
+                            icon="pi pi-upload"
+                            severity="secondary"
+                            text
+                            rounded
+                            size="small"
+                            @click.stop="emit('upload-voucher', slotProps.data)"
+                            v-tooltip.top="slotProps.data.voucher_url ? 'Cambiar comprobante' : 'Subir comprobante'"
                             class="action-btn voucher-btn"
                         />
                     </div>
@@ -660,14 +646,7 @@ const getStatusIcon = (status) => {
     </Dialog>
 
     <!-- Dialog para visualizar vouchers -->
-    <Dialog 
-        v-model:visible="showVoucherViewer" 
-        :modal="true" 
-        :closable="true" 
-        :style="{ width: '90vw', maxWidth: '1000px', height: '90vh' }"
-        class="voucher-viewer-dialog"
-        @hide="closeVoucherViewer"
-    >
+    <Dialog v-model:visible="showVoucherViewer" :modal="true" :closable="true" :style="{ width: '90vw', maxWidth: '1000px', height: '90vh' }" class="voucher-viewer-dialog" @hide="closeVoucherViewer">
         <template #header>
             <div class="voucher-dialog-header">
                 <h3 class="voucher-dialog-title">
@@ -675,14 +654,7 @@ const getStatusIcon = (status) => {
                     Visor de Voucher
                 </h3>
                 <div class="voucher-actions">
-                    <Button 
-                        icon="pi pi-external-link" 
-                        label="Abrir en nueva ventana"
-                        text
-                        size="small"
-                        @click="window.open(currentVoucherUrl, '_blank')"
-                        v-tooltip.top="'Abrir en nueva ventana'"
-                    />
+                    <Button icon="pi pi-external-link" label="Abrir en nueva ventana" text size="small" @click="window.open(currentVoucherUrl, '_blank')" v-tooltip.top="'Abrir en nueva ventana'" />
                 </div>
             </div>
         </template>
@@ -690,32 +662,17 @@ const getStatusIcon = (status) => {
         <template #default>
             <div class="voucher-viewer-content">
                 <div v-if="isVoucherPdf(currentVoucherUrl)" class="pdf-viewer">
-                    <iframe 
-                        :src="currentVoucherUrl" 
-                        class="pdf-frame"
-                        title="Voucher PDF"
-                        frameborder="0"
-                    ></iframe>
+                    <iframe :src="currentVoucherUrl" class="pdf-frame" title="Voucher PDF" frameborder="0"></iframe>
                 </div>
                 <div v-else class="image-viewer">
-                    <img 
-                        :src="currentVoucherUrl" 
-                        alt="Voucher" 
-                        class="voucher-image"
-                        @error="handleVoucherImageError"
-                    />
+                    <img :src="currentVoucherUrl" alt="Voucher" class="voucher-image" @error="handleVoucherImageError" />
                 </div>
             </div>
         </template>
 
         <template #footer>
             <div class="voucher-dialog-footer">
-                <Button 
-                    label="Cerrar" 
-                    icon="pi pi-times"
-                    @click="closeVoucherViewer" 
-                    autofocus 
-                />
+                <Button label="Cerrar" icon="pi pi-times" @click="closeVoucherViewer" autofocus />
             </div>
         </template>
     </Dialog>

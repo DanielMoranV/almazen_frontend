@@ -1,5 +1,4 @@
 export function handleError(error, fallbackMessage = 'Ocurrió un error') {
-
     // Redirección si no autorizado
     if (error?.status_code === 401) {
         window.location.href = '/login';

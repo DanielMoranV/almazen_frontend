@@ -131,7 +131,7 @@ export const useProductsStore = defineStore('productsStore', {
                 this.isLoading = false;
             }
         },
-        
+
         async uploadProductImage(productId, imageFile) {
             this.isLoading = true;
             try {
@@ -139,9 +139,7 @@ export const useProductsStore = defineStore('productsStore', {
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
                     // Actualizar el producto en la lista con la nueva imagen
-                    this.products = this.products.map((product) => 
-                        product.id === productId ? processed.data.product : product
-                    );
+                    this.products = this.products.map((product) => (product.id === productId ? processed.data.product : product));
                     return processed.data;
                 }
             } catch (error) {

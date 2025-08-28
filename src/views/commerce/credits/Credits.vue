@@ -55,9 +55,9 @@ const onFilterChange = (newFilters) => {
 };
 
 const onPageChange = (event) => {
-    creditsStore.updatePagination({ 
-        page: event.page + 1, 
-        size: event.rows 
+    creditsStore.updatePagination({
+        page: event.page + 1,
+        size: event.rows
     });
     loadCredits();
 };
@@ -184,7 +184,16 @@ onMounted(() => {
                 <CreditsToolbar :filters="creditsStore.currentFilters" :loading="loading" @filter-change="onFilterChange" @refresh="loadCredits" />
 
                 <!-- Tabla de créditos -->
-                <CreditsTable :credits="credits" :loading="loading" :pagination="pagination" :selection="selectedCredits" @update:selection="selectedCredits = $event" @page-change="onPageChange" @row-select="onRowSelect" @payment-request="onPaymentRequest" />
+                <CreditsTable
+                    :credits="credits"
+                    :loading="loading"
+                    :pagination="pagination"
+                    :selection="selectedCredits"
+                    @update:selection="selectedCredits = $event"
+                    @page-change="onPageChange"
+                    @row-select="onRowSelect"
+                    @payment-request="onPaymentRequest"
+                />
             </template>
         </Card>
 

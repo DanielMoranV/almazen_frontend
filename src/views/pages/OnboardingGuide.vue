@@ -51,7 +51,8 @@ const sections = ref([
             {
                 name: 'POS - Punto de Venta Avanzado',
                 icon: 'pi pi-desktop',
-                description: 'Sistema POS completo con búsqueda inteligente por nombre, SKU o código de barras. Carrito dinámico, gestión de clientes en tiempo real, múltiples métodos de pago, selección de lotes/vencimientos y generación automática de comprobantes. Requiere sesión de caja activa.'
+                description:
+                    'Sistema POS completo con búsqueda inteligente por nombre, SKU o código de barras. Carrito dinámico, gestión de clientes en tiempo real, múltiples métodos de pago, selección de lotes/vencimientos y generación automática de comprobantes. Requiere sesión de caja activa.'
             },
             {
                 name: 'Sistema de Caja Inteligente',
@@ -71,7 +72,8 @@ const sections = ref([
             {
                 name: 'Sistema de Cotizaciones Profesional',
                 icon: 'pi pi-file-edit',
-                description: 'Plataforma completa para crear, gestionar y aprobar cotizaciones comerciales. Estados de seguimiento (Pendiente/Aprobado/Rechazado/Vencido), conversión automática a ventas con métodos de pago, exportación en PDF/Excel, filtros avanzados y dashboard de métricas en tiempo real.'
+                description:
+                    'Plataforma completa para crear, gestionar y aprobar cotizaciones comerciales. Estados de seguimiento (Pendiente/Aprobado/Rechazado/Vencido), conversión automática a ventas con métodos de pago, exportación en PDF/Excel, filtros avanzados y dashboard de métricas en tiempo real.'
             },
             {
                 name: 'Gestión de Compras',
@@ -128,7 +130,8 @@ const sections = ref([
             {
                 name: 'Configuración Empresarial',
                 icon: 'pi pi-sitemap',
-                description: 'Gestión completa de datos empresariales con configuración de flujos de trabajo personalizables: proceso de compras (Estándar/Simplificado), requerimiento de sesión de caja, integración con SUNAT y configuración de comprobantes electrónicos.'
+                description:
+                    'Gestión completa de datos empresariales con configuración de flujos de trabajo personalizables: proceso de compras (Estándar/Simplificado), requerimiento de sesión de caja, integración con SUNAT y configuración de comprobantes electrónicos.'
             },
             {
                 name: 'Sistema de Usuarios y Permisos',
@@ -175,22 +178,26 @@ const sections = ref([
             {
                 name: 'Flujo de Ventas Rápidas (POS)',
                 icon: 'pi pi-shopping-cart',
-                description: '1. Abrir sesión de caja → 2. Buscar productos (código de barras/nombre/SKU) → 3. Agregar al carrito con selección de lotes → 4. Seleccionar/crear cliente → 5. Procesar pago (múltiples métodos) → 6. Generar comprobante automático'
+                description:
+                    '1. Abrir sesión de caja → 2. Buscar productos (código de barras/nombre/SKU) → 3. Agregar al carrito con selección de lotes → 4. Seleccionar/crear cliente → 5. Procesar pago (múltiples métodos) → 6. Generar comprobante automático'
             },
             {
                 name: 'Flujo de Cotizaciones Comerciales',
                 icon: 'pi pi-file-edit',
-                description: '1. Crear nueva cotización con datos del cliente → 2. Agregar productos con precios personalizados → 3. Establecer fecha de validez y condiciones comerciales → 4. Generar y exportar cotización (PDF/Excel) → 5. Cliente revisa y acepta propuesta → 6. Aprobar cotización y convertir automáticamente a venta con registro de pago'
+                description:
+                    '1. Crear nueva cotización con datos del cliente → 2. Agregar productos con precios personalizados → 3. Establecer fecha de validez y condiciones comerciales → 4. Generar y exportar cotización (PDF/Excel) → 5. Cliente revisa y acepta propuesta → 6. Aprobar cotización y convertir automáticamente a venta con registro de pago'
             },
             {
                 name: 'Flujo de Gestión de Inventario',
                 icon: 'pi pi-box',
-                description: '1. Importar productos masivamente desde Excel → 2. Configurar stock inicial por almacén → 3. Gestionar lotes y fechas de vencimiento → 4. Realizar ajustes cuando sea necesario → 5. Transferir entre almacenes → 6. Monitorear alertas automáticas'
+                description:
+                    '1. Importar productos masivamente desde Excel → 2. Configurar stock inicial por almacén → 3. Gestionar lotes y fechas de vencimiento → 4. Realizar ajustes cuando sea necesario → 5. Transferir entre almacenes → 6. Monitorear alertas automáticas'
             },
             {
                 name: 'Flujo de Análisis de Negocio',
                 icon: 'pi pi-chart-line',
-                description: '1. Consultar dashboard con métricas en tiempo real → 2. Generar reportes de ventas y rotación → 3. Analizar créditos y estrategias de cobranza → 4. Revisar sesiones de caja y movimientos → 5. Exportar datos para análisis externos'
+                description:
+                    '1. Consultar dashboard con métricas en tiempo real → 2. Generar reportes de ventas y rotación → 3. Analizar créditos y estrategias de cobranza → 4. Revisar sesiones de caja y movimientos → 5. Exportar datos para análisis externos'
             }
         ]
     }

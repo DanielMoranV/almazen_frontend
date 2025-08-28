@@ -85,7 +85,7 @@ const onFileSelect = (event) => {
 
     if (validateFile(file)) {
         selectedFile.value = file;
-        
+
         // Crear preview
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -128,7 +128,7 @@ const uploadImage = async () => {
         }, 200);
 
         let result;
-        
+
         // Intentar usar el store primero, si no funciona usar la API directamente
         if (productsStore.uploadProductImage && typeof productsStore.uploadProductImage === 'function') {
             result = await productsStore.uploadProductImage(props.product.id, selectedFile.value);
@@ -136,13 +136,11 @@ const uploadImage = async () => {
             // Fallback: usar la API directamente
             console.warn('Using direct API call as store function is not available');
             const apiResponse = await uploadProductImage(props.product.id, selectedFile.value);
-            
+
             if (apiResponse.data.success) {
                 // Actualizar manualmente la lista de productos en el store
                 const updatedProduct = apiResponse.data.data.product;
-                productsStore.products = productsStore.products.map((product) => 
-                    product.id === props.product.id ? updatedProduct : product
-                );
+                productsStore.products = productsStore.products.map((product) => (product.id === props.product.id ? updatedProduct : product));
                 result = apiResponse.data.data;
             } else {
                 throw new Error(apiResponse.data.message || 'Error al subir imagen');
@@ -170,12 +168,11 @@ const uploadImage = async () => {
         setTimeout(() => {
             closeModal();
         }, 1000);
-
     } catch (error) {
         console.error('Error uploading image:', error);
-        
+
         let errorMessage = 'Error al subir la imagen';
-        
+
         if (error.response?.data?.errors?.image) {
             errorMessage = error.response.data.errors.image.join(', ');
         } else if (error.response?.data?.message) {
@@ -188,7 +185,7 @@ const uploadImage = async () => {
             detail: errorMessage,
             life: 5000
         });
-        
+
         uploadProgress.value = 0;
     } finally {
         isUploading.value = false;
@@ -204,13 +201,16 @@ const closeModal = () => {
 };
 
 // Limpiar estado cuando se cierre el modal
-watch(() => props.visible, (newVisible) => {
-    if (!newVisible) {
-        setTimeout(() => {
-            clearSelection();
-        }, 300);
+watch(
+    () => props.visible,
+    (newVisible) => {
+        if (!newVisible) {
+            setTimeout(() => {
+                clearSelection();
+            }, 300);
+        }
     }
-});
+);
 
 // Manejar error de imagen
 const handleImageError = (event) => {
@@ -219,16 +219,7 @@ const handleImageError = (event) => {
 </script>
 
 <template>
-    <Dialog 
-        v-model:visible="dialogVisible" 
-        :header="modalTitle" 
-        modal 
-        class="product-image-modal"
-        :style="{ width: '500px' }"
-        :closable="!isUploading"
-        :closeOnEscape="!isUploading"
-        @hide="closeModal"
-    >
+    <Dialog v-model:visible="dialogVisible" :header="modalTitle" modal class="product-image-modal" :style="{ width: '500px' }" :closable="!isUploading" :closeOnEscape="!isUploading" @hide="closeModal">
         <div class="modal-content">
             <!-- Información del producto -->
             <div class="product-info">
@@ -236,12 +227,7 @@ const handleImageError = (event) => {
                 <div v-if="currentImageUrl" class="current-image-section">
                     <label class="section-label">Imagen actual:</label>
                     <div class="current-image-container">
-                        <img 
-                            :src="currentImageUrl" 
-                            :alt="productName"
-                            class="current-image"
-                            @error="handleImageError"
-                        >
+                        <img :src="currentImageUrl" :alt="productName" class="current-image" @error="handleImageError" />
                     </div>
                 </div>
             </div>
@@ -250,18 +236,8 @@ const handleImageError = (event) => {
             <div v-if="previewUrl" class="preview-section">
                 <label class="section-label">Nueva imagen:</label>
                 <div class="preview-container">
-                    <img :src="previewUrl" :alt="productName" class="preview-image">
-                    <Button 
-                        icon="pi pi-times" 
-                        class="remove-preview-btn"
-                        severity="danger"
-                        size="small"
-                        rounded
-                        text
-                        @click="clearSelection"
-                        :disabled="isUploading"
-                        v-tooltip.top="'Remover imagen'"
-                    />
+                    <img :src="previewUrl" :alt="productName" class="preview-image" />
+                    <Button icon="pi pi-times" class="remove-preview-btn" severity="danger" size="small" rounded text @click="clearSelection" :disabled="isUploading" v-tooltip.top="'Remover imagen'" />
                 </div>
             </div>
 
@@ -279,7 +255,7 @@ const handleImageError = (event) => {
                     @select="onFileSelect"
                     @error="onFileError"
                 />
-                
+
                 <div class="upload-info">
                     <div class="format-info">
                         <i class="pi pi-info-circle"></i>
@@ -303,22 +279,8 @@ const handleImageError = (event) => {
         <!-- Botones del modal -->
         <template #footer>
             <div class="modal-actions">
-                <Button 
-                    label="Cancelar" 
-                    icon="pi pi-times"
-                    severity="secondary"
-                    @click="closeModal"
-                    :disabled="isUploading"
-                    text
-                />
-                <Button 
-                    label="Subir Imagen" 
-                    icon="pi pi-upload"
-                    severity="success"
-                    @click="uploadImage"
-                    :disabled="!selectedFile || isUploading"
-                    :loading="isUploading"
-                />
+                <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click="closeModal" :disabled="isUploading" text />
+                <Button label="Subir Imagen" icon="pi pi-upload" severity="success" @click="uploadImage" :disabled="!selectedFile || isUploading" :loading="isUploading" />
             </div>
         </template>
     </Dialog>
@@ -502,18 +464,18 @@ const handleImageError = (event) => {
         width: 95vw !important;
         max-width: 400px !important;
     }
-    
+
     .current-image,
     .preview-image {
         width: 100px;
         height: 100px;
     }
-    
+
     .modal-actions {
         flex-direction: column;
         gap: 0.75rem;
     }
-    
+
     .modal-actions .p-button {
         width: 100%;
     }

@@ -48,9 +48,9 @@ const props = defineProps({
 // Formateo del valor principal
 const formattedValue = computed(() => {
     if (props.loading) return '---';
-    
+
     const value = typeof props.value === 'string' ? parseFloat(props.value) || 0 : props.value;
-    
+
     switch (props.format) {
         case 'currency':
             return new Intl.NumberFormat('es-PE', {
@@ -70,14 +70,14 @@ const formattedValue = computed(() => {
 // Configuración de colores
 const colorClasses = computed(() => {
     const colorMap = {
-        'blue': 'bg-gradient-to-br from-blue-500 to-blue-600 text-white',
-        'green': 'bg-gradient-to-br from-green-500 to-green-600 text-white',
-        'orange': 'bg-gradient-to-br from-orange-500 to-orange-600 text-white',
-        'red': 'bg-gradient-to-br from-red-500 to-red-600 text-white',
-        'purple': 'bg-gradient-to-br from-purple-500 to-purple-600 text-white',
-        'teal': 'bg-gradient-to-br from-teal-500 to-teal-600 text-white',
-        'indigo': 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white',
-        'pink': 'bg-gradient-to-br from-pink-500 to-pink-600 text-white'
+        blue: 'bg-gradient-to-br from-blue-500 to-blue-600 text-white',
+        green: 'bg-gradient-to-br from-green-500 to-green-600 text-white',
+        orange: 'bg-gradient-to-br from-orange-500 to-orange-600 text-white',
+        red: 'bg-gradient-to-br from-red-500 to-red-600 text-white',
+        purple: 'bg-gradient-to-br from-purple-500 to-purple-600 text-white',
+        teal: 'bg-gradient-to-br from-teal-500 to-teal-600 text-white',
+        indigo: 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white',
+        pink: 'bg-gradient-to-br from-pink-500 to-pink-600 text-white'
     };
     return colorMap[props.color] || colorMap.blue;
 });
@@ -85,21 +85,21 @@ const colorClasses = computed(() => {
 // Configuración de tamaño
 const sizeClasses = computed(() => {
     const sizeMap = {
-        'small': {
+        small: {
             card: 'min-h-[120px]',
             icon: 'text-2xl',
             value: 'text-xl',
             title: 'text-sm',
             subtitle: 'text-xs'
         },
-        'normal': {
+        normal: {
             card: 'min-h-[140px]',
             icon: 'text-3xl',
             value: 'text-2xl',
             title: 'text-base',
             subtitle: 'text-sm'
         },
-        'large': {
+        large: {
             card: 'min-h-[160px]',
             icon: 'text-4xl',
             value: 'text-3xl',
@@ -113,32 +113,29 @@ const sizeClasses = computed(() => {
 // Configuración de tendencia
 const trendIcon = computed(() => {
     if (!props.trend) return '';
-    
+
     const iconMap = {
-        'up': 'pi pi-arrow-up',
-        'down': 'pi pi-arrow-down',
-        'neutral': 'pi pi-minus'
+        up: 'pi pi-arrow-up',
+        down: 'pi pi-arrow-down',
+        neutral: 'pi pi-minus'
     };
     return iconMap[props.trend.direction] || '';
 });
 
 const trendClass = computed(() => {
     if (!props.trend) return '';
-    
+
     const classMap = {
-        'up': 'text-green-300',
-        'down': 'text-red-300',
-        'neutral': 'text-gray-300'
+        up: 'text-green-300',
+        down: 'text-red-300',
+        neutral: 'text-gray-300'
     };
     return classMap[props.trend.direction] || '';
 });
 </script>
 
 <template>
-    <Card 
-        class="metrics-widget transition-all duration-200 hover:shadow-lg border-0"
-        :class="[colorClasses, sizeClasses.card]"
-    >
+    <Card class="metrics-widget transition-all duration-200 hover:shadow-lg border-0" :class="[colorClasses, sizeClasses.card]">
         <template #content>
             <div class="widget-content p-2 flex items-center gap-4">
                 <!-- Icono -->
@@ -169,9 +166,7 @@ const trendClass = computed(() => {
                     <!-- Tendencia -->
                     <div v-if="trend" class="widget-trend mt-2 flex items-center gap-1" :class="sizeClasses.subtitle">
                         <i :class="[trendIcon, trendClass]"></i>
-                        <span :class="trendClass">
-                            {{ trend.percentage }}% {{ trend.period }}
-                        </span>
+                        <span :class="trendClass"> {{ trend.percentage }}% {{ trend.period }} </span>
                     </div>
                 </div>
             </div>
@@ -231,7 +226,8 @@ const trendClass = computed(() => {
 
 /* Animaciones */
 @keyframes pulse-glow {
-    0%, 100% {
+    0%,
+    100% {
         box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
     }
     50% {

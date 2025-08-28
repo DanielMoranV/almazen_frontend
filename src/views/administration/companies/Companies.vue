@@ -128,11 +128,11 @@ const showError = (summary, detail) => {
 // Manejador para cuando se actualiza un logo
 const handleLogoUpdated = (data) => {
     // Actualizar la empresa en el store localmente
-    const companyIndex = companiesStore.companiesList.findIndex(c => c.id === data.companyId);
+    const companyIndex = companiesStore.companiesList.findIndex((c) => c.id === data.companyId);
     if (companyIndex !== -1) {
         companiesStore.companiesList[companyIndex].logo = data.logoUrl;
     }
-    
+
     showLogoModal.value = false;
 };
 </script>
@@ -166,13 +166,7 @@ const handleLogoUpdated = (data) => {
             <!-- Tabla de Empresas con Animaciones -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasCompanies" class="table-container">
-                    <CompaniesTable 
-                        :companies="companiesStore.companiesList" 
-                        :loading="isLoading" 
-                        @edit="openEditDialog" 
-                        @delete="openDeleteDialog"
-                        @upload-logo="openLogoModal"
-                    />
+                    <CompaniesTable :companies="companiesStore.companiesList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" @upload-logo="openLogoModal" />
                 </div>
             </transition>
 

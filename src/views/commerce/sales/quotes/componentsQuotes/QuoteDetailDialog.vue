@@ -53,22 +53,28 @@ const canReject = computed(() => quote.value && quote.value.status === 'PENDIENT
 const canDelete = computed(() => quote.value && quote.value.status === 'PENDIENTE');
 
 // Watchers
-watch(() => props.visible, (newVal) => {
-    if (newVal && props.quoteId) {
-        loadQuote();
+watch(
+    () => props.visible,
+    (newVal) => {
+        if (newVal && props.quoteId) {
+            loadQuote();
+        }
     }
-});
+);
 
-watch(() => props.quoteId, (newVal) => {
-    if (newVal && props.visible) {
-        loadQuote();
+watch(
+    () => props.quoteId,
+    (newVal) => {
+        if (newVal && props.visible) {
+            loadQuote();
+        }
     }
-});
+);
 
 // Methods
 const loadQuote = async () => {
     if (!props.quoteId) return;
-    
+
     loading.value = true;
     try {
         const result = await quotesStore.getQuote(props.quoteId);
@@ -106,7 +112,7 @@ const editQuote = () => {
         });
         return;
     }
-    
+
     // Emitir evento para que el componente padre abra el modal de edición
     closeDialog();
     emit('edit-quote', quote.value);
@@ -133,7 +139,7 @@ const handleApproval = async (approvalData) => {
         }
     } catch (error) {
         console.error('Error approving quote:', error);
-        
+
         // Manejar errores específicos de la nueva API
         let errorMessage = 'Error al aprobar la cotización';
         if (error.response?.data?.message) {
@@ -141,7 +147,7 @@ const handleApproval = async (approvalData) => {
         } else if (quotesStore.message) {
             errorMessage = quotesStore.message;
         }
-        
+
         toast.add({
             severity: 'error',
             summary: 'Error',
@@ -340,36 +346,11 @@ const isExpiringSoon = (validUntil) => {
                 </div>
 
                 <div class="action-buttons">
-                    <Button
-                        v-if="canEdit"
-                        icon="pi pi-pencil"
-                        label="Editar"
-                        severity="success"
-                        outlined
-                        @click="editQuote"
-                        class="action-btn"
-                    />
-                    
-                    <Button
-                        v-if="canApprove"
-                        icon="pi pi-check"
-                        label="Aprobar"
-                        severity="success"
-                        @click="approveQuote"
-                        :loading="actionLoading"
-                        class="action-btn"
-                    />
-                    
-                    <Button
-                        v-if="canReject"
-                        icon="pi pi-times"
-                        label="Rechazar"
-                        severity="danger"
-                        outlined
-                        @click="rejectQuote"
-                        :loading="actionLoading"
-                        class="action-btn"
-                    />
+                    <Button v-if="canEdit" icon="pi pi-pencil" label="Editar" severity="success" outlined @click="editQuote" class="action-btn" />
+
+                    <Button v-if="canApprove" icon="pi pi-check" label="Aprobar" severity="success" @click="approveQuote" :loading="actionLoading" class="action-btn" />
+
+                    <Button v-if="canReject" icon="pi pi-times" label="Rechazar" severity="danger" outlined @click="rejectQuote" :loading="actionLoading" class="action-btn" />
 
                     <!-- Menu de descargas -->
                     <SplitButton
@@ -443,7 +424,7 @@ const isExpiringSoon = (validUntil) => {
                                 </div>
                                 <div class="date-item">
                                     <span class="date-label">Válido hasta:</span>
-                                    <span class="date-value" :class="{ 'expiring': isExpiringSoon(quote.valid_until) }">
+                                    <span class="date-value" :class="{ expiring: isExpiringSoon(quote.valid_until) }">
                                         {{ formatDate(quote.valid_until) }}
                                     </span>
                                 </div>
@@ -459,13 +440,7 @@ const isExpiringSoon = (validUntil) => {
                     <div class="products-section">
                         <h6 class="section-title">📦 Productos ({{ quote.details?.length || 0 }})</h6>
                         <div class="products-table-container">
-                            <DataTable 
-                                :value="quote.details" 
-                                class="products-table"
-                                responsiveLayout="scroll"
-                                :paginator="quote.details && quote.details.length > 10"
-                                :rows="10"
-                            >
+                            <DataTable :value="quote.details" class="products-table" responsiveLayout="scroll" :paginator="quote.details && quote.details.length > 10" :rows="10">
                                 <Column field="stock.product.name" header="Producto" style="width: 40%">
                                     <template #body="{ data }">
                                         <div class="product-info">
@@ -492,9 +467,7 @@ const isExpiringSoon = (validUntil) => {
 
                                 <Column field="discount_amount" header="Descuento" class="text-right" style="width: 15%">
                                     <template #body="{ data }">
-                                        <span v-if="data.discount_amount > 0" class="discount-amount">
-                                            -{{ formatCurrency(data.discount_amount) }}
-                                        </span>
+                                        <span v-if="data.discount_amount > 0" class="discount-amount"> -{{ formatCurrency(data.discount_amount) }} </span>
                                         <span v-else class="no-discount">-</span>
                                     </template>
                                 </Column>
@@ -513,7 +486,7 @@ const isExpiringSoon = (validUntil) => {
                     <!-- Información adicional -->
                     <div class="additional-info">
                         <h6 class="section-title">ℹ️ Información Adicional</h6>
-                        
+
                         <!-- Usuario que creó -->
                         <div v-if="quote.user" class="info-item">
                             <div class="info-label">Creado por:</div>
@@ -529,12 +502,15 @@ const isExpiringSoon = (validUntil) => {
                         <!-- Venta asociada -->
                         <div v-if="quote.sale_id" class="info-item">
                             <div class="info-label">Venta generada:</div>
-                            <Button 
-                                :label="`Ver Venta #${quote.sale_id}`" 
-                                icon="pi pi-external-link" 
+                            <Button
+                                :label="`Ver Venta #${quote.sale_id}`"
+                                icon="pi pi-external-link"
                                 size="small"
                                 text
-                                @click="router.push({ name: 'sale-detail', params: { id: quote.sale_id } }); closeDialog();"
+                                @click="
+                                    router.push({ name: 'sale-detail', params: { id: quote.sale_id } });
+                                    closeDialog();
+                                "
                             />
                         </div>
                     </div>
@@ -590,12 +566,7 @@ const isExpiringSoon = (validUntil) => {
         </div>
 
         <!-- Dialog de aprobación -->
-        <QuoteApprovalDialog
-            v-model:visible="showApprovalDialog"
-            :quote="quote"
-            :loading="actionLoading"
-            @approve="handleApproval"
-        />
+        <QuoteApprovalDialog v-model:visible="showApprovalDialog" :quote="quote" :loading="actionLoading" @approve="handleApproval" />
 
         <!-- Confirmaciones -->
         <ConfirmDialog />
@@ -854,19 +825,19 @@ const isExpiringSoon = (validUntil) => {
     .quote-header-actions {
         @apply flex-col items-start gap-4;
     }
-    
+
     .action-buttons {
         @apply w-full justify-start;
     }
-    
+
     .quote-main-content {
         @apply grid-cols-1;
     }
-    
+
     .info-sections {
         @apply grid-cols-1;
     }
-    
+
     .action-btn {
         @apply text-sm px-3 py-2;
     }

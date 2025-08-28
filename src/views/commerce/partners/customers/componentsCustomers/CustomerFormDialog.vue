@@ -82,19 +82,19 @@ const isLoadingDocumentData = computed(() => customersStore.isLoadingDocumentLoo
 const canLookupDocument = computed(() => {
     const doc = localCustomer.identity_document?.trim();
     const type = localCustomer.identity_document_type;
-    
+
     if (!doc || !type) return false;
-    
+
     if (type === 'dni') return /^\d{8}$/.test(doc);
     if (type === 'ruc') return /^\d{11}$/.test(doc);
-    
+
     return false;
 });
 
 // Validaciones para documentos
 const validateDocument = (document, type) => {
     if (!document) return true; // Documento opcional
-    
+
     switch (type) {
         case 'dni':
             return /^\d{8}$/.test(document);
@@ -112,16 +112,16 @@ const validateDocument = (document, type) => {
 // Validación básica del formulario
 const validateForm = () => {
     const errors = [];
-    
+
     if (!localCustomer.name?.trim()) {
         errors.push('El nombre es obligatorio');
     }
-    
+
     if (localCustomer.identity_document?.trim() && !validateDocument(localCustomer.identity_document, localCustomer.identity_document_type)) {
-        const docType = docTypes.find(dt => dt.value === localCustomer.identity_document_type)?.label || localCustomer.identity_document_type;
+        const docType = docTypes.find((dt) => dt.value === localCustomer.identity_document_type)?.label || localCustomer.identity_document_type;
         errors.push(`El formato del ${docType} no es válido`);
     }
-    
+
     if (localCustomer.credit_enabled) {
         if (!localCustomer.credit_limit || localCustomer.credit_limit <= 0) {
             errors.push('El límite de crédito debe ser mayor a 0');
@@ -130,21 +130,21 @@ const validateForm = () => {
             errors.push('Los días de crédito deben ser mayor a 0');
         }
     }
-    
+
     return errors;
 };
 
 // Búsqueda automática de datos por documento
 const lookupDocumentData = async () => {
     if (!canLookupDocument.value) return;
-    
+
     const payload = {
         document: localCustomer.identity_document.trim(),
         type: localCustomer.identity_document_type
     };
-    
+
     await customersStore.lookupDocumentData(payload);
-    
+
     if (customersStore.documentLookupSuccess) {
         mapDocumentDataToCustomer(customersStore.documentLookupData);
         toast.add({
@@ -166,9 +166,9 @@ const lookupDocumentData = async () => {
 // Mapear datos de la API a los campos del cliente
 const mapDocumentDataToCustomer = (data) => {
     if (!data) return;
-    
+
     customersStore.clearDocumentData();
-    
+
     if (localCustomer.identity_document_type === 'dni') {
         // Mapeo para DNI (RENIEC)
         localCustomer.name = data.nombre_completo || '';
@@ -188,21 +188,21 @@ const close = () => {
 
 const submit = () => {
     const errors = validateForm();
-    
+
     if (errors.length > 0) {
         // En una aplicación real, mostrarías estos errores al usuario
         console.warn('Errores de validación:', errors);
         return;
     }
-    
+
     // Limpiar campos opcionales vacíos
     const customerData = { ...localCustomer };
-    Object.keys(customerData).forEach(key => {
+    Object.keys(customerData).forEach((key) => {
         if (customerData[key] === '' || customerData[key] === null) {
             delete customerData[key];
         }
     });
-    
+
     emit('submit', customerData);
 };
 </script>
@@ -237,25 +237,10 @@ const submit = () => {
                     <div class="field">
                         <label for="identity_document" class="field-label">Nro. Documento</label>
                         <div class="flex gap-2">
-                            <InputText 
-                                id="identity_document" 
-                                v-model.trim="localCustomer.identity_document" 
-                                :placeholder="isRuc ? '20123456789' : '12345678'" 
-                                class="form-input flex-1" 
-                            />
-                            <Button 
-                                :loading="isLoadingDocumentData"
-                                :disabled="!canLookupDocument"
-                                icon="pi pi-search" 
-                                class="p-button-info lookup-btn"
-                                @click="lookupDocumentData"
-                                v-tooltip.top="'Buscar datos automáticamente'"
-                                type="button"
-                            />
+                            <InputText id="identity_document" v-model.trim="localCustomer.identity_document" :placeholder="isRuc ? '20123456789' : '12345678'" class="form-input flex-1" />
+                            <Button :loading="isLoadingDocumentData" :disabled="!canLookupDocument" icon="pi pi-search" class="p-button-info lookup-btn" @click="lookupDocumentData" v-tooltip.top="'Buscar datos automáticamente'" type="button" />
                         </div>
-                        <small v-if="canLookupDocument && !isLoadingDocumentData" class="lookup-hint">
-                            💡 Haz clic en buscar para obtener datos automáticamente
-                        </small>
+                        <small v-if="canLookupDocument && !isLoadingDocumentData" class="lookup-hint"> 💡 Haz clic en buscar para obtener datos automáticamente </small>
                     </div>
                     <!-- Dirección -->
                     <div class="field col-span-2">
@@ -279,22 +264,12 @@ const submit = () => {
                         <label for="name" class="field-label">
                             {{ isRuc ? 'Razón Social *' : 'Nombre completo *' }}
                         </label>
-                        <InputText 
-                            id="name" 
-                            v-model.trim="localCustomer.name" 
-                            :placeholder="isRuc ? 'Ingrese la razón social' : 'Ingrese el nombre completo'" 
-                            class="form-input"
-                        />
+                        <InputText id="name" v-model.trim="localCustomer.name" :placeholder="isRuc ? 'Ingrese la razón social' : 'Ingrese el nombre completo'" class="form-input" />
                     </div>
                     <!-- Nombre comercial (oculto para DNI) -->
                     <div v-if="!isDni" class="field col-span-2">
                         <label for="commercial_name" class="field-label">Nombre Comercial</label>
-                        <InputText 
-                            id="commercial_name" 
-                            v-model.trim="localCustomer.commercial_name" 
-                            placeholder="Nombre comercial o como se le conoce" 
-                            class="form-input" 
-                        />
+                        <InputText id="commercial_name" v-model.trim="localCustomer.commercial_name" placeholder="Nombre comercial o como se le conoce" class="form-input" />
                     </div>
                     <!-- Email -->
                     <div class="field">
@@ -334,7 +309,7 @@ const submit = () => {
                         Gestión de Créditos
                     </h3>
                 </div>
-                
+
                 <!-- Toggle para habilitar crédito -->
                 <div class="field-checkbox">
                     <ToggleSwitch id="credit_enabled" v-model="localCustomer.credit_enabled" />
@@ -350,46 +325,23 @@ const submit = () => {
                         <!-- Límite de crédito -->
                         <div class="field">
                             <label for="credit_limit" class="field-label">Límite de Crédito (S/) *</label>
-                            <InputNumber 
-                                id="credit_limit" 
-                                v-model="localCustomer.credit_limit" 
-                                mode="currency" 
-                                currency="PEN" 
-                                :minFractionDigits="2"
-                                :maxFractionDigits="2"
-                                :min="0" 
-                                :max="999999.99"
-                                placeholder="0.00" 
-                                class="form-input" 
-                            />
+                            <InputNumber id="credit_limit" v-model="localCustomer.credit_limit" mode="currency" currency="PEN" :minFractionDigits="2" :maxFractionDigits="2" :min="0" :max="999999.99" placeholder="0.00" class="form-input" />
                         </div>
-                        
+
                         <!-- Días de crédito -->
                         <div class="field">
                             <label for="credit_days" class="field-label">Días de Crédito *</label>
-                            <InputNumber 
-                                id="credit_days" 
-                                v-model="localCustomer.credit_days" 
-                                :min="0" 
-                                :max="365"
-                                placeholder="30" 
-                                class="form-input"
-                                suffix=" días"
-                            />
+                            <InputNumber id="credit_days" v-model="localCustomer.credit_days" :min="0" :max="365" placeholder="30" class="form-input" suffix=" días" />
                         </div>
                     </div>
-                    
+
                     <!-- Advertencia si hay deudas pendientes al desactivar -->
                     <div v-if="localCustomer.id && localCustomer.total_debt > 0" class="credit-warning">
                         <div class="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <i class="pi pi-exclamation-triangle text-yellow-600"></i>
                             <div>
-                                <p class="text-sm font-medium text-yellow-800">
-                                    Advertencia: Este cliente tiene deudas pendientes
-                                </p>
-                                <p class="text-xs text-yellow-700">
-                                    Deuda actual: S/ {{ localCustomer.total_debt?.toFixed(2) || '0.00' }}
-                                </p>
+                                <p class="text-sm font-medium text-yellow-800">Advertencia: Este cliente tiene deudas pendientes</p>
+                                <p class="text-xs text-yellow-700">Deuda actual: S/ {{ localCustomer.total_debt?.toFixed(2) || '0.00' }}</p>
                             </div>
                         </div>
                     </div>

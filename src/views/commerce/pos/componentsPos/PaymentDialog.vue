@@ -293,36 +293,51 @@ const anonymousCustomerValidation = computed(() => {
             </div>
 
             <!-- Validaciones para cliente anónimo -->
-            <div v-if="isAnonymousCustomer && anonymousCustomerValidation.message" class="p-4 rounded-xl border-2" :class="{
-                'bg-red-50 border-red-200': anonymousCustomerValidation.severity === 'error',
-                'bg-green-50 border-green-200': anonymousCustomerValidation.severity === 'success'
-            }">
+            <div
+                v-if="isAnonymousCustomer && anonymousCustomerValidation.message"
+                class="p-4 rounded-xl border-2"
+                :class="{
+                    'bg-red-50 border-red-200': anonymousCustomerValidation.severity === 'error',
+                    'bg-green-50 border-green-200': anonymousCustomerValidation.severity === 'success'
+                }"
+            >
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center" :class="{
-                        'bg-red-500': anonymousCustomerValidation.severity === 'error',
-                        'bg-green-500': anonymousCustomerValidation.severity === 'success'
-                    }">
-                        <i :class="{
-                            'pi pi-exclamation-triangle text-white': anonymousCustomerValidation.severity === 'error',
-                            'pi pi-check-circle text-white': anonymousCustomerValidation.severity === 'success'
-                        }"></i>
+                    <div
+                        class="w-10 h-10 rounded-full flex items-center justify-center"
+                        :class="{
+                            'bg-red-500': anonymousCustomerValidation.severity === 'error',
+                            'bg-green-500': anonymousCustomerValidation.severity === 'success'
+                        }"
+                    >
+                        <i
+                            :class="{
+                                'pi pi-exclamation-triangle text-white': anonymousCustomerValidation.severity === 'error',
+                                'pi pi-check-circle text-white': anonymousCustomerValidation.severity === 'success'
+                            }"
+                        ></i>
                     </div>
                     <div>
-                        <h4 class="font-bold" :class="{
-                            'text-red-800': anonymousCustomerValidation.severity === 'error',
-                            'text-green-800': anonymousCustomerValidation.severity === 'success'
-                        }">
+                        <h4
+                            class="font-bold"
+                            :class="{
+                                'text-red-800': anonymousCustomerValidation.severity === 'error',
+                                'text-green-800': anonymousCustomerValidation.severity === 'success'
+                            }"
+                        >
                             {{ anonymousCustomerValidation.severity === 'error' ? 'Restricción de Cliente Anónimo' : 'Cliente Anónimo Válido' }}
                         </h4>
-                        <p class="text-sm" :class="{
-                            'text-red-700': anonymousCustomerValidation.severity === 'error',
-                            'text-green-700': anonymousCustomerValidation.severity === 'success'
-                        }">
+                        <p
+                            class="text-sm"
+                            :class="{
+                                'text-red-700': anonymousCustomerValidation.severity === 'error',
+                                'text-green-700': anonymousCustomerValidation.severity === 'success'
+                            }"
+                        >
                             {{ anonymousCustomerValidation.message }}
                         </p>
                     </div>
                 </div>
-                
+
                 <div v-if="anonymousCustomerValidation.severity === 'error'" class="mt-3 text-xs bg-red-100 p-2 rounded-lg" :class="'text-red-800'">
                     <i class="pi pi-info-circle mr-1"></i>
                     <strong>Recuerda:</strong> Cliente anónimo solo para tickets o boletas menores a S/700

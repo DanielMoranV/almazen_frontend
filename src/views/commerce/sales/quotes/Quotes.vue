@@ -362,7 +362,7 @@ const approveQuoteFromMenu = async (quote) => {
 
 const handleApproval = async (approvalData) => {
     if (!quotePendingApproval.value) return;
-    
+
     try {
         const result = await quotesStore.approveQuote(quotePendingApproval.value.id, approvalData);
         if (result.success) {
@@ -377,7 +377,7 @@ const handleApproval = async (approvalData) => {
         }
     } catch (error) {
         console.error('Error approving quote:', error);
-        
+
         // Manejar errores específicos de la nueva API
         let errorMessage = 'Error al aprobar la cotización';
         if (error.response?.data?.message) {
@@ -385,7 +385,7 @@ const handleApproval = async (approvalData) => {
         } else if (quotesStore.message) {
             errorMessage = quotesStore.message;
         }
-        
+
         toast.add({
             severity: 'error',
             summary: 'Error',
@@ -941,12 +941,7 @@ const handleQuoteSubmit = async (quoteData) => {
         <QuoteDetailDialog v-model:visible="showQuoteDetailDialog" :quote-id="selectedQuoteId" @quote-updated="handleQuoteUpdated" @edit-quote="handleEditQuote" />
 
         <!-- Dialog de aprobación de cotización -->
-        <QuoteApprovalDialog
-            v-model:visible="showApprovalDialog"
-            :quote="quotePendingApproval"
-            :loading="loading"
-            @approve="handleApproval"
-        />
+        <QuoteApprovalDialog v-model:visible="showApprovalDialog" :quote="quotePendingApproval" :loading="loading" @approve="handleApproval" />
 
         <!-- Confirmación de acciones -->
         <ConfirmDialog />

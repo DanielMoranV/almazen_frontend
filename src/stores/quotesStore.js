@@ -1,15 +1,4 @@
-import { 
-    fetchQuotes, 
-    getQuote, 
-    createQuote, 
-    updateQuote, 
-    deleteQuote, 
-    approveQuote, 
-    rejectQuote, 
-    downloadQuotePdf, 
-    downloadQuoteExcel, 
-    fetchQuoteStatistics 
-} from '@/api';
+import { fetchQuotes, getQuote, createQuote, updateQuote, deleteQuote, approveQuote, rejectQuote, downloadQuotePdf, downloadQuoteExcel, fetchQuoteStatistics } from '@/api';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import { defineStore } from 'pinia';
 
@@ -59,34 +48,30 @@ export const useQuotesStore = defineStore('quotesStore', {
         getCurrentSearchTerm: (state) => state.currentSearchTerm,
         totalQuotes: (state) => state.pagination.total,
         hasActiveFilters: (state) => {
-            return state.filters.status || 
-                   state.filters.customer_id || 
-                   state.filters.search ||
-                   state.filters.date_from || 
-                   state.filters.date_to;
+            return state.filters.status || state.filters.customer_id || state.filters.search || state.filters.date_from || state.filters.date_to;
         },
-        
+
         // Getters para estadísticas
         getStatistics: (state) => state.statistics,
         isLoadingStats: (state) => state.isLoadingStatistics,
 
         // Getters para estados de cotización
-        pendingQuotes: (state) => state.allQuotes.filter(quote => quote.status === 'PENDIENTE'),
-        approvedQuotes: (state) => state.allQuotes.filter(quote => quote.status === 'APROBADO'),
-        rejectedQuotes: (state) => state.allQuotes.filter(quote => quote.status === 'RECHAZADO'),
-        expiredQuotes: (state) => state.allQuotes.filter(quote => quote.status === 'VENCIDO'),
+        pendingQuotes: (state) => state.allQuotes.filter((quote) => quote.status === 'PENDIENTE'),
+        approvedQuotes: (state) => state.allQuotes.filter((quote) => quote.status === 'APROBADO'),
+        rejectedQuotes: (state) => state.allQuotes.filter((quote) => quote.status === 'RECHAZADO'),
+        expiredQuotes: (state) => state.allQuotes.filter((quote) => quote.status === 'VENCIDO'),
 
         // Getter para métricas rápidas
         quickMetrics: (state) => {
             const allQuotes = state.allQuotes;
             return {
                 total: allQuotes.length,
-                pending: allQuotes.filter(q => q.status === 'PENDIENTE').length,
-                approved: allQuotes.filter(q => q.status === 'APROBADO').length,
-                rejected: allQuotes.filter(q => q.status === 'RECHAZADO').length,
-                expired: allQuotes.filter(q => q.status === 'VENCIDO').length,
+                pending: allQuotes.filter((q) => q.status === 'PENDIENTE').length,
+                approved: allQuotes.filter((q) => q.status === 'APROBADO').length,
+                rejected: allQuotes.filter((q) => q.status === 'RECHAZADO').length,
+                expired: allQuotes.filter((q) => q.status === 'VENCIDO').length,
                 totalAmount: allQuotes.reduce((sum, q) => sum + parseFloat(q.total_amount || 0), 0),
-                approvedAmount: allQuotes.filter(q => q.status === 'APROBADO').reduce((sum, q) => sum + parseFloat(q.total_amount || 0), 0)
+                approvedAmount: allQuotes.filter((q) => q.status === 'APROBADO').reduce((sum, q) => sum + parseFloat(q.total_amount || 0), 0)
             };
         }
     },
@@ -146,31 +131,20 @@ export const useQuotesStore = defineStore('quotesStore', {
             }
 
             if (this.filters.customer_id) {
-                filteredQuotes = filteredQuotes.filter((quote) => 
-                    quote.customer_id === this.filters.customer_id || 
-                    quote.customer?.id === this.filters.customer_id
-                );
+                filteredQuotes = filteredQuotes.filter((quote) => quote.customer_id === this.filters.customer_id || quote.customer?.id === this.filters.customer_id);
             }
 
             if (this.filters.search) {
                 const searchTerm = this.filters.search.toLowerCase();
-                filteredQuotes = filteredQuotes.filter((quote) => 
-                    quote.quote_number?.toLowerCase().includes(searchTerm) ||
-                    quote.notes?.toLowerCase().includes(searchTerm) ||
-                    quote.customer?.name?.toLowerCase().includes(searchTerm)
-                );
+                filteredQuotes = filteredQuotes.filter((quote) => quote.quote_number?.toLowerCase().includes(searchTerm) || quote.notes?.toLowerCase().includes(searchTerm) || quote.customer?.name?.toLowerCase().includes(searchTerm));
             }
 
             if (this.filters.date_from) {
-                filteredQuotes = filteredQuotes.filter((quote) => 
-                    new Date(quote.quote_date) >= new Date(this.filters.date_from)
-                );
+                filteredQuotes = filteredQuotes.filter((quote) => new Date(quote.quote_date) >= new Date(this.filters.date_from));
             }
 
             if (this.filters.date_to) {
-                filteredQuotes = filteredQuotes.filter((quote) => 
-                    new Date(quote.quote_date) <= new Date(this.filters.date_to)
-                );
+                filteredQuotes = filteredQuotes.filter((quote) => new Date(quote.quote_date) <= new Date(this.filters.date_to));
             }
 
             this.quotes = filteredQuotes;
@@ -194,11 +168,11 @@ export const useQuotesStore = defineStore('quotesStore', {
             try {
                 const res = await getQuote(id);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     this.currentQuote = processed.data;
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -225,7 +199,7 @@ export const useQuotesStore = defineStore('quotesStore', {
 
                 const res = await createQuote(payload);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     const quoteRecord = processed.data;
                     if (quoteRecord) {
@@ -234,7 +208,7 @@ export const useQuotesStore = defineStore('quotesStore', {
                         this.applyLocalFilters();
                     }
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -253,7 +227,7 @@ export const useQuotesStore = defineStore('quotesStore', {
             try {
                 const res = await updateQuote(payload, payload.id);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     const updatedQuote = processed.data;
                     if (updatedQuote) {
@@ -272,7 +246,7 @@ export const useQuotesStore = defineStore('quotesStore', {
                         this.applyLocalFilters();
                     }
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -291,19 +265,19 @@ export const useQuotesStore = defineStore('quotesStore', {
             try {
                 const res = await deleteQuote(quoteId);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     // Remover de allQuotes
                     this.allQuotes = this.allQuotes.filter((quote) => quote.id !== quoteId);
                     // Reaplicar filtros
                     this.applyLocalFilters();
-                    
+
                     // Limpiar currentQuote si era la eliminada
                     if (this.currentQuote?.id === quoteId) {
                         this.currentQuote = null;
                     }
                 }
-                
+
                 return processed;
             } catch (error) {
                 // Manejar errores específicos de reglas de negocio
@@ -330,7 +304,7 @@ export const useQuotesStore = defineStore('quotesStore', {
             try {
                 const res = await approveQuote(quoteId, approvalData);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     const updatedQuote = processed.data;
                     if (updatedQuote) {
@@ -349,7 +323,7 @@ export const useQuotesStore = defineStore('quotesStore', {
                         this.applyLocalFilters();
                     }
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -370,7 +344,7 @@ export const useQuotesStore = defineStore('quotesStore', {
                 const payload = rejectionReason ? { rejection_reason: rejectionReason } : {};
                 const res = await rejectQuote(quoteId, payload);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     const updatedQuote = processed.data;
                     if (updatedQuote) {
@@ -389,7 +363,7 @@ export const useQuotesStore = defineStore('quotesStore', {
                         this.applyLocalFilters();
                     }
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -406,23 +380,23 @@ export const useQuotesStore = defineStore('quotesStore', {
         async downloadPdf(quoteId) {
             try {
                 const response = await downloadQuotePdf(quoteId);
-                
+
                 // Crear blob y descargar
                 const blob = new Blob([response.data], { type: 'application/pdf' });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                
+
                 // Obtener el número de cotización para el nombre del archivo
-                const quote = this.allQuotes.find(q => q.id === quoteId) || this.currentQuote;
+                const quote = this.allQuotes.find((q) => q.id === quoteId) || this.currentQuote;
                 const fileName = `cotizacion_${quote?.quote_number || quoteId}.pdf`;
-                
+
                 link.setAttribute('download', fileName);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
                 window.URL.revokeObjectURL(url);
-                
+
                 return { success: true, message: 'PDF descargado exitosamente' };
             } catch (error) {
                 handleProcessError(error, this);
@@ -437,25 +411,25 @@ export const useQuotesStore = defineStore('quotesStore', {
         async downloadExcel(quoteId) {
             try {
                 const response = await downloadQuoteExcel(quoteId);
-                
+
                 // Crear blob y descargar
-                const blob = new Blob([response.data], { 
-                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                const blob = new Blob([response.data], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                
+
                 // Obtener el número de cotización para el nombre del archivo
-                const quote = this.allQuotes.find(q => q.id === quoteId) || this.currentQuote;
+                const quote = this.allQuotes.find((q) => q.id === quoteId) || this.currentQuote;
                 const fileName = `cotizacion_${quote?.quote_number || quoteId}.xlsx`;
-                
+
                 link.setAttribute('download', fileName);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
                 window.URL.revokeObjectURL(url);
-                
+
                 return { success: true, message: 'Excel descargado exitosamente' };
             } catch (error) {
                 handleProcessError(error, this);
@@ -472,11 +446,11 @@ export const useQuotesStore = defineStore('quotesStore', {
             try {
                 const res = await fetchQuoteStatistics(params);
                 const processed = handleProcessSuccess(res, this);
-                
+
                 if (processed.success) {
                     this.statistics = processed.data;
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -554,9 +528,9 @@ export const useQuotesStore = defineStore('quotesStore', {
             // Validar consistencia de totales
             const detailsSubtotal = details.reduce((sum, d) => sum + parseFloat(d.subtotal_amount || 0), 0);
             const detailsTotal = details.reduce((sum, d) => sum + parseFloat(d.total_amount || 0), 0);
-            
+
             const tolerance = 0.01; // Tolerancia de 1 centavo
-            
+
             if (Math.abs(detailsSubtotal - parseFloat(quote.subtotal_amount || 0)) > tolerance) {
                 return {
                     valid: false,
@@ -581,14 +555,14 @@ export const useQuotesStore = defineStore('quotesStore', {
          */
         canEditQuote(quote) {
             if (!quote) return false;
-            
+
             // Solo se pueden editar cotizaciones PENDIENTE
             if (quote.status !== 'PENDIENTE') return false;
-            
+
             // No se puede editar si está vencida
             const today = new Date();
             const validUntil = new Date(quote.valid_until);
-            
+
             return validUntil >= today;
         },
 
@@ -599,14 +573,14 @@ export const useQuotesStore = defineStore('quotesStore', {
          */
         canApproveQuote(quote) {
             if (!quote) return false;
-            
+
             // Solo se pueden aprobar cotizaciones PENDIENTE
             if (quote.status !== 'PENDIENTE') return false;
-            
+
             // No se puede aprobar si está vencida
             const today = new Date();
             const validUntil = new Date(quote.valid_until);
-            
+
             return validUntil >= today;
         }
     }

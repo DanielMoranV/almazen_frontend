@@ -59,14 +59,7 @@ const isPreviewPdf = computed(() => {
 
 // Validaciones de archivo
 const validateFile = (file) => {
-    const allowedTypes = [
-        'image/jpeg', 
-        'image/png', 
-        'image/jpg', 
-        'image/gif', 
-        'image/webp', 
-        'application/pdf'
-    ];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp', 'application/pdf'];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
     if (!allowedTypes.includes(file.type)) {
@@ -99,7 +92,7 @@ const onFileSelect = (event) => {
 
     if (validateFile(file)) {
         selectedFile.value = file;
-        
+
         // Crear preview para imágenes
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
@@ -151,7 +144,6 @@ const uploadVoucherFile = async () => {
         uploadProgress.value = 100;
 
         if (apiResponse.success) {
-            
             toast.add({
                 severity: 'success',
                 summary: 'Comprobante subido',
@@ -173,12 +165,11 @@ const uploadVoucherFile = async () => {
         } else {
             throw new Error(apiResponse.message || 'Error al subir comprobante');
         }
-
     } catch (error) {
         console.error('Error uploading voucher:', error);
-        
+
         let errorMessage = 'Error al subir el comprobante';
-        
+
         if (error.response?.data?.errors?.voucher) {
             errorMessage = error.response.data.errors.voucher.join(', ');
         } else if (error.response?.data?.message) {
@@ -193,7 +184,7 @@ const uploadVoucherFile = async () => {
             detail: errorMessage,
             life: 5000
         });
-        
+
         uploadProgress.value = 0;
     } finally {
         isUploading.value = false;
@@ -209,13 +200,16 @@ const closeModal = () => {
 };
 
 // Limpiar estado cuando se cierre el modal
-watch(() => props.visible, (newVisible) => {
-    if (!newVisible) {
-        setTimeout(() => {
-            clearSelection();
-        }, 300);
+watch(
+    () => props.visible,
+    (newVisible) => {
+        if (!newVisible) {
+            setTimeout(() => {
+                clearSelection();
+            }, 300);
+        }
     }
-});
+);
 
 // Abrir archivo en nueva pestaña
 const openCurrentVoucher = () => {
@@ -237,16 +231,7 @@ const getFileTypeLabel = (file) => {
 </script>
 
 <template>
-    <Dialog 
-        v-model:visible="dialogVisible" 
-        :header="modalTitle" 
-        modal 
-        class="purchase-voucher-modal"
-        :style="{ width: '600px' }"
-        :closable="!isUploading"
-        :closeOnEscape="!isUploading"
-        @hide="closeModal"
-    >
+    <Dialog v-model:visible="dialogVisible" :header="modalTitle" modal class="purchase-voucher-modal" :style="{ width: '600px' }" :closable="!isUploading" :closeOnEscape="!isUploading" @hide="closeModal">
         <div class="modal-content">
             <!-- Información de la orden ---->
             <div class="order-info">
@@ -278,15 +263,7 @@ const getFileTypeLabel = (file) => {
                         </div>
                         <img v-else :src="currentVoucherUrl" alt="Comprobante actual" class="current-image" />
                     </div>
-                    <Button 
-                        icon="pi pi-external-link" 
-                        label="Abrir"
-                        size="small"
-                        severity="info"
-                        outlined
-                        @click="openCurrentVoucher"
-                        v-tooltip.top="'Abrir en nueva pestaña'"
-                    />
+                    <Button icon="pi pi-external-link" label="Abrir" size="small" severity="info" outlined @click="openCurrentVoucher" v-tooltip.top="'Abrir en nueva pestaña'" />
                 </div>
             </div>
 
@@ -302,19 +279,9 @@ const getFileTypeLabel = (file) => {
                                 <span class="file-size">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</span>
                             </div>
                         </div>
-                        <img v-else-if="previewUrl" :src="previewUrl" alt="Vista previa" class="preview-image">
+                        <img v-else-if="previewUrl" :src="previewUrl" alt="Vista previa" class="preview-image" />
                     </div>
-                    <Button 
-                        icon="pi pi-times" 
-                        class="remove-preview-btn"
-                        severity="danger"
-                        size="small"
-                        rounded
-                        text
-                        @click="clearSelection"
-                        :disabled="isUploading"
-                        v-tooltip.top="'Remover archivo'"
-                    />
+                    <Button icon="pi pi-times" class="remove-preview-btn" severity="danger" size="small" rounded text @click="clearSelection" :disabled="isUploading" v-tooltip.top="'Remover archivo'" />
                 </div>
             </div>
 
@@ -332,7 +299,7 @@ const getFileTypeLabel = (file) => {
                     @select="onFileSelect"
                     @error="onFileError"
                 />
-                
+
                 <div class="upload-info">
                     <div class="format-info">
                         <i class="pi pi-info-circle"></i>
@@ -356,22 +323,8 @@ const getFileTypeLabel = (file) => {
         <!-- Botones del modal ---->
         <template #footer>
             <div class="modal-actions">
-                <Button 
-                    label="Cancelar" 
-                    icon="pi pi-times"
-                    severity="secondary"
-                    @click="closeModal"
-                    :disabled="isUploading"
-                    text
-                />
-                <Button 
-                    label="Subir Comprobante" 
-                    icon="pi pi-upload"
-                    severity="success"
-                    @click="uploadVoucherFile"
-                    :disabled="!selectedFile || isUploading"
-                    :loading="isUploading"
-                />
+                <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click="closeModal" :disabled="isUploading" text />
+                <Button label="Subir Comprobante" icon="pi pi-upload" severity="success" @click="uploadVoucherFile" :disabled="!selectedFile || isUploading" :loading="isUploading" />
             </div>
         </template>
     </Dialog>
@@ -640,34 +593,34 @@ const getFileTypeLabel = (file) => {
         width: 95vw !important;
         max-width: 500px !important;
     }
-    
+
     .order-details {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .current-voucher-container {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .pdf-preview-new {
         flex-direction: column;
         text-align: center;
         min-width: auto;
     }
-    
+
     .current-image,
     .preview-image {
         width: 100px;
         height: 100px;
     }
-    
+
     .modal-actions {
         flex-direction: column;
         gap: 0.75rem;
     }
-    
+
     .modal-actions .p-button {
         width: 100%;
     }

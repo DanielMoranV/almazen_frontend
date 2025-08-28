@@ -373,7 +373,7 @@ export const processStockImportData = async (file) => {
     // Leer los datos de la hoja 2 (índice 1)
     const worksheet = workbook.worksheets[1];
     const rows = [];
-    
+
     // Verificar que existe la hoja 2
     if (!worksheet) {
         throw new Error('El archivo debe contener al menos 2 hojas. Los datos deben estar en la hoja 2.');
@@ -432,7 +432,7 @@ export const validateStockImportStructure = (rows) => {
             errors.push(`Fila ${rowNumber}: Precio de venta debe ser mayor a 0`);
         }
     });
-    
+
     return {
         isValid: errors.length === 0,
         errors: errors,

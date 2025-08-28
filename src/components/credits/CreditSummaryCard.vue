@@ -33,10 +33,10 @@ const creditStatus = computed(() => {
 
 const statusSeverity = computed(() => {
     const severityMap = {
-        'DESHABILITADO': 'secondary',
-        'VENCIDO': 'danger',
-        'PENDIENTE': 'warning',
-        'DISPONIBLE': 'success'
+        DESHABILITADO: 'secondary',
+        VENCIDO: 'danger',
+        PENDIENTE: 'warning',
+        DISPONIBLE: 'success'
     };
     return severityMap[creditStatus.value] || 'secondary';
 });
@@ -80,11 +80,7 @@ const handleViewHistory = () => {
                     <p class="customer-document">{{ customer.identity_document }}</p>
                 </div>
                 <div class="status-badge">
-                    <Badge 
-                        :value="creditStatus" 
-                        :severity="statusSeverity"
-                        class="status-indicator"
-                    />
+                    <Badge :value="creditStatus" :severity="statusSeverity" class="status-indicator" />
                 </div>
             </div>
         </template>
@@ -96,23 +92,14 @@ const handleViewHistory = () => {
                     <h4 class="customer-name">{{ customer.name }}</h4>
                     <p class="customer-document">{{ customer.identity_document }}</p>
                 </div>
-                <Badge 
-                    :value="creditStatus" 
-                    :severity="statusSeverity"
-                    size="small"
-                />
+                <Badge :value="creditStatus" :severity="statusSeverity" size="small" />
             </div>
 
             <!-- Información de crédito -->
             <div v-if="customer.credit_enabled" class="credit-info">
                 <!-- Indicador de límite -->
                 <div class="limit-section">
-                    <CreditLimitIndicator
-                        :credit-limit="customer.credit_limit"
-                        :total-debt="customer.total_debt"
-                        :size="compact ? 'small' : 'normal'"
-                        :show-labels="!compact"
-                    />
+                    <CreditLimitIndicator :credit-limit="customer.credit_limit" :total-debt="customer.total_debt" :size="compact ? 'small' : 'normal'" :show-labels="!compact" />
                 </div>
 
                 <!-- Métricas -->
@@ -139,17 +126,11 @@ const handleViewHistory = () => {
                 <div v-if="!compact" class="stats-section">
                     <div class="stat-row">
                         <span class="stat-label">Créditos pendientes:</span>
-                        <Badge 
-                            :value="customer.pending_credits_count || 0" 
-                            :severity="customer.pending_credits_count > 0 ? 'warning' : 'success'"
-                        />
+                        <Badge :value="customer.pending_credits_count || 0" :severity="customer.pending_credits_count > 0 ? 'warning' : 'success'" />
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Créditos vencidos:</span>
-                        <Badge 
-                            :value="customer.overdue_credits_count || 0" 
-                            :severity="customer.overdue_credits_count > 0 ? 'danger' : 'success'"
-                        />
+                        <Badge :value="customer.overdue_credits_count || 0" :severity="customer.overdue_credits_count > 0 ? 'danger' : 'success'" />
                     </div>
                     <div v-if="averagePaymentDays > 0" class="stat-row">
                         <span class="stat-label">Días promedio de pago:</span>
@@ -165,7 +146,7 @@ const handleViewHistory = () => {
                     </div>
                 </div>
 
-                <div v-if="availableCredit < (customer.credit_limit * 0.1)" class="alert-section">
+                <div v-if="availableCredit < customer.credit_limit * 0.1" class="alert-section">
                     <div class="alert limit-alert">
                         <i class="pi pi-info-circle"></i>
                         <span>Límite de crédito casi agotado</span>
@@ -184,26 +165,9 @@ const handleViewHistory = () => {
 
         <template #footer v-if="showActions">
             <div class="actions-footer">
-                <Button
-                    v-if="customer.credit_enabled && customer.total_debt > 0"
-                    icon="pi pi-dollar"
-                    label="Registrar Pago"
-                    class="p-button-success p-button-sm"
-                    @click="handlePaymentRequest"
-                />
-                <Button
-                    icon="pi pi-cog"
-                    :label="compact ? '' : 'Configurar'"
-                    class="p-button-outlined p-button-sm"
-                    @click="handleEditConfig"
-                />
-                <Button
-                    v-if="customer.credit_enabled"
-                    icon="pi pi-history"
-                    :label="compact ? '' : 'Historial'"
-                    class="p-button-text p-button-sm"
-                    @click="handleViewHistory"
-                />
+                <Button v-if="customer.credit_enabled && customer.total_debt > 0" icon="pi pi-dollar" label="Registrar Pago" class="p-button-success p-button-sm" @click="handlePaymentRequest" />
+                <Button icon="pi pi-cog" :label="compact ? '' : 'Configurar'" class="p-button-outlined p-button-sm" @click="handleEditConfig" />
+                <Button v-if="customer.credit_enabled" icon="pi pi-history" :label="compact ? '' : 'Historial'" class="p-button-text p-button-sm" @click="handleViewHistory" />
             </div>
         </template>
     </Card>
@@ -360,15 +324,15 @@ const handleViewHistory = () => {
     .metrics-grid {
         @apply grid-cols-2 gap-2;
     }
-    
+
     .compact-metrics {
         @apply grid-cols-2;
     }
-    
+
     .card-header {
         @apply flex-col gap-2;
     }
-    
+
     .actions-footer {
         @apply justify-center;
     }
