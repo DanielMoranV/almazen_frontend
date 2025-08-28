@@ -13,6 +13,7 @@ import BonusManagementDialog from './componentsOrders/BonusManagementDialog.vue'
 import PurchaseOrderFormDialog from './componentsOrders/PurchaseOrderFormDialog.vue';
 import PurchaseOrdersTable from './componentsOrders/PurchaseOrdersTable.vue';
 import PurchaseOrderStatistics from './componentsOrders/PurchaseOrderStatistics.vue';
+import PurchaseVoucherModal from './componentsOrders/PurchaseVoucherModal.vue';
 
 const companiesStore = useCompaniesStore();
 
@@ -126,6 +127,10 @@ const batchManagementData = ref({
 const showBonusDialog = ref(false);
 const selectedOrderForBonus = ref(null);
 const bonusDialogMode = ref('add'); // 'add' | 'edit' | 'view'
+
+// Estados para gestión de comprobantes
+const showVoucherDialog = ref(false);
+const selectedOrderForVoucher = ref(null);
 
 const showBatchManagementDialog = (order, manualProducts, autoProducts) => {
     selectedOrderForBatch.value = order;
@@ -256,6 +261,25 @@ const handleBonusUpdate = async ({ bonusId, updateData }) => {
         } else {
             handleError('Error al actualizar bonificación', 'Error inesperado al procesar la actualización');
         }
+    }
+};
+
+// Funciones para gestión de comprobantes
+const handleUploadVoucher = (order) => {
+    selectedOrderForVoucher.value = order;
+    showVoucherDialog.value = true;
+};
+
+const handleVoucherUpdated = async (voucherData) => {
+    try {
+        // Actualizar la lista de órdenes para reflejar el cambio
+        await loadPurchaseOrders();
+
+        showSuccess('Comprobante actualizado', `Comprobante de la orden #${selectedOrderForVoucher.value.order_number} subido exitosamente`);
+        showVoucherDialog.value = false;
+    } catch (error) {
+        console.error('Error updating voucher:', error);
+        handleError('Error', 'Error al actualizar el comprobante');
     }
 };
 
@@ -710,6 +734,7 @@ function formatCurrencyPEN(value) {
                 @receive-order="handleReceiveOrder"
                 @cancel-order="handleCancelOrder"
                 @manage-bonuses="handleManageBonuses"
+                @upload-voucher="handleUploadVoucher"
             />
         </div>
 
@@ -718,6 +743,7 @@ function formatCurrencyPEN(value) {
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedOrder?.order_number ? `Orden #${selectedOrder.order_number}` : ''" @confirm="handlePurchaseOrderDelete" />
         <BatchManagementDialog v-model:visible="showBatchDialog" :order="selectedOrderForBatch" :batch-data="batchManagementData" @submit="handleBatchManagementSubmit" :loading="purchaseStore.isLoadingPurchaseOrders" />
         <BonusManagementDialog v-model:visible="showBonusDialog" :order="selectedOrderForBonus" :mode="bonusDialogMode" @submit="handleBonusSubmit" @update="handleBonusUpdate" />
+        <PurchaseVoucherModal v-model:visible="showVoucherDialog" :purchase-order="selectedOrderForVoucher" @voucher-updated="handleVoucherUpdated" />
     </div>
 </template>
 <style scoped>

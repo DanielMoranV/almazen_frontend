@@ -83,26 +83,7 @@ const model = ref([
                     {
                         label: 'Cotizaciones',
                         icon: 'pi pi-file-edit',
-                        items: [
-                            {
-                                label: 'Listado',
-                                icon: 'pi pi-list',
-                                to: '/commerce/sales/quotes',
-                                positions: ['Developer', 'Administrador', 'Vendedor']
-                            },
-                            {
-                                label: 'Nueva Cotización',
-                                icon: 'pi pi-plus',
-                                to: '/commerce/sales/quotes/create',
-                                positions: ['Developer', 'Administrador', 'Vendedor']
-                            },
-                            {
-                                label: 'Dashboard',
-                                icon: 'pi pi-chart-line',
-                                to: '/commerce/sales/quotes/dashboard',
-                                positions: ['Developer', 'Administrador', 'Vendedor']
-                            }
-                        ],
+                        to: '/commerce/sales/quotes',
                         positions: ['Developer', 'Administrador', 'Vendedor']
                     }
                     // {

@@ -16,6 +16,9 @@ import ProgressSpinner from 'primevue/progressspinner';
 import SplitButton from 'primevue/splitbutton';
 import Tag from 'primevue/tag';
 
+// Custom components
+import QuoteApprovalDialog from './QuoteApprovalDialog.vue';
+
 // Props
 const props = defineProps({
     visible: {
@@ -41,6 +44,7 @@ const quotesStore = useQuotesStore();
 const loading = ref(false);
 const actionLoading = ref(false);
 const quote = ref(null);
+const showApprovalDialog = ref(false);
 
 // Computed properties
 const canEdit = computed(() => quote.value && quote.value.status === 'PENDIENTE');
@@ -109,37 +113,44 @@ const editQuote = () => {
 };
 
 const approveQuote = () => {
-    confirm.require({
-        message: '¿Está seguro de aprobar esta cotización? Se creará una venta automáticamente y se descontará el stock.',
-        header: 'Confirmar Aprobación',
-        icon: 'pi pi-check',
-        accept: async () => {
-            actionLoading.value = true;
-            try {
-                const result = await quotesStore.approveQuote(quote.value.id);
-                if (result.success) {
-                    toast.add({
-                        severity: 'success',
-                        summary: 'Éxito',
-                        detail: result.message || 'Cotización aprobada exitosamente',
-                        life: 3000
-                    });
-                    await loadQuote(); // Recargar datos
-                    emit('quote-updated', quote.value);
-                }
-            } catch (error) {
-                console.error('Error approving quote:', error);
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: quotesStore.message || 'Error al aprobar la cotización',
-                    life: 5000
-                });
-            } finally {
-                actionLoading.value = false;
-            }
+    showApprovalDialog.value = true;
+};
+
+const handleApproval = async (approvalData) => {
+    actionLoading.value = true;
+    try {
+        const result = await quotesStore.approveQuote(quote.value.id, approvalData);
+        if (result.success) {
+            toast.add({
+                severity: 'success',
+                summary: 'Éxito',
+                detail: result.message || 'Cotización aprobada y venta registrada como pagada exitosamente',
+                life: 3000
+            });
+            showApprovalDialog.value = false;
+            await loadQuote(); // Recargar datos
+            emit('quote-updated', quote.value);
         }
-    });
+    } catch (error) {
+        console.error('Error approving quote:', error);
+        
+        // Manejar errores específicos de la nueva API
+        let errorMessage = 'Error al aprobar la cotización';
+        if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (quotesStore.message) {
+            errorMessage = quotesStore.message;
+        }
+        
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorMessage,
+            life: 5000
+        });
+    } finally {
+        actionLoading.value = false;
+    }
 };
 
 const rejectQuote = () => {
@@ -577,6 +588,14 @@ const isExpiringSoon = (validUntil) => {
             <h3>Error al cargar</h3>
             <p>No se pudo cargar la información de la cotización.</p>
         </div>
+
+        <!-- Dialog de aprobación -->
+        <QuoteApprovalDialog
+            v-model:visible="showApprovalDialog"
+            :quote="quote"
+            :loading="actionLoading"
+            @approve="handleApproval"
+        />
 
         <!-- Confirmaciones -->
         <ConfirmDialog />

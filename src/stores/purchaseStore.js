@@ -38,6 +38,8 @@ export const usePurchaseStore = defineStore('purchaseStore', {
             try {
                 const res = await fetchPurchaseOrders(params);
                 const processed = handleProcessSuccess(res, this);
+
+                console.log(processed);
                 if (processed.success) {
                     this.purchaseOrders = processed.data;
                     this.isInitialLoad = false;
@@ -151,9 +153,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await approvePurchaseOrder(id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = this.purchaseOrders.map((order) => 
-                        order.id === id ? { ...order, status: 'APPROVED' } : order
-                    );
+                    this.purchaseOrders = this.purchaseOrders.map((order) => (order.id === id ? { ...order, status: 'APPROVED' } : order));
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -168,9 +168,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await receivePurchaseOrder(id, batchData);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = this.purchaseOrders.map((order) => 
-                        order.id === id ? { ...order, status: 'RECEIVED' } : order
-                    );
+                    this.purchaseOrders = this.purchaseOrders.map((order) => (order.id === id ? { ...order, status: 'RECEIVED' } : order));
                 }
             } catch (error) {
                 handleProcessError(error, this);
@@ -185,9 +183,7 @@ export const usePurchaseStore = defineStore('purchaseStore', {
                 const res = await cancelPurchaseOrder(id);
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
-                    this.purchaseOrders = this.purchaseOrders.map((order) => 
-                        order.id === id ? { ...order, status: 'CANCELLED' } : order
-                    );
+                    this.purchaseOrders = this.purchaseOrders.map((order) => (order.id === id ? { ...order, status: 'CANCELLED' } : order));
                 }
             } catch (error) {
                 handleProcessError(error, this);

@@ -321,13 +321,14 @@ export const useQuotesStore = defineStore('quotesStore', {
         },
 
         /**
-         * Aprueba una cotización
+         * Aprueba una cotización con métodos de pago y tipo de comprobante
          * @param {Number} quoteId - ID de la cotización
+         * @param {Object} approvalData - Datos de aprobación incluyendo métodos de pago
          */
-        async approveQuote(quoteId) {
+        async approveQuote(quoteId, approvalData = {}) {
             this.isLoading = true;
             try {
-                const res = await approveQuote(quoteId);
+                const res = await approveQuote(quoteId, approvalData);
                 const processed = handleProcessSuccess(res, this);
                 
                 if (processed.success) {

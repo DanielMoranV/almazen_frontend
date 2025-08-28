@@ -161,6 +161,18 @@ export const updatePurchaseBonus = (purchaseId, bonusId, bonusData) => {
     return axios.patch(`/purchases/${purchaseId}/bonuses/${bonusId}`, bonusData);
 };
 
+// Purchase Voucher Upload
+export const uploadVoucher = (purchaseId, voucherFile) => {
+    const formData = new FormData();
+    formData.append('voucher', voucherFile);
+
+    return axios.post(`/purchases/${purchaseId}/upload-voucher`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
 // 1️⃣ Vista Consolidada de Inventarios - URL ACTUALIZADA
 export const fetchProductStocks = (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
@@ -428,7 +440,7 @@ export const updateQuote = (payload, id) => axios.put(`/quotes/${id}`, payload);
 
 export const deleteQuote = (id) => axios.delete(`/quotes/${id}`);
 
-export const approveQuote = (id) => axios.patch(`/quotes/${id}/approve`);
+export const approveQuote = (id, payload = {}) => axios.patch(`/quotes/${id}/approve`, payload);
 
 export const rejectQuote = (id, payload = {}) => axios.patch(`/quotes/${id}/reject`, payload);
 

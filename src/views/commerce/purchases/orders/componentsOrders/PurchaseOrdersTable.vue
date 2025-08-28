@@ -134,6 +134,56 @@ const handleImageError = (event) => {
     event.target.src = '/placeholder-product.png';
     event.target.style.objectFit = 'cover';
 };
+
+// --- Estados para visor de vouchers ---
+const showVoucherViewer = ref(false);
+const currentVoucherUrl = ref('');
+
+// Función para determinar si el voucher es un PDF
+const isVoucherPdf = (url) => {
+    if (!url) return false;
+    return url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('pdf');
+};
+
+// Función para abrir el visor de vouchers
+const openVoucherViewer = (voucherUrl) => {
+    currentVoucherUrl.value = voucherUrl;
+    showVoucherViewer.value = true;
+};
+
+// Función para cerrar el visor de vouchers
+const closeVoucherViewer = () => {
+    showVoucherViewer.value = false;
+    currentVoucherUrl.value = '';
+};
+
+// Función para manejar errores en las miniaturas de vouchers
+const handleVoucherError = (event) => {
+    event.target.src = '/placeholder-document.png';
+    event.target.style.display = 'none';
+    const parent = event.target.parentElement;
+    if (parent) {
+        parent.innerHTML = '<i class="pi pi-image text-gray-400 text-2xl"></i>';
+    }
+};
+
+// Función para manejar errores en las imágenes del visor
+const handleVoucherImageError = (event) => {
+    event.target.style.display = 'none';
+    const parent = event.target.parentElement;
+    if (parent) {
+        parent.innerHTML = `
+            <div class="error-state">
+                <i class="pi pi-exclamation-triangle text-orange-500 text-4xl"></i>
+                <p class="text-gray-600 mt-2">Error al cargar la imagen</p>
+                <a href="${currentVoucherUrl.value}" target="_blank" class="text-blue-500 underline mt-2 inline-block">
+                    Intentar abrir en nueva ventana
+                </a>
+            </div>
+        `;
+    }
+};
+
 // --- Fin Dialog ---
 
 defineProps({
@@ -141,7 +191,7 @@ defineProps({
     loading: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['view-details', 'receive-order', 'cancel-order', 'approve-order', 'update:selection', 'edit', 'delete', 'manage-bonuses']);
+const emit = defineEmits(['view-details', 'receive-order', 'cancel-order', 'approve-order', 'update:selection', 'edit', 'delete', 'manage-bonuses', 'upload-voucher']);
 
 const selectedOrders = ref([]);
 
@@ -321,6 +371,44 @@ const getStatusIcon = (status) => {
                 <span v-else class="text-gray-400 italic">Sin comprobante</span>
             </template>
         </Column>
+        
+        <Column field="voucher_url" header="Voucher" style="width: 120px">
+            <template #body="slotProps">
+                <div class="voucher-column">
+                    <div v-if="slotProps.data.voucher_url" class="voucher-container">
+                        <div class="voucher-preview">
+                            <div v-if="isVoucherPdf(slotProps.data.voucher_url)" class="pdf-indicator">
+                                <i class="pi pi-file-pdf text-red-500"></i>
+                                <span class="file-type">PDF</span>
+                            </div>
+                            <div v-else class="image-indicator">
+                                <img 
+                                    :src="slotProps.data.voucher_url" 
+                                    alt="Voucher" 
+                                    class="voucher-thumbnail"
+                                    @error="handleVoucherError"
+                                />
+                                <span class="file-type">IMG</span>
+                            </div>
+                        </div>
+                        <Button 
+                            icon="pi pi-eye" 
+                            text 
+                            rounded 
+                            size="small" 
+                            severity="info"
+                            @click.stop="openVoucherViewer(slotProps.data.voucher_url)"
+                            v-tooltip.top="'Ver voucher'"
+                            class="view-voucher-btn"
+                        />
+                    </div>
+                    <span v-else class="no-voucher">
+                        <i class="pi pi-file-o text-gray-400"></i>
+                        <span class="no-voucher-text">Sin voucher</span>
+                    </span>
+                </div>
+            </template>
+        </Column>
 
         <Column field="discount_amount" header="Descuento" sortable>
             <template #body="slotProps">
@@ -388,6 +476,16 @@ const getStatusIcon = (status) => {
                     <div class="primary-actions">
                         <Button icon="pi pi-eye" severity="help" text rounded size="small" @click.stop="openItemsDialog(slotProps.data)" v-tooltip.top="'Ver detalles de la orden'" class="action-btn view-btn" />
                         <Button icon="pi pi-print" severity="info" text rounded size="small" @click.stop="printOrder(slotProps.data)" v-tooltip.top="'Imprimir orden de compra'" class="action-btn print-btn" />
+                        <Button 
+                            icon="pi pi-upload" 
+                            severity="secondary" 
+                            text 
+                            rounded 
+                            size="small" 
+                            @click.stop="emit('upload-voucher', slotProps.data)" 
+                            v-tooltip.top="slotProps.data.voucher_url ? 'Cambiar comprobante' : 'Subir comprobante'" 
+                            class="action-btn voucher-btn"
+                        />
                     </div>
 
                     <!-- Acciones condicionales por estado -->
@@ -558,6 +656,67 @@ const getStatusIcon = (status) => {
 
         <template #footer>
             <Button label="Cerrar" icon="pi pi-times" @click="closeTrackingDialog" autofocus />
+        </template>
+    </Dialog>
+
+    <!-- Dialog para visualizar vouchers -->
+    <Dialog 
+        v-model:visible="showVoucherViewer" 
+        :modal="true" 
+        :closable="true" 
+        :style="{ width: '90vw', maxWidth: '1000px', height: '90vh' }"
+        class="voucher-viewer-dialog"
+        @hide="closeVoucherViewer"
+    >
+        <template #header>
+            <div class="voucher-dialog-header">
+                <h3 class="voucher-dialog-title">
+                    <i class="pi pi-file"></i>
+                    Visor de Voucher
+                </h3>
+                <div class="voucher-actions">
+                    <Button 
+                        icon="pi pi-external-link" 
+                        label="Abrir en nueva ventana"
+                        text
+                        size="small"
+                        @click="window.open(currentVoucherUrl, '_blank')"
+                        v-tooltip.top="'Abrir en nueva ventana'"
+                    />
+                </div>
+            </div>
+        </template>
+
+        <template #default>
+            <div class="voucher-viewer-content">
+                <div v-if="isVoucherPdf(currentVoucherUrl)" class="pdf-viewer">
+                    <iframe 
+                        :src="currentVoucherUrl" 
+                        class="pdf-frame"
+                        title="Voucher PDF"
+                        frameborder="0"
+                    ></iframe>
+                </div>
+                <div v-else class="image-viewer">
+                    <img 
+                        :src="currentVoucherUrl" 
+                        alt="Voucher" 
+                        class="voucher-image"
+                        @error="handleVoucherImageError"
+                    />
+                </div>
+            </div>
+        </template>
+
+        <template #footer>
+            <div class="voucher-dialog-footer">
+                <Button 
+                    label="Cerrar" 
+                    icon="pi pi-times"
+                    @click="closeVoucherViewer" 
+                    autofocus 
+                />
+            </div>
         </template>
     </Dialog>
 </template>
@@ -849,6 +1008,10 @@ const getStatusIcon = (status) => {
     @apply bg-orange-50 dark:bg-orange-900/20;
 }
 
+.voucher-btn:hover {
+    @apply bg-gray-50 dark:bg-gray-900/20;
+}
+
 .no-actions-text {
     @apply text-xs text-gray-400 dark:text-gray-500 italic text-center py-2;
 }
@@ -972,5 +1135,102 @@ const getStatusIcon = (status) => {
 
 :deep(.timeline-dialog .p-dialog-content) {
     @apply p-0;
+}
+
+/* Estilos para la columna de vouchers */
+.voucher-column {
+    @apply flex flex-col items-center gap-2;
+}
+
+.voucher-container {
+    @apply flex flex-col items-center gap-2;
+}
+
+.voucher-preview {
+    @apply relative w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600;
+}
+
+.pdf-indicator,
+.image-indicator {
+    @apply w-full h-full flex flex-col items-center justify-center gap-1;
+}
+
+.voucher-thumbnail {
+    @apply w-full h-full object-cover;
+}
+
+.file-type {
+    @apply text-xs font-bold text-gray-600 dark:text-gray-400 absolute bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 text-center py-0.5;
+}
+
+.no-voucher {
+    @apply flex flex-col items-center gap-1 text-gray-400;
+}
+
+.no-voucher-text {
+    @apply text-xs;
+}
+
+.view-voucher-btn {
+    @apply hover:bg-blue-50 dark:hover:bg-blue-900/20;
+}
+
+/* Estilos para el dialog del visor de vouchers */
+.voucher-viewer-dialog {
+    @apply rounded-xl overflow-hidden;
+}
+
+:deep(.voucher-viewer-dialog .p-dialog-header) {
+    @apply bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4;
+}
+
+:deep(.voucher-viewer-dialog .p-dialog-content) {
+    @apply p-0 h-full;
+}
+
+:deep(.voucher-viewer-dialog .p-dialog-footer) {
+    @apply bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4;
+}
+
+.voucher-dialog-header {
+    @apply flex justify-between items-center w-full;
+}
+
+.voucher-dialog-title {
+    @apply text-lg font-semibold flex items-center gap-2;
+}
+
+.voucher-actions {
+    @apply flex gap-2;
+}
+
+.voucher-viewer-content {
+    @apply h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900;
+    min-height: calc(90vh - 160px);
+}
+
+.pdf-viewer {
+    @apply w-full h-full;
+}
+
+.pdf-frame {
+    @apply w-full h-full rounded-lg;
+    min-height: calc(90vh - 160px);
+}
+
+.image-viewer {
+    @apply w-full h-full flex items-center justify-center p-4;
+}
+
+.voucher-image {
+    @apply max-w-full max-h-full object-contain rounded-lg shadow-lg;
+}
+
+.error-state {
+    @apply flex flex-col items-center justify-center text-center p-8;
+}
+
+.voucher-dialog-footer {
+    @apply flex justify-end;
 }
 </style>

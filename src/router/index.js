@@ -56,24 +56,6 @@ const router = createRouter({
                     component: () => import('@/views/commerce/sales/quotes/Quotes.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
-                {
-                    path: '/commerce/sales/quotes/create',
-                    name: 'quote-create',
-                    component: () => import('@/views/commerce/sales/quotes/QuoteCreate.vue'),
-                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
-                },
-                {
-                    path: '/commerce/sales/quotes/:id/edit',
-                    name: 'quote-edit',
-                    component: () => import('@/views/commerce/sales/quotes/QuoteEdit.vue'),
-                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
-                },
-                {
-                    path: '/commerce/sales/quotes/dashboard',
-                    name: 'quotes-dashboard',
-                    component: () => import('@/views/commerce/sales/quotes/QuotesDashboard.vue'),
-                    meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
-                },
 
                 // Commerce - Partners
                 {
