@@ -69,6 +69,11 @@ const sections = ref([
                 description: 'Gestión avanzada de créditos con dashboard especializado, control de límites por cliente, alertas de vencimiento, análisis de antigüedad de saldos, historial de pagos y reportes de cobranza.'
             },
             {
+                name: 'Sistema de Cotizaciones Profesional',
+                icon: 'pi pi-file-edit',
+                description: 'Plataforma completa para crear, gestionar y aprobar cotizaciones comerciales. Estados de seguimiento (Pendiente/Aprobado/Rechazado/Vencido), conversión automática a ventas con métodos de pago, exportación en PDF/Excel, filtros avanzados y dashboard de métricas en tiempo real.'
+            },
+            {
                 name: 'Gestión de Compras',
                 icon: 'pi pi-truck',
                 description: 'Sistema completo de órdenes de compra con gestión de lotes, bonificaciones, control de recepciones, timeline de órdenes e impresión de documentos. Incluye estadísticas detalladas de compras.'
@@ -171,6 +176,11 @@ const sections = ref([
                 name: 'Flujo de Ventas Rápidas (POS)',
                 icon: 'pi pi-shopping-cart',
                 description: '1. Abrir sesión de caja → 2. Buscar productos (código de barras/nombre/SKU) → 3. Agregar al carrito con selección de lotes → 4. Seleccionar/crear cliente → 5. Procesar pago (múltiples métodos) → 6. Generar comprobante automático'
+            },
+            {
+                name: 'Flujo de Cotizaciones Comerciales',
+                icon: 'pi pi-file-edit',
+                description: '1. Crear nueva cotización con datos del cliente → 2. Agregar productos con precios personalizados → 3. Establecer fecha de validez y condiciones comerciales → 4. Generar y exportar cotización (PDF/Excel) → 5. Cliente revisa y acepta propuesta → 6. Aprobar cotización y convertir automáticamente a venta con registro de pago'
             },
             {
                 name: 'Flujo de Gestión de Inventario',

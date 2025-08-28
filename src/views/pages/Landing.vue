@@ -15,6 +15,11 @@ export default {
                     description: 'Realiza ventas rápidas, gestiona pagos y sesiones de caja de forma eficiente.'
                 },
                 {
+                    icon: 'pi-file-edit',
+                    title: 'Sistema de Cotizaciones Profesional',
+                    description: 'Crea cotizaciones personalizadas, gestiona aprobaciones y convierte automáticamente a ventas pagadas.'
+                },
+                {
                     icon: 'pi-shopping-cart',
                     title: 'Gestión Integral de Compras',
                     description: 'Controla todo el ciclo de compras, desde órdenes hasta recepción y proveedores.'
@@ -98,6 +103,17 @@ export default {
                     ]
                 },
                 {
+                    title: 'Sistema de Cotizaciones Profesional',
+                    icon: 'pi-file-edit',
+                    description: 'Plataforma completa para crear, gestionar y convertir cotizaciones comerciales',
+                    items: [
+                        { name: 'Creación de Cotizaciones', description: 'Diseña cotizaciones personalizadas con productos, precios y condiciones específicas para cada cliente' },
+                        { name: 'Gestión de Estados', description: 'Control de flujo completo: Pendiente, Aprobado, Rechazado y Vencido con fechas de validez automáticas' },
+                        { name: 'Aprobación y Conversión', description: 'Proceso de aprobación que convierte automáticamente cotizaciones en ventas con registro de pago' },
+                        { name: 'Exportación Profesional', description: 'Descarga cotizaciones en PDF y Excel con formato empresarial y logos personalizados' }
+                    ]
+                },
+                {
                     title: 'Análisis y Reportes',
                     icon: 'pi-chart-line',
                     description: 'Business Intelligence integrado para toma de decisiones',
@@ -119,6 +135,17 @@ export default {
                         'Seleccionar cliente o crear uno nuevo',
                         'Procesar pago con uno o múltiples métodos',
                         'Generar comprobante automáticamente'
+                    ]
+                },
+                {
+                    title: 'Flujo de Cotizaciones Comerciales',
+                    steps: [
+                        'Crear nueva cotización con datos del cliente',
+                        'Agregar productos con precios personalizados',
+                        'Establecer fecha de validez y condiciones',
+                        'Generar y exportar cotización en PDF/Excel',
+                        'Cliente revisa y acepta la propuesta',
+                        'Aprobar cotización y convertir a venta pagada'
                     ]
                 },
                 {
