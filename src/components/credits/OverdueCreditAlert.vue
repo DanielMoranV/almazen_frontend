@@ -1,7 +1,7 @@
 <script setup>
-import { computed } from 'vue';
-import InlineMessage from 'primevue/inlinemessage';
 import Button from 'primevue/button';
+import InlineMessage from 'primevue/inlinemessage';
+import { computed } from 'vue';
 
 const props = defineProps({
     customer: {
@@ -122,9 +122,9 @@ const handleViewDetails = () => {
     });
 };
 
-const handleDismiss = () => {
-    emit('dismiss');
-};
+// const handleDismiss = () => {
+//     emit('dismiss');
+// };
 </script>
 
 <script>

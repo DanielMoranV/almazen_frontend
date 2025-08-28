@@ -75,6 +75,6 @@ export const fetchProductByBarcode = async (barcode) => {
 };
 
 // Placeholder si en el futuro quieres implementar guardado de nuevas categorías
-export const saveSuggestedCategories = async (suggestedCategories) => {
+export const saveSuggestedCategories = async () => {
     return [];
 };

@@ -36,8 +36,7 @@ instance.interceptors.response.use(
         const originalRequest = error.config;
 
         // Auto-refresh en 401 si no es retry y no es endpoint de auth (excepto login)
-        const isAuthEndpoint = originalRequest.url?.includes('/auth/');
-        const isLoginEndpoint = originalRequest.url?.includes('/auth/login');
+        const isAuthEndpoint = originalRequest.url?.includes('/login/');
 
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;

@@ -1,9 +1,8 @@
 <script setup>
-import { computed } from 'vue';
-import Card from 'primevue/card';
-import Button from 'primevue/button';
 import Badge from 'primevue/badge';
-import CreditStatusBadge from './CreditStatusBadge.vue';
+import Button from 'primevue/button';
+import Card from 'primevue/card';
+import { computed } from 'vue';
 import CreditLimitIndicator from './CreditLimitIndicator.vue';
 
 const props = defineProps({
