@@ -38,6 +38,9 @@ defineEmits(['refresh', 'create']);
                 <div class="actions-section">
                     <div class="action-buttons">
                         <Button icon="pi pi-refresh" class="action-btn refresh-btn" :loading="isLoading" @click="$emit('refresh')" v-tooltip.bottom="'Actualizar lista'" :disabled="isLoading" />
+                        <router-link to="/inventory/warehouses/catalogs" v-slot="{ navigate }">
+                            <Button @click="navigate" icon="pi pi-book" label="Catálogos Públicos" class="action-btn" v-tooltip.bottom="'Gestionar catálogos públicos'" />
+                        </router-link>
                         <Button icon="pi pi-plus" label="Agregar Almacén" class="action-btn create-btn" @click="$emit('create')" v-tooltip.bottom="'Crear nuevo almacén'" />
                     </div>
                 </div>

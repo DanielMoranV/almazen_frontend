@@ -1,10 +1,4 @@
-import { 
-    fetchPublicProduct, 
-    fetchPublicProducts, 
-    fetchCatalogInfo, 
-    fetchCatalogProducts, 
-    fetchCatalogProduct 
-} from '@/api';
+import { fetchPublicProduct, fetchPublicProducts, fetchCatalogInfo, fetchCatalogProducts, fetchCatalogProduct } from '@/api';
 import { defineStore } from 'pinia';
 
 export const usePublicStore = defineStore('publicStore', {
@@ -134,27 +128,27 @@ export const usePublicStore = defineStore('publicStore', {
         async loadCatalogInfo(slug, accessToken = null) {
             this.isLoading = true;
             this.error = null;
-            
+
             try {
                 const params = {};
                 if (accessToken) {
                     params.token = accessToken;
                 }
-                
+
                 const response = await fetchCatalogInfo(slug, params);
                 const data = response.data;
-                
+
                 // Actualizar información del catálogo
                 this.currentWarehouse = data.warehouse;
                 this.currentCompany = data.company;
                 this.catalogConfig = data.config || {};
                 this.catalogSlug = slug;
                 this.isTokenRequired = data.requires_token || false;
-                
+
                 return data;
             } catch (error) {
                 this.error = error;
-                
+
                 if (error.response?.status === 403) {
                     this.message = 'Token de acceso requerido o inválido';
                     this.isTokenRequired = true;
@@ -163,7 +157,7 @@ export const usePublicStore = defineStore('publicStore', {
                 } else {
                     this.message = error.message || 'Error al cargar información del catálogo';
                 }
-                
+
                 console.error('Error fetching catalog info:', error);
                 throw error;
             } finally {
@@ -175,66 +169,66 @@ export const usePublicStore = defineStore('publicStore', {
         async loadCatalogProducts(slug, options = {}) {
             this.isLoading = true;
             this.error = null;
-            
+
             try {
                 const params = {};
-                
+
                 // Token de acceso si es requerido
                 if (this.accessToken || options.token) {
                     params.token = this.accessToken || options.token;
                 }
-                
+
                 // Filtros de búsqueda
                 if (this.searchQuery.trim()) {
                     params.search = this.searchQuery.trim();
                 }
-                
+
                 if (this.selectedCategory) {
                     params.category_id = this.selectedCategory;
                 }
-                
+
                 // Paginación
                 if (options.usePagination && (options.page || this.currentPage > 1)) {
                     params.page = options.page || this.currentPage;
                     params.per_page = options.perPage || this.perPage;
                 }
-                
+
                 // Ordenamiento
                 if (options.sort) {
                     params.sort = options.sort;
                 }
-                
+
                 const response = await fetchCatalogProducts(slug, params);
                 const data = response.data;
-                
+
                 this.products = data.data || [];
                 this.totalProducts = data.total || data.data?.length || 0;
                 this.totalPages = Math.ceil(this.totalProducts / this.perPage);
                 this.currentPage = data.current_page || 1;
                 this.lastPage = data.last_page || null;
-                
+
                 // Extraer información del almacén y empresa si no están disponibles
                 if (data.warehouse && !this.currentWarehouse) {
                     this.currentWarehouse = data.warehouse;
                 }
-                
+
                 if (data.company && !this.currentCompany) {
                     this.currentCompany = data.company;
                 }
-                
+
                 // Actualizar slug del catálogo
                 this.catalogSlug = slug;
-                
+
                 // Extraer categorías únicas de los productos
                 this.extractCategories();
-                
+
                 return data;
             } catch (error) {
                 this.error = error;
                 this.products = [];
                 this.totalProducts = 0;
                 this.totalPages = 1;
-                
+
                 if (error.response?.status === 403) {
                     this.message = 'Token de acceso requerido o inválido';
                     this.isTokenRequired = true;
@@ -245,7 +239,7 @@ export const usePublicStore = defineStore('publicStore', {
                 } else {
                     this.message = error.message || 'Error al cargar productos';
                 }
-                
+
                 console.error('Error fetching catalog products:', error);
                 throw error;
             } finally {
@@ -261,20 +255,20 @@ export const usePublicStore = defineStore('publicStore', {
                 if (existingProduct) {
                     return existingProduct;
                 }
-                
+
                 // Usar el endpoint específico para obtener un producto individual
                 const params = {};
                 if (accessToken || this.accessToken) {
                     params.token = accessToken || this.accessToken;
                 }
-                
+
                 const response = await fetchCatalogProduct(slug, productId, params);
                 const data = response.data;
-                
+
                 if (data.data) {
                     return data.data;
                 }
-                
+
                 return null;
             } catch (error) {
                 console.error('Error fetching product by slug:', error);
@@ -292,14 +286,14 @@ export const usePublicStore = defineStore('publicStore', {
         async initializeCatalog(slug, accessToken = null) {
             this.reset();
             this.catalogSlug = slug;
-            
+
             if (accessToken) {
                 this.accessToken = accessToken;
             }
-            
+
             // Primero obtener información del catálogo
             await this.loadCatalogInfo(slug, accessToken);
-            
+
             // Luego cargar los productos
             await this.loadCatalogProducts(slug, { token: accessToken });
         },
@@ -314,14 +308,14 @@ export const usePublicStore = defineStore('publicStore', {
         getCatalogUrl(slug = null) {
             const currentSlug = slug || this.catalogSlug;
             if (!currentSlug) return null;
-            
+
             const baseUrl = window.location.origin;
             let url = `${baseUrl}/tienda/${currentSlug}`;
-            
+
             if (this.accessToken) {
                 url += `?token=${this.accessToken}`;
             }
-            
+
             return url;
         },
 
@@ -329,14 +323,14 @@ export const usePublicStore = defineStore('publicStore', {
         getProductUrl(productId, slug = null) {
             const currentSlug = slug || this.catalogSlug;
             if (!currentSlug) return null;
-            
+
             const baseUrl = window.location.origin;
             let url = `${baseUrl}/tienda/${currentSlug}/productos/${productId}`;
-            
+
             if (this.accessToken) {
                 url += `?token=${this.accessToken}`;
             }
-            
+
             return url;
         },
 

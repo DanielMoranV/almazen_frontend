@@ -33,7 +33,7 @@ const fetchProduct = async () => {
     loading.value = true;
     try {
         let foundProduct = null;
-        
+
         if (isSlugRoute.value) {
             // Nueva forma: Usando slug amigable
             foundProduct = await publicStore.findProductBySlug(slug.value, productId.value, accessToken.value);
@@ -59,9 +59,9 @@ const fetchProduct = async () => {
         }
     } catch (error) {
         console.error('Error fetching product:', error);
-        
+
         let errorMessage = 'No se pudo cargar el producto';
-        
+
         if (error.message?.includes('403') && isSlugRoute.value) {
             errorMessage = 'Token de acceso requerido o inválido';
         }
@@ -229,7 +229,7 @@ onMounted(() => {
     if (accessToken.value && isSlugRoute.value) {
         publicStore.setAccessToken(accessToken.value);
     }
-    
+
     // Cargar el producto específico
     fetchProduct();
 });

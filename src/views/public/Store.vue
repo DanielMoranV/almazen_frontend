@@ -57,9 +57,9 @@ const loadProducts = async () => {
     try {
         if (isSlugRoute.value) {
             // Nueva forma: Usando slug amigable
-            await publicStore.loadCatalogProducts(slug.value, { 
+            await publicStore.loadCatalogProducts(slug.value, {
                 token: accessToken.value,
-                usePagination: true 
+                usePagination: true
             });
         } else if (isLegacyRoute.value) {
             // Forma legacy: Mantener retrocompatibilidad
@@ -70,7 +70,7 @@ const loadProducts = async () => {
         }
     } catch (error) {
         let errorMessage = 'No se pudieron cargar los productos';
-        
+
         if (error.message?.includes('404')) {
             errorMessage = isSlugRoute.value ? 'Catálogo no encontrado' : 'Tienda no encontrada';
         } else if (error.message?.includes('403')) {
@@ -218,14 +218,10 @@ const updateStructuredData = () => {
                 name: 'Catálogo de Productos',
                 numberOfItems: totalProducts.value
             },
-            url: isSlugRoute.value 
-                ? `${window.location.origin}/tienda/${slug.value}`
-                : `${window.location.origin}/store/${companyId.value}/${warehouseId.value}`,
+            url: isSlugRoute.value ? `${window.location.origin}/tienda/${slug.value}` : `${window.location.origin}/store/${companyId.value}/${warehouseId.value}`,
             potentialAction: {
                 '@type': 'SearchAction',
-                target: isSlugRoute.value 
-                    ? `${window.location.origin}/tienda/${slug.value}?search={search_term_string}`
-                    : `${window.location.origin}/store/${companyId.value}/${warehouseId.value}?search={search_term_string}`,
+                target: isSlugRoute.value ? `${window.location.origin}/tienda/${slug.value}?search={search_term_string}` : `${window.location.origin}/store/${companyId.value}/${warehouseId.value}?search={search_term_string}`,
                 'query-input': 'required name=search_term_string'
             }
         };
@@ -323,16 +319,16 @@ const showTokenDialog = () => {
 
 const submitToken = async () => {
     if (!tokenInput.value.trim()) return;
-    
+
     // Actualizar token en el store
     publicStore.setAccessToken(tokenInput.value.trim());
-    
+
     try {
         // Intentar cargar productos con el token
         await loadProducts();
         showTokenInput.value = false;
         tokenInput.value = '';
-        
+
         toast.add({
             severity: 'success',
             summary: 'Acceso concedido',
@@ -360,7 +356,7 @@ const applyUrlToken = () => {
 onMounted(async () => {
     // Aplicar token de la URL si existe
     applyUrlToken();
-    
+
     try {
         if (isSlugRoute.value) {
             // Nueva forma: Inicializar por slug
@@ -369,7 +365,7 @@ onMounted(async () => {
             // Forma legacy: Mantener retrocompatibilidad
             await publicStore.initializeStore(warehouseId.value, companyId.value);
         }
-        
+
         // Actualizar SEO después de cargar los datos
         updateSEO();
         updateStructuredData();
@@ -486,12 +482,7 @@ onMounted(async () => {
                 </div>
 
                 <div v-else class="products-grid">
-                    <router-link 
-                        v-for="product in products" 
-                        :key="product.id" 
-                        :to="getProductRoute(product.id)" 
-                        class="product-card"
-                    >
+                    <router-link v-for="product in products" :key="product.id" :to="getProductRoute(product.id)" class="product-card">
                         <!-- Imagen del producto -->
                         <div class="product-image">
                             <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
@@ -593,13 +584,7 @@ onMounted(async () => {
         </footer>
 
         <!-- 🆕 Dialog: Token de Acceso -->
-        <Dialog 
-            v-model:visible="showTokenInput" 
-            modal
-            header="Token de Acceso Requerido"
-            :style="{ width: '90vw', maxWidth: '500px' }"
-            :closable="false"
-        >
+        <Dialog v-model:visible="showTokenInput" modal header="Token de Acceso Requerido" :style="{ width: '90vw', maxWidth: '500px' }" :closable="false">
             <template #default>
                 <div class="space-y-4">
                     <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-700">
@@ -607,37 +592,20 @@ onMounted(async () => {
                             <i class="pi pi-lock"></i>
                             <span class="font-medium">Catálogo Protegido</span>
                         </div>
-                        <p class="text-sm text-blue-700 dark:text-blue-300">
-                            Este catálogo requiere un token de acceso para visualizar los productos.
-                            Por favor, ingresa el token proporcionado.
-                        </p>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">Este catálogo requiere un token de acceso para visualizar los productos. Por favor, ingresa el token proporcionado.</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Token de Acceso
-                        </label>
-                        <InputText
-                            v-model="tokenInput"
-                            placeholder="Ingresa tu token de acceso"
-                            class="w-full"
-                            @keyup.enter="submitToken"
-                        />
-                        <small class="text-gray-500 dark:text-gray-400 mt-1 block">
-                            El token es proporcionado por el propietario del catálogo
-                        </small>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"> Token de Acceso </label>
+                        <InputText v-model="tokenInput" placeholder="Ingresa tu token de acceso" class="w-full" @keyup.enter="submitToken" />
+                        <small class="text-gray-500 dark:text-gray-400 mt-1 block"> El token es proporcionado por el propietario del catálogo </small>
                     </div>
                 </div>
             </template>
-            
+
             <template #footer>
                 <div class="flex justify-end gap-2">
-                    <Button
-                        label="Acceder"
-                        @click="submitToken"
-                        :disabled="!tokenInput.trim()"
-                        icon="pi pi-key"
-                    />
+                    <Button label="Acceder" @click="submitToken" :disabled="!tokenInput.trim()" icon="pi pi-key" />
                 </div>
             </template>
         </Dialog>
