@@ -178,6 +178,17 @@ const router = createRouter({
                     component: () => import('@/views/inventory/warehouses/Warehouses.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística'] }
                 },
+                // 🆕 NUEVO: Administración de Catálogos Públicos
+                {
+                    path: '/inventory/warehouses/catalogs',
+                    name: 'publicCatalogs',
+                    component: () => import('@/views/inventory/warehouses/PublicCatalogs.vue'),
+                    meta: {
+                        positions: ['Developer', 'Administrador', 'Logística'],
+                        title: 'Catálogos Públicos',
+                        description: 'Gestión de catálogos públicos con URLs amigables'
+                    }
+                },
 
                 // Administración - Sistema
                 {
@@ -283,17 +294,48 @@ const router = createRouter({
             component: () => import('@/views/auth/Login.vue'),
             meta: { public: true } // Ruta pública
         },
+        // 🆕 NUEVO: Rutas con URLs Amigables (Slugs)
+        {
+            path: '/tienda/:slug',
+            name: 'catalogHome',
+            component: () => import('@/views/public/Store.vue'),
+            meta: {
+                public: true,
+                title: 'Catálogo de Productos',
+                description: 'Descubre nuestros productos'
+            }
+        },
+        {
+            path: '/tienda/:slug/productos/:productId',
+            name: 'catalogProductDetail',
+            component: () => import('@/views/public/ProductDetail.vue'),
+            meta: {
+                public: true,
+                title: 'Producto',
+                description: 'Detalles del producto'
+            }
+        },
+
+        // 🔄 LEGACY: Rutas Antiguas (Mantener para retrocompatibilidad - DEPRECATED)
         {
             path: '/store/:companyId/:warehouseId',
             name: 'publicStore',
             component: () => import('@/views/public/Store.vue'),
-            meta: { public: true } // Ruta pública
+            meta: {
+                public: true,
+                deprecated: true,
+                redirectTo: 'catalogHome'
+            }
         },
         {
             path: '/store/:companyId/:warehouseId/product/:productId',
             name: 'publicProductDetail',
             component: () => import('@/views/public/ProductDetail.vue'),
-            meta: { public: true } // Ruta pública
+            meta: {
+                public: true,
+                deprecated: true,
+                redirectTo: 'catalogProductDetail'
+            }
         },
 
         {

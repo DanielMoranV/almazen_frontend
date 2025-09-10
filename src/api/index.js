@@ -415,7 +415,49 @@ export const fetchAgingAnalysis = (params = {}) => {
     return axios.get(`/dashboard/aging-analysis${queryString ? `?${queryString}` : ''}`);
 };
 
-// Public Store API - Sin autenticación
+// 🆕 NEW: Catálogo Público con URLs Amigables
+export const fetchCatalogInfo = (slug, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/tienda/${slug}/info${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchCatalogProducts = (slug, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/tienda/${slug}/productos${queryString ? `?${queryString}` : ''}`);
+};
+
+export const fetchCatalogProduct = (slug, productId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/tienda/${slug}/productos/${productId}${queryString ? `?${queryString}` : ''}`);
+};
+
+// 🆕 NEW: Administración de Catálogos Públicos (Autenticado)
+export const fetchPublicCatalogs = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return axios.get(`/warehouses/public-catalogs${queryString ? `?${queryString}` : ''}`);
+};
+
+export const checkSlugAvailability = (slug, warehouseId = null) => {
+    return axios.post('/warehouses/check-slug', { slug, warehouse_id: warehouseId });
+};
+
+export const getCatalogConfig = (warehouseId) => {
+    return axios.get(`/warehouses/${warehouseId}/catalog-config`);
+};
+
+export const updateCatalogConfig = (warehouseId, config) => {
+    return axios.put(`/warehouses/${warehouseId}/catalog-config`, config);
+};
+
+export const regenerateAccessToken = (warehouseId) => {
+    return axios.post(`/warehouses/${warehouseId}/regenerate-token`);
+};
+
+export const removeAccessToken = (warehouseId) => {
+    return axios.delete(`/warehouses/${warehouseId}/access-token`);
+};
+
+// 🔄 LEGACY: Public Store API - Sin autenticación (DEPRECATED - Mantener para retrocompatibilidad)
 export const fetchPublicProducts = (warehouseId, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     return axios.get(`/public/warehouses/${warehouseId}/products${queryString ? `?${queryString}` : ''}`);

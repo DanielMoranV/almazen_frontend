@@ -13,9 +13,15 @@ const showFilters = ref(false);
 // Control de errores de carga de logo
 const logoError = ref(false);
 
-// Estados computados
+// Estados computados - Detectar tipo de URL (slug vs legacy)
+const isSlugRoute = computed(() => route.name === 'catalogHome');
+const isLegacyRoute = computed(() => route.name === 'publicStore');
+
+// Parámetros según el tipo de ruta
+const slug = computed(() => route.params.slug);
 const companyId = computed(() => route.params.companyId);
 const warehouseId = computed(() => route.params.warehouseId);
+const accessToken = computed(() => route.query.token);
 
 // Computed properties que acceden al store
 const products = computed(() => publicStore.filteredProducts);
@@ -49,11 +55,29 @@ const formatDate = (dateString) => publicStore.formatDate(dateString);
 // Función para cargar productos usando el store
 const loadProducts = async () => {
     try {
-        await publicStore.loadPublicProducts(warehouseId.value);
+        if (isSlugRoute.value) {
+            // Nueva forma: Usando slug amigable
+            await publicStore.loadCatalogProducts(slug.value, { 
+                token: accessToken.value,
+                usePagination: true 
+            });
+        } else if (isLegacyRoute.value) {
+            // Forma legacy: Mantener retrocompatibilidad
+            await publicStore.loadPublicProducts(warehouseId.value, {
+                companyId: companyId.value,
+                usePagination: true
+            });
+        }
     } catch (error) {
         let errorMessage = 'No se pudieron cargar los productos';
+        
         if (error.message?.includes('404')) {
-            errorMessage = 'Tienda no encontrada';
+            errorMessage = isSlugRoute.value ? 'Catálogo no encontrado' : 'Tienda no encontrada';
+        } else if (error.message?.includes('403')) {
+            errorMessage = 'Token de acceso requerido o inválido';
+            // Si necesita token, mostrar diálogo
+            showTokenDialog();
+            return;
         } else if (error.message?.includes('500')) {
             errorMessage = 'Error del servidor. Por favor, inténtalo más tarde.';
         }
@@ -104,6 +128,24 @@ const clearFilters = () => {
 // Alternar filtro de categoría
 const toggleCategoryFilter = (categoryId) => {
     publicStore.toggleCategoryFilter(categoryId);
+};
+
+// 🆕 Nuevo: Generar ruta de producto según el tipo de URL
+const getProductRoute = (productId) => {
+    if (isSlugRoute.value) {
+        // Nueva forma: URL con slug
+        return {
+            name: 'catalogProductDetail',
+            params: { slug: slug.value, productId },
+            query: accessToken.value ? { token: accessToken.value } : {}
+        };
+    } else {
+        // Forma legacy
+        return {
+            name: 'publicProductDetail',
+            params: { companyId: companyId.value, warehouseId: warehouseId.value, productId }
+        };
+    }
 };
 
 // SEO dinámico
@@ -176,10 +218,14 @@ const updateStructuredData = () => {
                 name: 'Catálogo de Productos',
                 numberOfItems: totalProducts.value
             },
-            url: `${window.location.origin}/store/${companyId.value}/${warehouseId.value}`,
+            url: isSlugRoute.value 
+                ? `${window.location.origin}/tienda/${slug.value}`
+                : `${window.location.origin}/store/${companyId.value}/${warehouseId.value}`,
             potentialAction: {
                 '@type': 'SearchAction',
-                target: `${window.location.origin}/store/${companyId.value}/${warehouseId.value}?search={search_term_string}`,
+                target: isSlugRoute.value 
+                    ? `${window.location.origin}/tienda/${slug.value}?search={search_term_string}`
+                    : `${window.location.origin}/store/${companyId.value}/${warehouseId.value}?search={search_term_string}`,
                 'query-input': 'required name=search_term_string'
             }
         };
@@ -266,14 +312,73 @@ const isValidImageUrl = (url) => {
     }
 };
 
+// 🆕 Nuevo: Diálogo de token de acceso
+const showTokenInput = ref(false);
+const tokenInput = ref('');
+const isTokenRequired = computed(() => publicStore.isTokenRequired);
+
+const showTokenDialog = () => {
+    showTokenInput.value = true;
+};
+
+const submitToken = async () => {
+    if (!tokenInput.value.trim()) return;
+    
+    // Actualizar token en el store
+    publicStore.setAccessToken(tokenInput.value.trim());
+    
+    try {
+        // Intentar cargar productos con el token
+        await loadProducts();
+        showTokenInput.value = false;
+        tokenInput.value = '';
+        
+        toast.add({
+            severity: 'success',
+            summary: 'Acceso concedido',
+            detail: 'Token válido, cargando catálogo...',
+            life: 3000
+        });
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Token inválido',
+            detail: 'El token proporcionado no es válido',
+            life: 3000
+        });
+    }
+};
+
+// Función para detectar token en URL y aplicarlo
+const applyUrlToken = () => {
+    if (accessToken.value) {
+        publicStore.setAccessToken(accessToken.value);
+    }
+};
+
 // Inicialización
 onMounted(async () => {
-    // Inicializar store y cargar productos
-    await publicStore.initializeStore(warehouseId.value, companyId.value);
-
-    // Actualizar SEO después de cargar los datos
-    updateSEO();
-    updateStructuredData();
+    // Aplicar token de la URL si existe
+    applyUrlToken();
+    
+    try {
+        if (isSlugRoute.value) {
+            // Nueva forma: Inicializar por slug
+            await publicStore.initializeCatalog(slug.value, accessToken.value);
+        } else if (isLegacyRoute.value) {
+            // Forma legacy: Mantener retrocompatibilidad
+            await publicStore.initializeStore(warehouseId.value, companyId.value);
+        }
+        
+        // Actualizar SEO después de cargar los datos
+        updateSEO();
+        updateStructuredData();
+    } catch (error) {
+        if (error.message?.includes('403')) {
+            // Si requiere token, mostrar el diálogo
+            showTokenDialog();
+        }
+    }
 });
 </script>
 
@@ -381,7 +486,12 @@ onMounted(async () => {
                 </div>
 
                 <div v-else class="products-grid">
-                    <router-link v-for="product in products" :key="product.id" :to="{ name: 'publicProductDetail', params: { companyId: companyId, warehouseId: warehouseId, productId: product.id } }" class="product-card">
+                    <router-link 
+                        v-for="product in products" 
+                        :key="product.id" 
+                        :to="getProductRoute(product.id)" 
+                        class="product-card"
+                    >
                         <!-- Imagen del producto -->
                         <div class="product-image">
                             <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
@@ -481,6 +591,56 @@ onMounted(async () => {
                 </div>
             </div>
         </footer>
+
+        <!-- 🆕 Dialog: Token de Acceso -->
+        <Dialog 
+            v-model:visible="showTokenInput" 
+            modal
+            header="Token de Acceso Requerido"
+            :style="{ width: '90vw', maxWidth: '500px' }"
+            :closable="false"
+        >
+            <template #default>
+                <div class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 dark:bg-blue-900/20 dark:border-blue-700">
+                        <div class="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
+                            <i class="pi pi-lock"></i>
+                            <span class="font-medium">Catálogo Protegido</span>
+                        </div>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">
+                            Este catálogo requiere un token de acceso para visualizar los productos.
+                            Por favor, ingresa el token proporcionado.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Token de Acceso
+                        </label>
+                        <InputText
+                            v-model="tokenInput"
+                            placeholder="Ingresa tu token de acceso"
+                            class="w-full"
+                            @keyup.enter="submitToken"
+                        />
+                        <small class="text-gray-500 dark:text-gray-400 mt-1 block">
+                            El token es proporcionado por el propietario del catálogo
+                        </small>
+                    </div>
+                </div>
+            </template>
+            
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <Button
+                        label="Acceder"
+                        @click="submitToken"
+                        :disabled="!tokenInput.trim()"
+                        icon="pi pi-key"
+                    />
+                </div>
+            </template>
+        </Dialog>
     </div>
 </template>
 

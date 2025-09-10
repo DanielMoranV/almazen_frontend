@@ -13,10 +13,16 @@ const publicStore = usePublicStore();
 const product = ref(null);
 const loading = ref(false);
 
-// Estados computados
+// Estados computados - Detectar tipo de URL (slug vs legacy)
+const isSlugRoute = computed(() => route.name === 'catalogProductDetail');
+const isLegacyRoute = computed(() => route.name === 'publicProductDetail');
+
+// Parámetros según el tipo de ruta
+const slug = computed(() => route.params.slug);
 const companyId = computed(() => route.params.companyId);
 const warehouseId = computed(() => route.params.warehouseId);
 const productId = computed(() => route.params.productId);
+const accessToken = computed(() => route.query.token);
 
 // Usar las utilidades del store
 const formatPrice = (price) => publicStore.formatPrice(price);
@@ -26,7 +32,15 @@ const formatDate = (dateString) => publicStore.formatDate(dateString);
 const fetchProduct = async () => {
     loading.value = true;
     try {
-        const foundProduct = await publicStore.findProductById(warehouseId.value, productId.value, companyId.value);
+        let foundProduct = null;
+        
+        if (isSlugRoute.value) {
+            // Nueva forma: Usando slug amigable
+            foundProduct = await publicStore.findProductBySlug(slug.value, productId.value, accessToken.value);
+        } else if (isLegacyRoute.value) {
+            // Forma legacy: Mantener retrocompatibilidad
+            foundProduct = await publicStore.findProductById(warehouseId.value, productId.value, companyId.value);
+        }
 
         if (foundProduct) {
             product.value = foundProduct;
@@ -35,7 +49,7 @@ const fetchProduct = async () => {
             updateStructuredData();
         } else {
             // Si no se encuentra el producto, redirigir al catálogo
-            router.push({ name: 'publicStore', params: { warehouseId: warehouseId.value } });
+            router.push(getCatalogRoute());
             toast.add({
                 severity: 'warn',
                 summary: 'Producto no encontrado',
@@ -45,8 +59,12 @@ const fetchProduct = async () => {
         }
     } catch (error) {
         console.error('Error fetching product:', error);
-
+        
         let errorMessage = 'No se pudo cargar el producto';
+        
+        if (error.message?.includes('403') && isSlugRoute.value) {
+            errorMessage = 'Token de acceso requerido o inválido';
+        }
 
         toast.add({
             severity: 'error',
@@ -56,15 +74,33 @@ const fetchProduct = async () => {
         });
 
         // Redirigir al catálogo en caso de error
-        router.push({ name: 'publicStore', params: { warehouseId: warehouseId.value } });
+        router.push(getCatalogRoute());
     } finally {
         loading.value = false;
     }
 };
 
+// 🆕 Nuevo: Generar ruta de catálogo según el tipo de URL
+const getCatalogRoute = () => {
+    if (isSlugRoute.value) {
+        // Nueva forma: URL con slug
+        return {
+            name: 'catalogHome',
+            params: { slug: slug.value },
+            query: accessToken.value ? { token: accessToken.value } : {}
+        };
+    } else {
+        // Forma legacy
+        return {
+            name: 'publicStore',
+            params: { companyId: companyId.value, warehouseId: warehouseId.value }
+        };
+    }
+};
+
 // Volver al catálogo
 const goBack = () => {
-    router.push({ name: 'publicStore', params: { warehouseId: warehouseId.value } });
+    router.push(getCatalogRoute());
 };
 
 // SEO dinámico
@@ -189,6 +225,12 @@ watch(
 
 // Inicialización
 onMounted(() => {
+    // Aplicar token de la URL si existe (para rutas con slug)
+    if (accessToken.value && isSlugRoute.value) {
+        publicStore.setAccessToken(accessToken.value);
+    }
+    
+    // Cargar el producto específico
     fetchProduct();
 });
 </script>
