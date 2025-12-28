@@ -22,6 +22,9 @@ instance.interceptors.request.use(
     }
 );
 
+// Variable para evitar múltiples refreshes simultáneos
+let isRefreshing = false;
+
 //Add a response interceptor
 instance.interceptors.response.use(
     function (response) {
@@ -35,11 +38,14 @@ instance.interceptors.response.use(
     async function (error) {
         const originalRequest = error.config;
 
-        // Auto-refresh en 401 si no es retry y no es endpoint de auth (excepto login)
-        const isAuthEndpoint = originalRequest.url?.includes('/login/');
+        // Auto-refresh en 401 si no es retry y no es endpoint de auth
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                               originalRequest.url?.includes('/auth/refresh') ||
+                               originalRequest.url?.includes('/auth/register');
 
-        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint && !isRefreshing) {
             originalRequest._retry = true;
+            isRefreshing = true;
 
             try {
                 const authStore = useAuthStore();
@@ -57,8 +63,11 @@ instance.interceptors.response.use(
                 clearAuthData();
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
+
 
         // Si el backend responde, intenta adaptar la estructura al estándar
         let backendData = error.response && error.response.data;
