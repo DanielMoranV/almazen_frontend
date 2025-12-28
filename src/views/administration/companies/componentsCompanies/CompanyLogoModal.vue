@@ -130,7 +130,8 @@ const uploadLogo = async () => {
         clearInterval(progressInterval);
         uploadProgress.value = 100;
 
-        if (response.data.success) {
+        // El interceptor de axios ya desenvuelve response.data, así que response ya es el objeto data
+        if (response.success) {
             toast.add({
                 severity: 'success',
                 summary: 'Logo actualizado',
@@ -141,8 +142,8 @@ const uploadLogo = async () => {
             // Emitir evento de actualización
             emit('logo-updated', {
                 companyId: props.company.id,
-                logoUrl: response.data.logo_url,
-                company: response.data.company
+                logoUrl: response.data?.logo_url || response.logo_url,
+                company: response.data?.company || response.company
             });
 
             // Cerrar modal después de un breve delay
@@ -150,15 +151,17 @@ const uploadLogo = async () => {
                 closeModal();
             }, 1000);
         } else {
-            throw new Error(response.data.message || 'Error al subir logo');
+            throw new Error(response.message || 'Error al subir logo');
         }
     } catch (error) {
+        console.error('[CompanyLogoModal] Error al subir logo:', error);
         let errorMessage = 'Error al subir el logo';
 
-        if (error.response?.data?.errors?.logo) {
-            errorMessage = error.response.data.errors.logo.join(', ');
-        } else if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
+        // El error ya viene procesado por el interceptor de axios
+        if (error.validationErrors?.logo) {
+            errorMessage = error.validationErrors.logo.join(', ');
+        } else if (error.message) {
+            errorMessage = error.message;
         }
 
         toast.add({

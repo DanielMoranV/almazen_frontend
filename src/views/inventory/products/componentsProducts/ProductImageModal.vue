@@ -1,11 +1,11 @@
 <script setup>
-import { useProductsStore } from '@/stores/productsStore';
 import { uploadProductImage } from '@/api';
-import { useToast } from 'primevue/usetoast';
+import { useProductsStore } from '@/stores/productsStore';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import FileUpload from 'primevue/fileupload';
 import ProgressBar from 'primevue/progressbar';
+import { useToast } from 'primevue/usetoast';
 import { computed, ref, watch } from 'vue';
 
 const productsStore = useProductsStore();
@@ -137,13 +137,14 @@ const uploadImage = async () => {
             console.warn('Using direct API call as store function is not available');
             const apiResponse = await uploadProductImage(props.product.id, selectedFile.value);
 
-            if (apiResponse.data.success) {
+            // El interceptor de axios ya desenvuelve response.data, así que apiResponse ya es el objeto data
+            if (apiResponse.success) {
                 // Actualizar manualmente la lista de productos en el store
-                const updatedProduct = apiResponse.data.data.product;
+                const updatedProduct = apiResponse.data?.product || apiResponse.product;
                 productsStore.products = productsStore.products.map((product) => (product.id === props.product.id ? updatedProduct : product));
-                result = apiResponse.data.data;
+                result = apiResponse.data || apiResponse;
             } else {
-                throw new Error(apiResponse.data.message || 'Error al subir imagen');
+                throw new Error(apiResponse.message || 'Error al subir imagen');
             }
         }
 
@@ -169,14 +170,15 @@ const uploadImage = async () => {
             closeModal();
         }, 1000);
     } catch (error) {
-        console.error('Error uploading image:', error);
+        console.error('[ProductImageModal] Error al subir imagen:', error);
 
         let errorMessage = 'Error al subir la imagen';
 
-        if (error.response?.data?.errors?.image) {
-            errorMessage = error.response.data.errors.image.join(', ');
-        } else if (error.response?.data?.message) {
-            errorMessage = error.response.data.message;
+        // El error ya viene procesado por el interceptor de axios
+        if (error.validationErrors?.image) {
+            errorMessage = error.validationErrors.image.join(', ');
+        } else if (error.message) {
+            errorMessage = error.message;
         }
 
         toast.add({
