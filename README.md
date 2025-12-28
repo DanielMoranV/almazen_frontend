@@ -60,6 +60,17 @@ Almazen es un sistema de gestión integral (ERP) diseñado para optimizar las op
     ```
     Esto generará los archivos de producción en el directorio `dist/`.
 
+## Documentación
+
+Puedes encontrar documentación detallada sobre módulos específicos en la carpeta `docs/`:
+
+*   [Documentación de API de Control de Caja](docs/CASH_CONTROL_API_DOCUMENTATION.md)
+*   [Implementación de Importación de Productos](docs/PRODUCT_IMPORT_IMPLEMENTATION.md)
+*   [Documentación de Tienda Pública](docs/PUBLIC_STORE_DOCUMENTATION.md)
+*   [Implementación de Exportación/Importación de Stock](docs/STOCK_EXPORT_IMPORT_FINAL_IMPLEMENTATION.md)
+*   [Guía de Migración a URLs Amigables](docs/URLS_AMIGABLES_MIGRATION_GUIDE.md)
+*   [Readme de Caja y Ventas](docs/cash_and_sales_readme.md)
+
 ## Contribución
 
 Si deseas contribuir a este proyecto, por favor, sigue las mejores prácticas de desarrollo y envía tus pull requests.
