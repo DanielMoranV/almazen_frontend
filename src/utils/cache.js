@@ -30,6 +30,12 @@ export default {
      * @return {Object}
      */
     setItem: (key, value) => {
+        // Prevent storing undefined or null values
+        if (value === undefined || value === null) {
+            console.warn(`Attempted to cache undefined/null value for key "${key}". Skipping.`);
+            storage.removeItem(key);
+            return null;
+        }
         const encripted = base64EncodeUnicode(JSON.stringify(value));
         storage.setItem(key, encripted);
         return encripted;
@@ -53,7 +59,10 @@ export default {
             try {
                 return JSON.parse(base64DecodeUnicode(item));
             } catch (e) {
-                console.error('Error parsing cached item:', e);
+                console.error(`Error parsing cached item "${key}":`, e);
+                // Remove corrupted cache entry
+                storage.removeItem(key);
+                console.warn(`Removed corrupted cache entry: "${key}"`);
                 return null;
             }
         }

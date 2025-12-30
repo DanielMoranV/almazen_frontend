@@ -56,6 +56,12 @@ const router = createRouter({
                     component: () => import('@/views/commerce/sales/quotes/Quotes.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Ventas'] }
                 },
+                {
+                    path: '/commerce/sales/discount-codes',
+                    name: 'discount-codes',
+                    component: () => import('@/views/sales/discounts/DiscountCodes.vue'),
+                    meta: { positions: ['Developer', 'Administrador', 'Gerente'] }
+                },
 
                 // Commerce - Partners
                 {
@@ -133,6 +139,16 @@ const router = createRouter({
                     name: 'products',
                     component: () => import('@/views/inventory/products/Products.vue'),
                     meta: { positions: ['Developer', 'Administrador', 'Logística', 'Compras'] }
+                },
+                {
+                    path: '/inventory/catalogs',
+                    name: 'catalogs',
+                    component: () => import('@/views/inventory/catalogs/Catalogs.vue'),
+                    meta: { 
+                        positions: ['Developer', 'Administrador', 'Logística'],
+                        title: 'Catálogos de Productos',
+                        description: 'Gestión de galerías de imágenes de productos'
+                    }
                 },
                 {
                     path: '/inventory/stock',

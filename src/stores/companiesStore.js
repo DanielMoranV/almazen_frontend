@@ -91,9 +91,16 @@ export const useCompaniesStore = defineStore('companiesStore', {
         },
 
         async updateCompany(payload) {
+            console.log('[companiesStore] updateCompany called with payload:', payload);
+            console.log('[companiesStore] Social media in payload:', payload.social_media);
+            
             this.isLoading = true;
             try {
                 const res = await updateCompany(payload, payload.id);
+                console.log('[companiesStore] API response:', res);
+                console.log('[companiesStore] Response data:', res.data);
+                console.log('[companiesStore] Response social_media:', res.data?.social_media);
+                
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
                     this.companies = this.companies.map((c) => (c.id === payload.id ? normalizeCompany(processed.data) : c));
@@ -104,6 +111,7 @@ export const useCompaniesStore = defineStore('companiesStore', {
                     this.message = processed.message || 'Error al actualizar empresa';
                 }
             } catch (error) {
+                console.error('[companiesStore] Error updating company:', error);
                 handleProcessError(error, this);
             } finally {
                 this.isLoading = false;
@@ -117,7 +125,9 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
                     this.companyConfig = processed.data.config ?? config;
-                    cache.setItem('companyConfig', this.companyConfig);
+                    if (this.companyConfig !== undefined && this.companyConfig !== null) {
+                        cache.setItem('companyConfig', this.companyConfig);
+                    }
                     this.success = true;
                     this.message = processed.message || 'Configuración actualizada correctamente';
                 } else {
@@ -139,7 +149,9 @@ export const useCompaniesStore = defineStore('companiesStore', {
                 const processed = handleProcessSuccess(res, this);
                 if (processed.success) {
                     this.companyConfig = processed.data;
-                    cache.setItem('companyConfig', processed.data);
+                    if (processed.data !== undefined && processed.data !== null) {
+                        cache.setItem('companyConfig', processed.data);
+                    }
                     this.success = true;
                     this.message = processed.message || 'Configuración obtenida correctamente';
                 } else {

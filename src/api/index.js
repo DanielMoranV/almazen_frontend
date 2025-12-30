@@ -18,7 +18,13 @@ export const updateUser = (payload, id) => axios.put(`/users/${id}`, payload);
 export const fetchCompanies = () => axios.get('/companies');
 export const createCompany = (payload) => axios.post('/companies', payload);
 export const deleteCompany = (id) => axios.delete(`/companies/${id}`);
-export const updateCompany = (payload, id) => axios.put(`/companies/${id}`, payload);
+export const updateCompany = (payload, id) => {
+    console.log('[API] updateCompany - Sending request to:', `/companies/${id}`);
+    console.log('[API] updateCompany - Payload:', JSON.stringify(payload, null, 2));
+    console.log('[API] updateCompany - Social media:', payload.social_media);
+    return axios.put(`/companies/${id}`, payload);
+};
+
 
 // Company Logo Upload
 export const uploadCompanyLogo = (companyId, logoFile) => {

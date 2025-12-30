@@ -22,10 +22,17 @@ export default defineConfig({
             'jsbarcode',
             'print-js',
             'vue-i18n',
-            'vue-i18n-loader'
+            'vue-i18n-loader',
+            'vuedraggable'
         ],
 
         noDiscovery: true
+    },
+    build: {
+        commonjsOptions: {
+            include: [/vuedraggable/, /node_modules/],
+            transformMixedEsModules: true
+        }
     },
     plugins: [
         vue(),

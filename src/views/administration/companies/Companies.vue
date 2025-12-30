@@ -1,104 +1,60 @@
 <script setup>
-import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog.vue';
-import { useCompaniesStore } from '@/stores/companiesStore';
 import { useAuthStore } from '@/stores/authStore';
-import Button from 'primevue/button';
-import ConfirmDialog from 'primevue/confirmdialog';
+import { useCompaniesStore } from '@/stores/companiesStore';
 import ProgressSpinner from 'primevue/progressspinner';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
-import CompaniesTable from './componentsCompanies/CompaniesTable.vue';
+import CompanyContactInfo from './componentsCompanies/CompanyContactInfo.vue';
 import CompanyFormDialog from './componentsCompanies/CompanyFormDialog.vue';
 import CompanyLogoModal from './componentsCompanies/CompanyLogoModal.vue';
-import CompanyToolbar from './componentsCompanies/CompanyToolbar.vue';
+import CompanyProfileCard from './componentsCompanies/CompanyProfileCard.vue';
+import CompanySocialMedia from './componentsCompanies/CompanySocialMedia.vue';
 
 const toast = useToast();
 const companiesStore = useCompaniesStore();
 const authStore = useAuthStore();
 
 // Estados locales
-const selectedCompany = ref(null);
 const showCompanyDialog = ref(false);
 const showDeleteDialog = ref(false);
 const showLogoModal = ref(false);
-const isCreating = ref(false);
+const isLoading = ref(false);
 
-// Estados computados del store
-const totalCompanies = computed(() => companiesStore.companiesList.length);
-const isLoading = computed(() => companiesStore.isLoadingCompanies);
-const hasCompanies = computed(() => companiesStore.companiesList.length > 0);
-const canCreateCompany = computed(() => authStore.currentUser?.position === 'Developer');
+// Computed properties
+const currentCompany = computed(() => authStore.currentCompany);
+const hasCompany = computed(() => !!currentCompany.value);
 
 // Inicialización
 onMounted(async () => {
-    await loadCompanies();
+    // No need to fetch companies list, we use the company from auth
 });
 
-// Gestión de carga inicial
-const loadCompanies = async () => {
-    await companiesStore.fetchCompanies();
-    if (companiesStore.success) {
-        showSuccess('Empresas cargadas', 'Lista actualizada correctamente');
-    }
-};
-
-// Gestión de empresas
-const openCreateDialog = () => {
-    selectedCompany.value = null;
-    isCreating.value = true;
+// Gestión de empresa
+const openEditDialog = () => {
     showCompanyDialog.value = true;
 };
 
-const openEditDialog = (company) => {
-    selectedCompany.value = { ...company };
-    isCreating.value = false;
-    showCompanyDialog.value = true;
-};
-
-const openDeleteDialog = (company) => {
-    selectedCompany.value = company;
-    showDeleteDialog.value = true;
-};
-
-const openLogoModal = (company) => {
-    selectedCompany.value = company;
+const openLogoModal = () => {
     showLogoModal.value = true;
 };
 
 const handleCompanySubmit = async (companyData) => {
-    const action = isCreating.value ? companiesStore.createCompany : companiesStore.updateCompany;
-    await action(companyData, companyData.id);
+    console.log('[Companies] Received company data from dialog:', companyData);
+    console.log('[Companies] Social media from received data:', companyData.social_media);
+    
+    isLoading.value = true;
+    await companiesStore.updateCompany(companyData);
 
     if (companiesStore.success) {
-        const message = isCreating.value ? 'Empresa creada exitosamente' : 'Empresa actualizada exitosamente';
-        showSuccess(message, companiesStore.message);
+        showSuccess('Empresa actualizada', companiesStore.message);
         showCompanyDialog.value = false;
-        // Recargar la lista para mostrar los cambios
-        await companiesStore.fetchCompanies();
+        // Refresh user data to get updated company info
+        await authStore.me();
     } else {
         handleApiErrors(companiesStore);
     }
-};
-
-const handleCompanyDelete = async () => {
-    await companiesStore.removeCompany(selectedCompany.value.id);
-
-    if (companiesStore.success) {
-        showSuccess('Empresa eliminada', companiesStore.message);
-        showDeleteDialog.value = false;
-        // Recargar para reflejar la eliminación
-        await companiesStore.fetchCompanies();
-    } else {
-        handleApiErrors(companiesStore);
-        showDeleteDialog.value = false;
-    }
-};
-
-// Manejadores del toolbar
-const handleRefresh = async () => {
-    await companiesStore.fetchCompanies();
-    showSuccess('Datos actualizados', 'Lista de empresas actualizada');
+    isLoading.value = false;
 };
 
 // Helpers para manejo de respuestas API
@@ -126,90 +82,139 @@ const showError = (summary, detail) => {
 };
 
 // Manejador para cuando se actualiza un logo
-const handleLogoUpdated = (data) => {
-    // Actualizar la empresa en el store localmente
-    const companyIndex = companiesStore.companiesList.findIndex((c) => c.id === data.companyId);
-    if (companyIndex !== -1) {
-        companiesStore.companiesList[companyIndex].logo = data.logoUrl;
-    }
-
+const handleLogoUpdated = async (data) => {
+    showSuccess('Logo actualizado', 'El logo de la empresa se actualizó correctamente');
     showLogoModal.value = false;
+    // Refresh user data to get updated logo
+    await authStore.me();
 };
 </script>
 <template>
-    <div class="companies-page">
-        <!-- Toast y Confirmaciones -->
+    <div class="company-profile-page">
+        <!-- Toast -->
         <Toast />
-        <ConfirmDialog />
 
-        <!-- Toolbar Principal Mejorado -->
-        <CompanyToolbar :total-companies="totalCompanies" :is-loading="isLoading" @refresh="handleRefresh" @create="openCreateDialog" />
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="title-section">
+                    <h1 class="page-title">
+                        <i class="pi pi-building"></i>
+                        Perfil de Empresa
+                    </h1>
+                    <p class="page-subtitle">Gestiona la información de tu empresa</p>
+                </div>
+            </div>
+        </div>
 
-        <!-- Área Principal de Contenido con Animaciones -->
+        <!-- Área Principal de Contenido -->
         <div class="content-wrapper">
-            <!-- Estado Vacío Mejorado -->
+            <!-- Estado Vacío -->
             <transition name="fade" appear>
-                <div v-if="!isLoading && !hasCompanies" class="empty-state">
+                <div v-if="!isLoading && !hasCompany" class="empty-state">
                     <div class="empty-content">
                         <div class="empty-icon">
                             <i class="pi pi-building"></i>
                         </div>
-                        <h3 class="empty-title">Aún no tienes empresas</h3>
-                        <p class="empty-description">No hay empresas registradas en el sistema.</p>
-                        <div v-if="canCreateCompany" class="empty-actions">
-                            <Button icon="pi pi-plus" label="Agregar Empresa" class="primary-action-btn" @click="openCreateDialog" />
-                        </div>
+                        <h3 class="empty-title">No hay información de empresa</h3>
+                        <p class="empty-description">No se encontró información de empresa asociada a tu cuenta.</p>
                     </div>
                 </div>
             </transition>
 
-            <!-- Tabla de Empresas con Animaciones -->
+            <!-- Profile Content -->
             <transition name="slide-up" appear>
-                <div v-if="!isLoading && hasCompanies" class="table-container">
-                    <CompaniesTable :companies="companiesStore.companiesList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" @upload-logo="openLogoModal" />
+                <div v-if="!isLoading && hasCompany" class="profile-grid">
+                    <!-- Company Profile Card (Full Width) -->
+                    <div class="profile-section full-width">
+                        <CompanyProfileCard :company="currentCompany" @edit="openEditDialog" @upload-logo="openLogoModal" />
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="profile-section">
+                        <CompanyContactInfo :company="currentCompany" />
+                    </div>
+
+                    <!-- Social Media -->
+                    <div class="profile-section">
+                        <CompanySocialMedia :company="currentCompany" />
+                    </div>
                 </div>
             </transition>
 
-            <!-- Estado de Carga Mejorado -->
+            <!-- Estado de Carga -->
             <transition name="fade" appear>
                 <div v-if="isLoading" class="loading-state">
                     <div class="loading-content">
                         <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="3" fill="transparent" animationDuration="1s" />
-                        <p class="loading-text">Cargando empresas...</p>
+                        <p class="loading-text">Cargando información...</p>
                     </div>
                 </div>
             </transition>
         </div>
 
         <!-- Diálogos -->
-        <CompanyFormDialog v-model:visible="showCompanyDialog" :company="selectedCompany" :loading="isLoading" @submit="handleCompanySubmit" />
+        <CompanyFormDialog v-model:visible="showCompanyDialog" :company="currentCompany" :loading="isLoading" @submit="handleCompanySubmit" />
 
-        <CompanyLogoModal v-model:visible="showLogoModal" :company="selectedCompany" @logo-updated="handleLogoUpdated" />
-
-        <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedCompany?.company_name || ''" @confirm="handleCompanyDelete" />
+        <CompanyLogoModal v-model:visible="showLogoModal" :company="currentCompany" @logo-updated="handleLogoUpdated" />
     </div>
 </template>
 
 <style scoped>
-/* Contenedor principal de la página de empresas */
-.companies-page {
+/* Contenedor principal de la página */
+.company-profile-page {
     @apply min-h-screen;
 }
 
-/* Contenedor de contenido con espaciado y diseño mejorado */
-.content-wrapper {
-    @apply mt-6 space-y-6;
-}
-
-/* Contenedor de tabla con efecto de elevación */
-.table-container {
-    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden;
+/* Page Header */
+.page-header {
+    @apply relative overflow-hidden mb-6 rounded-xl;
+    background: linear-gradient(135deg, #059669 0%, #10b981 50%, #3b82f6 100%);
+    padding: 1.5rem;
     box-shadow:
-        0 10px 25px -5px rgba(0, 0, 0, 0.1),
-        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        0 4px 12px -2px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.05);
 }
 
-/* Estado vacío mejorado con diseño centrado */
+.header-content {
+    @apply relative z-10;
+}
+
+.title-section {
+    @apply text-center;
+}
+
+.page-title {
+    @apply flex items-center justify-center gap-2 text-2xl font-bold text-white mb-1;
+}
+
+.page-title i {
+    @apply text-2xl;
+}
+
+.page-subtitle {
+    @apply text-white/90 text-sm;
+}
+
+/* Contenedor de contenido */
+.content-wrapper {
+    @apply space-y-6;
+}
+
+/* Profile Grid */
+.profile-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+.profile-section {
+    @apply transition-all duration-300;
+}
+
+.profile-section.full-width {
+    @apply lg:col-span-2;
+}
+
+/* Estado vacío */
 .empty-state {
     @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl border-2 border-dashed border-green-200 dark:border-gray-600;
 }
@@ -218,18 +223,15 @@ const handleLogoUpdated = (data) => {
     @apply text-center px-8 py-12 max-w-md;
 }
 
-/* Contenedor del ícono mejorado */
 .empty-icon {
     @apply mx-auto mb-6 w-20 h-20 flex items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-500 shadow-lg;
 }
 
-/* Estilo del ícono con animación */
 .empty-icon i {
     @apply text-4xl text-white;
     animation: bounce 2s infinite;
 }
 
-/* Título del estado vacío mejorado */
 .empty-title {
     @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4;
     background: linear-gradient(135deg, #059669, #3b82f6);
@@ -238,22 +240,11 @@ const handleLogoUpdated = (data) => {
     background-clip: text;
 }
 
-/* Descripción del estado vacío */
 .empty-description {
     @apply text-gray-600 dark:text-gray-400 mb-8 text-lg leading-relaxed;
 }
 
-/* Contenedor de acciones en estado vacío */
-.empty-actions {
-    @apply flex justify-center gap-4;
-}
-
-/* Botón de acción principal */
-.primary-action-btn {
-    @apply bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 border-none text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105;
-}
-
-/* Estado de carga mejorado */
+/* Estado de carga */
 .loading-state {
     @apply flex items-center justify-center min-h-96 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl;
 }
@@ -304,7 +295,29 @@ const handleLogoUpdated = (data) => {
 }
 
 /* Ajustes responsivos para pantallas pequeñas */
+@media (max-width: 1024px) {
+    .profile-grid {
+        @apply grid-cols-1;
+    }
+
+    .profile-section.full-width {
+        @apply col-span-1;
+    }
+}
+
 @media (max-width: 640px) {
+    .page-header {
+        @apply p-6;
+    }
+
+    .page-title {
+        @apply text-3xl;
+    }
+
+    .page-subtitle {
+        @apply text-base;
+    }
+
     .empty-content {
         @apply px-4 py-8;
     }
@@ -316,19 +329,11 @@ const handleLogoUpdated = (data) => {
     .empty-description {
         @apply text-base;
     }
-
-    .empty-actions {
-        @apply flex-col gap-3;
-    }
-
-    .primary-action-btn {
-        @apply w-full;
-    }
 }
 
 /* Mejoras adicionales para modo oscuro */
 @media (prefers-color-scheme: dark) {
-    .table-container {
+    .profile-section {
         box-shadow:
             0 10px 25px -5px rgba(0, 0, 0, 0.3),
             0 4px 6px -2px rgba(0, 0, 0, 0.2);

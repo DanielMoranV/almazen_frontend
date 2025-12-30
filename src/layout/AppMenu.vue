@@ -85,6 +85,12 @@ const model = ref([
                         icon: 'pi pi-file-edit',
                         to: '/commerce/sales/quotes',
                         positions: ['Developer', 'Administrador', 'Vendedor']
+                    },
+                    {
+                        label: 'Códigos de Descuento',
+                        icon: 'pi pi-percentage',
+                        to: '/commerce/sales/discount-codes',
+                        positions: ['Developer', 'Administrador', 'Gerente']
                     }
                     // {
                     //     label: 'Facturas',
@@ -157,6 +163,12 @@ const model = ref([
                 icon: 'pi pi-tags',
                 to: '/inventory/products',
                 positions: ['Developer', 'Administrador', 'Gerente', 'Almacenista', 'Comprador']
+            },
+            {
+                label: 'Catálogos',
+                icon: 'pi pi-images',
+                to: '/inventory/catalogs',
+                positions: ['Developer', 'Administrador', 'Logística']
             },
             {
                 label: 'Stock Actual',

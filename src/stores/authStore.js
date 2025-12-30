@@ -21,6 +21,7 @@ export const useAuthStore = defineStore('authStore', {
         isAuthenticated: (state) => !!state.user && !!state.success,
         isActive: (state) => state.user?.is_active,
         currentUser: (state) => state.user,
+        currentCompany: (state) => state.user?.company || null,
         getCompanyConfig: (state) => state.companyConfig,
         loading: (state) => state.isLoading,
         getToken: (state) => state.token,
@@ -188,9 +189,12 @@ export const useAuthStore = defineStore('authStore', {
         },
 
         setCompanyConfig(companyConfig) {
-            if (this.companyConfig !== companyConfig) {
+            // Only update if the value is valid and different
+            if (companyConfig !== undefined && companyConfig !== null && this.companyConfig !== companyConfig) {
                 this.companyConfig = companyConfig;
                 cache.setItem('companyConfig', companyConfig);
+            } else if (companyConfig === undefined || companyConfig === null) {
+                console.warn('Attempted to set undefined/null companyConfig. Skipping.');
             }
         },
 

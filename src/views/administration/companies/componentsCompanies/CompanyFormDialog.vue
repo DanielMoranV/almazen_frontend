@@ -21,31 +21,62 @@ const emit = defineEmits(['update:visible', 'submit']);
 const companyForm = ref({
     id: null,
     company_name: '',
+    ruc: '',
     address: '',
     phone: '',
     email: '',
     website: '',
     logo: '',
     description: '',
-    is_active: true
+    is_active: true,
+    social_media: {
+        facebook: '',
+        instagram: '',
+        tiktok: '',
+        twitter: '',
+        linkedin: '',
+        youtube: '',
+        whatsapp: ''
+    }
 });
 
 const dialogVisible = ref(props.visible);
 
 const resetForm = () => {
     if (props.company) {
-        companyForm.value = { ...props.company };
+        companyForm.value = {
+            ...props.company,
+            social_media: props.company.social_media || {
+                facebook: '',
+                instagram: '',
+                tiktok: '',
+                twitter: '',
+                linkedin: '',
+                youtube: '',
+                whatsapp: ''
+            }
+        };
     } else {
         companyForm.value = {
             id: null,
             company_name: '',
+            ruc: '',
             address: '',
             phone: '',
             email: '',
             website: '',
             logo: '',
             description: '',
-            is_active: true
+            is_active: true,
+            social_media: {
+                facebook: '',
+                instagram: '',
+                tiktok: '',
+                twitter: '',
+                linkedin: '',
+                youtube: '',
+                whatsapp: ''
+            }
         };
     }
 };
@@ -78,6 +109,11 @@ const hideDialog = () => {
 };
 
 const submitForm = () => {
+    console.log('[CompanyFormDialog] Submitting company data:', {
+        ...companyForm.value,
+        social_media: companyForm.value.social_media
+    });
+    console.log('[CompanyFormDialog] Social media data:', JSON.stringify(companyForm.value.social_media, null, 2));
     emit('submit', { ...companyForm.value });
 };
 
@@ -115,6 +151,14 @@ const isFormValid = () => {
                 </div>
 
                 <div class="field">
+                    <label for="ruc" class="field-label">
+                        <i class="pi pi-id-card mr-2"></i>
+                        RUC
+                    </label>
+                    <InputText id="ruc" v-model="companyForm.ruc" fluid class="form-input" placeholder="12345678901" maxlength="11" />
+                </div>
+
+                <div class="field">
                     <label for="address" class="field-label required">
                         <i class="pi pi-map-marker mr-2"></i>
                         Dirección
@@ -146,6 +190,84 @@ const isFormValid = () => {
                         Sitio Web
                     </label>
                     <InputText id="website" v-model="companyForm.website" fluid class="form-input" placeholder="https://www.empresa.com" />
+                </div>
+
+                <div class="field">
+                    <label for="description" class="field-label">
+                        <i class="pi pi-file-edit mr-2"></i>
+                        Descripción
+                    </label>
+                    <Textarea id="description" v-model="companyForm.description" rows="3" fluid class="form-textarea" placeholder="Descripción de la empresa..." />
+                </div>
+
+                <!-- Social Media Section -->
+                <div class="social-media-section">
+                    <h4 class="section-header">
+                        <i class="pi pi-share-alt mr-2"></i>
+                        Redes Sociales
+                    </h4>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="facebook" class="field-label">
+                                <i class="pi pi-facebook mr-2"></i>
+                                Facebook
+                            </label>
+                            <InputText id="facebook" v-model="companyForm.social_media.facebook" fluid class="form-input" placeholder="usuario o URL" />
+                        </div>
+
+                        <div class="field">
+                            <label for="instagram" class="field-label">
+                                <i class="pi pi-instagram mr-2"></i>
+                                Instagram
+                            </label>
+                            <InputText id="instagram" v-model="companyForm.social_media.instagram" fluid class="form-input" placeholder="@usuario o URL" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="tiktok" class="field-label">
+                                <i class="pi pi-video mr-2"></i>
+                                TikTok
+                            </label>
+                            <InputText id="tiktok" v-model="companyForm.social_media.tiktok" fluid class="form-input" placeholder="@usuario o URL" />
+                        </div>
+
+                        <div class="field">
+                            <label for="twitter" class="field-label">
+                                <i class="pi pi-twitter mr-2"></i>
+                                Twitter/X
+                            </label>
+                            <InputText id="twitter" v-model="companyForm.social_media.twitter" fluid class="form-input" placeholder="@usuario o URL" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="linkedin" class="field-label">
+                                <i class="pi pi-linkedin mr-2"></i>
+                                LinkedIn
+                            </label>
+                            <InputText id="linkedin" v-model="companyForm.social_media.linkedin" fluid class="form-input" placeholder="empresa o URL" />
+                        </div>
+
+                        <div class="field">
+                            <label for="youtube" class="field-label">
+                                <i class="pi pi-youtube mr-2"></i>
+                                YouTube
+                            </label>
+                            <InputText id="youtube" v-model="companyForm.social_media.youtube" fluid class="form-input" placeholder="canal o URL" />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label for="whatsapp" class="field-label">
+                            <i class="pi pi-whatsapp mr-2"></i>
+                            WhatsApp
+                        </label>
+                        <InputText id="whatsapp" v-model="companyForm.social_media.whatsapp" fluid class="form-input" placeholder="+51987654321" />
+                    </div>
                 </div>
 
                 <div class="field">
@@ -253,6 +375,19 @@ const isFormValid = () => {
 
 .form-textarea:focus {
     @apply border-green-500 ring-2 ring-green-200 dark:ring-green-800;
+}
+
+/* Social Media Section */
+.social-media-section {
+    @apply mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 space-y-4;
+}
+
+.section-header {
+    @apply flex items-center text-base font-bold text-gray-800 dark:text-gray-200 mb-4;
+}
+
+.section-header i {
+    @apply text-green-600 dark:text-green-400;
 }
 
 /* Toggle de estado */
