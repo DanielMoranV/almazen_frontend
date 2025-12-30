@@ -61,18 +61,7 @@ const appliesToOptions = [
 
 const submitting = ref(false);
 
-// Watch for code prop changes
-watch(
-    () => props.code,
-    (newCode) => {
-        if (newCode) {
-            loadCodeData(newCode);
-        } else {
-            resetForm();
-        }
-    },
-    { immediate: true }
-);
+
 
 /**
  * Load code data into form
@@ -119,6 +108,19 @@ const resetForm = () => {
         is_stackable: false
     };
 };
+
+// Watch for code prop changes
+watch(
+    () => props.code,
+    (newCode) => {
+        if (newCode) {
+            loadCodeData(newCode);
+        } else {
+            resetForm();
+        }
+    },
+    { immediate: true }
+);
 
 /**
  * Handle form submission

@@ -127,13 +127,6 @@ watch(() => form.value.discount_amount, () => {
     calculateTotals();
 });
 
-// ... inside template ...
-                    <!-- Descuento -->
-                    <div class="field">
-                        <label for="discount_amount" class="field-label">Descuento</label>
-                        <InputNumber id="discount_amount" v-model="form.discount_amount" mode="currency" currency="PEN" locale="es-PE" :min="0" :class="{ 'p-invalid': submitted && !isValidDiscountAmount }" :readonly="hasDiscount" class="form-input" fluid />
-                        <small class="p-error" v-if="submitted && !isValidDiscountAmount">El monto debe ser mayor o igual a 0.</small>
-                    </div>
 
 // ... (keep rest of script)
 
@@ -208,11 +201,18 @@ const resetForm = () => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <!-- Impuestos -->
                     <div class="field">
                         <label for="tax_amount" class="field-label">Impuestos</label>
                         <InputNumber id="tax_amount" v-model="form.tax_amount" mode="currency" currency="PEN" locale="es-PE" :min="0" :class="{ 'p-invalid': submitted && !isValidTaxAmount }" class="form-input" fluid />
+                    </div>
+
+                    <!-- Descuento (Manual o Calculado) -->
+                    <div class="field">
+                        <label for="discount_amount" class="field-label">Descuento</label>
+                        <InputNumber id="discount_amount" v-model="form.discount_amount" mode="currency" currency="PEN" locale="es-PE" :min="0" :class="{ 'p-invalid': submitted && !isValidDiscountAmount }" :readonly="hasDiscount" class="form-input" fluid />
+                        <small class="p-error" v-if="submitted && !isValidDiscountAmount">El monto debe ser mayor o igual a 0.</small>
                     </div>
                     
                      <!-- Total (Read only or calculated) -->
