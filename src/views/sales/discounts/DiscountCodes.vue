@@ -2,6 +2,8 @@
 import { useDiscountCodesStore } from '@/stores/discountCodesStore';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Toast from 'primevue/toast';
@@ -154,10 +156,10 @@ const viewStats = (codeId) => {
             <div class="toolbar">
                 <div class="toolbar-left">
                     <div class="search-container">
-                        <span class="p-input-icon-left">
-                            <i class="pi pi-search"></i>
+                        <IconField>
+                            <InputIcon class="pi pi-search" />
                             <InputText v-model="searchQuery" placeholder="Buscar códigos..." class="search-input" />
-                        </span>
+                        </IconField>
                     </div>
 
                     <div class="filter-container">
