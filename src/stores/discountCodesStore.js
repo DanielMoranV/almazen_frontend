@@ -41,7 +41,8 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.list(filters);
-            discountCodes.value = response.data.data || [];
+            const codes = response.data.data || [];
+            discountCodes.value = codes.filter(c => c);
             return discountCodes.value;
         } catch (err) {
             error.value = err.response?.data?.message || 'Error al cargar códigos de descuento';
@@ -83,8 +84,10 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
             const response = await discountCodesApi.create(data);
             const newCode = response.data.data;
 
-            // Add to list
-            discountCodes.value.unshift(newCode);
+            // Add to list if valid
+            if (newCode) {
+                discountCodes.value.unshift(newCode);
+            }
 
             return newCode;
         } catch (err) {

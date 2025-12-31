@@ -37,7 +37,7 @@ const loading = computed(() => discountCodesStore.loading);
 
 // Filtered codes
 const filteredCodes = computed(() => {
-    let codes = discountCodesStore.discountCodes;
+    let codes = (discountCodesStore.discountCodes || []).filter(c => c);
 
     // Filter by search
     if (searchQuery.value) {
