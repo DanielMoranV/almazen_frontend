@@ -287,9 +287,10 @@ watch(
 );
 
 // Resetear error de logo cuando cambie la empresa
-watch(company, () => {
+watch(company, (newVal) => {
+    console.log('📦 [DEBUG] Company Data from Backend:', newVal);
     logoError.value = false;
-});
+}, { immediate: true });
 
 // Función para verificar si una URL es válida y accesible
 const isValidImageUrl = (url) => {
