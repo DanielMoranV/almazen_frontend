@@ -91,7 +91,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
             return newCode;
         } catch (err) {
-            error.value = err.response?.data?.message || 'Error al crear código de descuento';
+            error.value = err.response?.data?.details?.error_message || err.response?.data?.message || 'Error al crear código de descuento';
             console.error('[DiscountCodesStore] Error creating code:', err);
             throw err;
         } finally {
@@ -122,7 +122,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
             return updatedCode;
         } catch (err) {
-            error.value = err.response?.data?.message || 'Error al actualizar código de descuento';
+            error.value = err.response?.data?.details?.error_message || err.response?.data?.message || 'Error al actualizar código de descuento';
             console.error('[DiscountCodesStore] Error updating code:', err);
             throw err;
         } finally {

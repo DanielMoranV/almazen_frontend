@@ -173,10 +173,15 @@ const handleSubmit = async () => {
         resetForm();
     } catch (error) {
         console.error('[DiscountCodeForm] Error saving code:', error);
+        
+        const errorMessage = error.response?.data?.details?.error_message 
+            || error.response?.data?.message 
+            || 'Error al guardar el código de descuento';
+
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: error.response?.data?.message || 'Error al guardar el código de descuento',
+            detail: errorMessage,
             life: 4000
         });
     } finally {
