@@ -11,6 +11,22 @@ const customersStore = useCustomersStore();
 
 const productsStore = useProductsStore();
 
+// Discount Composable
+const {
+    discountCode,
+    discountType,
+    discountPercentage,
+    discountAmount,
+    validating,
+    error: discountError,
+    hasDiscount,
+    discountInfo,
+    validateCode,
+    applyManualDiscount,
+    clearDiscount,
+    calculateDiscount
+} = useDiscount();
+
 const props = defineProps({
     visible: Boolean,
     loading: Boolean,
@@ -31,6 +47,11 @@ const form = ref({
     subtotal_amount: 0,
     tax_amount: 0,
     discount_amount: 0,
+    discount_code: null,
+    discount_code_id: null,
+    discount_type: 'none',
+    discount_percentage: 0,
+    discount_code_input: '',
     total_amount: 0,
     notes: '',
     terms_and_conditions: 'Cotización válida por 30 días. Precios sujetos a cambios sin previo aviso.'
@@ -124,15 +145,55 @@ const updateDetailDiscount = (index, discount) => {
     calculateTotals();
 };
 
+// Discount Handlers and Watchers
+const handleApplyDiscount = async (code) => {
+    if (!form.value.subtotal_amount) {
+        return;
+    }
+    // Validate against the current subtotal
+    const isValid = await validateCode(code, form.value.subtotal_amount, form.value.customer_id);
+    if (isValid) {
+        calculateTotals();
+    }
+};
+
+const handleRemoveDiscount = () => {
+    clearDiscount();
+    calculateTotals();
+};
+
+// Watch for discount changes to update totals
+watch(discountAmount, () => {
+    calculateTotals();
+});
+
 const calculateTotals = () => {
     const subtotal = details.value.reduce((sum, detail) => sum + parseFloat(detail.subtotal_amount || 0), 0);
     const tax = details.value.reduce((sum, detail) => sum + parseFloat(detail.tax_amount || 0), 0);
-    const discount = details.value.reduce((sum, detail) => sum + parseFloat(detail.discount_amount || 0), 0);
+    const itemDiscounts = details.value.reduce((sum, detail) => sum + parseFloat(detail.discount_amount || 0), 0);
 
     form.value.subtotal_amount = Number(subtotal.toFixed(2));
+    
+    // Calculate global discount based on new subtotal if active
+    if (hasDiscount.value && discountType.value === 'percentage') {
+         // Force recalculate in composable if subtotal changed
+         applyManualDiscount('percentage', discountPercentage.value, subtotal);
+    }
+    
+    // Total discount = Item Discounts + Global Discount
+    // Ensure we don't double count if useDiscount is not fully synced yet, but discountAmount.value should be correct
+    const globalDiscount = hasDiscount.value ? (discountAmount.value || 0) : 0;
+    const totalDiscount = itemDiscounts + globalDiscount;
+
     form.value.tax_amount = Number(tax.toFixed(2));
-    form.value.discount_amount = Number(discount.toFixed(2));
-    form.value.total_amount = Number((subtotal + tax - discount).toFixed(2));
+    form.value.discount_amount = Number(totalDiscount.toFixed(2));
+    form.value.total_amount = Number((subtotal + tax - totalDiscount).toFixed(2));
+    
+    // Update discount fields in form for consistency
+    form.value.discount_type = hasDiscount.value ? discountType.value : (totalDiscount > 0 ? 'fixed' : 'none');
+    form.value.discount_code = discountCode.value?.code || null;
+    form.value.discount_code_id = discountCode.value?.id || null;
+    form.value.discount_percentage = discountPercentage.value;
 };
 
 // Búsqueda de productos con debounce
@@ -660,6 +721,29 @@ const formatCurrency = (value) => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Descuentos -->
+                     <div class="discount-section-wrapper mb-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="pi pi-ticket mr-1 text-emerald-600"></i>
+                            Cupón de Descuento
+                        </label>
+                         <div class="discount-ui-container">
+                            <DiscountCodeInput 
+                                v-if="!hasDiscount"
+                                v-model="form.discount_code_input" 
+                                :loading="validating"
+                                @apply="handleApplyDiscount"
+                            />
+                            <small v-if="discountError" class="p-error block mt-2">{{ discountError }}</small>
+                            
+                            <DiscountSummary 
+                                v-if="hasDiscount"
+                                :discount="discountInfo"
+                                @remove="handleRemoveDiscount"
+                            />
                         </div>
                     </div>
 
