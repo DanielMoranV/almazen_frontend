@@ -4,7 +4,7 @@ import DiscountSummary from '@/components/discounts/DiscountSummary.vue';
 import { useDiscount } from '@/composables/useDiscount';
 import { useCustomersStore } from '@/stores/customersStore';
 import { useWarehousesStore } from '@/stores/warehousesStore';
-import { ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const submitted = ref(false);
 const customersStore = useCustomersStore();
@@ -46,7 +46,7 @@ const form = ref({
     voucher_type: 'ticket',
     document_type: 'ticket',
     document_number: '',
-    subtotal_amount: 0, // Changed from implicit to explicit
+    subtotal_amount: 0,
     total_amount: 0,
     tax_amount: 0,
     discount_amount: 0,
@@ -54,17 +54,60 @@ const form = ref({
     discount_code_id: null,
     discount_type: 'none',
     discount_percentage: 0,
-    discount_code_input: '', // For the input field
+    discount_code_input: '',
     notes: ''
 });
 
-// ... (keep voucherTypes, statusOptions, etc.)
+const voucherTypes = [
+    { label: 'Ticket', value: 'ticket' },
+    { label: 'Boleta', value: 'boleta' },
+    { label: 'Factura', value: 'factura' }
+];
 
-// Validate discount code
+const statusOptions = [
+    { label: 'Pendiente', value: 'PENDIENTE' },
+    { label: 'Pagado', value: 'PAGADO' },
+    { label: 'Anulado', value: 'ANULADO' }
+];
+
+const isCreating = computed(() => !form.value.id);
+
+// Validar si se puede cambiar el estado basado en status_info de la API
+const canChangeStatus = computed(() => {
+    if (isCreating.value) return true;
+
+    // Si tenemos status_info de la API, usar eso
+    if (props.sale?.status_info) {
+        return props.sale.status_info.can_edit;
+    }
+
+    // Fallback: solo pendientes se pueden cambiar
+    return form.value.status === 'PENDIENTE';
+});
+
+// Opciones de estado disponibles según el estado actual
+const availableStatusOptions = computed(() => {
+    if (isCreating.value) {
+        return statusOptions.filter((option) => option.value === 'PENDIENTE');
+    }
+
+    const currentStatus = form.value.status;
+    if (currentStatus === 'PENDIENTE') {
+        return statusOptions;
+    } else if (currentStatus === 'PAGADO') {
+        // Las ventas pagadas no se pueden cambiar de estado
+        return statusOptions.filter((option) => option.value === 'PAGADO');
+    } else if (currentStatus === 'ANULADO') {
+        // Las ventas anuladas no se pueden cambiar de estado
+        return statusOptions.filter((option) => option.value === 'ANULADO');
+    }
+
+    return statusOptions;
+});
+
+// Discount Logic
 const handleApplyDiscount = async (code) => {
     if (!form.value.subtotal_amount) {
-        // If subtotal is 0, we can't apply discount comfortably
-        // Maybe warn user?
         return;
     }
     
@@ -92,43 +135,12 @@ const updateFormDiscount = () => {
 };
 
 const calculateTotals = () => {
-    // Basic calculation assuming manual subtotal entry
-    // total = subtotal - discount + tax
-    // tax is usually calculated on (subtotal - discount)
-    
     const subtotal = form.value.subtotal_amount || 0;
     const discount = form.value.discount_amount || 0;
     
     const taxableBase = Math.max(0, subtotal - discount);
-    // Assuming 18% tax for example, or manual entry. 
-    // Since this form seems to have manual tax entry, we preserve it or calc it?
-    // Let's keep tax manual for now to avoid breaking existing logic, 
-    // OR if the user enters tax, we use it.
-    
-    // BUT, if we change discount, total MUST change.
     form.value.total_amount = taxableBase + (form.value.tax_amount || 0);
 };
-
-// Watchers
-watch(() => form.value.subtotal_amount, (newSubtotal) => {
-    if (hasDiscount.value) {
-        // Recalculate discount amount if subtotal changes (e.g. percentage)
-        if (discountType.value === 'percentage') {
-             applyManualDiscount('percentage', discountPercentage.value, newSubtotal);
-             form.value.discount_amount = discountAmount.value;
-        } else if (discountType.value === 'fixed') {
-             // Re-validate limits maybe?
-        }
-    }
-    calculateTotals();
-});
-
-watch(() => form.value.discount_amount, () => {
-    calculateTotals();
-});
-
-
-// ... (keep rest of script)
 
 // Update resetForm
 const resetForm = () => {
@@ -156,17 +168,186 @@ const resetForm = () => {
     submitted.value = false;
 };
 
-// ... (keep onMounted, watchers)
-// Don't forget to update `handleSubmit` to include new fields
+// Cargar datos iniciales
+onMounted(async () => {
+    await Promise.all([customersStore.fetchCustomers(), warehousesStore.fetchWarehouses()]);
+});
 
-// ...
+// Reset form when sale changes
+watch(
+    () => props.sale,
+    (sale) => {
+        if (sale) {
+            form.value = {
+                ...sale,
+                sale_date: sale.sale_date ? sale.sale_date.split('T')[0] : new Date().toISOString().split('T')[0],
+                voucher_type: sale.voucher_type || sale.document_type || 'ticket',
+                document_type: sale.document_type || sale.voucher_type || 'ticket'
+            };
+        } else {
+            resetForm();
+        }
+    },
+    { immediate: true }
+);
 
+// Sincronizar voucher_type con document_type
+watch(
+    () => form.value.voucher_type,
+    (newValue) => {
+        form.value.document_type = newValue;
+    }
+);
+
+// Discount Watchers
+watch(() => form.value.subtotal_amount, (newSubtotal) => {
+    if (hasDiscount.value) {
+        if (discountType.value === 'percentage') {
+             applyManualDiscount('percentage', discountPercentage.value, newSubtotal);
+             form.value.discount_amount = discountAmount.value;
+        }
+    }
+    calculateTotals();
+});
+
+watch(() => form.value.discount_amount, () => {
+    calculateTotals();
+});
+
+watch(() => form.value.tax_amount, () => {
+    calculateTotals();
+});
+
+// Validaciones
+const isValidAmount = computed(() => form.value.total_amount >= 0);
+const isValidTaxAmount = computed(() => form.value.tax_amount >= 0);
+const isValidDiscountAmount = computed(() => form.value.discount_amount >= 0);
+const isFormValid = computed(
+    () => form.value.customer_id && form.value.sale_date && form.value.voucher_type && isValidAmount.value && isValidTaxAmount.value && isValidDiscountAmount.value && (form.value.status !== 'PAGADO' || form.value.warehouse_id)
+);
+
+const handleSubmit = () => {
+    submitted.value = true;
+    if (isFormValid.value) {
+        // Preparar datos para envío
+        const saleData = {
+            ...form.value,
+            total_amount: parseFloat(form.value.total_amount) || 0,
+            tax_amount: parseFloat(form.value.tax_amount) || 0,
+            discount_amount: parseFloat(form.value.discount_amount) || 0,
+            subtotal_amount: parseFloat(form.value.subtotal_amount) || 0
+        };
+
+        emit('submit', saleData);
+        resetForm();
+    }
+};
+
+const handleCancel = () => {
+    emit('update:visible', false);
+    resetForm();
+};
 </script>
 
 <template>
-    <!-- ... (keep header parts) -->
-            
-            <!-- Montos -->
+    <Dialog
+        :visible="visible"
+        @update:visible="(val) => emit('update:visible', val)"
+        :style="{ width: '600px', maxWidth: '95vw' }"
+        :header="isCreating ? '🛒➕ Nueva Venta' : '✏️ Editar Venta'"
+        :modal="true"
+        class="p-fluid sale-dialog"
+        :closable="true"
+        :dismissableMask="false"
+    >
+        <div class="form-content">
+            <!-- Información general -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-info-circle"></i>
+                        Información General
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Cliente -->
+                    <div class="field col-span-2">
+                        <label for="customer_id" class="field-label">Cliente *</label>
+                        <Select
+                            id="customer_id"
+                            v-model="form.customer_id"
+                            :options="customersStore.customersList"
+                            optionLabel="name"
+                            optionValue="id"
+                            placeholder="Seleccione un cliente"
+                            :class="{ 'p-invalid': submitted && !form.customer_id }"
+                            class="form-select"
+                            filter
+                        />
+                        <small class="p-error" v-if="submitted && !form.customer_id">El cliente es requerido.</small>
+                    </div>
+
+                    <!-- Fecha de venta -->
+                    <div class="field">
+                        <label for="sale_date" class="field-label">Fecha de Venta *</label>
+                        <DatePicker id="sale_date" v-model="form.sale_date" dateFormat="yy-mm-dd" :class="{ 'p-invalid': submitted && !form.sale_date }" class="form-input" />
+                        <small class="p-error" v-if="submitted && !form.sale_date">La fecha es requerida.</small>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="field">
+                        <label for="status" class="field-label">Estado *</label>
+                        <Select
+                            id="status"
+                            v-model="form.status"
+                            :options="availableStatusOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Seleccione estado"
+                            :class="{ 'p-invalid': submitted && !form.status }"
+                            :disabled="!canChangeStatus"
+                            class="form-select"
+                        />
+                        <small class="p-info" v-if="!canChangeStatus"> Las ventas pagadas o anuladas no pueden cambiar de estado </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información del documento -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="pi pi-file"></i>
+                        Documento
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Tipo de comprobante -->
+                    <div class="field">
+                        <label for="voucher_type" class="field-label">Tipo de Comprobante *</label>
+                        <Select
+                            id="voucher_type"
+                            v-model="form.voucher_type"
+                            :options="voucherTypes"
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Seleccione tipo"
+                            :class="{ 'p-invalid': submitted && !form.voucher_type }"
+                            class="form-select"
+                        />
+                        <small class="p-error" v-if="submitted && !form.voucher_type">El tipo de comprobante es requerido.</small>
+                    </div>
+
+                    <!-- Número de documento -->
+                    <div class="field">
+                        <label for="document_number" class="field-label">Número de Documento</label>
+                        <InputText id="document_number" v-model="form.document_number" placeholder="B001-0001" class="form-input" />
+                        <small class="p-info">Se generará automáticamente si se deja vacío</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Montos y Descuentos -->
             <div class="form-section">
                 <div class="section-header">
                     <h3 class="section-title">
@@ -223,9 +404,6 @@ const resetForm = () => {
                     </div>
                 </div>
             </div>
-            
-    <!-- ... (keep rest of template) -->
-
 
             <!-- Almacén (solo si el estado es PAGADO) -->
             <div v-if="form.status === 'PAGADO'" class="form-section">
