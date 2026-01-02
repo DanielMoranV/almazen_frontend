@@ -230,12 +230,25 @@ const handleSubmit = () => {
     submitted.value = true;
     if (isFormValid.value) {
         // Preparar datos para envío
+        const rawDiscountAmount = parseFloat(form.value.discount_amount) || 0;
+        const rawDiscountType = form.value.discount_type || 'none';
+        
+        // Ensure consistency required by backend
+        const finalDiscountAmount = rawDiscountAmount > 0 ? rawDiscountAmount : 0;
+        const finalDiscountType = finalDiscountAmount > 0 ? rawDiscountType : 'none';
+        
         const saleData = {
             ...form.value,
             total_amount: parseFloat(form.value.total_amount) || 0,
             tax_amount: parseFloat(form.value.tax_amount) || 0,
-            discount_amount: parseFloat(form.value.discount_amount) || 0,
-            subtotal_amount: parseFloat(form.value.subtotal_amount) || 0
+            subtotal_amount: parseFloat(form.value.subtotal_amount) || 0,
+            
+            // Discount fields strict validation
+            discount_amount: finalDiscountAmount,
+            discount_type: finalDiscountType,
+            discount_percentage: finalDiscountType === 'percentage' ? (parseFloat(form.value.discount_percentage) || 0) : null,
+            discount_code: form.value.discount_code || null,
+            discount_code_id: form.value.discount_code_id || null
         };
 
         emit('submit', saleData);

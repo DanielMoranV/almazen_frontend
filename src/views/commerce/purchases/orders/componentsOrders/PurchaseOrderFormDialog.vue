@@ -287,7 +287,33 @@ watch(
 const handleSubmit = () => {
     submitted.value = true;
     if (isFormValid.value) {
-        emit('submit', form.value);
+        const rawDiscountAmount = parseFloat(form.value.discount_amount) || 0;
+        const finalDiscountType = rawDiscountAmount > 0 ? 'fixed' : 'none';
+
+        const purchaseData = {
+            ...form.value,
+            // Ensure numeric values
+            total_amount: parseFloat(form.value.total_amount) || 0,
+            tax_amount: parseFloat(form.value.tax_amount) || 0,
+            
+            // Header Discount Validation
+            discount_amount: rawDiscountAmount,
+            discount_type: finalDiscountType,
+            discount_percentage: null, 
+            discount_code: null,
+
+            details: form.value.details.map(d => ({
+                ...d,
+                quantity: parseFloat(d.quantity),
+                unit_price: parseFloat(d.unit_price),
+                total_amount: parseFloat(d.total_amount),
+                discount_amount: parseFloat(d.discount_amount) || 0,
+                // Item level discounts are optional, but good to be explicit
+                discount_type: (parseFloat(d.discount_amount) || 0) > 0 ? 'fixed' : 'none'
+            }))
+        };
+
+        emit('submit', purchaseData);
         resetForm();
     }
 };

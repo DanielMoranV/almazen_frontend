@@ -444,12 +444,23 @@ const handleSubmit = () => {
     }
 
     // Preparar datos para envío
+    // Preparar datos para envío
+    const rawDiscountAmount = parseFloat(form.value.discount_amount) || 0;
+    // Quote form aggregates item discounts, so we classify it as 'fixed' if > 0, else 'none'
+    const finalDiscountType = rawDiscountAmount > 0 ? 'fixed' : 'none';
+
     const quoteData = {
         ...form.value,
         subtotal_amount: parseFloat(form.value.subtotal_amount) || 0,
         tax_amount: parseFloat(form.value.tax_amount) || 0,
-        discount_amount: parseFloat(form.value.discount_amount) || 0,
         total_amount: parseFloat(form.value.total_amount) || 0,
+        
+        // Strict Validation Rules for Defaults
+        discount_amount: rawDiscountAmount,
+        discount_type: finalDiscountType,
+        discount_percentage: null, // Quotes only use item discounts or fixed aggregation
+        discount_code: null, // No discount code support in quotes yet
+
         details: details.value.map((detail) => ({
             stock_id: detail.stock_id,
             quantity: parseFloat(detail.quantity),
