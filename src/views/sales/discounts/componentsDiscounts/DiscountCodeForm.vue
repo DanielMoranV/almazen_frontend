@@ -174,8 +174,8 @@ const handleSubmit = async () => {
     } catch (error) {
         console.error('[DiscountCodeForm] Error saving code:', error);
         
-        const errorMessage = error.response?.data?.details?.error_message 
-            || error.response?.data?.message 
+        const errorMessage = error.details?.error_message 
+            || error.message 
             || 'Error al guardar el código de descuento';
 
         toast.add({

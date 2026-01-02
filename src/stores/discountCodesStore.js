@@ -41,11 +41,11 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.list(filters);
-            const codes = response.data.data || [];
+            const codes = response.data || [];
             discountCodes.value = codes.filter(c => c);
             return discountCodes.value;
         } catch (err) {
-            error.value = err.response?.data?.message || 'Error al cargar códigos de descuento';
+            error.value = err.details?.error_message || err.message || 'Error al cargar códigos de descuento';
             console.error('[DiscountCodesStore] Error fetching codes:', err);
             throw err;
         } finally {
@@ -62,10 +62,10 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.get(id);
-            currentCode.value = response.data.data;
+            currentCode.value = response.data;
             return currentCode.value;
         } catch (err) {
-            error.value = err.response?.data?.message || 'Error al cargar código de descuento';
+            error.value = err.details?.error_message || err.message || 'Error al cargar código de descuento';
             console.error('[DiscountCodesStore] Error getting code:', err);
             throw err;
         } finally {
@@ -82,7 +82,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.create(data);
-            const newCode = response.data.data;
+            const newCode = response.data;
 
             // Add to list if valid
             if (newCode) {
@@ -91,7 +91,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
             return newCode;
         } catch (err) {
-            error.value = err.response?.data?.details?.error_message || err.response?.data?.message || 'Error al crear código de descuento';
+            error.value = err.details?.error_message || err.message || 'Error al crear código de descuento';
             console.error('[DiscountCodesStore] Error creating code:', err);
             throw err;
         } finally {
@@ -108,7 +108,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.update(id, data);
-            const updatedCode = response.data.data;
+            const updatedCode = response.data;
 
             // Update in list
             const index = discountCodes.value.findIndex((code) => code.id === id);
@@ -122,7 +122,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
             return updatedCode;
         } catch (err) {
-            error.value = err.response?.data?.details?.error_message || err.response?.data?.message || 'Error al actualizar código de descuento';
+            error.value = err.details?.error_message || err.message || 'Error al actualizar código de descuento';
             console.error('[DiscountCodesStore] Error updating code:', err);
             throw err;
         } finally {
@@ -147,7 +147,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
                 currentCode.value = null;
             }
         } catch (err) {
-            error.value = err.response?.data?.message || 'Error al eliminar código de descuento';
+            error.value = err.details?.error_message || err.message || 'Error al eliminar código de descuento';
             console.error('[DiscountCodesStore] Error deleting code:', err);
             throw err;
         } finally {
@@ -164,9 +164,9 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.validate(code, subtotal, customerId);
-            return response.data.data;
+            return response.data;
         } catch (err) {
-            error.value = err.response?.data?.message || 'Código de descuento inválido';
+            error.value = err.details?.error_message || err.message || 'Código de descuento inválido';
             console.error('[DiscountCodesStore] Error validating code:', err);
             throw err;
         } finally {
@@ -183,9 +183,9 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.getStats(id);
-            return response.data.data;
+            return response.data;
         } catch (err) {
-            error.value = err.response?.data?.message || 'Error al cargar estadísticas';
+            error.value = err.details?.error_message || err.message || 'Error al cargar estadísticas';
             console.error('[DiscountCodesStore] Error getting stats:', err);
             throw err;
         } finally {
@@ -202,7 +202,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
         try {
             const response = await discountCodesApi.toggleActive(id);
-            const updatedCode = response.data.data;
+            const updatedCode = response.data;
 
             // Update in list
             const index = discountCodes.value.findIndex((code) => code.id === id);
@@ -212,7 +212,7 @@ export const useDiscountCodesStore = defineStore('discountCodes', () => {
 
             return updatedCode;
         } catch (err) {
-            error.value = err.response?.data?.message || 'Error al cambiar estado';
+            error.value = err.details?.error_message || err.message || 'Error al cambiar estado';
             console.error('[DiscountCodesStore] Error toggling active:', err);
             throw err;
         } finally {
