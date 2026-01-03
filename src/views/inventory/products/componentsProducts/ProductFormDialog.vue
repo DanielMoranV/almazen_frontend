@@ -213,7 +213,7 @@ const calculateEAN13Checksum = (code) => {
                             icon="pi pi-bolt" 
                             class="p-button-outlined p-button-secondary" 
                             @click="generateInternalBarcode" 
-                            v-tooltip.top="'Generar automáticamente un código único basado en la fecha y hora'"
+                            v-tooltip.top="'Generar código automático'"
                         />
                     </div>
                     <small class="p-error" v-if="submitted && !form.barcode">El código de barras es requerido.</small>
