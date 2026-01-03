@@ -69,6 +69,10 @@ const fetchProduct = async () => {
         }
 
         if (foundProduct) {
+            console.log('📦 [DEBUG] Product Data:', foundProduct);
+            console.log('🖼️ [DEBUG] Main Image URL:', foundProduct.image_url);
+            console.log('📸 [DEBUG] Gallery:', foundProduct.gallery);
+            
             product.value = foundProduct;
             // Actualizar SEO después de cargar el producto
             updateSEO();
