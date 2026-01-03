@@ -287,10 +287,41 @@ watch(
 );
 
 // Resetear error de logo cuando cambie la empresa
-watch(company, (newVal) => {
-    console.log('📦 [DEBUG] Company Data from Backend:', newVal);
+watch(company, () => {
     logoError.value = false;
-}, { immediate: true });
+});
+
+// 🆕 Redes Sociales
+const socialMediaLinks = computed(() => {
+    if (!company.value?.social_media) return [];
+
+    const networks = [
+        { key: 'facebook', icon: 'pi pi-facebook', label: 'Facebook', color: '#1877F2' },
+        { key: 'instagram', icon: 'pi pi-instagram', label: 'Instagram', color: '#E4405F' },
+        { key: 'twitter', icon: 'pi pi-twitter', label: 'Twitter', color: '#1DA1F2' },
+        { key: 'linkedin', icon: 'pi pi-linkedin', label: 'LinkedIn', color: '#0A66C2' },
+        { key: 'tiktok', icon: 'pi pi-video', label: 'TikTok', color: '#000000' }, // PrimeVue icon fallback
+        { key: 'youtube', icon: 'pi pi-youtube', label: 'YouTube', color: '#FF0000' },
+        { key: 'whatsapp', icon: 'pi pi-whatsapp', label: 'WhatsApp', color: '#25D366' }
+    ];
+
+    return networks.map(net => {
+        let url = company.value.social_media[net.key];
+        
+        if (!url) return null;
+
+        // Formatear WhatsApp si es solo número
+        if (net.key === 'whatsapp') {
+            const cleanNumber = url.replace(/\D/g, ''); // Eliminar no numéricos
+            if (!url.startsWith('http')) {
+                // Asumir código de país si no lo tiene (ej. Perú 51) o usar link universal
+                url = `https://wa.me/${cleanNumber.length <= 9 ? '51' + cleanNumber : cleanNumber}`; 
+            }
+        }
+
+        return { ...net, url };
+    }).filter(item => item !== null);
+});
 
 // Función para verificar si una URL es válida y accesible
 const isValidImageUrl = (url) => {
@@ -377,6 +408,57 @@ onMounted(async () => {
         }
     }
 });
+// 🛒 Lógica de Carrito para WhatsApp
+const cart = ref([]);
+
+// Verificar si un producto está en el carrito
+const isInCart = (productId) => {
+    return cart.value.some(item => item.id === productId);
+};
+
+// Alternar producto en el carrito
+const toggleCart = (product) => {
+    const index = cart.value.findIndex(item => item.id === product.id);
+    if (index === -1) {
+        cart.value.push(product);
+        toast.add({ severity: 'success', summary: 'Agregado', detail: 'Producto agregado a la lista', life: 1500 });
+    } else {
+        cart.value.splice(index, 1);
+        toast.add({ severity: 'info', summary: 'Removido', detail: 'Producto quitado de la lista', life: 1500 });
+    }
+};
+
+// Generar mensaje y enviar a WhatsApp
+const sendCartToWhatsApp = () => {
+    if (cart.value.length === 0) return;
+
+    // Obtener número de WhatsApp de la empresa
+    const whatsappLink = socialMediaLinks.value.find(link => link.key === 'whatsapp');
+    if (!whatsappLink) {
+        toast.add({ severity: 'warn', summary: 'No disponible', detail: 'La empresa no tiene WhatsApp configurado', life: 3000 });
+        return;
+    }
+
+    // Construir mensaje
+    let message = `Hola *${company.value?.name || 'Tienda'}*, me gustaría consultar por los siguientes productos:\n\n`;
+    
+    let totalAprox = 0;
+    cart.value.forEach(item => {
+        const price = publicStore.getProductPrice(item);
+        message += `- ${item.name} (${publicStore.formatPrice(price)})\n`;
+        totalAprox += price;
+    });
+
+    message += `\n*Total Aprox:* ${publicStore.formatPrice(totalAprox)}`;
+    message += `\n\nQuedo atento a su respuesta.`;
+
+    // Extraer número limpio
+    const phoneNumber = whatsappLink.url.split('wa.me/')[1];
+    
+    // Abrir WhatsApp con el mensaje
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+};
+
 </script>
 
 <template>
@@ -408,7 +490,32 @@ onMounted(async () => {
                         </div>
                     </div>
                     <div class="header-actions">
+                        <!-- Socials en Header -->
+                        <div class="header-socials" v-if="socialMediaLinks.length > 0">
+                            <a 
+                                v-for="social in socialMediaLinks" 
+                                :key="social.key"
+                                :href="social.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="header-social-link"
+                                :title="social.label"
+                                :style="{ '--hover-color': social.color }"
+                            >
+                                <i :class="social.icon"></i>
+                            </a>
+                        </div>
+                        
                         <Button icon="pi pi-filter" label="Filtros" @click="showFilters = !showFilters" class="filter-toggle" />
+                        
+                        <!-- Botón Enviar Pedido -->
+                        <Button 
+                            v-if="cart.length > 0"
+                            icon="pi pi-whatsapp" 
+                            :label="`Enviar Lista (${cart.length})`" 
+                            class="whatsapp-cart-btn"
+                            @click="sendCartToWhatsApp"
+                        />
                     </div>
                 </div>
             </div>
@@ -485,10 +592,20 @@ onMounted(async () => {
                 <div v-else class="products-grid">
                     <router-link v-for="product in products" :key="product.id" :to="getProductRoute(product.id)" class="product-card">
                         <!-- Imagen del producto -->
+                        <!-- Imagen del producto -->
                         <div class="product-image">
                             <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
                             <div v-if="publicStore.getProductStock(product) <= 0" class="out-of-stock-badge">Agotado</div>
                             <div v-else-if="publicStore.getProductBatch(product) && publicStore.getProductBatch(product).days_to_expire <= 7" class="expiry-badge">Vence pronto</div>
+                            
+                            <!-- Botón Agregar a Lista -->
+                            <Button 
+                                :icon="isInCart(product.id) ? 'pi pi-check' : 'pi pi-plus'" 
+                                class="add-to-cart-btn p-button-rounded"
+                                :class="isInCart(product.id) ? 'p-button-success' : 'p-button-secondary'"
+                                @click.prevent="toggleCart(product)"
+                                v-tooltip.top="isInCart(product.id) ? 'Quitar de la lista' : 'Agregar a la lista'"
+                            />
                         </div>
 
                         <!-- Contenido del producto -->
@@ -1201,6 +1318,138 @@ onMounted(async () => {
 .slide-down-leave-to {
     opacity: 0;
     transform: translateY(-15px);
+}
+
+
+/* === HEADER ACTIONS & SOCIALS === */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap; /* Permitir wrap en móviles */
+}
+
+.header-socials {
+    display: flex;
+    gap: 0.5rem;
+    margin-right: 0.5rem;
+    align-items: center;
+}
+
+.header-social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--surface-100);
+    color: var(--text-color-secondary);
+    transition: all 0.2s ease-in-out;
+    font-size: 1.1rem;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.header-social-link:hover {
+    background: var(--hover-color, var(--primary-color));
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .header-social-link {
+    background: var(--surface-800);
+    border-color: var(--surface-700);
+}
+
+/* === WHATSAPP CART BUTTON === */
+.whatsapp-cart-btn {
+    background: #25D366 !important; /* WhatsApp Green */
+    border: 1px solid #25D366 !important;
+    color: white !important;
+    font-weight: 700 !important;
+    border-radius: 2rem !important; /* Pill shape */
+    padding: 0.6rem 1.25rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3) !important;
+}
+
+.whatsapp-cart-btn:hover {
+    background: #1ebc57 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4) !important;
+}
+
+/* === PRODUCT ADD BUTTON === */
+.add-to-cart-btn {
+    position: absolute !important;
+    bottom: 1rem;
+    right: 1rem;
+    width: 3rem !important;
+    height: 3rem !important;
+    padding: 0 !important;
+    z-index: 10; /* Asegurar que esté sobre el link */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    opacity: 0.9;
+    transition: all 0.2s ease !important;
+}
+
+.add-to-cart-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.product-image {
+    position: relative; /* Para posicionar el botón absoluto */
+    overflow: hidden; /* Mantener bordes redondeados */
+}
+
+/* === REDES SOCIALES (Footer Legacy - Opcional mantener o eliminar css viejo) === */
+.social-media-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.social-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.social-icons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.social-icon-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--surface-hover);
+    color: var(--text-color-secondary);
+    transition: all 0.3s ease;
+    font-size: 1.25rem;
+    text-decoration: none;
+}
+
+.social-icon-link:hover {
+    background: var(--hover-color, var(--primary-color));
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dark .social-icon-link {
+    background: var(--surface-overlay);
 }
 
 /* === RESPONSIVE === */
