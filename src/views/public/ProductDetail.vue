@@ -1,8 +1,8 @@
 <script setup>
-import { onMounted, ref, computed, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
 import { usePublicStore } from '@/stores/publicStore';
+import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
@@ -12,6 +12,32 @@ const publicStore = usePublicStore();
 // Estado reactivo
 const product = ref(null);
 const loading = ref(false);
+const selectedImage = ref(null); // Imagen seleccionada para el visor
+
+// Propiedad computada para obtener todas las imágenes (Principal + Galería)
+const productImages = computed(() => {
+    if (!product.value) return [];
+    
+    const mainImage = {
+        id: 'main',
+        image_url: publicStore.getProductImage(product.value),
+        is_primary: true
+    };
+    
+    const gallery = product.value.gallery || [];
+    
+    return [mainImage, ...gallery];
+});
+
+// Imagen actual a mostrar (seleccionada o default principal)
+const currentImage = computed(() => {
+    return selectedImage.value || productImages.value[0]?.image_url;
+});
+
+// Resetear selección al cambiar de producto
+watch(product, () => {
+    selectedImage.value = null;
+});
 
 // Estados computados - Detectar tipo de URL (slug vs legacy)
 const isSlugRoute = computed(() => route.name === 'catalogProductDetail');
@@ -271,9 +297,16 @@ onMounted(() => {
             <div class="container">
                 <div class="product-content">
                     <!-- Imagen del producto -->
+                    <!-- Imagen del producto y Galería -->
                     <div class="product-image-section">
                         <div class="main-image">
-                            <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
+                            <!-- Image PrimeVue para vista previa (vistoso) -->
+                            <Image :src="currentImage" :alt="product.name" preview imageClass="w-full h-full object-cover">
+                                <template #error>
+                                    <img :src="publicStore.generateProductAvatar(product.name)" :alt="product.name" class="w-full h-full object-cover" />
+                                </template>
+                            </Image>
+                            
                             <div v-if="publicStore.getProductStock(product) <= 0" class="status-overlay out-of-stock">
                                 <i class="pi pi-times-circle"></i>
                                 <span>Agotado</span>
@@ -281,6 +314,19 @@ onMounted(() => {
                             <div v-else-if="publicStore.getProductBatch(product) && publicStore.getProductBatch(product).days_to_expire <= 7" class="status-overlay expiry">
                                 <i class="pi pi-calendar"></i>
                                 <span>{{ publicStore.getProductBatch(product).days_to_expire }}d</span>
+                            </div>
+                        </div>
+
+                        <!-- Miniaturas de Galería -->
+                        <div class="gallery-thumbs" v-if="productImages.length > 1">
+                            <div 
+                                v-for="(img, index) in productImages" 
+                                :key="img.id || index"
+                                class="thumb-item"
+                                :class="{ 'active': currentImage === img.image_url }"
+                                @click="selectedImage = img.image_url"
+                            >
+                                <img :src="img.image_url" :alt="img.alt_text || product.name" />
                             </div>
                         </div>
                     </div>
@@ -513,6 +559,45 @@ onMounted(() => {
 
 .status-overlay.expiry {
     background: rgba(245, 158, 11, 0.9);
+}
+
+
+/* === MINIATURAS DE GALERÍA === */
+.gallery-thumbs {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+}
+
+.thumb-item {
+    flex: 0 0 70px;
+    height: 70px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.thumb-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumb-item:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.thumb-item.active {
+    border-color: var(--primary-color);
+    opacity: 1;
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.2);
 }
 
 /* === INFORMACIÓN COMPACTA === */
