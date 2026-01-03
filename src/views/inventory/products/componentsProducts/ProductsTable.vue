@@ -142,10 +142,73 @@ const getBarcodeOptions = (type) => {
     };
 };
 
-// Función para manejar errores de imagen
 const handleImageError = (event) => {
     event.target.src = '/placeholder-product.png';
     event.target.style.objectFit = 'cover';
+};
+
+// Función para descargar el código de barras como imagen pequeña para ticket
+const downloadBarcode = (product) => {
+    if (!product.barcode) return;
+
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const barcodeCanvas = document.createElement('canvas');
+        
+        // 1. Generar código de barras en un canvas temporal
+        JsBarcode(barcodeCanvas, product.barcode, {
+            format: getBarcodeOptions(product.type_barcode).format,
+            width: 2,
+            height: 60,
+            displayValue: false, // Dibujaremos el valor manualmente
+            margin: 0
+        });
+
+        // 2. Configurar dimensiones finales (tipo ticket pequeño)
+        const width = 300; // Ancho ajustado para ticket
+        const padding = 15;
+        const textHeight = 40; // Espacio para el nombre
+        const codeHeight = 20; // Espacio para el código textual
+        const height = barcodeCanvas.height + textHeight + codeHeight + (padding * 2);
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // 3. Fondo blanco
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+
+        // 4. Dibujar Nombre del Producto (Arriba, pequeño, truncado si es necesario)
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        
+        let productName = product.name;
+        if (ctx.measureText(productName).width > width - 20) {
+            // Truncar simple si es muy largo
+            const maxLength = 25;
+            productName = productName.substring(0, maxLength) + '...';
+        }
+        ctx.fillText(productName, width / 2, padding + 10);
+
+        // 5. Dibujar Código de Barras (Centrado)
+        const barcodeX = (width - barcodeCanvas.width) / 2;
+        ctx.drawImage(barcodeCanvas, barcodeX, padding + textHeight - 10);
+
+        // 6. Dibujar Código Textual (Abajo, pequeño)
+        ctx.font = '12px Courier New';
+        ctx.fillText(product.barcode, width / 2, height - padding);
+
+        // 7. Descargar
+        const link = document.createElement('a');
+        link.download = `BARCODE_${product.barcode}_${product.sku || 'NOSKU'}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+    } catch (error) {
+        console.error('Error downloading barcode:', error);
+    }
 };
 </script>
 
@@ -298,6 +361,7 @@ const handleImageError = (event) => {
         <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
+                    <Button icon="pi pi-barcode" class="p-button-rounded p-button-secondary" size="small" rounded text v-tooltip.top="'Descargar Código de Barras'" @click="downloadBarcode(slotProps.data)" :disabled="!slotProps.data.barcode" />
                     <Button icon="pi pi-image" class="p-button-rounded p-button-warning" size="small" rounded text v-tooltip.top="slotProps.data.image_url ? 'Cambiar imagen' : 'Subir imagen'" @click="$emit('upload-image', slotProps.data)" />
                     <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Editar'" @click="$emit('edit', slotProps.data)" />
                     <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text v-tooltip.top="'Eliminar'" @click="$emit('delete', slotProps.data)" />
