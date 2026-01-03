@@ -1,10 +1,10 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
-import { useUnitsStore } from '@/stores/unitsStore';
-import { useCategoriesStore } from '@/stores/categoriesStore';
 import { fetchProductByBarcode } from '@/api/openFoodFacts';
 import { BarcodeType } from '@/constants/barcode_type';
+import { useCategoriesStore } from '@/stores/categoriesStore';
+import { useUnitsStore } from '@/stores/unitsStore';
 import Checkbox from 'primevue/checkbox';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const unitsStore = useUnitsStore();
 const categoriesStore = useCategoriesStore();
@@ -140,6 +140,50 @@ const searchProduct = async () => {
         isSearching.value = false;
     }
 };
+
+const generateInternalBarcode = () => {
+    // Generar estructura: 2 + YYMMDDHHmmss (12 dígitos) + Checksum (1 dígito) = 13
+    // Sin embargo, YYMMDDHHmmss son 12 chars. + prefix '2' = 13. Nos pasaríamos.
+    // Estrategia combinada: Prefix '2' + Timestamp (ms) reducido o random.
+    // Mejor estrategia EAN-13 Internal: 
+    // Prefix '20' (2 dígitos)
+    // + Random/Secuencial (10 dígitos)
+    // + Checksum (1 dígito)
+    
+    // Usamos Date.now() para unicidad temporal: ej. 1704259834521 (13 digitos).
+    // Tomamos los últimos 10 dígitos del timestamp para variar.
+    const timestamp = Date.now().toString(); 
+    const sequence = timestamp.slice(-10); 
+    const prefix = '20';
+    
+    const codeWithoutChecksum = prefix + sequence; // 12 dígitos
+    const checksum = calculateEAN13Checksum(codeWithoutChecksum);
+    
+    form.value.barcode = codeWithoutChecksum + checksum;
+    form.value.type_barcode = 'personalized'; // Asegurar que se marque como personalizado
+};
+
+const calculateEAN13Checksum = (code) => {
+    const digits = code.split('').map(Number);
+    let sum = 0;
+    
+    for (let i = 0; i < digits.length; i++) {
+        // Posiciones impares (0, 2, 4...) * 1
+        // Posiciones pares (1, 3, 5...) * 3
+        // Nota: EAN-13 se cuenta de derecha a izquierda para la ponderación 3-1, 
+        // pero como son 12 dígitos user-data, el índice 0 es impar (posición 13 desde derecha).
+        // Standard: Odd positions (from left, 1-based) weight 1, Even positions weight 3.
+        // Index 0 (1st) -> weight 1. Index 1 (2nd) -> weight 3.
+        if (i % 2 === 0) {
+            sum += digits[i] * 1;
+        } else {
+            sum += digits[i] * 3;
+        }
+    }
+    
+    const remainder = sum % 10;
+    return remainder === 0 ? 0 : 10 - remainder;
+};
 </script>
 <template>
     <Dialog :visible="visible" @update:visible="(val) => emit('update:visible', val)" :style="{ width: '550px', maxWidth: '95vw' }" :header="form.id ? '✏️ Editar Producto' : '📦➕ Nuevo Producto'" :modal="true" class="p-fluid product-dialog">
@@ -162,7 +206,16 @@ const searchProduct = async () => {
                 <!-- Código de Barras -->
                 <div class="field">
                     <label for="barcode" class="font-medium mb-2 block">Código de barras</label>
-                    <InputText id="barcode" v-model="form.barcode" placeholder="Código de barras" :class="{ 'p-invalid': submitted && !form.barcode }" />
+                    <div class="flex gap-2">
+                        <InputText id="barcode" v-model="form.barcode" placeholder="Código de barras" :class="{ 'p-invalid': submitted && !form.barcode }" class="flex-1" />
+                        <Button 
+                            v-if="form.type_barcode === 'personalized'" 
+                            icon="pi pi-bolt" 
+                            class="p-button-outlined p-button-secondary" 
+                            @click="generateInternalBarcode" 
+                            v-tooltip.top="'Generar automáticamente un código único basado en la fecha y hora'"
+                        />
+                    </div>
                     <small class="p-error" v-if="submitted && !form.barcode">El código de barras es requerido.</small>
                 </div>
                 <!-- Tipo de Código -->
