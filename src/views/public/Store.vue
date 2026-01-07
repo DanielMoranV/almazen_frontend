@@ -73,13 +73,15 @@ const loadProducts = async () => {
             // Nueva forma: Usando slug amigable
             await publicStore.loadCatalogProducts(slug.value, {
                 token: accessToken.value,
-                usePagination: true
+                usePagination: true,
+                sort: sortBy.value // Inlcude current sort
             });
         } else if (isLegacyRoute.value) {
             // Forma legacy: Mantener retrocompatibilidad
             await publicStore.loadPublicProducts(warehouseId.value, {
                 companyId: companyId.value,
-                usePagination: true
+                usePagination: true,
+                sort: sortBy.value // Inlcude current sort
             });
         }
 
@@ -93,6 +95,9 @@ const loadProducts = async () => {
                 currentPage: publicStore.currentPage
             }
         });
+        
+        // Ensure scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (error) {
         let errorMessage = 'No se pudieron cargar los productos';
@@ -129,10 +134,18 @@ const debouncedSearch = (() => {
 })();
 
 // Watchers
+// Watchers
 watch(searchQuery, debouncedSearch);
-// Solo filtrar localmente por categoría, sin hacer petición al servidor
+
+// Filtro de categoría: Actualizar store y recargar
 watch(selectedCategory, (newCategory) => {
-    publicStore.filterByCategory(newCategory);
+    // Update store state
+    publicStore.selectedCategory = newCategory;
+    publicStore.currentPage = 1; // Reset to page 1
+    
+    // Reload products from server (for slug route) or filter locally (for legacy)
+    // loadProducts handles the distinction
+    loadProducts();
 });
 watch(currentPage, () => {
     loadProducts();
@@ -628,9 +641,33 @@ const setActiveImage = (imgUrl) => {
             <div class="store-content">
                 <!-- Barra de búsqueda y filtros -->
                 <div class="search-section">
-                    <div class="search-bar">
-                        <i class="pi pi-search search-icon"></i>
-                        <InputText v-model="searchQuery" placeholder="Buscar productos por nombre, SKU o código..." class="search-input" />
+                    <div class="flex flex-col md:flex-row gap-3 w-full">
+                        <div class="search-bar flex-1">
+                            <i class="pi pi-search search-icon"></i>
+                            <InputText v-model="searchQuery" placeholder="Buscar productos por nombre, SKU o código..." class="search-input" />
+                        </div>
+                        
+                        <!-- Sort Dropdown -->
+                        <div class="w-full md:w-56">
+                            <Dropdown
+                                v-model="sortBy"
+                                :options="sortOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Ordenar por"
+                                class="w-full custom-sort-dropdown"
+                            >
+                                <template #value="slotProps">
+                                    <div v-if="slotProps.value" class="flex items-center">
+                                        <i class="pi pi-sort-alt mr-2 text-blue-600"></i>
+                                        <span>{{ sortOptions.find(o => o.value === slotProps.value)?.label }}</span>
+                                    </div>
+                                    <span v-else>
+                                        {{ slotProps.placeholder }}
+                                    </span>
+                                </template>
+                            </Dropdown>
+                        </div>
                     </div>
 
                     <!-- Panel de filtros colapsable -->
@@ -1391,6 +1428,7 @@ const setActiveImage = (imgUrl) => {
     min-height: 2.8em; /* for 2 lines */
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

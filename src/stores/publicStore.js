@@ -188,25 +188,37 @@ export const usePublicStore = defineStore('publicStore', {
                 }
 
                 // Paginación
-                if (options.usePagination && (options.page || this.currentPage > 1)) {
+                if (options.usePagination) { // Always send pagination params if usePagination is true
                     params.page = options.page || this.currentPage;
                     params.per_page = options.perPage || this.perPage;
                 }
 
                 // Ordenamiento
-                if (options.sort) {
-                    params.sort = options.sort;
-                }
+                // Priority: options.sort > this.sortBy > default 'name'
+                params.sort = options.sort || this.sortBy || 'name';
 
                 const response = await fetchCatalogProducts(slug, params);
                 const data = response.data;
-                console.log(data);
+                console.log('📦 [Store API] Response:', data);
 
-                this.products = data.data || [];
-                this.totalProducts = data.total || data.data?.length || 0;
+                // Handle response structure where data could be paginated
+                // The API guide says data.data contains the array, and data.pagination contains meta
+                const productsData = data.data?.data || data.data || [];
+                const paginationData = data.data?.pagination || {};
+
+                this.products = productsData;
+                this.totalProducts = paginationData.total || productsData.length || 0;
+                
+                // Update pagination state from response if available, otherwise calculate
+                if (paginationData.per_page) {
+                    this.perPage = paginationData.per_page;
+                }
+                if (paginationData.current_page) {
+                    this.currentPage = paginationData.current_page;
+                }
+                
                 this.totalPages = Math.ceil(this.totalProducts / this.perPage);
-                this.currentPage = data.current_page || 1;
-                this.lastPage = data.last_page || null;
+                this.lastPage = paginationData.last_page || null;
 
                 // Extraer información del catálogo si viene en la respuesta
                 if (data.catalog_info) {
