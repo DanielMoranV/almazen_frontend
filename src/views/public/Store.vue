@@ -541,6 +541,22 @@ const sendCartToWhatsApp = () => {
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
 };
 
+// 📦 Lógica de Detalles del Producto (Modal)
+const selectedProduct = ref(null);
+const isProductDetailVisible = ref(false);
+const activeImage = ref('');
+
+const openProductDetail = (product) => {
+    selectedProduct.value = product;
+    activeImage.value = publicStore.getProductImage(product);
+    isProductDetailVisible.value = true;
+};
+
+const setActiveImage = (imgUrl) => {
+    activeImage.value = imgUrl;
+};
+
+
 </script>
 
 <template>
@@ -677,7 +693,7 @@ const sendCartToWhatsApp = () => {
                 </div>
 
                 <div v-else class="products-grid">
-                    <router-link v-for="product in products" :key="product.id" :to="getProductRoute(product.id)" class="product-card">
+                    <div v-for="product in products" :key="product.id" class="product-card" @click="openProductDetail(product)">
                         <!-- Imagen del producto -->
                         <!-- Imagen del producto -->
                         <div class="product-image">
@@ -690,7 +706,7 @@ const sendCartToWhatsApp = () => {
                             <Button 
                                 class="add-to-cart-btn p-button-rounded"
                                 :class="isInCart(product.id) ? 'p-button-success' : 'p-button-secondary'"
-                                @click.prevent="addToCart(product)"
+                                @click.stop.prevent="addToCart(product)"
                                 v-tooltip.top="isInCart(product.id) ? 'Agregar otro' : 'Agregar a la lista'"
                             >
                                 <i :class="isInCart(product.id) ? 'pi pi-plus' : 'pi pi-cart-plus'" style="font-size: 1.25rem;"></i>
@@ -734,7 +750,7 @@ const sendCartToWhatsApp = () => {
                                 </div>
                             </div>
                         </div>
-                    </router-link>
+                    </div>
                 </div>
 
                 <!-- Paginación -->
@@ -865,6 +881,104 @@ const sendCartToWhatsApp = () => {
                             class="p-button-success w-full sm:w-auto" 
                             @click="sendCartToWhatsApp" 
                         />
+                    </div>
+                </div>
+            </div>
+        </Dialog>
+
+        <!-- 📦 Modal de Detalles del Producto -->
+        <Dialog v-model:visible="isProductDetailVisible" modal :style="{ width: '90vw', maxWidth: '900px' }" :breakpoints="{ '960px': '75vw', '641px': '100vw' }" contentClass="product-detail-modal-content">
+            <template #header>
+                <div class="text-xl font-bold">{{ selectedProduct?.name }}</div>
+            </template>
+            
+            <div class="product-detail-container" v-if="selectedProduct">
+                <!-- Columna Izquierda: Galería -->
+                <div class="detail-gallery">
+                    <div class="main-image">
+                        <img :src="activeImage" :alt="selectedProduct.name" class="detail-img-large" />
+                        <div v-if="publicStore.getProductStock(selectedProduct) <= 0" class="detail-out-stock-badge">Agotado</div>
+                    </div>
+                    
+                    <!-- Miniaturas (si hay galería y tiene más de 0 elementos) -->
+                    <div class="gallery-thumbs" v-if="selectedProduct.gallery && selectedProduct.gallery.length > 0">
+                         <!-- Agregar imagen principal también a las miniaturas para poder volver a ella -->
+                        <div 
+                            class="thumb-item" 
+                            :class="{ active: activeImage === publicStore.getProductImage(selectedProduct) }"
+                            @click="setActiveImage(publicStore.getProductImage(selectedProduct))"
+                        >
+                            <img :src="publicStore.getProductImage(selectedProduct)" :alt="selectedProduct.name" />
+                        </div>
+
+                        <div 
+                            v-for="(img, idx) in selectedProduct.gallery" 
+                            :key="idx" 
+                            class="thumb-item"
+                            :class="{ active: activeImage === img.image_url }"
+                            @click="setActiveImage(img.image_url)"
+                        >
+                            <img :src="img.image_url" :alt="`Imagen ${idx + 1}`" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Información -->
+                <div class="detail-info">
+                    <div class="detail-header">
+                        <span class="detail-category">{{ publicStore.getProductCategory(selectedProduct)?.name || 'Sin categoría' }}</span>
+                        <!-- Brand si existe -->
+                        <span class="detail-brand" v-if="selectedProduct.brand">{{ selectedProduct.brand.name }}</span>
+                    </div>
+
+                    <div class="detail-price-section" v-if="showPrices">
+                         <span class="detail-price-currency">S/</span>
+                         <span class="detail-price-amount">{{ formatPrice(publicStore.getProductPrice(selectedProduct)).replace('S/', '').trim() }}</span>
+                         <span class="detail-unit">/ {{ publicStore.getProductUnit(selectedProduct).symbol }}</span>
+                    </div>
+
+                    <div class="detail-stock mb-4" v-if="showStock">
+                         <div
+                            class="stock-badge inline-flex"
+                            :class="{
+                                'out-of-stock': publicStore.getProductStock(selectedProduct) <= 0,
+                                'low-stock': publicStore.getProductStock(selectedProduct) > 0 && publicStore.getProductStock(selectedProduct) <= 5,
+                                'in-stock': publicStore.getProductStock(selectedProduct) > 5
+                            }"
+                        >
+                            <i class="pi pi-box"></i>
+                            <span v-if="publicStore.getProductStock(selectedProduct) <= 0">Agotado</span>
+                            <span v-else>{{ publicStore.getProductStock(selectedProduct) }} Unidades disponibles</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-description">
+                        <h3 class="text-lg font-semibold mb-2">Descripción</h3>
+                        <p>{{ selectedProduct.description || 'Sin descripción disponible.' }}</p>
+                    </div>
+
+                    <div class="detail-actions mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div class="flex flex-col gap-3">
+                             <div class="flex items-center gap-2 mb-2" v-if="isInCart(selectedProduct.id)">
+                                <i class="pi pi-check-circle text-green-500"></i>
+                                <span class="text-green-600 font-medium">Este producto ya está en tu lista ({{ getCartQuantity(selectedProduct.id) }})</span>
+                            </div>
+
+                            <Button 
+                                :label="isInCart(selectedProduct.id) ? 'Agregar otro a la lista' : 'Agregar a la lista'" 
+                                icon="pi pi-cart-plus" 
+                                class="w-full p-button-lg"
+                                :severity="isInCart(selectedProduct.id) ? 'success' : 'primary'"
+                                @click="addToCart(selectedProduct)"
+                            />
+                            
+                            <Button 
+                                label="Cerrar" 
+                                icon="pi pi-times" 
+                                class="w-full p-button-outlined p-button-secondary"
+                                @click="isProductDetailVisible = false"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1831,5 +1945,169 @@ const sendCartToWhatsApp = () => {
         flex-direction: row;
         justify-content: space-between;
     }
+}
+
+/* === PRODUCT DETAIL MODAL === */
+.product-detail-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .product-detail-container {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+/* Galería */
+.detail-gallery {
+    flex: 1;
+    min-width: 0; /* Prevenir desbordamiento flex */
+}
+
+.main-image {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--surface-50);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid var(--surface-border);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark .main-image {
+    background: var(--surface-800);
+}
+
+.detail-img-large {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.detail-out-stock-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    backdrop-filter: blur(4px);
+}
+
+.gallery-thumbs {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.thumb-item {
+    width: 70px;
+    height: 70px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    opacity: 0.7;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    background: var(--surface-50);
+}
+
+.dark .thumb-item {
+    background: var(--surface-800);
+}
+
+.thumb-item:hover {
+    opacity: 1;
+}
+
+.thumb-item.active {
+    border-color: var(--primary-color);
+    opacity: 1;
+}
+
+.thumb-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Info del Producto */
+.detail-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-header {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.detail-category, .detail-brand {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    background: var(--surface-100);
+    color: var(--text-color-secondary);
+}
+
+.detail-category {
+    color: var(--primary-color);
+    background: var(--primary-50);
+}
+
+.dark .detail-category {
+    background: rgba(var(--primary-color-rgb), 0.15);
+}
+
+.detail-price-section {
+    display: flex;
+    align-items: baseline;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+}
+
+.detail-price-currency {
+    font-size: 1.5rem;
+    margin-right: 0.25rem;
+}
+
+.detail-price-amount {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.detail-unit {
+    margin-left: 0.5rem;
+    color: var(--text-color-secondary);
+    font-weight: 400;
+    font-size: 1.125rem;
+}
+
+.detail-description {
+    color: var(--text-color-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    white-space: pre-line;
 }
 </style>
