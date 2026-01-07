@@ -53,12 +53,16 @@ const openConfigDialog = async (warehouse) => {
 
     // Llenar el formulario con los datos del store (currentConfig y currentWarehouse)
     if (currentConfig.value && currentWarehouse.value) {
+        console.log('openConfigDialog - currentWarehouse:', currentWarehouse.value);
+        console.log('openConfigDialog - currentConfig:', currentConfig.value);
+        
         form.value = {
-            is_public_visible: currentWarehouse.value.is_public,
+            is_public_visible: Boolean(currentWarehouse.value.is_public),
             public_url_slug: currentWarehouse.value.slug || '',
-            require_access_token: currentWarehouse.value.requires_token,
+            require_access_token: Boolean(currentWarehouse.value.requires_token),
             ...currentConfig.value
         };
+        console.log('openConfigDialog - form initialized:', form.value);
         configDialog.value = true;
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: catalogsStore.error || 'No se pudo cargar la configuración.', life: 4000 });

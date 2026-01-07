@@ -73,8 +73,10 @@ export const usePublicCatalogsStore = defineStore('publicCatalogsStore', {
             this.currentWarehouse = null;
             try {
                 const response = await getCatalogConfig(warehouseId);
+                console.log('loadCatalogConfig raw response:', response);
                 // CORRECCIÓN: Se accede a response.data directamente.
                 const responseData = response.data;
+                console.log('loadCatalogConfig responseData:', responseData);
                 this.currentWarehouse = responseData.warehouse;
                 this.currentConfig = responseData.warehouse.public_catalog_config || this.getDefaultConfig();
                 this.currentUrls = responseData.urls;
