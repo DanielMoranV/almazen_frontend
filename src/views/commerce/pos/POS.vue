@@ -1041,6 +1041,7 @@ const openMultiplePaymentDialog = () => {
             v-model:paymentStatus="paymentStatus"
             :loading="loading"
             :selectedCustomer="selectedCustomer"
+            :discountInfo="discountInfo"
             @process-payment="processPayment"
             :printVoucher="printVoucher"
         />

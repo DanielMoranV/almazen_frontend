@@ -57,9 +57,16 @@ const copySuccess = ref(false);
 
 // Obtener URL del catálogo (Prioriza Friendly URL)
 const getCatalogUrl = (catalog) => {
-    // Si tiene una URL pública válida (amigable), usarla
+    // Si tiene una URL pública válida (amigable), usarla pero asegurando que use el dominio actual
     if (catalog.urls?.public_url) {
-        return catalog.urls.public_url;
+        try {
+            // Si viene una URL completa (ej: http://localhost...), extraemos solo el path
+            const urlObj = new URL(catalog.urls.public_url);
+            return `${window.location.origin}${urlObj.pathname}`;
+        } catch (e) {
+            // Si viene solo el path (ej: /tienda/...), lo concatenamos al origen actual
+            return `${window.location.origin}${catalog.urls.public_url.startsWith('/') ? '' : '/'}${catalog.urls.public_url}`;
+        }
     }
 
     // Fallback: Generación de URL legacy

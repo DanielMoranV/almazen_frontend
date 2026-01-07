@@ -50,6 +50,7 @@ export const usePublicCatalogsStore = defineStore('publicCatalogsStore', {
                     this.stats = response.data.stats || this.stats;
 
                     console.log('Loaded public catalogs:', this.catalogs);
+                    console.log('API Response for public catalogs:', response.data);
                 } else {
                     this.catalogs = [];
                 }

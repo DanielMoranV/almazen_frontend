@@ -163,7 +163,17 @@ const closeNewTokenDialog = () => {
 
 const openCatalogInNewTab = (url) => {
     if (url) {
-        window.open(url, '_blank');
+        window.open(formatUrl(url), '_blank');
+    }
+};
+
+const formatUrl = (url) => {
+    if (!url) return '';
+    try {
+        const urlObj = new URL(url);
+        return `${window.location.origin}${urlObj.pathname}`;
+    } catch (e) {
+        return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
     }
 };
 </script>
@@ -231,8 +241,8 @@ const openCatalogInNewTab = (url) => {
             <Column header="URL Pública">
                 <template #body="{ data }">
                     <div v-if="data.is_public && data.urls.public_url" class="flex items-center gap-2">
-                        <a :href="data.urls.public_url" target="_blank" class="text-blue-600 hover:underline">{{ data.urls.public_url }}</a>
-                        <Button icon="pi pi-copy" text rounded @click="copyToClipboard(data.urls.public_url, 'URL')" v-tooltip.top="'Copiar URL'" />
+                        <a :href="formatUrl(data.urls.public_url)" target="_blank" class="text-blue-600 hover:underline">{{ formatUrl(data.urls.public_url) }}</a>
+                        <Button icon="pi pi-copy" text rounded @click="copyToClipboard(formatUrl(data.urls.public_url), 'URL')" v-tooltip.top="'Copiar URL'" />
                     </div>
                     <span v-else class="text-gray-400">-</span>
                 </template>

@@ -10,7 +10,8 @@ const props = defineProps({
     availableVoucherTypes: Array,
     paymentStatus: String,
     loading: Boolean,
-    selectedCustomer: Object
+    selectedCustomer: Object,
+    discountInfo: Object
 });
 
 const emit = defineEmits(['update:showMultiplePaymentDialog', 'update:selectedPaymentMethods', 'update:voucherType', 'update:paymentStatus', 'process-payment']);
@@ -244,6 +245,16 @@ const anonymousCustomerValidation = computed(() => {
         <div class="space-y-6 mt-2">
             <!-- Order Summary -->
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200">
+                <div v-if="discountInfo" class="space-y-2 mb-2 border-b border-blue-200 pb-2">
+                     <div class="flex justify-between items-center text-gray-600">
+                        <span>Subtotal:</span>
+                        <span class="font-bold">{{ formatCurrency(cartTotal + (discountInfo.amount || 0)) }}</span>
+                    </div>
+                     <div class="flex justify-between items-center text-emerald-600">
+                        <span class="flex items-center gap-1"><i class="pi pi-ticket"></i> Descuento:</span>
+                        <span class="font-bold">- {{ formatCurrency(discountInfo.amount || 0) }}</span>
+                    </div>
+                </div>
                 <div class="flex justify-between items-center">
                     <span class="text-lg font-bold text-gray-800">TOTAL A PAGAR:</span>
                     <span class="text-2xl font-black text-blue-600">{{ formatCurrency(cartTotal) }}</span>
