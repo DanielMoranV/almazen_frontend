@@ -1,15 +1,15 @@
 <script setup>
-import { useDashboardStore } from '@/stores/dashboardStore';
-import { useWarehousesStore } from '@/stores/warehousesStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useDashboardStore } from '@/stores/dashboardStore';
+import { usePublicCatalogsStore } from '@/stores/publicCatalogsStore';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const dashboardStore = useDashboardStore();
-const warehousesStore = useWarehousesStore();
+const catalogsStore = usePublicCatalogsStore();
 const authStore = useAuthStore();
 const { getDashboardMetrics, getLowStockProducts, getLowStockSummary, getExpiringProducts, getExpiringProductsSummary, isLoadingDashboard, getTotalSalesGrowth, getInventoryHealthScore } = storeToRefs(dashboardStore);
-const { warehousesList } = storeToRefs(warehousesStore);
+const { catalogs } = storeToRefs(catalogsStore);
 const { currentUser } = storeToRefs(authStore);
 
 const refreshInterval = ref(null);
@@ -50,15 +50,22 @@ const formatExpirationDate = (dateString) => {
 };
 
 // Estados para la sección de catálogo
-const selectedWarehouse = ref(null);
+const selectedCatalog = ref(null);
 const catalogUrl = ref('');
 const showCatalogDialog = ref(false);
 const copySuccess = ref(false);
 
-// Generar URL del catálogo público
-const generateCatalogUrl = (warehouseId) => {
+// Obtener URL del catálogo (Prioriza Friendly URL)
+const getCatalogUrl = (catalog) => {
+    // Si tiene una URL pública válida (amigable), usarla
+    if (catalog.urls?.public_url) {
+        return catalog.urls.public_url;
+    }
+
+    // Fallback: Generación de URL legacy
     const baseUrl = window.location.origin;
     const companyId = currentUser.value?.company_id;
+    const warehouseId = catalog.id;
 
     if (!companyId) {
         console.error('No se encontró el ID de la empresa del usuario');
@@ -92,15 +99,15 @@ const copyToClipboard = async (url) => {
 };
 
 // Abrir diálogo de catálogo
-const openCatalogDialog = (warehouse) => {
-    selectedWarehouse.value = warehouse;
-    catalogUrl.value = generateCatalogUrl(warehouse.id);
+const openCatalogDialog = (catalog) => {
+    selectedCatalog.value = catalog;
+    catalogUrl.value = getCatalogUrl(catalog);
     showCatalogDialog.value = true;
 };
 
 // Abrir catálogo en nueva pestaña
-const openCatalog = (warehouseId) => {
-    const url = generateCatalogUrl(warehouseId);
+const openCatalog = (catalog) => {
+    const url = getCatalogUrl(catalog);
     window.open(url, '_blank');
 };
 
@@ -148,8 +155,9 @@ const refreshDashboard = async () => {
 
 onMounted(async () => {
     await refreshDashboard();
-    // Cargar almacenes para la sección de catálogo
-    await warehousesStore.fetchWarehouses();
+    // Cargar catálogos públicos para obtener URLs amigables
+    await catalogsStore.loadPublicCatalogs();
+    console.log('📦 [Dashboard] Data de Catálogos Públicos recibida:', catalogs.value);
 
     // Auto-refresh cada 5 minutos
     refreshInterval.value = setInterval(refreshDashboard, 5 * 60 * 1000);
@@ -311,27 +319,28 @@ onUnmounted(() => {
                     </template>
                     <template #content>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div v-for="warehouse in warehousesList" :key="warehouse.id" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-indigo-300">
+                            <div v-for="catalog in catalogs" :key="catalog.id" class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-indigo-300">
                                 <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
                                         <h3 class="font-semibold text-gray-900 mb-1">
-                                            {{ warehouse.name }}
+                                            {{ catalog.name }}
                                         </h3>
-                                        <p class="text-sm text-gray-600 mb-2" v-if="warehouse.location">
+                                        <p class="text-sm text-gray-600 mb-2" v-if="catalog.location">
                                             <i class="pi pi-map-marker mr-1"></i>
-                                            {{ warehouse.location }}
+                                            {{ catalog.location }}
                                         </p>
                                     </div>
+                                    <Tag v-if="catalog.urls?.public_url" value="URL Amigable" severity="success" class="text-xs" />
                                 </div>
 
                                 <div class="flex items-center space-x-2">
-                                    <Button label="Ver Catálogo" icon="pi pi-external-link" size="small" outlined @click="openCatalog(warehouse.id)" class="flex-1" />
-                                    <Button icon="pi pi-share-alt" size="small" severity="info" @click="openCatalogDialog(warehouse)" v-tooltip.top="'Compartir'" />
+                                    <Button label="Ver Catálogo" icon="pi pi-external-link" size="small" outlined @click="openCatalog(catalog)" class="flex-1" />
+                                    <Button icon="pi pi-share-alt" size="small" severity="info" @click="openCatalogDialog(catalog)" v-tooltip.top="'Compartir'" />
                                 </div>
                             </div>
 
-                            <!-- Card para crear nuevo catálogo si no hay almacenes -->
-                            <div v-if="warehousesList.length === 0" class="col-span-full text-center py-8 text-gray-500">
+                            <!-- Card para crear nuevo catálogo si no hay catalogo -->
+                            <div v-if="catalogs.length === 0" class="col-span-full text-center py-8 text-gray-500">
                                 <i class="pi pi-warehouse text-4xl mb-4 text-gray-400"></i>
                                 <p class="text-lg mb-2">No hay almacenes configurados</p>
                                 <p class="text-sm">Crea un almacén para generar catálogos públicos</p>
@@ -510,7 +519,7 @@ onUnmounted(() => {
                         <template #title>
                             <div class="flex items-center space-x-2">
                                 <i class="pi pi-chart-line text-green-500"></i>
-                                <span>Tendencia Ventas (Mes)</span>
+                                    <span>Tendencia Ventas (Mes)</span>
                             </div>
                         </template>
                         <template #content>
@@ -545,14 +554,14 @@ onUnmounted(() => {
         <Dialog v-model:visible="showCatalogDialog" :style="{ width: '32rem' }" header="Compartir Catálogo" :modal="true">
             <div class="space-y-4">
                 <!-- Información del almacén -->
-                <div v-if="selectedWarehouse" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div v-if="selectedCatalog" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div class="p-2 bg-indigo-100 rounded-lg">
                         <i class="pi pi-warehouse text-indigo-600"></i>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-gray-900">{{ selectedWarehouse.name }}</h3>
-                        <p class="text-sm text-gray-600" v-if="selectedWarehouse.location">
-                            {{ selectedWarehouse.location }}
+                        <h3 class="font-semibold text-gray-900">{{ selectedCatalog.name }}</h3>
+                        <p class="text-sm text-gray-600" v-if="selectedCatalog.location">
+                            {{ selectedCatalog.location }}
                         </p>
                     </div>
                 </div>
@@ -584,7 +593,7 @@ onUnmounted(() => {
 
                 <!-- Acciones -->
                 <div class="flex items-center justify-between pt-4">
-                    <Button label="Ver Catálogo" icon="pi pi-external-link" outlined @click="openCatalog(selectedWarehouse?.id)" />
+                    <Button label="Ver Catálogo" icon="pi pi-external-link" outlined @click="openCatalog(selectedCatalog)" />
                     <div class="space-x-2">
                         <Button label="Cerrar" text @click="showCatalogDialog = false" />
                         <Button label="Copiar URL" :icon="copySuccess ? 'pi pi-check' : 'pi pi-copy'" :severity="copySuccess ? 'success' : 'info'" @click="copyToClipboard(catalogUrl)" />

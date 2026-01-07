@@ -1,4 +1,4 @@
-import { fetchPublicProduct, fetchPublicProducts, fetchCatalogInfo, fetchCatalogProducts, fetchCatalogProduct } from '@/api';
+import { fetchCatalogInfo, fetchCatalogProduct, fetchCatalogProducts, fetchPublicProduct, fetchPublicProducts } from '@/api';
 import { defineStore } from 'pinia';
 
 export const usePublicStore = defineStore('publicStore', {
@@ -200,12 +200,26 @@ export const usePublicStore = defineStore('publicStore', {
 
                 const response = await fetchCatalogProducts(slug, params);
                 const data = response.data;
+                console.log(data);
 
                 this.products = data.data || [];
                 this.totalProducts = data.total || data.data?.length || 0;
                 this.totalPages = Math.ceil(this.totalProducts / this.perPage);
                 this.currentPage = data.current_page || 1;
                 this.lastPage = data.last_page || null;
+
+                // Extraer información del catálogo si viene en la respuesta
+                if (data.catalog_info) {
+                    this.catalogConfig = data.catalog_info.config || {};
+                    // Si viene warehouse info dentro de catalog_info
+                    if (!this.currentWarehouse) {
+                       this.currentWarehouse = {
+                           name: data.catalog_info.name,
+                           location: data.catalog_info.location,
+                           ...data.warehouse
+                       };
+                    }
+                }
 
                 // Extraer información del almacén y empresa si no están disponibles
                 if (data.warehouse && !this.currentWarehouse) {

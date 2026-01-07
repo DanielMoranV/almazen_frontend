@@ -48,6 +48,20 @@ const currentPage = computed({
 });
 const perPage = computed(() => publicStore.perPage);
 
+const showPrices = computed(() => {
+    if (publicStore.catalogConfig) {
+        return publicStore.catalogConfig.show_prices;
+    }
+    return true; // Default for legacy/fallback
+});
+
+const showStock = computed(() => {
+    if (publicStore.catalogConfig) {
+        return publicStore.catalogConfig.show_stock_quantity;
+    }
+    return true; // Default for legacy/fallback
+});
+
 // Usar las utilidades del store
 const formatPrice = (price) => publicStore.formatPrice(price);
 const formatDate = (dateString) => publicStore.formatDate(dateString);
@@ -68,6 +82,18 @@ const loadProducts = async () => {
                 usePagination: true
             });
         }
+
+        console.log('📦 [Store View] Data recibida del backend:', {
+            products: publicStore.products,
+            warehouse: publicStore.warehouseInfo,
+            company: publicStore.companyInfo,
+            pagination: {
+                total: publicStore.totalProducts,
+                perPage: publicStore.perPage,
+                currentPage: publicStore.currentPage
+            }
+        });
+
     } catch (error) {
         let errorMessage = 'No se pudieron cargar los productos';
 
@@ -398,6 +424,8 @@ onMounted(async () => {
             await publicStore.initializeStore(warehouseId.value, companyId.value);
         }
 
+
+
         // Actualizar SEO después de cargar los datos
         updateSEO();
         updateStructuredData();
@@ -410,22 +438,70 @@ onMounted(async () => {
 });
 // 🛒 Lógica de Carrito para WhatsApp
 const cart = ref([]);
+const isCartVisible = ref(false);
 
 // Verificar si un producto está en el carrito
 const isInCart = (productId) => {
-    return cart.value.some(item => item.id === productId);
+    return cart.value.some(item => item.product.id === productId);
 };
 
-// Alternar producto en el carrito
-const toggleCart = (product) => {
-    const index = cart.value.findIndex(item => item.id === product.id);
-    if (index === -1) {
-        cart.value.push(product);
-        toast.add({ severity: 'success', summary: 'Agregado', detail: 'Producto agregado a la lista', life: 1500 });
+// Obtener cantidad en carrito
+const getCartQuantity = (productId) => {
+    const item = cart.value.find(item => item.product.id === productId);
+    return item ? item.quantity : 0;
+};
+
+// Agregar al carrito
+const addToCart = (product) => {
+    const existingItem = cart.value.find(item => item.product.id === product.id);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+        toast.add({ severity: 'success', summary: 'Actualizado', detail: 'Cantidad actualizada en la lista', life: 1500 });
     } else {
+        cart.value.push({ product, quantity: 1 });
+        toast.add({ severity: 'success', summary: 'Agregado', detail: 'Producto agregado a la lista', life: 1500 });
+    }
+};
+
+// Remover del carrito
+const removeFromCart = (productId) => {
+    const index = cart.value.findIndex(item => item.product.id === productId);
+    if (index !== -1) {
         cart.value.splice(index, 1);
         toast.add({ severity: 'info', summary: 'Removido', detail: 'Producto quitado de la lista', life: 1500 });
     }
+};
+
+// Actualizar cantidad
+const updateQuantity = (productId, delta) => {
+    const item = cart.value.find(item => item.product.id === productId);
+    if (item) {
+        const newQuantity = item.quantity + delta;
+        if (newQuantity > 0) {
+            item.quantity = newQuantity;
+        } else {
+            // Confirmar eliminación si llega a 0? Por ahora solo lo dejamos en 1 o removemos
+             removeFromCart(productId);
+        }
+    }
+};
+
+// Calcular total del carrito
+const cartTotal = computed(() => {
+    return cart.value.reduce((total, item) => {
+        return total + (publicStore.getProductPrice(item.product) * item.quantity);
+    }, 0);
+});
+
+// Total de items
+const cartItemsCount = computed(() => {
+    return cart.value.reduce((total, item) => total + item.quantity, 0);
+});
+
+// Abrir modal del carrito
+const openCartModal = () => {
+    isCartVisible.value = true;
 };
 
 // Generar mensaje y enviar a WhatsApp
@@ -440,17 +516,23 @@ const sendCartToWhatsApp = () => {
     }
 
     // Construir mensaje
-    let message = `Hola *${company.value?.name || 'Tienda'}*, me gustaría consultar por los siguientes productos:\n\n`;
+    let message = `Hola *${company.value?.name || 'Tienda'}*, me gustaría realizar el siguiente pedido:\n\n`;
     
-    let totalAprox = 0;
     cart.value.forEach(item => {
-        const price = publicStore.getProductPrice(item);
-        message += `- ${item.name} (${publicStore.formatPrice(price)})\n`;
-        totalAprox += price;
+        const price = publicStore.getProductPrice(item.product);
+        const subtotal = price * item.quantity;
+        message += `▪️ ${item.quantity} x ${item.product.name}\n`;
+        // Solo mostrar precio si está habilitado en la config
+        if (showPrices.value) {
+           message += `   (Unid: ${publicStore.formatPrice(price)} - Sub: ${publicStore.formatPrice(subtotal)})\n`;
+        }
     });
 
-    message += `\n*Total Aprox:* ${publicStore.formatPrice(totalAprox)}`;
-    message += `\n\nQuedo atento a su respuesta.`;
+    if (showPrices.value) {
+        message += `\n*Total Aprox:* ${publicStore.formatPrice(cartTotal.value)}`;
+    }
+    
+    message += `\n\nQuedo atento a su confirmación y métodos de pago.`;
 
     // Extraer número limpio
     const phoneNumber = whatsappLink.url.split('wa.me/')[1];
@@ -500,7 +582,11 @@ const sendCartToWhatsApp = () => {
                                 rel="noopener noreferrer"
                                 class="header-social-link"
                                 :title="social.label"
-                                :style="{ '--hover-color': social.color }"
+                                :style="{ 
+                                    backgroundColor: social.color,
+                                    borderColor: social.color
+                                }"
+                                v-tooltip.bottom="social.label"
                             >
                                 <i :class="social.icon"></i>
                             </a>
@@ -508,13 +594,14 @@ const sendCartToWhatsApp = () => {
                         
                         <Button icon="pi pi-filter" label="Filtros" @click="showFilters = !showFilters" class="filter-toggle" />
                         
-                        <!-- Botón Enviar Pedido -->
+                        <!-- Botón Ver Carrito -->
                         <Button 
-                            v-if="cart.length > 0"
-                            icon="pi pi-whatsapp" 
-                            :label="`Enviar Lista (${cart.length})`" 
+                            v-if="cartItemsCount > 0"
+                            icon="pi pi-shopping-cart" 
+                            :label="`Ver Pedido (${cartItemsCount})`" 
                             class="whatsapp-cart-btn"
-                            @click="sendCartToWhatsApp"
+                            @click="openCartModal"
+                            severity="success"
                         />
                     </div>
                 </div>
@@ -599,13 +686,16 @@ const sendCartToWhatsApp = () => {
                             <div v-else-if="publicStore.getProductBatch(product) && publicStore.getProductBatch(product).days_to_expire <= 7" class="expiry-badge">Vence pronto</div>
                             
                             <!-- Botón Agregar a Lista -->
+                            <!-- Botón Agregar a Lista -->
                             <Button 
-                                :icon="isInCart(product.id) ? 'pi pi-check' : 'pi pi-plus'" 
                                 class="add-to-cart-btn p-button-rounded"
                                 :class="isInCart(product.id) ? 'p-button-success' : 'p-button-secondary'"
-                                @click.prevent="toggleCart(product)"
-                                v-tooltip.top="isInCart(product.id) ? 'Quitar de la lista' : 'Agregar a la lista'"
-                            />
+                                @click.prevent="addToCart(product)"
+                                v-tooltip.top="isInCart(product.id) ? 'Agregar otro' : 'Agregar a la lista'"
+                            >
+                                <i :class="isInCart(product.id) ? 'pi pi-plus' : 'pi pi-cart-plus'" style="font-size: 1.25rem;"></i>
+                                <Badge v-if="isInCart(product.id)" :value="getCartQuantity(product.id)" severity="danger" class="absolute -top-2 -right-2"></Badge>
+                            </Button>
                         </div>
 
                         <!-- Contenido del producto -->
@@ -621,14 +711,14 @@ const sendCartToWhatsApp = () => {
                             </div>
 
                             <div class="product-footer">
-                                <div class="price-section">
+                                <div class="price-section" v-if="showPrices">
                                     <span class="current-price">
                                         {{ formatPrice(publicStore.getProductPrice(product)) }}
                                     </span>
                                     <span class="per-unit">/ {{ publicStore.getProductUnit(product).symbol }}</span>
                                 </div>
 
-                                <div class="stock-info">
+                                <div class="stock-info" v-if="showStock">
                                     <div
                                         class="stock-badge"
                                         :class="{
@@ -726,6 +816,58 @@ const sendCartToWhatsApp = () => {
                     <Button label="Acceder" @click="submitToken" :disabled="!tokenInput.trim()" icon="pi pi-key" />
                 </div>
             </template>
+        </Dialog>
+
+        <!-- 🛒 Modal de Carrito -->
+        <Dialog v-model:visible="isCartVisible" modal header="Tu Pedido" :style="{ width: '90vw', maxWidth: '600px' }" :breakpoints="{ '960px': '75vw', '641px': '100vw' }">
+            <div class="cart-container">
+                <div v-if="cart.length === 0" class="empty-cart-message">
+                    <i class="pi pi-shopping-cart text-4xl text-gray-400 mb-2"></i>
+                    <p>Tu lista está vacía</p>
+                    <Button label="Ver productos" text @click="isCartVisible = false" />
+                </div>
+                
+                <div v-else class="cart-items">
+                    <div v-for="item in cart" :key="item.product.id" class="cart-item">
+                        <div class="cart-item-image">
+                            <img :src="publicStore.getProductImage(item.product)" :alt="item.product.name" />
+                        </div>
+                        <div class="cart-item-details">
+                            <h4 class="cart-item-name">{{ item.product.name }}</h4>
+                            <div class="cart-item-price" v-if="showPrices">
+                                {{ formatPrice(publicStore.getProductPrice(item.product)) }}
+                            </div>
+                        </div>
+                        <div class="cart-item-actions">
+                            <div class="quantity-controls">
+                                <Button icon="pi pi-minus" class="p-button-rounded p-button-text p-button-sm" @click="updateQuantity(item.product.id, -1)" />
+                                <span class="quantity-value">{{ item.quantity }}</span>
+                                <Button icon="pi pi-plus" class="p-button-rounded p-button-text p-button-sm" @click="updateQuantity(item.product.id, 1)" />
+                            </div>
+                            <div class="item-subtotal" v-if="showPrices">
+                                {{ formatPrice(publicStore.getProductPrice(item.product) * item.quantity) }}
+                            </div>
+                            <Button icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger p-button-sm ml-2" @click="removeFromCart(item.product.id)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cart-summary" v-if="cart.length > 0">
+                    <div class="summary-total" v-if="showPrices">
+                        <span>Total Estimado:</span>
+                        <span class="total-amount">{{ formatPrice(cartTotal) }}</span>
+                    </div>
+                    <div class="summary-actions">
+                         <Button label="Seguir comprando" icon="pi pi-arrow-left" text @click="isCartVisible = false" class="p-button-secondary" />
+                        <Button 
+                            label="Enviar Pedido por WhatsApp" 
+                            icon="pi pi-whatsapp" 
+                            class="p-button-success w-full sm:w-auto" 
+                            @click="sendCartToWhatsApp" 
+                        />
+                    </div>
+                </div>
+            </div>
         </Dialog>
     </div>
 </template>
@@ -1340,22 +1482,21 @@ const sendCartToWhatsApp = () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
-    background: var(--surface-100);
-    color: var(--text-color-secondary);
-    transition: all 0.2s ease-in-out;
-    font-size: 1.1rem;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-size: 1.25rem;
     text-decoration: none;
-    border: 1px solid transparent;
+    border: 2px solid transparent;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .header-social-link:hover {
-    background: var(--hover-color, var(--primary-color));
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    filter: brightness(1.1);
 }
 
 .dark .header-social-link {
@@ -1550,6 +1691,145 @@ const sendCartToWhatsApp = () => {
     .search-icon {
         font-size: 1rem;
         left: 1rem;
+    }
+}
+/* === CART MODAL === */
+.cart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.empty-cart-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-color-secondary);
+    gap: 1rem;
+}
+
+.cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.cart-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--surface-50);
+    border-radius: 0.75rem;
+    align-items: center;
+    border: 1px solid var(--surface-border);
+}
+
+.dark .cart-item {
+    background: var(--surface-800);
+}
+
+.cart-item-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--surface-border);
+}
+
+.cart-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cart-item-details {
+    flex: 1;
+}
+
+.cart-item-name {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.cart-item-price {
+    font-size: 0.875rem;
+    color: var(--text-color-secondary);
+}
+
+.cart-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    background: var(--surface-0);
+    border-radius: 2rem;
+    padding: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid var(--surface-border);
+}
+
+.dark .quantity-controls {
+    background: var(--surface-900);
+}
+
+.quantity-value {
+    min-width: 2rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.item-subtotal {
+    font-weight: 600;
+    min-width: 5rem;
+    text-align: right;
+    display: none; /* Ocultar en móviles muy pequeños */
+}
+
+@media (min-width: 640px) {
+    .item-subtotal {
+        display: block;
+    }
+}
+
+.cart-summary {
+    border-top: 1px solid var(--surface-border);
+    padding-top: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+@media (min-width: 640px) {
+    .summary-actions {
+        flex-direction: row;
+        justify-content: space-between;
     }
 }
 </style>
