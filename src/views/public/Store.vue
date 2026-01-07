@@ -666,7 +666,7 @@ const setActiveImage = (imgUrl) => {
                         
                         <!-- Sort Dropdown -->
                         <div class="w-full md:w-56">
-                            <Dropdown
+                            <Select
                                 v-model="sortBy"
                                 :options="sortOptions"
                                 optionLabel="label"
@@ -683,7 +683,7 @@ const setActiveImage = (imgUrl) => {
                                         {{ slotProps.placeholder }}
                                     </span>
                                 </template>
-                            </Dropdown>
+                            </Select>
                         </div>
                     </div>
 

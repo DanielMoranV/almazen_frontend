@@ -193,8 +193,6 @@ export const usePublicStore = defineStore('publicStore', {
                     params.per_page = options.perPage || this.perPage;
                 }
 
-                console.log('📤 [Store API] Fetching products with params:', params);
-
                 // Ordenamiento
                 // Priority: options.sort > this.sortBy > default 'name'
                 params.sort = options.sort || this.sortBy || 'name';
