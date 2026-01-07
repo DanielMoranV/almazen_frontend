@@ -50,6 +50,7 @@ export function useDiscount() {
 
         try {
             const response = await discountCodesApi.validate(code, subtotal, customerId);
+            console.log('[useDiscount] API Response:', response);
 
             if (response.data.success) {
                 const data = response.data.data;

@@ -1,5 +1,7 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import DiscountCodeInput from '@/components/discounts/DiscountCodeInput.vue';
+import DiscountSummary from '@/components/discounts/DiscountSummary.vue';
+import { defineEmits, defineProps, ref } from 'vue';
 
 defineProps({
     cart: Array,
@@ -7,10 +9,17 @@ defineProps({
     cartTotal: Number,
     canOperateWithoutSession: Boolean,
     loading: Boolean,
-    showCartSummary: Boolean
+    showCartSummary: Boolean,
+    // Discount Props
+    hasDiscount: Boolean,
+    discountInfo: Object,
+    validating: Boolean,
+    discountError: String
 });
 
-defineEmits(['update:showCartSummary', 'remove-from-cart', 'update-quantity', 'clear-cart', 'open-multiple-payment-dialog']);
+defineEmits(['update:showCartSummary', 'remove-from-cart', 'update-quantity', 'clear-cart', 'open-multiple-payment-dialog', 'apply-discount', 'remove-discount']);
+
+const discountInput = ref('');
 
 const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-PE', {
@@ -74,6 +83,29 @@ const formatCurrency = (amount) => {
                             </div>
                         </div>
                     </div>
+
+
+
+                    <!-- Discount Section -->
+                   <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                        <label class="font-bold text-gray-700 text-sm flex items-center gap-2">
+                             <i class="pi pi-ticket text-emerald-600"></i> Descuentos
+                        </label>
+                        
+                        <DiscountCodeInput
+                            v-if="!hasDiscount"
+                            v-model="discountInput"
+                            :loading="validating"
+                            @apply="$emit('apply-discount', $event)"
+                        />
+                        <small v-if="discountError" class="text-red-500 text-xs block mt-1">{{ discountError }}</small>
+                        
+                        <DiscountSummary
+                            v-if="hasDiscount"
+                            :discount="discountInfo"
+                            @remove="$emit('remove-discount')"
+                        />
+                   </div>
 
                     <Divider class="my-6" />
 
@@ -156,6 +188,26 @@ const formatCurrency = (amount) => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                 <label class="font-bold text-gray-700 text-sm flex items-center gap-2">
+                      <i class="pi pi-ticket text-emerald-600"></i> Descuentos
+                 </label>
+                 
+                 <DiscountCodeInput
+                     v-if="!hasDiscount"
+                     v-model="discountInput"
+                     :loading="validating"
+                     @apply="$emit('apply-discount', $event)"
+                 />
+                 <small v-if="discountError" class="text-red-500 text-xs block mt-1">{{ discountError }}</small>
+                 
+                 <DiscountSummary
+                     v-if="hasDiscount"
+                     :discount="discountInfo"
+                     @remove="$emit('remove-discount')"
+                 />
             </div>
 
             <Divider class="my-6" />

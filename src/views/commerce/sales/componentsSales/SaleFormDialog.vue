@@ -200,11 +200,38 @@ watch(
 );
 
 // Discount Watchers
-watch(() => form.value.subtotal_amount, (newSubtotal) => {
+// Discount Watchers
+watch(() => form.value.subtotal_amount, async (newSubtotal) => {
     if (hasDiscount.value) {
-        if (discountType.value === 'percentage') {
+        // CASE 1: Coupon Code (Re-validate to check minimum limits etc)
+        if (discountCode.value) {
+            // Re-validate logic
+            console.log('Re-validating coupon for new subtotal:', newSubtotal);
+            const isValid = await validateCode(discountCode.value.code, newSubtotal, form.value.customer_id);
+            if (!isValid) {
+                // If invalid (e.g. subtotal < min_purchase), validateCode handles clearing or error
+                 updateFormDiscount(); 
+            } else {
+                 updateFormDiscount();
+            }
+        } 
+        // CASE 2: Manual Percentage Discount
+        else if (discountType.value === 'percentage') {
              applyManualDiscount('percentage', discountPercentage.value, newSubtotal);
              form.value.discount_amount = discountAmount.value;
+        }
+        // CASE 3: Manual Fixed Discount
+        else if (discountType.value === 'fixed') {
+            // We want to ensure it doesn't exceed subtotal. 
+            // NOTE: We use the CURRENT discountAmount as the basis. 
+            // If the user wants the "original" higher amount back, they might need to re-apply, 
+            // but at least we prevent an invalid state where discount > subtotal.
+            const currentFixed = discountAmount.value; 
+            // Check if current fixed exceeds new subtotal
+            if (currentFixed > newSubtotal) {
+                applyManualDiscount('fixed', newSubtotal, newSubtotal); // Cap at subtotal
+                form.value.discount_amount = discountAmount.value;
+            }
         }
     }
     calculateTotals();

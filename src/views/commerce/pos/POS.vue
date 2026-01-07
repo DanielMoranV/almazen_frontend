@@ -10,6 +10,7 @@ import { useWarehousesStore } from '@/stores/warehousesStore';
 import cache from '@/utils/cache.js';
 import { storeToRefs } from 'pinia';
 
+import { useDiscount } from '@/composables/useDiscount';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -90,6 +91,22 @@ const newCustomer = ref({
     identity_document: '',
     identity_document_type: 'dni'
 });
+
+// Discount Composable
+const {
+    discountCode,
+    discountType,
+    discountPercentage,
+    discountAmount,
+    validating,
+    error: discountError,
+    hasDiscount,
+    discountInfo,
+    validateCode,
+    applyManualDiscount,
+    clearDiscount,
+    calculateDiscount
+} = useDiscount();
 
 // Computed para productos con manejo de stock por almacén
 const products = computed(() => {
@@ -482,6 +499,35 @@ const cartTotal = computed(() => {
     return cart.value.reduce((total, item) => total + item.subtotal, 0);
 });
 
+const finalTotal = computed(() => {
+    return Math.max(0, cartTotal.value - discountAmount.value);
+});
+
+// Validar y recalcular descuentos al cambiar el total
+watch(cartTotal, async (newSubtotal) => {
+    if (hasDiscount.value) {
+        // CASE 1: Coupon Code (Re-validate to check minimum limits etc)
+        if (discountCode.value) {
+            console.log('Re-validating coupon for new POS subtotal:', newSubtotal);
+            const isValid = await validateCode(discountCode.value.code, newSubtotal, selectedCustomer.value?.id);
+            if (!isValid) {
+                 // validateCode handles clearing if invalid
+            }
+        } 
+        // CASE 2: Manual Percentage Discount
+        else if (discountType.value === 'percentage') {
+             applyManualDiscount('percentage', discountPercentage.value, newSubtotal);
+        }
+        // CASE 3: Manual Fixed Discount
+        else if (discountType.value === 'fixed') {
+            const currentFixed = discountAmount.value; 
+            if (currentFixed > newSubtotal) {
+                applyManualDiscount('fixed', newSubtotal, newSubtotal); // Cap at subtotal
+            }
+        }
+    }
+});
+
 const cartItemsCount = computed(() => {
     return cart.value.reduce((total, item) => total + item.quantity, 0);
 });
@@ -555,13 +601,13 @@ const processPayment = async () => {
 
     // Calcular impuestos (18% en Perú)
     const calculateTax = (amount) => Math.round(amount * 0.18 * 100) / 100;
-    const totalTax = calculateTax(cartTotal.value);
+    const totalTax = calculateTax(finalTotal.value);
 
     const payload = {
         customer_id: selectedCustomer.value?.id || null,
         sale_date: new Date().toISOString().slice(0, 10),
         voucher_type: voucherType.value,
-        total_amount: cartTotal.value,
+        total_amount: finalTotal.value,
         tax_amount: totalTax,
         discount_amount: 0,
         notes: null,
@@ -583,7 +629,14 @@ const processPayment = async () => {
             method_id: pm.method_id,
             amount: parseFloat(pm.amount),
             reference: pm.reference || null
-        }))
+        })),
+        
+        // Discount fields
+        discount_amount: parseFloat(discountAmount.value) || 0,
+        discount_type: discountAmount.value > 0 ? (discountType.value || 'none') : 'none',
+        discount_percentage: discountType.value === 'percentage' ? (parseFloat(discountPercentage.value) || 0) : null,
+        discount_code: discountCode.value?.code || null,
+        discount_code_id: discountCode.value?.id || null
     };
 
     try {
@@ -622,6 +675,8 @@ const processPayment = async () => {
 
         // Limpiar carrito, métodos de pago y datos de cliente, y preparar siguiente venta
         cart.value = [];
+        clearDiscount(); // Limpiar descuento
+        selectedPaymentMethods.value = [];
         selectedPaymentMethods.value = [];
         clearCustomer(); // Limpia datos de cliente y búsquedas
         showCustomerDialog.value = true; // Abre el modal para seleccionar nuevo cliente
@@ -655,6 +710,13 @@ const processPayment = async () => {
     } finally {
         loading.value = false;
     }
+};
+
+const handleApplyDiscount = async (code) => {
+    if (!cartTotal.value) {
+        return;
+    }
+    await validateCode(code, cartTotal.value, selectedCustomer.value?.id);
 };
 
 // Customer search functions
@@ -846,10 +908,12 @@ const validateSelectedPaymentMethods = async () => {
     const totalPayments = getTotalPaymentAmount();
     const tolerance = 0.01;
 
-    if (Math.abs(totalPayments - cartTotal.value) > tolerance) {
+
+
+    if (Math.abs(totalPayments - finalTotal.value) > tolerance) {
         return {
             valid: false,
-            message: `La suma de pagos (${totalPayments.toFixed(2)}) debe coincidir con el total (${cartTotal.value.toFixed(2)})`
+            message: `La suma de pagos (${totalPayments.toFixed(2)}) debe coincidir con el total (${finalTotal.value.toFixed(2)})`
         };
     }
 
@@ -890,7 +954,7 @@ const openMultiplePaymentDialog = () => {
         {
             method_id: cashMethod.id || null,
             method_name: cashMethod.name || '',
-            amount: cartTotal.value,
+            amount: finalTotal.value,
             reference: '',
             requires_reference: cashMethod.requires_reference || false
         }
@@ -944,6 +1008,13 @@ const openMultiplePaymentDialog = () => {
                     @update-quantity="updateQuantity"
                     @clear-cart="clearCart"
                     @open-multiple-payment-dialog="openMultiplePaymentDialog"
+                    
+                    :hasDiscount="hasDiscount"
+                    :discountInfo="discountInfo"
+                    :validating="validating"
+                    :discountError="discountError"
+                    @apply-discount="handleApplyDiscount"
+                    @remove-discount="clearDiscount"
                 />
                 <!-- Mobile Floating Action Button for Cart -->
                 <div class="fixed right-4 bottom-4 lg:hidden z-50">
@@ -959,9 +1030,10 @@ const openMultiplePaymentDialog = () => {
         </div>
 
         <!-- Multiple Payment Methods Dialog -->
+
         <PaymentDialog
             v-model:showMultiplePaymentDialog="showMultiplePaymentDialog"
-            :cartTotal="cartTotal"
+            :cartTotal="finalTotal"
             v-model:selectedPaymentMethods="selectedPaymentMethods"
             :availablePaymentMethods="availablePaymentMethods"
             v-model:voucherType="voucherType"
@@ -986,7 +1058,7 @@ const openMultiplePaymentDialog = () => {
             v-model:newCustomer="newCustomer"
             :loading="loading"
             :voucherType="voucherType"
-            :cartTotal="cartTotal"
+            :cartTotal="finalTotal"
             @search-customers="searchCustomersDebounced"
             @select-customer="selectCustomer"
             @create-quick-customer="createQuickCustomer"
