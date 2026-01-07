@@ -57,12 +57,17 @@ const openConfigDialog = async (warehouse) => {
         console.log('openConfigDialog - currentConfig:', currentConfig.value);
         
         form.value = {
-            is_public_visible: Boolean(currentWarehouse.value.is_public),
-            public_url_slug: currentWarehouse.value.slug || '',
-            require_access_token: Boolean(currentWarehouse.value.requires_token),
+            is_public_visible: Boolean(currentWarehouse.value.is_public_visible),
+            public_url_slug: currentWarehouse.value.public_url_slug || '',
+            require_access_token: Boolean(currentWarehouse.value.require_access_token), // Assuming the API returns 'require_access_token' or 'requires_token'. Let's check consistency.
             ...currentConfig.value
         };
-        console.log('openConfigDialog - form initialized:', form.value);
+        // Fallback for require_access_token if the key matches 'requires_token' in some API versions
+        if (currentWarehouse.value.requires_token !== undefined) {
+             form.value.require_access_token = Boolean(currentWarehouse.value.requires_token);
+        }
+        
+        console.log('openConfigDialog - form initialized (correction):', form.value);
         configDialog.value = true;
     } else {
         toast.add({ severity: 'error', summary: 'Error', detail: catalogsStore.error || 'No se pudo cargar la configuración.', life: 4000 });
