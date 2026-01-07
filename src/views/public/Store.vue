@@ -48,6 +48,23 @@ const currentPage = computed({
 });
 const perPage = computed(() => publicStore.perPage);
 
+// Ordenamiento
+const sortBy = computed({
+    get: () => publicStore.sortBy,
+    set: (value) => {
+        publicStore.sortBy = value;
+        // Reload products when sort changes
+        loadProducts();
+    }
+});
+
+const sortOptions = [
+    { label: 'Nombre (A-Z)', value: 'name' },
+    { label: 'Menor Precio', value: 'price_asc' },
+    { label: 'Mayor Precio', value: 'price_desc' },
+    { label: 'Más Nuevos', value: 'newest' }
+];
+
 const showPrices = computed(() => {
     if (publicStore.catalogConfig) {
         return publicStore.catalogConfig.show_prices;

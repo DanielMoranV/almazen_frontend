@@ -188,10 +188,12 @@ export const usePublicStore = defineStore('publicStore', {
                 }
 
                 // Paginación
-                if (options.usePagination) { // Always send pagination params if usePagination is true
+                if (options.usePagination) {
                     params.page = options.page || this.currentPage;
                     params.per_page = options.perPage || this.perPage;
                 }
+
+                console.log('📤 [Store API] Fetching products with params:', params);
 
                 // Ordenamiento
                 // Priority: options.sort > this.sortBy > default 'name'
@@ -321,7 +323,10 @@ export const usePublicStore = defineStore('publicStore', {
             await this.loadCatalogInfo(slug, accessToken);
 
             // Luego cargar los productos
-            await this.loadCatalogProducts(slug, { token: accessToken });
+            await this.loadCatalogProducts(slug, { 
+                token: accessToken,
+                usePagination: true 
+            });
         },
 
         // 🆕 Nuevo: Validar y actualizar token de acceso
