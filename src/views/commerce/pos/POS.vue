@@ -826,16 +826,35 @@ const processPayment = async () => {
     }
 };
 
+
+
+// ... (other code)
+
 const handleApplyDiscount = async (code) => {
-    if (!discountableTotal.value) {
+    if (!discountableTotal.value || discountableTotal.value <= 0) {
         showToast('validation', {
             severity: 'warn',
             summary: 'Sin productos aplicables',
-            detail: 'No hay productos elegibles para descuento (revice promociones)'
+            detail: 'No hay productos elegibles para descuento (revise promociones)'
         });
         return;
     }
-    await validateCode(code, discountableTotal.value, selectedCustomer.value?.id);
+    
+    const isValid = await validateCode(code, discountableTotal.value, selectedCustomer.value?.id);
+    
+    if (isValid) {
+        showToast('discount', {
+            severity: 'success',
+            summary: 'Descuento Aplicado',
+            detail: `Se aplicó el cupón "${code}" exitosamente`
+        });
+    } else {
+        showToast('validation', {
+            severity: 'error',
+            summary: 'Error de Validación',
+            detail: discountError.value || 'El código de descuento no es válido o ha expirado'
+        });
+    }
 };
 
 // Customer search functions

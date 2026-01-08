@@ -19,6 +19,10 @@ const props = defineProps({
     visible: {
         type: Boolean,
         default: false
+    },
+    preSelectedProduct: {
+        type: Object,
+        default: null
     }
 });
 
@@ -120,16 +124,29 @@ const resetForm = () => {
         is_stackable_with_coupons: false,
         is_active: true
     };
+
+    // If preSelectedProduct is provided, set it
+    if (props.preSelectedProduct && !isEdit.value) {
+        form.value.product = props.preSelectedProduct;
+        form.value.product_id = props.preSelectedProduct.id;
+    }
 };
 
 // Watch for promotion prop changes
 watch(
-    () => props.promotion,
-    (newPromo) => {
-        if (newPromo) {
-            loadPromotionData(newPromo);
-        } else {
-            resetForm();
+    [() => props.promotion, () => props.preSelectedProduct, () => props.visible],
+    ([newPromo, newPreSelected, newVisible]) => {
+        if (newVisible) {
+            if (newPromo) {
+                loadPromotionData(newPromo);
+            } else {
+                resetForm();
+                // Explicitly set pre-selected if available and creating
+                if (newPreSelected) {
+                    form.value.product = newPreSelected;
+                    form.value.product_id = newPreSelected.id;
+                }
+            }
         }
     },
     { immediate: true }

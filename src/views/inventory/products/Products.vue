@@ -18,6 +18,8 @@ const showProductDialog = ref(false);
 const showDeleteDialog = ref(false);
 const showImportDialog = ref(false);
 const showImageModal = ref(false);
+const showPromotionDialog = ref(false);
+const promotionProduct = ref(null);
 const isCreating = ref(false);
 
 // Estados computados del store
@@ -59,6 +61,11 @@ const openDeleteDialog = (product) => {
 const openImageModal = (product) => {
     selectedProduct.value = product;
     showImageModal.value = true;
+};
+
+const openPromotionDialog = (product) => {
+    promotionProduct.value = product;
+    showPromotionDialog.value = true;
 };
 
 const handleProductSubmit = async (productData) => {
@@ -180,7 +187,7 @@ const showError = (summary, detail) => {
             <!-- Tabla de Productos con Animaciones -->
             <transition name="slide-up" appear>
                 <div v-if="!isLoading && hasProducts" class="table-container">
-                    <ProductsTable :products="productsStore.productsList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" @upload-image="openImageModal" />
+                    <ProductsTable :products="productsStore.productsList" :loading="isLoading" @edit="openEditDialog" @delete="openDeleteDialog" @upload-image="openImageModal" @add-promotion="openPromotionDialog" />
                 </div>
             </transition>
 
@@ -201,6 +208,13 @@ const showError = (summary, detail) => {
         <ProductImportDialog v-model:visible="showImportDialog" @products-imported="handleProductsImported" @view-products="handleViewProducts" />
 
         <ProductImageModal v-model:visible="showImageModal" :product="selectedProduct" @image-updated="handleImageUpdated" />
+
+        <PromotionFormDialog
+            v-model:visible="showPromotionDialog"
+            :preSelectedProduct="promotionProduct"
+            @close="showPromotionDialog = false"
+            @saved="showSuccess('Promoción creada', 'La promoción se ha creado correctamente')"
+        />
 
         <DeleteConfirmationDialog v-model:visible="showDeleteDialog" :item-name="selectedProduct?.name || ''" @confirm="handleProductDelete" />
     </div>
