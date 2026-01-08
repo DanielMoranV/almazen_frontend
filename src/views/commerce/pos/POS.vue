@@ -593,30 +593,50 @@ const cartTotal = computed(() => {
     return cart.value.reduce((total, item) => total + item.subtotal, 0);
 });
 
+// TOTAL DISCOUNTABLE: Sum of subtotals of items that allow stacking OR have no promo
+const discountableTotal = computed(() => {
+    return cart.value.reduce((total, item) => {
+        // If item has a promotion applied...
+        if (item.applied_promotion) {
+            // ...check if it's stackable
+            if (item.applied_promotion.is_stackable_with_coupons) {
+                return total + item.subtotal;
+            }
+            // If not stackable, do NOT add to discountable total
+            return total;
+        }
+        // If no promotion, it's fully discountable
+        return total + item.subtotal;
+    }, 0);
+});
+
 const finalTotal = computed(() => {
     return Math.max(0, cartTotal.value - discountAmount.value);
 });
 
-// Validar y recalcular descuentos al cambiar el total
-watch(cartTotal, async (newSubtotal) => {
+// Validar y recalcular descuentos al cambiar el total descontable
+watch(discountableTotal, async (newDiscountableTotal) => {
     if (hasDiscount.value) {
         // CASE 1: Coupon Code (Re-validate to check minimum limits etc)
         if (discountCode.value) {
-            console.log('Re-validating coupon for new POS subtotal:', newSubtotal);
-            const isValid = await validateCode(discountCode.value.code, newSubtotal, selectedCustomer.value?.id);
-            if (!isValid) {
-                 // validateCode handles clearing if invalid
-            }
+             console.log('Re-validating coupon for new POS discountable total:', newDiscountableTotal);
+             // We pass discountableTotal instead of cartTotal
+             const isValid = await validateCode(discountCode.value.code, newDiscountableTotal, selectedCustomer.value?.id);
+             if (!isValid) {
+                  // validateCode handles clearing if invalid
+             }
         } 
         // CASE 2: Manual Percentage Discount
         else if (discountType.value === 'percentage') {
-             applyManualDiscount('percentage', discountPercentage.value, newSubtotal);
+             // Calculate percentage based on DISCOUNTABLE total
+             applyManualDiscount('percentage', discountPercentage.value, newDiscountableTotal);
         }
         // CASE 3: Manual Fixed Discount
         else if (discountType.value === 'fixed') {
             const currentFixed = discountAmount.value; 
-            if (currentFixed > newSubtotal) {
-                applyManualDiscount('fixed', newSubtotal, newSubtotal); // Cap at subtotal
+            // Cap fixed discount at discountable total
+            if (currentFixed > newDiscountableTotal) {
+                applyManualDiscount('fixed', newDiscountableTotal, newDiscountableTotal); 
             }
         }
     }
@@ -807,10 +827,15 @@ const processPayment = async () => {
 };
 
 const handleApplyDiscount = async (code) => {
-    if (!cartTotal.value) {
+    if (!discountableTotal.value) {
+        showToast('validation', {
+            severity: 'warn',
+            summary: 'Sin productos aplicables',
+            detail: 'No hay productos elegibles para descuento (revice promociones)'
+        });
         return;
     }
-    await validateCode(code, cartTotal.value, selectedCustomer.value?.id);
+    await validateCode(code, discountableTotal.value, selectedCustomer.value?.id);
 };
 
 // Customer search functions
@@ -1071,10 +1096,10 @@ const openMultiplePaymentDialog = () => {
             @show-cart-summary="showCartSummary = true"
         />
 
-        <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+        <div class="w-full px-2 lg:px-4 py-2 sm:py-3 lg:py-4 h-[calc(100vh-4rem)]">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 h-full">
                 <!-- Products Section -->
-                <div class="lg:col-span-3 space-y-4 sm:space-y-6">
+                <div class="lg:col-span-8 xl:col-span-9 space-y-3 sm:space-y-4 overflow-y-auto pr-1">
                     <!-- Search and Filters Panel -->
                     <ProductSearch
                         v-model:searchQuery="searchQuery"
@@ -1091,33 +1116,35 @@ const openMultiplePaymentDialog = () => {
                 </div>
 
                 <!-- Cart Sidebar (Desktop) -->
-                <ShoppingCart
-                    :cart="cart"
-                    :cartItemsCount="cartItemsCount"
-                    :cartTotal="cartTotal"
-                    :canOperateWithoutSession="canOperateWithoutSession"
-                    :loading="loading"
-                    :showCartSummary="showCartSummary"
-                    @update:showCartSummary="showCartSummary = $event"
-                    @remove-from-cart="removeFromCart"
-                    @update-quantity="updateQuantity"
-                    @clear-cart="clearCart"
-                    @open-multiple-payment-dialog="showMultiplePaymentDialog = true"
-                    
-                    :hasDiscount="hasDiscount"
-                    :discountInfo="discountInfo"
-                    :validating="validating"
-                    :discountError="discountError"
-                    @apply-discount="handleApplyDiscount"
-                    @remove-discount="clearDiscount"
-                    @toggle-promotion="toggleItemPromotion"
-                />
+                <div class="hidden lg:block lg:col-span-4 xl:col-span-3 h-full">
+                    <ShoppingCart
+                        :cart="cart"
+                        :cartItemsCount="cartItemsCount"
+                        :cartTotal="cartTotal"
+                        :canOperateWithoutSession="canOperateWithoutSession"
+                        :loading="loading"
+                        :showCartSummary="showCartSummary"
+                        @update:showCartSummary="showCartSummary = $event"
+                        @remove-from-cart="removeFromCart"
+                        @update-quantity="updateQuantity"
+                        @clear-cart="clearCart"
+                        @open-multiple-payment-dialog="showMultiplePaymentDialog = true"
+                        
+                        :hasDiscount="hasDiscount"
+                        :discountInfo="discountInfo"
+                        :validating="validating"
+                        :discountError="discountError"
+                        @apply-discount="handleApplyDiscount"
+                        @remove-discount="clearDiscount"
+                        @toggle-promotion="toggleItemPromotion"
+                    />
+                </div>
                 <!-- Mobile Floating Action Button for Cart -->
                 <div class="fixed right-4 bottom-4 lg:hidden z-50">
                     <Button
                         @click="showCartSummary = true"
                         icon="pi pi-shopping-cart"
-                        class="p-4 w-16 h-16 rounded-full shadow-lg bg-gradient-to-r from-green-600 to-emerald-600"
+                        class="p-4 w-14 h-14 rounded-full shadow-lg bg-gradient-to-r from-green-600 to-emerald-600"
                         badge-class="bg-white text-green-600 font-bold"
                         :badge="cartItemsCount > 0 ? cartItemsCount.toString() : null"
                     />
@@ -1170,6 +1197,7 @@ const openMultiplePaymentDialog = () => {
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

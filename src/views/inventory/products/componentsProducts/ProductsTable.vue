@@ -21,7 +21,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['edit', 'delete', 'upload-image']);
+const emit = defineEmits(['edit', 'delete', 'upload-image', 'add-promotion']);
 
 const initFilters = () => ({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -358,10 +358,11 @@ const downloadBarcode = (product) => {
                 </div>
             </template>
         </Column>
-        <Column :exportable="false" header="Acciones" style="min-width: 8rem; max-width: 10rem">
+        <Column :exportable="false" header="Acciones" style="min-width: 10rem; max-width: 12rem">
             <template #body="slotProps">
                 <div class="flex justify-center gap-1">
                     <Button icon="pi pi-print" class="p-button-rounded p-button-secondary" size="small" rounded text v-tooltip.top="'Descargar Código de Barras'" @click="downloadBarcode(slotProps.data)" :disabled="!slotProps.data.barcode" />
+                    <Button icon="pi pi-bolt" class="p-button-rounded text-purple-600 hover:bg-purple-50" size="small" rounded text v-tooltip.top="'Agregar Promoción'" @click="$emit('add-promotion', slotProps.data)" />
                     <Button icon="pi pi-image" class="p-button-rounded p-button-warning" size="small" rounded text v-tooltip.top="slotProps.data.image_url ? 'Cambiar imagen' : 'Subir imagen'" @click="$emit('upload-image', slotProps.data)" />
                     <Button icon="pi pi-pencil" class="p-button-rounded p-button-info" size="small" rounded text v-tooltip.top="'Editar'" @click="$emit('edit', slotProps.data)" />
                     <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" rounded text v-tooltip.top="'Eliminar'" @click="$emit('delete', slotProps.data)" />
