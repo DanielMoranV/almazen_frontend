@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, ref } from 'vue';
+import { defineEmits, defineProps, ref } from 'vue';
 
 defineProps({
     isSearching: Boolean,
@@ -68,15 +68,15 @@ const handleImageLoad = (event) => {
                     <!-- Product Image -->
                     <div class="relative aspect-square mb-2 sm:mb-4 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden">
                         <img
-                            :src="product.image"
+                            :src="product.image_url"
                             :alt="product.name"
                             class="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                             @error="handleImageError($event)"
                             @load="handleImageLoad($event)"
-                            v-if="product.image && !imageErrors[product.id]"
+                            v-if="product.image_url && !imageErrors[product.id]"
                         />
                         <!-- Fallback -->
-                        <div v-if="!product.image || imageErrors[product.id]" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+                        <div v-if="!product.image_url || imageErrors[product.id]" class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
                             <div class="text-center">
                                 <i class="pi pi-shopping-bag text-4xl text-blue-400 mb-2"></i>
                                 <div class="text-xs text-blue-600 font-medium px-2 leading-tight">

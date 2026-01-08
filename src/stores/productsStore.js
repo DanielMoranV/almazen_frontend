@@ -176,6 +176,7 @@ export const useProductsStore = defineStore('productsStore', {
                 }
 
                 const res = await searchProductsForSale(params);
+                console.log('🔍 PROCESSED DATA FROM /products/search-sale:', res);
                 const processed = handleProcessSuccess(res, this);
 
                 if (processed.success) {
