@@ -389,6 +389,60 @@ const addToCart = (product) => {
     addProductToCart(product, null, null);
 };
 
+/**
+ * Calculate best price based on quantity and active promotions
+ */
+const calculateBestPrice = (product, quantity, ignorePromotions = false) => {
+    let bestPrice = parseFloat(product.price);
+    
+    if (ignorePromotions || !product.promotions || product.promotions.length === 0) {
+        return { price: bestPrice, promotion: null };
+    }
+
+    const now = new Date();
+
+    // Filter valid promotions
+    const validPromotions = product.promotions.filter(promo => {
+        // Active check
+        if (promo.is_active === false || promo.is_active === 0) return false;
+        
+        // Quantity check
+        if (quantity < (promo.min_quantity || 1)) return false;
+        
+        // Date checks
+        if (promo.start_date && new Date(promo.start_date) > now) return false;
+        if (promo.end_date && new Date(promo.end_date) < now) return false;
+
+        // Channel check (assuming POS context, so allow 'pos' or null)
+        if (promo.channel && promo.channel !== 'pos') return false;
+
+        return true;
+    });
+
+    if (validPromotions.length === 0) {
+        return { price: bestPrice, promotion: null };
+    }
+
+    // Sort by priority (desc) then price (asc)
+    validPromotions.sort((a, b) => {
+        if (b.priority !== a.priority) {
+            return b.priority - a.priority;
+        }
+        return parseFloat(a.price) - parseFloat(b.price);
+    });
+
+    const bestPromo = validPromotions[0];
+    const promoPrice = parseFloat(bestPromo.price);
+
+    // Apply promo only if it's lower than base price (optional, but safe for discounts)
+    // Or if priority dictates specific price. For now, let's assume promo is always better or preferred if valid.
+    if (promoPrice < bestPrice) {
+         return { price: promoPrice, promotion: bestPromo };
+    }
+    
+    return { price: bestPrice, promotion: null };
+};
+
 const addProductToCart = (product, batchId = null, stockId = null) => {
     // Para productos sin lotes, necesitamos obtener el stock_id desde stock_info
     if (!batchId && !stockId && product.stock_info) {
@@ -409,8 +463,21 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
         const availableStock = batchId ? product.stock_info.batches.find((b) => b.batch_id === batchId)?.available_quantity || 0 : product.stock;
 
         if (existingItem.quantity < availableStock) {
-            existingItem.quantity++;
-            showSuccessMessage('Actualizado', `${product.name} cantidad: ${existingItem.quantity}`);
+            const newQuantity = existingItem.quantity + 1;
+            
+            // Recalculate price with new quantity - preserve ignore flag
+            const { price, promotion } = calculateBestPrice(product, newQuantity, existingItem.ignore_promotions);
+            
+            existingItem.quantity = newQuantity;
+            existingItem.price = price; // Update unit price
+            existingItem.subtotal = price * newQuantity;
+            existingItem.applied_promotion = promotion; // Store promo info
+            
+            let msg = `${product.name} cantidad: ${newQuantity}`;
+            if (promotion) {
+                msg += ` (Promo: ${promotion.name})`;
+            }
+            showSuccessMessage('Actualizado', msg);
         } else {
             showToast('stockWarning', {
                 severity: 'warn',
@@ -421,19 +488,31 @@ const addProductToCart = (product, batchId = null, stockId = null) => {
     } else {
         const batchInfo = batchId ? product.stock_info.batches.find((b) => b.batch_id === batchId) : null;
         const itemName = batchInfo ? `${product.name} (${batchInfo.batch_code})` : product.name;
+        
+        // Calculate initial price for quantity 1
+        const { price, promotion } = calculateBestPrice(product, 1);
 
         cart.value.push({
             cartKey: cartItemKey,
             id: product.id,
             name: itemName,
-            price: product.price,
+            base_price: product.price, // Keep original price reference
+            price: price,
             quantity: 1,
-            subtotal: product.price,
+            subtotal: price,
             batch_id: batchId,
             stock_id: stockId, // OBLIGATORIO - siempre debe tener valor
-            requires_batches: product.requires_batches
+            requires_batches: product.requires_batches,
+            applied_promotion: promotion,
+            promotions: product.promotions, // Keep promotions reference for future quantity updates
+            ignore_promotions: false // Default to false
         });
-        showSuccessMessage('Agregado', `${itemName} añadido al carrito`);
+        
+        let msg = `${itemName} añadido al carrito`;
+        if (promotion) {
+            msg += ` (Promo: ${promotion.name})`;
+        }
+        showSuccessMessage('Agregado', msg);
     }
 
     updateCartTotals();
@@ -459,7 +538,12 @@ const removeFromCart = (index) => {
 };
 
 const updateQuantity = (item, newQuantity) => {
-    const product = products.value.find((p) => p.id === item.id);
+    const productInList = products.value.find((p) => p.id === item.id);
+    const availableStock = productInList 
+        ? (item.batch_id ? productInList.stock_info?.batches?.find(b => b.batch_id === item.batch_id)?.available_quantity : productInList.stock)
+        : 9999; 
+        
+    const productPromotions = item.promotions || (productInList ? productInList.promotions : []);
 
     if (newQuantity <= 0) {
         const index = cart.value.findIndex((i) => i.cartKey === item.cartKey);
@@ -467,18 +551,22 @@ const updateQuantity = (item, newQuantity) => {
             cart.value.splice(index, 1);
         }
     } else {
-        // Determinar stock disponible según si tiene lotes o no
-        let availableStock = product.stock;
-        if (item.batch_id && product.stock_info?.batches) {
-            const batch = product.stock_info.batches.find((b) => b.batch_id === item.batch_id);
-            availableStock = batch ? parseFloat(batch.available_quantity) : 0;
-        }
-
         if (newQuantity <= availableStock) {
+            
+            // Calculate new price
+            const mockProduct = { 
+                price: item.base_price || item.price, 
+                promotions: productPromotions
+            };
+            
+            const { price, promotion } = calculateBestPrice(mockProduct, newQuantity, item.ignore_promotions);
+
             item.quantity = newQuantity;
-            item.subtotal = item.price * newQuantity;
+            item.price = price;
+            item.subtotal = price * newQuantity;
+            item.applied_promotion = promotion;
         } else {
-            showToast('stockWarning', {
+             showToast('stockWarning', {
                 severity: 'warn',
                 summary: 'Stock Insuficiente',
                 detail: `Solo hay ${availableStock} unidades disponibles`
@@ -487,6 +575,12 @@ const updateQuantity = (item, newQuantity) => {
     }
 
     updateCartTotals();
+};
+
+const toggleItemPromotion = (item) => {
+    item.ignore_promotions = !item.ignore_promotions;
+    // Trigger update logic to recalculate price
+    updateQuantity(item, item.quantity);
 };
 
 const updateCartTotals = () => {
@@ -1003,11 +1097,12 @@ const openMultiplePaymentDialog = () => {
                     :cartTotal="cartTotal"
                     :canOperateWithoutSession="canOperateWithoutSession"
                     :loading="loading"
-                    v-model:showCartSummary="showCartSummary"
+                    :showCartSummary="showCartSummary"
+                    @update:showCartSummary="showCartSummary = $event"
                     @remove-from-cart="removeFromCart"
                     @update-quantity="updateQuantity"
                     @clear-cart="clearCart"
-                    @open-multiple-payment-dialog="openMultiplePaymentDialog"
+                    @open-multiple-payment-dialog="showMultiplePaymentDialog = true"
                     
                     :hasDiscount="hasDiscount"
                     :discountInfo="discountInfo"
@@ -1015,6 +1110,7 @@ const openMultiplePaymentDialog = () => {
                     :discountError="discountError"
                     @apply-discount="handleApplyDiscount"
                     @remove-discount="clearDiscount"
+                    @toggle-promotion="toggleItemPromotion"
                 />
                 <!-- Mobile Floating Action Button for Cart -->
                 <div class="fixed right-4 bottom-4 lg:hidden z-50">

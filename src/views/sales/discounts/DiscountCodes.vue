@@ -1,25 +1,40 @@
 <script setup>
 import { useDiscountCodesStore } from '@/stores/discountCodesStore';
+import { usePromotionsStore } from '@/stores/promotionsStore';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
+import TabPanel from 'primevue/tabpanel';
+import TabView from 'primevue/tabview';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import DiscountCodeForm from './componentsDiscounts/DiscountCodeForm.vue';
 import DiscountCodesList from './componentsDiscounts/DiscountCodesList.vue';
+import PromotionFormDialog from './componentsDiscounts/PromotionFormDialog.vue';
+import PromotionsList from './componentsDiscounts/PromotionsList.vue';
 
 const toast = useToast();
 const discountCodesStore = useDiscountCodesStore();
+const promotionsStore = usePromotionsStore();
 
+// UI State
+const activeTab = ref(0);
 const searchQuery = ref('');
+const showFormDialog = ref(false);
+const showPromotionDialog = ref(false);
+
+// Discount Codes State
 const selectedStatus = ref('all');
 const selectedType = ref('all');
-const showFormDialog = ref(false);
 const editingCode = ref(null);
+
+// Promotions State
+const selectedPromoChannel = ref(null);
+const editingPromotion = ref(null);
 
 const statusOptions = [
     { label: 'Todos', value: 'all' },
@@ -33,14 +48,22 @@ const typeOptions = [
     { label: 'Monto Fijo', value: 'fixed' }
 ];
 
-const loading = computed(() => discountCodesStore.loading);
+const channelOptions = [
+    { label: 'Todos los canales', value: null },
+    { label: 'Web', value: 'web' },
+    { label: 'POS', value: 'pos' },
+    { label: 'Instagram', value: 'instagram' }
+];
 
-// Filtered codes
+const loading = computed(() => {
+    return activeTab.value === 0 ? discountCodesStore.loading : promotionsStore.loading;
+});
+
+// -- Discount Codes Filtering --
 const filteredCodes = computed(() => {
     let codes = (discountCodesStore.discountCodes || []).filter(c => c);
 
-    // Filter by search
-    if (searchQuery.value) {
+    if (searchQuery.value && activeTab.value === 0) {
         const query = searchQuery.value.toLowerCase();
         codes = codes.filter(
             (code) =>
@@ -50,14 +73,12 @@ const filteredCodes = computed(() => {
         );
     }
 
-    // Filter by status
     if (selectedStatus.value === 'active') {
         codes = codes.filter((code) => code.is_active);
     } else if (selectedStatus.value === 'inactive') {
         codes = codes.filter((code) => !code.is_active);
     }
 
-    // Filter by type
     if (selectedType.value !== 'all') {
         codes = codes.filter((code) => code.discount_type === selectedType.value);
     }
@@ -65,71 +86,71 @@ const filteredCodes = computed(() => {
     return codes;
 });
 
-onMounted(async () => {
-    await loadDiscountCodes();
+// -- Promotions Filtering --
+const filteredPromotions = computed(() => {
+    let promos = (promotionsStore.promotions || []).filter(p => p);
+
+    if (searchQuery.value && activeTab.value === 1) {
+        const query = searchQuery.value.toLowerCase();
+        promos = promos.filter(
+             (p) => 
+                p.name.toLowerCase().includes(query) || 
+                (p.product?.name && p.product.name.toLowerCase().includes(query))
+        );
+    }
+
+    if (selectedPromoChannel.value) {
+        promos = promos.filter(p => p.channel === selectedPromoChannel.value);
+    }
+
+    return promos;
 });
 
-/**
- * Load discount codes
- */
 const loadDiscountCodes = async () => {
     try {
         await discountCodesStore.fetchDiscountCodes();
     } catch (error) {
-        console.error('[DiscountCodes] Error loading codes:', error);
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al cargar códigos de descuento',
-            life: 4000
-        });
+        console.error('[DiscountCodes] Error:', error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar códigos', life: 4000 });
     }
 };
 
-/**
- * Open form dialog for new code
- */
-const openNewCodeDialog = () => {
-    editingCode.value = null;
-    showFormDialog.value = true;
+const loadPromotions = async () => {
+    try {
+        await promotionsStore.fetchPromotions();
+    } catch (error) {
+        console.error('[Promotions] Error:', error);
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Error al cargar promociones', life: 4000 });
+    }
 };
 
-/**
- * Open form dialog for editing
- */
-const openEditDialog = (code) => {
-    editingCode.value = code;
-    showFormDialog.value = true;
-};
-
-/**
- * Close form dialog
- */
-const closeFormDialog = () => {
-    showFormDialog.value = false;
-    editingCode.value = null;
-};
-
-/**
- * Handle code saved
- */
-const handleCodeSaved = async () => {
+// Initial Load and Tab Change
+onMounted(async () => {
     await loadDiscountCodes();
-    closeFormDialog();
-};
+    // Pre-fetch promotions too or wait for tab switch? Let's fetch both to be ready or lazy load.
+    await loadPromotions(); 
+});
 
-/**
- * View statistics
- */
-const viewStats = (codeId) => {
-    // TODO: Implement stats view
-    console.log('View stats for code:', codeId);
-    toast.add({
-        severity: 'info',
-        summary: 'Próximamente',
-        detail: 'La vista de estadísticas estará disponible pronto',
-        life: 3000
-    });
+watch(activeTab, (val) => {
+    searchQuery.value = ''; // Clear search on tab switch
+    if (val === 0) loadDiscountCodes();
+    else loadPromotions();
+});
+
+// -- Discount Code Handlers --
+const openNewCodeDialog = () => { editingCode.value = null; showFormDialog.value = true; };
+const openEditDialog = (code) => { editingCode.value = code; showFormDialog.value = true; };
+const closeFormDialog = () => { showFormDialog.value = false; editingCode.value = null; };
+const handleCodeSaved = async () => { await loadDiscountCodes(); closeFormDialog(); };
+
+// -- Promotion Handlers --
+const openNewPromoDialog = () => { editingPromotion.value = null; showPromotionDialog.value = true; };
+const openEditPromoDialog = (promo) => { editingPromotion.value = promo; showPromotionDialog.value = true; };
+const closePromoDialog = () => { showPromotionDialog.value = false; editingPromotion.value = null; };
+const handlePromoSaved = async () => { await loadPromotions(); closePromoDialog(); };
+
+const viewStats = (id) => {
+    toast.add({ severity: 'info', summary: 'Próximamente', detail: 'Estadísticas pronto', life: 3000 });
 };
 </script>
 
@@ -142,45 +163,77 @@ const viewStats = (codeId) => {
             <div class="header-content">
                 <div class="title-section">
                     <h1 class="page-title">
-                        <i class="pi pi-percentage"></i>
-                        Códigos de Descuento
+                        <i class="pi pi-tags"></i>
+                        Gestión de Descuentos y Promociones
                     </h1>
-                    <p class="page-subtitle">Gestiona códigos promocionales y descuentos para tus ventas</p>
+                    <p class="page-subtitle">Administra códigos de cupón y precios promocionales</p>
                 </div>
             </div>
         </div>
 
         <!-- Content Container -->
         <div class="content-container">
-            <!-- Toolbar -->
-            <div class="toolbar">
-                <div class="toolbar-left">
-                    <div class="search-container">
-                        <IconField>
-                            <InputIcon class="pi pi-search" />
-                            <InputText v-model="searchQuery" placeholder="Buscar códigos..." class="search-input" />
-                        </IconField>
+            <TabView v-model:activeIndex="activeTab">
+                <!-- CUPONES TAB -->
+                <TabPanel header="Códigos de Descuento">
+                    <div class="toolbar">
+                        <div class="toolbar-left">
+                            <div class="search-container">
+                                <IconField>
+                                    <InputIcon class="pi pi-search" />
+                                    <InputText v-model="searchQuery" placeholder="Buscar códigos..." class="search-input" />
+                                </IconField>
+                            </div>
+
+                            <div class="filter-container">
+                                <Select v-model="selectedStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Estado" class="filter-select" />
+                                <Select v-model="selectedType" :options="typeOptions" optionLabel="label" optionValue="value" placeholder="Tipo" class="filter-select" />
+                            </div>
+                        </div>
+
+                        <div class="toolbar-right">
+                            <Button icon="pi pi-refresh" label="Actualizar" severity="secondary" @click="loadDiscountCodes" :loading="loading" outlined />
+                            <Button icon="pi pi-plus" label="Nuevo Código" severity="success" @click="openNewCodeDialog" />
+                        </div>
                     </div>
 
-                    <div class="filter-container">
-                        <Select v-model="selectedStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Estado" class="filter-select" />
-                        <Select v-model="selectedType" :options="typeOptions" optionLabel="label" optionValue="value" placeholder="Tipo" class="filter-select" />
+                    <DiscountCodesList :codes="filteredCodes" :loading="loading" @edit="openEditDialog" @view-stats="viewStats" @refresh="loadDiscountCodes" />
+                </TabPanel>
+
+                <!-- PROMOCIONES TAB -->
+                <TabPanel header="Precios Promocionales">
+                     <div class="toolbar">
+                        <div class="toolbar-left">
+                            <div class="search-container">
+                                <IconField>
+                                    <InputIcon class="pi pi-search" />
+                                    <InputText v-model="searchQuery" placeholder="Buscar promociones..." class="search-input" />
+                                </IconField>
+                            </div>
+
+                            <div class="filter-container">
+                                <Select v-model="selectedPromoChannel" :options="channelOptions" optionLabel="label" optionValue="value" placeholder="Filtrar por Canal" class="filter-select" showClear />
+                            </div>
+                        </div>
+
+                        <div class="toolbar-right">
+                            <Button icon="pi pi-refresh" label="Actualizar" severity="secondary" @click="loadPromotions" :loading="loading" outlined />
+                            <Button icon="pi pi-plus" label="Nueva Promoción" severity="success" @click="openNewPromoDialog" />
+                        </div>
                     </div>
-                </div>
 
-                <div class="toolbar-right">
-                    <Button icon="pi pi-refresh" label="Actualizar" severity="secondary" @click="loadDiscountCodes" :loading="loading" outlined />
-                    <Button icon="pi pi-plus" label="Nuevo Código" severity="success" @click="openNewCodeDialog" />
-                </div>
-            </div>
-
-            <!-- Discount Codes List -->
-            <DiscountCodesList :codes="filteredCodes" :loading="loading" @edit="openEditDialog" @view-stats="viewStats" @refresh="loadDiscountCodes" />
+                    <PromotionsList :promotions="filteredPromotions" :loading="loading" @edit="openEditPromoDialog" @refresh="loadPromotions" />
+                </TabPanel>
+            </TabView>
         </div>
 
-        <!-- Form Dialog -->
+        <!-- Form Dialogs -->
         <Dialog v-model:visible="showFormDialog" :header="editingCode ? 'Editar Código de Descuento' : 'Nuevo Código de Descuento'" modal :style="{ width: '900px' }" :closable="true">
             <DiscountCodeForm :code="editingCode" :visible="showFormDialog" @close="closeFormDialog" @saved="handleCodeSaved" />
+        </Dialog>
+
+        <Dialog v-model:visible="showPromotionDialog" :header="editingPromotion ? 'Editar Promoción' : 'Nueva Promoción'" modal :style="{ width: '700px' }" :closable="true">
+            <PromotionFormDialog :promotion="editingPromotion" :visible="showPromotionDialog" @close="closePromoDialog" @saved="handlePromoSaved" />
         </Dialog>
     </div>
 </template>
@@ -222,12 +275,21 @@ const viewStats = (codeId) => {
 
 /* Content Container */
 .content-container {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 flex flex-col gap-6;
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-2 flex flex-col gap-6;
+}
+
+/* Tabs Styling overrides */
+:deep(.p-tabview-nav-container) {
+    @apply mb-4;
+}
+
+:deep(.p-tabview-panels) {
+    @apply p-0;
 }
 
 /* Toolbar */
 .toolbar {
-    @apply flex justify-between items-center gap-4 flex-wrap;
+    @apply flex justify-between items-center gap-4 flex-wrap mb-4 px-2;
 }
 
 .toolbar-left {
@@ -289,3 +351,4 @@ const viewStats = (codeId) => {
     }
 }
 </style>
+

@@ -60,7 +60,8 @@ const handleImageLoad = (event) => {
             class="cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 touch-manipulation shadow-lg border-0 bg-white/90 backdrop-blur-sm hover:bg-white/95 group min-h-[180px]"
             :class="{
                 'opacity-60 cursor-not-allowed': product.stock === 0,
-                'ring-2 ring-red-200': product.stock === 0
+                'ring-2 ring-red-200': product.stock === 0,
+                'ring-2 ring-purple-200': product.promotions && product.promotions.length > 0
             }"
         >
             <template #content>
@@ -89,6 +90,11 @@ const handleImageLoad = (event) => {
                         <div v-if="product.stock === 0" class="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl">
                             <Chip label="SIN STOCK" severity="danger" class="font-bold" />
                         </div>
+
+                         <!-- Promotion Badge -->
+                        <div v-if="product.promotions && product.promotions.length > 0" class="absolute top-2 right-2 flex flex-col items-end gap-1">
+                             <Tag icon="pi pi-bolt" severity="warning" value="OFERTA" class="font-bold shadow-md" />
+                        </div>
                     </div>
 
                     <!-- Product Info -->
@@ -96,7 +102,17 @@ const handleImageLoad = (event) => {
                         <h3 class="font-bold text-gray-900 text-xs sm:text-sm leading-tight line-clamp-2 min-h-[2.5rem]">
                             {{ product.name }}
                         </h3>
-                        <div class="text-xl font-black text-blue-600">
+                        
+                        <div v-if="product.promotions && product.promotions.length > 0" class="flex flex-col items-center">
+                             <div class="text-xs text-gray-400 line-through">
+                                {{ formatCurrency(product.price) }}
+                            </div>
+                             <div class="text-xl font-black text-purple-600">
+                                {{ formatCurrency(Math.min(product.price, ...product.promotions.map(p => parseFloat(p.price)))) }}*
+                            </div>
+                           <small class="text-[10px] text-gray-500">*Precio mín. promo</small>
+                        </div>
+                        <div v-else class="text-xl font-black text-blue-600">
                             {{ formatCurrency(product.price) }}
                         </div>
 

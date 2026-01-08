@@ -17,7 +17,7 @@ defineProps({
     discountError: String
 });
 
-defineEmits(['update:showCartSummary', 'remove-from-cart', 'update-quantity', 'clear-cart', 'open-multiple-payment-dialog', 'apply-discount', 'remove-discount']);
+defineEmits(['update:showCartSummary', 'remove-from-cart', 'update-quantity', 'clear-cart', 'open-multiple-payment-dialog', 'apply-discount', 'remove-discount', 'toggle-promotion']);
 
 const discountInput = ref('');
 
@@ -63,7 +63,46 @@ const formatCurrency = (amount) => {
                                 <h5 class="font-bold text-gray-900 truncate text-sm">
                                     {{ item.name }}
                                 </h5>
-                                <p class="text-blue-600 font-semibold text-sm">
+                                <div v-if="item.applied_promotion" class="flex flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-blue-600 font-semibold text-sm">
+                                            {{ formatCurrency(item.price) }}
+                                        </span>
+                                        <span class="text-xs text-gray-400 line-through">
+                                            {{ formatCurrency(item.base_price || item.price) }}
+                                        </span>
+                                    </div>
+                                    <small class="text-xs text-green-600 font-medium flex items-center justify-between">
+                                        <span><i class="pi pi-bolt text-[10px]"></i> {{ item.applied_promotion.name }}</span>
+                                        <Button 
+                                            icon="pi pi-times" 
+                                            text 
+                                            rounded 
+                                            size="small" 
+                                            class="h-4 w-4 ml-1 !p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                            v-tooltip.top="'Quitar promoción'"
+                                            @click.stop="$emit('toggle-promotion', item)"
+                                        />
+                                    </small>
+                                </div>
+                                <div v-else-if="item.promotions && item.promotions.length > 0" class="flex flex-col">
+                                     <p class="text-blue-600 font-semibold text-sm">
+                                        {{ formatCurrency(item.price) }}
+                                    </p>
+                                    <small class="text-xs text-gray-400 font-medium flex items-center">
+                                        <span>Promo disponible</span>
+                                         <Button 
+                                            icon="pi pi-bolt" 
+                                            text 
+                                            rounded 
+                                            size="small" 
+                                            class="h-4 w-4 ml-1 !p-0 text-green-400 hover:text-green-600 hover:bg-green-50"
+                                            v-tooltip.top="'Aplicar promoción'"
+                                            @click.stop="$emit('toggle-promotion', item)"
+                                        />
+                                    </small>
+                                </div>
+                                <p v-else class="text-blue-600 font-semibold text-sm">
                                     {{ formatCurrency(item.price) }}
                                 </p>
                             </div>
@@ -171,7 +210,44 @@ const formatCurrency = (amount) => {
                 <div class="flex items-start justify-between mb-3">
                     <div class="flex-1 min-w-0">
                         <h5 class="font-bold text-gray-900 truncate">{{ item.name }}</h5>
-                        <p class="text-blue-600 font-semibold">{{ formatCurrency(item.price) }}</p>
+                        <div v-if="item.applied_promotion" class="flex flex-col">
+                            <div class="flex items-center gap-2">
+                                <span class="text-blue-600 font-semibold">
+                                    {{ formatCurrency(item.price) }}
+                                </span>
+                                <span class="text-xs text-gray-400 line-through">
+                                    {{ formatCurrency(item.base_price || item.price) }}
+                                </span>
+                            </div>
+                            <small class="text-xs text-green-600 font-medium flex items-center justify-between">
+                                <span><i class="pi pi-bolt text-[10px]"></i> {{ item.applied_promotion.name }}</span>
+                                <Button 
+                                    icon="pi pi-times" 
+                                    text 
+                                    rounded 
+                                    size="small" 
+                                    class="h-4 w-4 ml-1 !p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                    @click.stop="$emit('toggle-promotion', item)"
+                                />
+                            </small>
+                        </div>
+                        <div v-else-if="item.promotions && item.promotions.length > 0" class="flex flex-col">
+                                <p class="text-blue-600 font-semibold text-sm">
+                                {{ formatCurrency(item.price) }}
+                            </p>
+                            <small class="text-xs text-gray-400 font-medium flex items-center">
+                                <span>Promo disponible</span>
+                                    <Button 
+                                    icon="pi pi-bolt" 
+                                    text 
+                                    rounded 
+                                    size="small" 
+                                    class="h-4 w-4 ml-1 !p-0 text-green-400 hover:text-green-600 hover:bg-green-50"
+                                    @click.stop="$emit('toggle-promotion', item)"
+                                />
+                            </small>
+                        </div>
+                        <p v-else class="text-blue-600 font-semibold">{{ formatCurrency(item.price) }}</p>
                     </div>
                     <Button @click="$emit('remove-from-cart', index)" icon="pi pi-trash" size="small" severity="danger" text rounded class="ml-2" />
                 </div>
