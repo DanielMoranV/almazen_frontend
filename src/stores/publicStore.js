@@ -618,6 +618,55 @@ export const usePublicStore = defineStore('publicStore', {
             return product.stock_info?.batch || null;
         },
 
+        // --- 🆕 LOGICA DE PROMOCIONES ---
+        
+        hasPromotions(product) {
+            return product.promotions && product.promotions.length > 0 && product.promotions.some(p => p.is_active);
+        },
+
+        getActivePromotions(product) {
+            if (!this.hasPromotions(product)) return [];
+            return product.promotions.filter(p => p.is_active).sort((a, b) => {
+                // Ordenar por prioridad si existe, o por cantidad mínima
+                if (a.tier_index !== undefined && b.tier_index !== undefined) return a.tier_index - b.tier_index;
+                return a.min_quantity - b.min_quantity;
+            });
+        },
+
+        // Obtener el precio aplicable dada una cantidad
+        getApplicablePrice(product, quantity = 1) {
+            const basePrice = this.getProductPrice(product);
+            
+            if (!this.hasPromotions(product)) return basePrice;
+
+            const promotions = this.getActivePromotions(product);
+            
+            // Buscar la mejor promoción aplicable para la cantidad
+            // Asumimos que las promociones son de tipo 'wholesale' (precio fijo por mayoreo)
+            // Filtramos las que cumplen con la cantidad mínima y tomamos la de mayor cantidad mínima (o menor precio)
+            const applicablePromo = promotions
+                .filter(p => quantity >= p.min_quantity)
+                .sort((a, b) => parseFloat(a.price) - parseFloat(b.price))[0]; // Menor precio gana
+
+            if (applicablePromo) {
+                return parseFloat(applicablePromo.price);
+            }
+
+            return basePrice;
+        },
+
+        // Obtener el precio más bajo posible (para mostrar "Desde S/...")
+        getBestPromotionPrice(product) {
+            if (!this.hasPromotions(product)) return null;
+            
+            const promotions = this.getActivePromotions(product);
+            if (promotions.length === 0) return null;
+
+            // Encontrar el precio más bajo ofrecido
+            return Math.min(...promotions.map(p => parseFloat(p.price)));
+        },
+
+
         getProductUnit(product) {
             return product.unit || { name: 'Unidad', symbol: 'und' };
         },

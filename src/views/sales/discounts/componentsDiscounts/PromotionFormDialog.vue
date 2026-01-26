@@ -5,6 +5,7 @@ import AutoComplete from 'primevue/autocomplete';
 import Button from 'primevue/button';
 import Calendar from 'primevue/calendar';
 import Checkbox from 'primevue/checkbox';
+import Dialog from 'primevue/dialog';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
@@ -230,121 +231,130 @@ const handleCancel = () => {
 </script>
 
 <template>
-    <div class="promotion-form">
-        <form @submit.prevent="handleSubmit">
-            <!-- Basic Information -->
-            <div class="form-section">
-                <h3 class="section-title">Información Principal</h3>
+    <Dialog 
+        :visible="visible" 
+        modal 
+        header="Crear Promoción" 
+        :style="{ width: '50rem' }" 
+        :breakpoints="{ '1199px': '75vw', '575px': '90vw' }" 
+        @update:visible="val => !val && emit('close')"
+    >
+        <div class="promotion-form">
+            <form @submit.prevent="handleSubmit">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3 class="section-title">Información Principal</h3>
 
-                <div class="form-group mb-4">
-                    <label for="product">Producto *</label>
-                    <AutoComplete
-                        id="product"
-                        v-model="form.product"
-                        :suggestions="filteredProducts"
-                        @complete="searchProducts"
-                        optionLabel="name"
-                        placeholder="Buscar producto por nombre o código..."
-                        forceSelection
-                        class="w-full"
-                        :disabled="isEdit"
-                    >
-                        <template #option="slotProps">
-                            <div class="flex items-center gap-2">
-                                <img v-if="slotProps.option.image_url" :src="slotProps.option.image_url" :alt="slotProps.option.name" class="w-8 h-8 object-cover rounded" />
-                                <div>
-                                    <div class="font-bold">{{ slotProps.option.name }}</div>
-                                    <small>{{ slotProps.option.sku }}</small>
+                    <div class="form-group mb-4">
+                        <label for="product">Producto *</label>
+                        <AutoComplete
+                            id="product"
+                            v-model="form.product"
+                            :suggestions="filteredProducts"
+                            @complete="searchProducts"
+                            optionLabel="name"
+                            placeholder="Buscar producto por nombre o código..."
+                            forceSelection
+                            class="w-full"
+                            :disabled="isEdit"
+                        >
+                            <template #option="slotProps">
+                                <div class="flex items-center gap-2">
+                                    <img v-if="slotProps.option.image_url" :src="slotProps.option.image_url" :alt="slotProps.option.name" class="w-8 h-8 object-cover rounded" />
+                                    <div>
+                                        <div class="font-bold">{{ slotProps.option.name }}</div>
+                                        <small>{{ slotProps.option.sku }}</small>
+                                    </div>
                                 </div>
-                            </div>
-                        </template>
-                    </AutoComplete>
-                    <small v-if="isEdit" class="text-blue-500">El producto no se puede cambiar al editar</small>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="name">Nombre de Promoción *</label>
-                        <InputText id="name" v-model="form.name" placeholder="Ej: Mayorista 12+" required class="w-full" />
+                            </template>
+                        </AutoComplete>
+                        <small v-if="isEdit" class="text-blue-500">El producto no se puede cambiar al editar</small>
                     </div>
 
-                    <div class="form-group">
-                        <label for="type">Tipo *</label>
-                        <Select id="type" v-model="form.type" :options="typeOptions" optionLabel="label" optionValue="value" class="w-full" />
-                    </div>
-                </div>
-            </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Nombre de Promoción *</label>
+                            <InputText id="name" v-model="form.name" placeholder="Ej: Mayorista 12+" required class="w-full" />
+                        </div>
 
-            <!-- Pricing & Conditions -->
-            <div class="form-section">
-                <h3 class="section-title">Precios y Condiciones</h3>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="price">Precio Promocional (S/) *</label>
-                        <InputNumber id="price" v-model="form.price" :min="0.01" :minFractionDigits="2" :maxFractionDigits="2" placeholder="0.00" class="w-full" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="min_quantity">Cantidad Mínima *</label>
-                        <InputNumber id="min_quantity" v-model="form.min_quantity" :min="1" showButtons buttonLayout="horizontal" class="w-full" />
+                        <div class="form-group">
+                            <label for="type">Tipo *</label>
+                            <Select id="type" v-model="form.type" :options="typeOptions" optionLabel="label" optionValue="value" class="w-full" />
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-row mt-4">
-                    <div class="form-group">
-                        <label for="channel">Canal Exclusivo</label>
-                        <Select id="channel" v-model="form.channel" :options="channelOptions" optionLabel="label" optionValue="value" class="w-full" />
+                <!-- Pricing & Conditions -->
+                <div class="form-section">
+                    <h3 class="section-title">Precios y Condiciones</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="price">Precio Promocional (S/) *</label>
+                            <InputNumber id="price" v-model="form.price" :min="0.01" :minFractionDigits="2" :maxFractionDigits="2" placeholder="0.00" class="w-full" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="min_quantity">Cantidad Mínima *</label>
+                            <InputNumber id="min_quantity" v-model="form.min_quantity" :min="1" showButtons buttonLayout="horizontal" class="w-full" />
+                        </div>
                     </div>
+
+                    <div class="form-row mt-4">
+                        <div class="form-group">
+                            <label for="channel">Canal Exclusivo</label>
+                            <Select id="channel" v-model="form.channel" :options="channelOptions" optionLabel="label" optionValue="value" class="w-full" />
+                        </div>
+                        
+                        <div class="form-group">
+                             <label for="priority">Prioridad (Mayor valor = Gana)</label>
+                             <InputNumber id="priority" v-model="form.priority" :min="0" :max="100" class="w-full" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validity -->
+                <div class="form-section">
+                    <h3 class="section-title">Vigencia</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="start_date">Inicio</label>
+                            <Calendar id="start_date" v-model="form.start_date" showTime hourFormat="24" dateFormat="dd/mm/yy" placeholder="Inmediato" class="w-full" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="end_date">Fin</label>
+                            <Calendar id="end_date" v-model="form.end_date" showTime hourFormat="24" dateFormat="dd/mm/yy" placeholder="Indefinido" class="w-full" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="form-section">
+                    <h3 class="section-title">Opciones Adicionales</h3>
                     
-                    <div class="form-group">
-                         <label for="priority">Prioridad (Mayor valor = Gana)</label>
-                         <InputNumber id="priority" v-model="form.priority" :min="0" :max="100" class="w-full" />
+                    <div class="grid grid-cols-1 gap-4">
+                         <div class="checkbox-group">
+                            <Checkbox id="is_active" v-model="form.is_active" :binary="true" />
+                            <label for="is_active">Promoción Activa</label>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <Checkbox id="is_stackable" v-model="form.is_stackable_with_coupons" :binary="true" />
+                            <label for="is_stackable">Permitir aplicar cupones encima de este precio</label>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Validity -->
-            <div class="form-section">
-                <h3 class="section-title">Vigencia</h3>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="start_date">Inicio</label>
-                        <Calendar id="start_date" v-model="form.start_date" showTime hourFormat="24" dateFormat="dd/mm/yy" placeholder="Inmediato" class="w-full" />
-                    </div>
-
-                    <div class="form-group">
-                        <label for="end_date">Fin</label>
-                        <Calendar id="end_date" v-model="form.end_date" showTime hourFormat="24" dateFormat="dd/mm/yy" placeholder="Indefinido" class="w-full" />
-                    </div>
+                <!-- Actions -->
+                <div class="form-actions">
+                    <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click="handleCancel" text />
+                    <Button :label="isEdit ? 'Actualizar' : 'Crear'" icon="pi pi-check" severity="success" type="submit" :loading="submitting" />
                 </div>
-            </div>
-
-            <!-- Options -->
-            <div class="form-section">
-                <h3 class="section-title">Opciones Adicionales</h3>
-                
-                <div class="grid grid-cols-1 gap-4">
-                     <div class="checkbox-group">
-                        <Checkbox id="is_active" v-model="form.is_active" :binary="true" />
-                        <label for="is_active">Promoción Activa</label>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <Checkbox id="is_stackable" v-model="form.is_stackable_with_coupons" :binary="true" />
-                        <label for="is_stackable">Permitir aplicar cupones encima de este precio</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="form-actions">
-                <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click="handleCancel" text />
-                <Button :label="isEdit ? 'Actualizar' : 'Crear'" icon="pi pi-check" severity="success" type="submit" :loading="submitting" />
-            </div>
-        </form>
-    </div>
+            </form>
+        </div>
+    </Dialog>
 </template>
 
 <style scoped>

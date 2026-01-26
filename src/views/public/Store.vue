@@ -520,7 +520,7 @@ const updateQuantity = (productId, delta) => {
 // Calcular total del carrito
 const cartTotal = computed(() => {
     return cart.value.reduce((total, item) => {
-        return total + (publicStore.getProductPrice(item.product) * item.quantity);
+        return total + (publicStore.getApplicablePrice(item.product, item.quantity) * item.quantity);
     }, 0);
 });
 
@@ -549,12 +549,20 @@ const sendCartToWhatsApp = () => {
     let message = `Hola *${company.value?.name || 'Tienda'}*, me gustaría realizar el siguiente pedido:\n\n`;
     
     cart.value.forEach(item => {
-        const price = publicStore.getProductPrice(item.product);
-        const subtotal = price * item.quantity;
-        message += `▪️ ${item.quantity} x ${item.product.name}\n`;
+        const unitPrice = publicStore.getApplicablePrice(item.product, item.quantity);
+        const subtotal = unitPrice * item.quantity;
+        const basePrice = publicStore.getProductPrice(item.product);
+        const hasPromo = unitPrice < basePrice;
+
+        message += `▪️ ${item.quantity} x ${item.product.name}`;
+        if (hasPromo) message += ` 🎉`; // Emoji festivo para ofertas
+        message += `\n`;
+
         // Solo mostrar precio si está habilitado en la config
         if (showPrices.value) {
-           message += `   (Unid: ${publicStore.formatPrice(price)} - Sub: ${publicStore.formatPrice(subtotal)})\n`;
+           message += `   (Unid: ${publicStore.formatPrice(unitPrice)}`;
+           if (hasPromo) message += ` [Oferta]`; 
+           message += ` - Sub: ${publicStore.formatPrice(subtotal)})\n`;
         }
     });
 
@@ -754,6 +762,9 @@ const setActiveImage = (imgUrl) => {
                             <img :src="publicStore.getProductImage(product)" :alt="product.name" @error="$event.target.src = publicStore.generateProductAvatar(product.name)" />
                             <div v-if="publicStore.getProductStock(product) <= 0" class="out-of-stock-badge">Agotado</div>
                             <div v-else-if="publicStore.getProductBatch(product) && publicStore.getProductBatch(product).days_to_expire <= 7" class="expiry-badge">Vence pronto</div>
+                            <div v-else-if="publicStore.hasPromotions(product)" class="promo-badge">
+                                <i class="pi pi-percentage"></i> Oferta
+                            </div>
                             
                             <!-- Botón Agregar a Lista -->
                             <!-- Botón Agregar a Lista -->
@@ -1526,6 +1537,25 @@ const setActiveImage = (imgUrl) => {
     background: var(--red-900);
     color: var(--red-100);
 }
+
+.promo-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
+    z-index: 2;
+}
+
 
 /* === PAGINACIÓN === */
 .pagination-section {

@@ -377,6 +377,25 @@ onMounted(() => {
                             </div>
                         </div>
 
+                        <!-- Promociones -->
+                        <div v-if="publicStore.hasPromotions(product)" class="info-card promotions-card">
+                            <div class="card-header">
+                                <i class="pi pi-bolt text-yellow-500"></i>
+                                <span>Promociones</span>
+                            </div>
+                            <div class="promotions-list">
+                                <div v-for="promo in publicStore.getActivePromotions(product)" :key="promo.id" class="promo-item">
+                                    <div class="promo-info">
+                                        <span class="promo-name">{{ promo.name }}</span>
+                                        <span class="promo-condition">Llevando {{ promo.min_quantity }}+ unid.</span>
+                                    </div>
+                                    <div class="promo-price-tag">
+                                        {{ formatPrice(promo.price) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Información técnica compacta -->
                         <div class="tech-info">
                             <div class="tech-grid">
@@ -748,6 +767,59 @@ onMounted(() => {
 
 .stock-card.out-of-stock .stock-value {
     color: var(--red-600);
+}
+
+/* === PROMOCIONES === */
+.promotions-card {
+    grid-column: span 2;
+    text-align: left;
+}
+
+.promotions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.promo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--surface-50);
+    border-radius: 0.5rem;
+    border: 1px dashed var(--primary-color);
+}
+
+.promo-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.promo-name {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+}
+
+.promo-condition {
+    font-size: 0.8rem;
+    color: var(--text-color-secondary);
+}
+
+.promo-price-tag {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .promotions-card {
+        grid-column: span 1;
+    }
 }
 
 /* === INFORMACIÓN TÉCNICA === */

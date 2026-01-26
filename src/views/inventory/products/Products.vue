@@ -6,6 +6,7 @@ import ProductImageModal from '@/views/inventory/products/componentsProducts/Pro
 import ProductImportDialog from '@/views/inventory/products/componentsProducts/ProductImportDialog.vue';
 import ProductsTable from '@/views/inventory/products/componentsProducts/ProductsTable.vue';
 import ProductToolbar from '@/views/inventory/products/componentsProducts/ProductToolbar.vue';
+import PromotionFormDialog from '@/views/sales/discounts/componentsDiscounts/PromotionFormDialog.vue';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 
