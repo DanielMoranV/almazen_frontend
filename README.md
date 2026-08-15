@@ -2,6 +2,12 @@
 
 Almazen es un sistema de gestión integral (ERP) diseñado para optimizar las operaciones de inventario, ventas, compras y administración de tu negocio. Desarrollado con Vue.js y PrimeVue, ofrece una interfaz intuitiva y potente para una gestión eficiente.
 
+## Sobre este proyecto
+
+Es el cliente de la **segunda iteración arquitectónica de AlmaZen**: la versión desacoplada. Consume la API de **[almazen-api](https://github.com/DanielMoranV/almazen-api)** (Laravel), y los dos repositorios forman el sistema completo.
+
+AlmaZen pasó por tres arquitecturas. Esta es la del medio, y la que decidí no explotar comercialmente — por eso es la que publico. El producto que sí está en producción es un monolito distinto, y su código no es público.
+
 ## Características Principales
 
 *   **Panel Principal y Reportes:**
@@ -77,4 +83,13 @@ Si deseas contribuir a este proyecto, por favor, sigue las mejores prácticas de
 
 ## Licencia
 
-Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE.md` para más detalles.
+[PolyForm Noncommercial License 1.0.0](LICENSE.md).
+
+Uso libre y gratuito para cualquier fin **no comercial**: estudio, investigación, docencia, proyectos personales y organizaciones sin ánimo de lucro. Puedes leerlo, modificarlo y redistribuirlo manteniendo esta licencia y el aviso de copyright.
+
+**El uso comercial requiere una licencia aparte.** Si te interesa, escríbeme.
+
+## Autor
+
+**Daniel Morán Vílchez** — [Djasoft](https://djasoft.net.pe)
+GitHub: [@DanielMoranV](https://github.com/DanielMoranV)
